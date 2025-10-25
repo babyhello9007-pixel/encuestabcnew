@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { Loader2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface PartyStats {
   id: string;
@@ -35,13 +35,11 @@ export default function Results() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        // Obtener total de respuestas
         const { count } = await supabase
           .from("respuestas")
           .select("*", { count: "exact", head: true });
         setTotalResponses(count || 0);
 
-        // Obtener votos para elecciones generales
         const { data: generalData } = await supabase
           .from("votos_generales_totales")
           .select("*");
@@ -65,7 +63,6 @@ export default function Results() {
           setGeneralStats(stats);
         }
 
-        // Obtener votos para asociaciones juveniles
         const { data: youthData } = await supabase
           .from("votos_juveniles_totales")
           .select("*");
@@ -89,7 +86,6 @@ export default function Results() {
           setYouthStats(stats);
         }
 
-        // Obtener valoraciones de líderes
         const { data: allResponses } = await supabase
           .from("respuestas")
           .select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
@@ -107,15 +103,21 @@ export default function Results() {
           ];
 
           const ratings: LeaderRating[] = leaders.map((leader) => {
-            const values = allResponses
-              .map((r: any) => r[leader.fieldName])
-              .filter((v: any) => v !== null && v !== undefined);
-            const average = values.length > 0 ? values.reduce((a: number, b: number) => a + b, 0) / values.length : 0;
+            let sum = 0;
+            let count = 0;
+            allResponses.forEach((r: any) => {
+              const value = r[leader.fieldName];
+              if (value !== null && value !== undefined) {
+                sum += value;
+                count += 1;
+              }
+            });
+            const average = count > 0 ? sum / count : 0;
             return {
               name: leader.name,
               fieldName: leader.fieldName,
               average: Math.round(average * 10) / 10,
-              count: values.length,
+              count: count,
             };
           });
 
@@ -129,8 +131,6 @@ export default function Results() {
     };
 
     fetchResults();
-
-    // Actualizar cada 10 segundos
     const interval = setInterval(fetchResults, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -140,7 +140,6 @@ export default function Results() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
-      {/* Header */}
       <header className="sticky top-0 z-50 header-dark border-b">
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -157,7 +156,6 @@ export default function Results() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 container py-12">
         {loading ? (
           <div className="flex items-center justify-center min-h-96">
@@ -168,7 +166,6 @@ export default function Results() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Stats Header */}
             <div className="liquid-glass p-8 rounded-2xl space-y-4">
               <h2 className="text-3xl font-bold text-[#2D2D2D]">Resultados en Vivo</h2>
               <div className="grid md:grid-cols-3 gap-4">
@@ -189,7 +186,6 @@ export default function Results() {
               </div>
             </div>
 
-            {/* Tabs */}
             <div className="flex gap-4 border-b border-[#E0D5CC]">
               <button
                 onClick={() => setActiveTab("general")}
@@ -213,7 +209,6 @@ export default function Results() {
               </button>
             </div>
 
-            {/* Results Grid */}
             <div className="space-y-4">
               {stats.length === 0 ? (
                 <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
@@ -225,7 +220,6 @@ export default function Results() {
                     key={party.id}
                     className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow"
                   >
-                    {/* Party Header */}
                     <div className="flex items-center gap-4">
                       {party.logo && (
                         <img
@@ -246,7 +240,6 @@ export default function Results() {
                       </div>
                     </div>
 
-                    {/* Progress Bar */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-xs text-[#666666]">
                         <span>{party.porcentaje.toFixed(1)}%</span>
@@ -264,7 +257,6 @@ export default function Results() {
               )}
             </div>
 
-            {/* Leaders Ratings */}
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
               {leaderRatings.length === 0 ? (
@@ -291,7 +283,6 @@ export default function Results() {
                   ))}
                   </div>
 
-                  {/* Bar Chart */}
                   <div className="liquid-glass p-8 rounded-2xl">
                     <h3 className="text-xl font-bold text-[#2D2D2D] mb-6">Comparativa de Valoraciones</h3>
                     <ResponsiveContainer width="100%" height={400}>
@@ -312,7 +303,6 @@ export default function Results() {
               )}
             </div>
 
-            {/* Methodology */}
             <div className="liquid-glass p-8 rounded-2xl space-y-4">
               <h3 className="text-xl font-bold text-[#2D2D2D]">Metodología</h3>
               <div className="space-y-3 text-sm text-[#666666]">
@@ -331,7 +321,6 @@ export default function Results() {
               </div>
             </div>
 
-            {/* CTA */}
             <div className="text-center space-y-4">
               <p className="text-[#666666]">¿Aún no has respondido la encuesta?</p>
               <Button
@@ -345,7 +334,6 @@ export default function Results() {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
         <div className="container py-8 text-center text-sm text-[#666666]">
           <p>
@@ -356,4 +344,3 @@ export default function Results() {
     </div>
   );
 }
-
