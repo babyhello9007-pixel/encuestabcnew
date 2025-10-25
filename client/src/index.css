@@ -197,4 +197,10 @@
     border: 1px solid rgba(224, 213, 204, 0.5);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
+
+  /* Header Dark Blue */
+  .header-dark {
+    background: #0F1419;
+    border-color: #1A2332;
+  }
 }

@@ -96,7 +96,7 @@ export default function Survey() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass-card border-b border-[#E0D5CC]">
+      <header className="sticky top-0 z-50 header-dark border-b">
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
