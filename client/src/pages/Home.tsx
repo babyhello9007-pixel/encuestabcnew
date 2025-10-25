@@ -24,7 +24,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#FAFAF8] via-[#F5F1E8] to-[#FAFAF8]">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
       {/* Header */}
       <header className="sticky top-0 z-50 glass-card border-b border-[#E0D5CC]">
         <div className="container flex items-center justify-between h-16">
