@@ -15,6 +15,13 @@ interface PartyStats {
   logo: string;
 }
 
+interface LeaderRating {
+  name: string;
+  fieldName: string;
+  average: number;
+  count: number;
+}
+
 export default function Results() {
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
@@ -22,6 +29,7 @@ export default function Results() {
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"general" | "youth">("general");
+  const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -78,6 +86,39 @@ export default function Results() {
 
           const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos);
           setYouthStats(stats);
+        }
+
+        // Obtener valoraciones de líderes
+        const { data: allResponses } = await supabase
+          .from("respuestas")
+          .select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
+
+        if (allResponses && allResponses.length > 0) {
+          const leaders = [
+            { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" },
+            { name: "Pedro Sánchez", fieldName: "val_sanchez" },
+            { name: "Santiago Abascal", fieldName: "val_abascal" },
+            { name: "Alvise Pérez", fieldName: "val_alvise" },
+            { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" },
+            { name: "Irene Montero", fieldName: "val_irene_montero" },
+            { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" },
+            { name: "Jorge Buxadé", fieldName: "val_buxade" },
+          ];
+
+          const ratings: LeaderRating[] = leaders.map((leader) => {
+            const values = allResponses
+              .map((r: any) => r[leader.fieldName])
+              .filter((v: any) => v !== null && v !== undefined);
+            const average = values.length > 0 ? values.reduce((a: number, b: number) => a + b, 0) / values.length : 0;
+            return {
+              name: leader.name,
+              fieldName: leader.fieldName,
+              average: Math.round(average * 10) / 10,
+              count: values.length,
+            };
+          });
+
+          setLeaderRatings(ratings);
         }
       } catch (error) {
         console.error("Error fetching results:", error);
@@ -225,60 +266,29 @@ export default function Results() {
             {/* Leaders Ratings */}
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Feijóo */}
-                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                  <h4 className="font-semibold text-[#2D2D2D]">Alberto Núñez Feijóo</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-[#666666]">
-                      <span>Valoración Media</span>
-                      <span className="text-[#C41E3A] font-bold">0-10</span>
-                    </div>
-                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
-                    </div>
-                  </div>
+              {leaderRatings.length === 0 ? (
+                <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
+                  <p>Aún no hay valoraciones. Sé el primero en responder la encuesta.</p>
                 </div>
-                {/* Sánchez */}
-                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                  <h4 className="font-semibold text-[#2D2D2D]">Pedro Sánchez</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-[#666666]">
-                      <span>Valoración Media</span>
-                      <span className="text-[#C41E3A] font-bold">0-10</span>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {leaderRatings.map((leader) => (
+                    <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
+                      <h4 className="font-semibold text-[#2D2D2D]">{leader.name}</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-[#666666]">
+                          <span>Valoración Media</span>
+                          <span className="text-[#C41E3A] font-bold">{leader.average.toFixed(1)}/10</span>
+                        </div>
+                        <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                          <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: `${(leader.average / 10) * 100}%` }} />
+                        </div>
+                        <p className="text-xs text-[#999999]">({leader.count} respuestas)</p>
+                      </div>
                     </div>
-                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
-                {/* Abascal */}
-                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                  <h4 className="font-semibold text-[#2D2D2D]">Santiago Abascal</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-[#666666]">
-                      <span>Valoración Media</span>
-                      <span className="text-[#C41E3A] font-bold">0-10</span>
-                    </div>
-                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
-                    </div>
-                  </div>
-                </div>
-                {/* Alvise */}
-                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                  <h4 className="font-semibold text-[#2D2D2D]">Alvise Pérez</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-[#666666]">
-                      <span>Valoración Media</span>
-                      <span className="text-[#C41E3A] font-bold">0-10</span>
-                    </div>
-                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Methodology */}
