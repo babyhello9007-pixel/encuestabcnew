@@ -14,6 +14,7 @@ export const PARTIES_GENERAL = {
   SAF: { name: 'Se Acabó La Fiesta', logo: '/assets/icons/saf.png' },
   CC: { name: 'Coalición Canaria', logo: '/assets/icons/cc.png' },
   UPN: { name: 'UPN', logo: '/assets/icons/UPN.png' },
+  CIUDADANOS: { name: 'Ciudadanos', logo: '/assets/icons/ciudadanos.png' },
   PLIB: { name: 'P-Lib', logo: '/assets/icons/plib.jpg' },
   EB: { name: 'Escaños en Blanco', logo: '/assets/icons/escanosblanco.png' },
 };
@@ -39,6 +40,7 @@ export const YOUTH_ASSOCIATIONS = {
   JPV: { name: 'Joves del País Valencià – Compromís', logo: '/assets/icons/jpv.png' },
   ACL: { name: 'Acción Castilla y León', logo: '/assets/icons/jcl.png' },
   JEC: { name: 'Juventud Estudiante Católica', logo: '/assets/icons/jec.jpg' },
+  AGORA: { name: 'ÁGORA Canarias', logo: '/assets/icons/agora.png' },
 };
 
 export const LEADERS = {
@@ -53,7 +55,7 @@ export const LEADERS = {
 };
 
 export const PROVINCES = [
-  'Álava', 'Albacete', 'Alicante', 'Almería', 'Ávila', 'Badajoz', 'Barcelona', 'Burgos',
+  'Álava', 'Albacete', 'Alicante', 'Almería', 'Ávila', 'Asturias', 'Badajoz', 'Barcelona', 'Burgos',
   'Cáceres', 'Cádiz', 'Cantabria', 'Castellón', 'Ciudad Real', 'Córdoba', 'Cuenca', 'Girona',
   'Granada', 'Guadalajara', 'Guipúzcoa', 'Huelva', 'Huesca', 'Jaén', 'La Coruña', 'La Rioja',
   'Las Palmas', 'León', 'Lleida', 'Lugo', 'Madrid', 'Málaga', 'Murcia', 'Navarra', 'Ourense',
