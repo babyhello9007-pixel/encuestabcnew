@@ -125,7 +125,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     section: 'Intención de voto',
     question: '¿A qué partido votarías en las elecciones generales?',
     type: 'radio',
-    options: Object.values(PARTIES_GENERAL).map(p => p.name),
+    options: Object.values(PARTIES_GENERAL).map(p => p.name).concat(['Otros']),
     fieldName: 'voto_generales',
   },
 
@@ -135,7 +135,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     section: 'Intención de voto',
     question: '¿A qué partido votarías en las elecciones autonómicas?',
     type: 'radio',
-    options: Object.values(PARTIES_GENERAL).map(p => p.name),
+    options: Object.values(PARTIES_GENERAL).map(p => p.name).concat(['Otros']),
     fieldName: 'voto_autonomicas',
   },
 
@@ -145,7 +145,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     section: 'Intención de voto',
     question: '¿A qué partido votarías en las elecciones municipales?',
     type: 'radio',
-    options: Object.values(PARTIES_GENERAL).map(p => p.name),
+    options: Object.values(PARTIES_GENERAL).map(p => p.name).concat(['Otros']),
     fieldName: 'voto_municipales',
   },
 
@@ -155,7 +155,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     section: 'Intención de voto',
     question: '¿A qué partido votarías en las elecciones europeas?',
     type: 'radio',
-    options: Object.values(PARTIES_GENERAL).map(p => p.name),
+    options: Object.values(PARTIES_GENERAL).map(p => p.name).concat(['Otros']),
     fieldName: 'voto_europeas',
   },
 
@@ -280,7 +280,7 @@ export const surveyQuestions: SurveyQuestion[] = [
     section: 'Juventud',
     question: '¿A qué asociación juvenil votarías?',
     type: 'radio',
-    options: Object.values(YOUTH_ASSOCIATIONS).map(a => a.name),
+    options: Object.values(YOUTH_ASSOCIATIONS).map(a => a.name).concat(['Otros']),
     fieldName: 'voto_asociacion_juvenil',
   },
 

@@ -35,10 +35,19 @@ export default function Results() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const { count } = await supabase
-          .from("respuestas")
-          .select("*", { count: "exact", head: true });
-        setTotalResponses(count || 0);
+        // Obtener total de respuestas usando el VIEW
+        try {
+          const { data: viewData } = await supabase
+            .from("total_respuestas_view")
+            .select("total_respuestas");
+          setTotalResponses(viewData?.[0]?.total_respuestas || 0);
+        } catch (err) {
+          // Fallback si el VIEW no existe
+          const { count } = await supabase
+            .from("respuestas")
+            .select("*", { count: "exact", head: true });
+          setTotalResponses(count || 0);
+        }
 
         const { data: generalData } = await supabase
           .from("votos_generales_totales")
@@ -86,42 +95,74 @@ export default function Results() {
           setYouthStats(stats);
         }
 
-        const { data: allResponses } = await supabase
-          .from("respuestas")
-          .select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
-
-        if (allResponses && allResponses.length > 0) {
-          const leaders = [
-            { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" },
-            { name: "Pedro Sánchez", fieldName: "val_sanchez" },
-            { name: "Santiago Abascal", fieldName: "val_abascal" },
-            { name: "Alvise Pérez", fieldName: "val_alvise" },
-            { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" },
-            { name: "Irene Montero", fieldName: "val_irene_montero" },
-            { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" },
-            { name: "Jorge Buxadé", fieldName: "val_buxade" },
-          ];
-
-          const ratings: LeaderRating[] = leaders.map((leader) => {
-            let sum = 0;
-            let count = 0;
-            allResponses.forEach((r: any) => {
-              const value = r[leader.fieldName];
-              if (value !== null && value !== undefined) {
-                sum += value;
-                count += 1;
-              }
-            });
-            const average = count > 0 ? sum / count : 0;
-            return {
-              name: leader.name,
-              fieldName: leader.fieldName,
-              average: Math.round(average * 10) / 10,
-              count: count,
+        // Intentar usar el VIEW de valoraciones
+        try {
+          const { data: viewData } = await supabase
+            .from("valoraciones_lideres_view")
+            .select("*");
+          
+          if (viewData && viewData.length > 0) {
+            const leaderMap: Record<string, { name: string; fieldName: string }> = {
+              'feijoo': { name: 'Alberto Núñez Feijóo', fieldName: 'val_feijoo' },
+              'sanchez': { name: 'Pedro Sánchez', fieldName: 'val_sanchez' },
+              'abascal': { name: 'Santiago Abascal', fieldName: 'val_abascal' },
+              'alvise': { name: 'Alvise Pérez', fieldName: 'val_alvise' },
+              'yolanda_diaz': { name: 'Yolanda Díaz', fieldName: 'val_yolanda_diaz' },
+              'irene_montero': { name: 'Irene Montero', fieldName: 'val_irene_montero' },
+              'ayuso': { name: 'Isabel Díaz Ayuso', fieldName: 'val_ayuso' },
+              'buxade': { name: 'Jorge Buxadé', fieldName: 'val_buxade' },
             };
-          });
+            
+            const ratings: LeaderRating[] = viewData.map((row: any) => {
+              const leader = leaderMap[row.lider];
+              return {
+                name: leader.name,
+                fieldName: leader.fieldName,
+                average: parseFloat(row.valoracion_media) || 0,
+                count: row.total_valoraciones || 0,
+              };
+            });
+            setLeaderRatings(ratings);
+          }
+        } catch (err) {
+          // Fallback: calcular manualmente si el VIEW no existe
+          const { data: allResponses } = await supabase
+            .from("respuestas")
+            .select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
 
-          setLeaderRatings(ratings);
+          if (allResponses && allResponses.length > 0) {
+            const leaders = [
+              { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" },
+              { name: "Pedro Sánchez", fieldName: "val_sanchez" },
+              { name: "Santiago Abascal", fieldName: "val_abascal" },
+              { name: "Alvise Pérez", fieldName: "val_alvise" },
+              { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" },
+              { name: "Irene Montero", fieldName: "val_irene_montero" },
+              { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" },
+              { name: "Jorge Buxadé", fieldName: "val_buxade" },
+            ];
+
+            const ratings: LeaderRating[] = leaders.map((leader) => {
+              let sum = 0;
+              let count = 0;
+              allResponses.forEach((r: any) => {
+                const value = r[leader.fieldName];
+                if (value !== null && value !== undefined) {
+                  sum += value;
+                  count += 1;
+                }
+              });
+              const average = count > 0 ? sum / count : 0;
+              return {
+                name: leader.name,
+                fieldName: leader.fieldName,
+                average: Math.round(average * 10) / 10,
+                count: count,
+              };
+            });
+
+            setLeaderRatings(ratings);
+          }
         }
       } catch (error) {
         console.error("Error fetching results:", error);

@@ -8,12 +8,22 @@ export default function Home() {
   const [responseCount, setResponseCount] = useState(0);
 
   useEffect(() => {
-    // Obtener el número de respuestas
+    // Obtener el número de respuestas usando el VIEW
     const fetchResponseCount = async () => {
-      const { count } = await supabase
-        .from("respuestas")
-        .select("*", { count: "exact", head: true });
-      setResponseCount(count || 0);
+      try {
+        const { data, error } = await supabase
+          .from("total_respuestas_view")
+          .select("total_respuestas");
+        if (error) throw error;
+        setResponseCount(data?.[0]?.total_respuestas || 0);
+      } catch (err) {
+        console.error("Error fetching response count:", err);
+        // Fallback a método antiguo si el VIEW no existe
+        const { count } = await supabase
+          .from("respuestas")
+          .select("*", { count: "exact", head: true });
+        setResponseCount(count || 0);
+      }
     };
 
     fetchResponseCount();
@@ -75,7 +85,7 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="frosted-glass p-4 text-center">
-                  <p className="text-2xl font-bold text-[#C41E3A]">58</p>
+                  <p className="text-2xl font-bold text-[#C41E3A]">61</p>
                   <p className="text-xs text-[#666666] mt-1">Preguntas</p>
                 </div>
                 <div className="frosted-glass p-4 text-center">
