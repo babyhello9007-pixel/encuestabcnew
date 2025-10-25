@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { Loader2 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface PartyStats {
   id: string;
@@ -271,7 +272,8 @@ export default function Results() {
                   <p>Aún no hay valoraciones. Sé el primero en responder la encuesta.</p>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {leaderRatings.map((leader) => (
                     <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
                       <h4 className="font-semibold text-[#2D2D2D]">{leader.name}</h4>
@@ -287,7 +289,26 @@ export default function Results() {
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+
+                  {/* Bar Chart */}
+                  <div className="liquid-glass p-8 rounded-2xl">
+                    <h3 className="text-xl font-bold text-[#2D2D2D] mb-6">Comparativa de Valoraciones</h3>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={leaderRatings}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E0D5CC" />
+                        <XAxis dataKey="name" stroke="#666666" angle={-45} textAnchor="end" height={100} />
+                        <YAxis stroke="#666666" domain={[0, 10]} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: "#F5F1E8", border: "1px solid #E0D5CC", borderRadius: "8px" }}
+                          formatter={(value: any) => value.toFixed(1)}
+                          labelStyle={{ color: "#2D2D2D" }}
+                        />
+                        <Bar dataKey="average" fill="#C41E3A" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
               )}
             </div>
 
