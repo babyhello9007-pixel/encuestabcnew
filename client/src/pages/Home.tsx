@@ -18,8 +18,8 @@ export default function Home() {
 
     fetchResponseCount();
 
-    // Actualizar cada 5 segundos
-    const interval = setInterval(fetchResponseCount, 5000);
+    // Actualizar cada 2 segundos para ver cambios en tiempo real
+    const interval = setInterval(fetchResponseCount, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -75,7 +75,7 @@ export default function Home() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="frosted-glass p-4 text-center">
-                  <p className="text-2xl font-bold text-[#C41E3A]">80+</p>
+                  <p className="text-2xl font-bold text-[#C41E3A]">58</p>
                   <p className="text-xs text-[#666666] mt-1">Preguntas</p>
                 </div>
                 <div className="frosted-glass p-4 text-center">
@@ -167,6 +167,18 @@ export default function Home() {
               <p className="font-semibold text-[#2D2D2D] mb-2">Asociaciones Juveniles</p>
               <p>
                 50 escaños distribuidos mediante la Ley d'Hondt con un umbral mínimo del 7% de los votos válidos.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold text-[#2D2D2D] mb-2">Gasto en Defensa</p>
+              <p>
+                Se pregunta sobre aumentar el gasto en defensa al 5% del PIB.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold text-[#2D2D2D] mb-2">Cobertura Completa</p>
+              <p>
+                Incluye preguntas sobre elecciones generales, autonómicas, municipales y europeas.
               </p>
             </div>
           </div>

@@ -127,6 +127,36 @@ export const surveyQuestions: SurveyQuestion[] = [
     fieldName: 'voto_generales',
   },
 
+  // Intención de voto - Autonómicas
+  {
+    id: 'voto_autonomicas',
+    section: 'Intención de voto',
+    question: '¿A qué partido votarías en las elecciones autonómicas?',
+    type: 'radio',
+    options: Object.values(PARTIES_GENERAL).map(p => p.name),
+    fieldName: 'voto_autonomicas',
+  },
+
+  // Intención de voto - Municipales
+  {
+    id: 'voto_municipales',
+    section: 'Intención de voto',
+    question: '¿A qué partido votarías en las elecciones municipales?',
+    type: 'radio',
+    options: Object.values(PARTIES_GENERAL).map(p => p.name),
+    fieldName: 'voto_municipales',
+  },
+
+  // Intención de voto - Europeas
+  {
+    id: 'voto_europeas',
+    section: 'Intención de voto',
+    question: '¿A qué partido votarías en las elecciones europeas?',
+    type: 'radio',
+    options: Object.values(PARTIES_GENERAL).map(p => p.name),
+    fieldName: 'voto_europeas',
+  },
+
   // Probabilidad de voto
   {
     id: 'probabilidad_voto',
@@ -317,7 +347,7 @@ export const surveyQuestions: SurveyQuestion[] = [
   {
     id: 'aumentar_gasto_defensa',
     section: 'Política exterior',
-    question: '¿Debería España aumentar su gasto en defensa al 2% del PIB?',
+    question: '¿Debería España aumentar su gasto en defensa al 5% del PIB?',
     type: 'radio',
     options: ['Sí', 'No', 'Tal vez', 'Otro'],
     fieldName: 'aumentar_gasto_defensa',

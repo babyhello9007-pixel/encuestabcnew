@@ -185,8 +185,17 @@ export default function Survey() {
                   onChange={(e) => handleAnswer(parseInt(e.target.value))}
                   className="w-full h-2 bg-[#E0D5CC] rounded-lg appearance-none cursor-pointer accent-[#C41E3A]"
                 />
+                {currentQuestion.max !== undefined && currentQuestion.min !== undefined && (
+                  <div className="flex justify-between text-xs text-[#999999] px-1">
+                    {Array.from({ length: (currentQuestion.max - currentQuestion.min) + 1 }, (_, i) => currentQuestion.min! + i).map((num) => (
+                      <span key={num} className={num === (responses[currentQuestion.fieldName] as number) ? "text-[#C41E3A] font-semibold" : ""}>
+                        {num}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="text-center text-lg font-semibold text-[#C41E3A]">
-                  {responses[currentQuestion.fieldName] || currentQuestion.min}
+                  {responses[currentQuestion.fieldName] !== undefined && responses[currentQuestion.fieldName] !== null ? responses[currentQuestion.fieldName] : "Sin seleccionar"}
                 </div>
               </div>
             )}

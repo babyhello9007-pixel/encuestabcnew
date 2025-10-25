@@ -222,6 +222,65 @@ export default function Results() {
               )}
             </div>
 
+            {/* Leaders Ratings */}
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Feijóo */}
+                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
+                  <h4 className="font-semibold text-[#2D2D2D]">Alberto Núñez Feijóo</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-[#666666]">
+                      <span>Valoración Media</span>
+                      <span className="text-[#C41E3A] font-bold">0-10</span>
+                    </div>
+                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
+                    </div>
+                  </div>
+                </div>
+                {/* Sánchez */}
+                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
+                  <h4 className="font-semibold text-[#2D2D2D]">Pedro Sánchez</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-[#666666]">
+                      <span>Valoración Media</span>
+                      <span className="text-[#C41E3A] font-bold">0-10</span>
+                    </div>
+                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
+                    </div>
+                  </div>
+                </div>
+                {/* Abascal */}
+                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
+                  <h4 className="font-semibold text-[#2D2D2D]">Santiago Abascal</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-[#666666]">
+                      <span>Valoración Media</span>
+                      <span className="text-[#C41E3A] font-bold">0-10</span>
+                    </div>
+                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
+                    </div>
+                  </div>
+                </div>
+                {/* Alvise */}
+                <div className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
+                  <h4 className="font-semibold text-[#2D2D2D]">Alvise Pérez</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-[#666666]">
+                      <span>Valoración Media</span>
+                      <span className="text-[#C41E3A] font-bold">0-10</span>
+                    </div>
+                    <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: "50%" }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Methodology */}
             <div className="liquid-glass p-8 rounded-2xl space-y-4">
               <h3 className="text-xl font-bold text-[#2D2D2D]">Metodología</h3>
