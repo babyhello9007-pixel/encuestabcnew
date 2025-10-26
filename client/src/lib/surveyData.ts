@@ -9,14 +9,18 @@ export const PARTIES_GENERAL = {
   JUNTS: { name: 'JUNTS', logo: '/assets/icons/JUNTS.png' },
   ERC: { name: 'ERC', logo: '/assets/icons/ERC.png' },
   PNV: { name: 'PNV', logo: '/assets/icons/PNV.png' },
-  ALIANZA: { name: 'Aliança Catalana', logo: '/assets/icons/alianza.png' },
+  ALIANZA: { name: 'Aliança Catalana', logo: '/assets/icons/aliaçacatalana.png' },
   BILDU: { name: 'BILDU', logo: '/assets/icons/BILDU.png' },
-  SAF: { name: 'Se Acabó La Fiesta', logo: '/assets/icons/saf.png' },
+  SAF: { name: 'Se Acabó La Fiesta', logo: '/assets/icons/SeAcabóLaFiesta.png' },
   CC: { name: 'Coalición Canaria', logo: '/assets/icons/cc.png' },
   UPN: { name: 'UPN', logo: '/assets/icons/UPN.png' },
   CIUDADANOS: { name: 'Ciudadanos', logo: '/assets/icons/ciudadanos.png' },
-  PLIB: { name: 'P-Lib', logo: '/assets/icons/plib.jpg' },
-  EB: { name: 'Escaños en Blanco', logo: '/assets/icons/escanosblanco.png' },
+  CAMINANDO: { name: 'Caminando Juntos', logo: '/assets/icons/Caminando Juntos.png' },
+  FRENTE: { name: 'Frente Obrero', logo: '/assets/icons/FrenteObrero.png' },
+  IZQUIERDA: { name: 'Izquierda Española', logo: '/assets/icons/IzquierdaEspañola.png' },
+  JUNTOS_EXT: { name: 'Juntos por Extremadura', logo: '/assets/icons/JuntosPorExtremadura.png' },
+  PLIB: { name: 'P-Lib', logo: '/assets/icons/P-Lib.jpg' },
+  EB: { name: 'Escaños en Blanco', logo: '/assets/icons/EscañosEnBlanco.png' },
 };
 
 export const YOUTH_ASSOCIATIONS = {
@@ -44,14 +48,14 @@ export const YOUTH_ASSOCIATIONS = {
 };
 
 export const LEADERS = {
-  FEIJOO: { name: 'Alberto Núñez Feijóo', image: '/assets/images/AlbertoNuñezFeijoo.png' },
-  SANCHEZ: { name: 'Pedro Sánchez', image: '/assets/images/PedroSanchez.png' },
-  ABASCAL: { name: 'Santiago Abascal', image: '/assets/images/SantiagoAbascal.png' },
-  ALVISE: { name: 'Alvise Pérez', image: '/assets/images/AlvisePerez.png' },
-  YOLANDA: { name: 'Yolanda Díaz', image: '/assets/images/YolandaDiaz.png' },
-  IRENE: { name: 'Irene Montero', image: '/assets/images/IreneMontero.png' },
-  AYUSO: { name: 'Isabel Díaz Ayuso', image: '/assets/images/IsabelDiazAyuso.png' },
-  BUXADE: { name: 'Jorge Buxadé', image: '/assets/images/JorgeBuxade.png' },
+  FEIJOO: { name: 'Alberto Núñez Feijóo', image: '/assets/icons/AlbertoNúñezFeijoo.png' },
+  SANCHEZ: { name: 'Pedro Sánchez', image: '/assets/icons/PedroSanchez.png' },
+  ABASCAL: { name: 'Santiago Abascal', image: '/assets/icons/SantiagoAbascal.png' },
+  ALVISE: { name: 'Alvise Pérez', image: '/assets/icons/AlvisePerez.png' },
+  YOLANDA: { name: 'Yolanda Díaz', image: '/assets/icons/YolandaDiaz.png' },
+  IRENE: { name: 'Irene Montero', image: '/assets/icons/IreneMontero.png' },
+  AYUSO: { name: 'Isabel Díaz Ayuso', image: '/assets/icons/IsabelDiazAyuso.png' },
+  BUXADE: { name: 'Jorge Buxadé', image: '/assets/icons/JorgeBuxade.png' },
 };
 
 export const PROVINCES = [
@@ -59,7 +63,7 @@ export const PROVINCES = [
   'Cáceres', 'Cádiz', 'Cantabria', 'Castellón', 'Ciudad Real', 'Córdoba', 'Cuenca', 'Girona',
   'Granada', 'Guadalajara', 'Guipúzcoa', 'Huelva', 'Huesca', 'Jaén', 'La Coruña', 'La Rioja',
   'Las Palmas', 'León', 'Lleida', 'Lugo', 'Madrid', 'Málaga', 'Murcia', 'Navarra', 'Ourense',
-  'Palencia', 'Palma de Mallorca', 'Palmas', 'Pontevedra', 'Salamanca', 'Segovia', 'Sevilla',
+  'Palencia', 'Palma de Mallorca', 'Palmas', 'Pontevedra', 'Salamanca', 'Santa Cruz de Tenerife', 'Segovia', 'Sevilla',
   'Soria', 'Tarragona', 'Teruel', 'Toledo', 'Valencia', 'Valladolid', 'Vizcaya', 'Zamora', 'Zaragoza'
 ];
 
