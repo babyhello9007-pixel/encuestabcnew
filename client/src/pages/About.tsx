@@ -141,6 +141,48 @@ export default function About() {
             </div>
           </div>
 
+          {/* User Guide Section */}
+          <div className="glass-card p-8 rounded-xl space-y-4">
+            <h3 className="text-2xl font-bold text-[#2D2D2D]">Guía de Uso</h3>
+            <div className="space-y-4 text-[#666666] text-sm">
+              <div>
+                <p className="font-semibold text-[#2D2D2D] mb-1">1. Responder la Encuesta</p>
+                <p>
+                  Haz clic en el botón "Comenzar Encuesta" en la página de inicio. La encuesta consta de 61 preguntas 
+                  sobre política, cultura y temas de actualidad. Puedes avanzar y retroceder entre preguntas.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-[#2D2D2D] mb-1">2. Tipos de Preguntas</p>
+                <p>
+                  Encontrarás preguntas de selección única, múltiples opciones, escalas de valoración (0-10) y preguntas abiertas. 
+                  Responde con sinceridad para obtener resultados más precisos.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-[#2D2D2D] mb-1">3. Ver Resultados</p>
+                <p>
+                  Accede a la sección "Resultados" para ver los datos en tiempo real. Encontrarás gráficos interactivos, 
+                  distribución de escaños y valoraciones de líderes políticos.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-[#2D2D2D] mb-1">4. Privacidad</p>
+                <p>
+                  Todas tus respuestas son completamente anónimas. No recopilamos datos personales. 
+                  Tus datos se almacenan de forma segura en Supabase con encriptación.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-[#2D2D2D] mb-1">5. Tiempo de Respuesta</p>
+                <p>
+                  La encuesta toma aproximadamente 5 minutos en completarse. Puedes pausar y continuar más tarde 
+                  si es necesario.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Methodology Section */}
           <div className="glass-card p-8 rounded-xl space-y-4">
             <h3 className="text-2xl font-bold text-[#2D2D2D]">Metodología de la Encuesta</h3>

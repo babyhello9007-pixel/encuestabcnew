@@ -307,9 +307,27 @@ export default function Results() {
               ) : (
                 <>
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {leaderRatings.map((leader) => (
+                  {leaderRatings.map((leader) => {
+                    const leaderImages: Record<string, string> = {
+                      'val_feijoo': '/assets/icons/AlbertoNúñezFeijoo.png',
+                      'val_sanchez': '/assets/icons/PedroSanchez.png',
+                      'val_abascal': '/assets/icons/SantiagoAbascal.png',
+                      'val_alvise': '/assets/icons/AlvisePerez.png',
+                      'val_yolanda_diaz': '/assets/icons/YolandaDiaz.png',
+                      'val_irene_montero': '/assets/icons/IreneMontero.png',
+                      'val_ayuso': '/assets/icons/IsabelDiazAyuso.png',
+                      'val_buxade': '/assets/icons/JorgeBuxade.png',
+                    };
+                    return (
                     <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                      <h4 className="font-semibold text-[#2D2D2D]">{leader.name}</h4>
+                      {leaderImages[leader.fieldName] && (
+                        <img
+                          src={leaderImages[leader.fieldName]}
+                          alt={leader.name}
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                      )}
+                      <h4 className="font-semibold text-[#2D2D2D] text-sm">{leader.name}</h4>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm text-[#666666]">
                           <span>Valoración Media</span>
@@ -321,7 +339,8 @@ export default function Results() {
                         <p className="text-xs text-[#999999]">({leader.count} respuestas)</p>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   </div>
 
                   <div className="liquid-glass p-8 rounded-2xl">

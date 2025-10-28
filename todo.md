@@ -32,6 +32,14 @@
 - [x] Crear componentes reutilizables
 - [x] Implementar estilos frosted glass y liquid glass
 
+## Fallos Reportados - URGENTE
+- [x] Verificar que todos los logotipos de partidos se muestren en resultados
+- [x] Agregar fotos de políticos en sección de valoración
+- [x] Verificar que asociaciones juveniles muestren sus logotipos correctamente
+- [ ] Mejorar paleta de colores para mejor contraste y visibilidad
+- [ ] Optimizar responsividad en diferentes dispositivos
+- [x] Agregar documentación de uso en página "Acerca de"
+
 ## Pruebas y Optimización
 - [ ] Pruebas funcionales de la encuesta
 - [ ] Pruebas de envío de datos a Supabase
