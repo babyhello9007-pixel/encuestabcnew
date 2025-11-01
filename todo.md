@@ -40,6 +40,16 @@
 - [ ] Optimizar responsividad en diferentes dispositivos
 - [x] Agregar documentación de uso en página "Acerca de"
 
+## Conversión a Full-Stack - NUEVO
+- [x] Convertir proyecto a full-stack con servidor backend
+- [x] Integrar base de datos Supabase con tablas de partidos y asociaciones
+- [x] Agregar logo_path a tablas de partidos_generales y asociaciones_juveniles
+- [ ] Mostrar logotipos correctamente en página de resultados desde BD
+- [ ] Adaptar tarjetas de líderes políticos a las imágenes
+- [x] Crear panel de administrador para gestión de archivos
+- [x] Implementar función de carga de archivos a S3
+- [x] Crear interfaz de explorador de archivos para admin
+
 ## Pruebas y Optimización
 - [ ] Pruebas funcionales de la encuesta
 - [ ] Pruebas de envío de datos a Supabase

@@ -8,14 +8,17 @@ import Home from "./pages/Home";
 import Survey from "./pages/Survey";
 import Results from "./pages/Results";
 import About from "./pages/About";
+import Admin from "./pages/Admin";
 
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/encuesta"} component={Survey} />
       <Route path={"/resultados"} component={Results} />
       <Route path={"/acerca-de"} component={About} />
+      <Route path={"/admin"} component={Admin} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
