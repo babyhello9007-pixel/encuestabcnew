@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, Trash2, Download, FileIcon } from "lucide-react";
+import { Upload, Trash2, Download, FileIcon, Code } from "lucide-react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -89,9 +90,17 @@ export default function Admin() {
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Panel de Administrador</h1>
-          <p className="text-gray-400">Gestiona los archivos de la encuesta</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Panel de Administrador</h1>
+            <p className="text-gray-400">Gestiona los archivos de la encuesta</p>
+          </div>
+          <Link href="/editor">
+            <Button className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2">
+              <Code className="w-4 h-4" />
+              Editor de Código
+            </Button>
+          </Link>
         </div>
 
         {/* Upload Section */}
