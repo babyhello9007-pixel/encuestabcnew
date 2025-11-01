@@ -44,11 +44,13 @@
 - [x] Convertir proyecto a full-stack con servidor backend
 - [x] Integrar base de datos Supabase con tablas de partidos y asociaciones
 - [x] Agregar logo_path a tablas de partidos_generales y asociaciones_juveniles
-- [ ] Mostrar logotipos correctamente en página de resultados desde BD
-- [ ] Adaptar tarjetas de líderes políticos a las imágenes
+- [ ] Mostrar logotipos correctamente en página de resultados desde BD (PRIORITARIO)
+- [ ] Adaptar tarjetas de líderes políticos a las imágenes y mostrar todas (PRIORITARIO)
 - [x] Crear panel de administrador para gestión de archivos
 - [x] Implementar función de carga de archivos a S3
 - [x] Crear interfaz de explorador de archivos para admin
+- [x] Editor de código con Monaco Editor
+- [ ] Permitir editar archivos del proyecto desde admin (main.tsx, etc.)
 
 ## Pruebas y Optimización
 - [ ] Pruebas funcionales de la encuesta

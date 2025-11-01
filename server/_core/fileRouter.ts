@@ -117,5 +117,16 @@ export const fileRouter = router({
         throw new Error("Error al eliminar archivo");
       }
     }),
-});
 
+  getProjectFiles: protectedProcedure
+    .query(async () => {
+      return [
+        { path: "client/src/main.tsx", content: "// Main entry point" },
+        { path: "client/src/App.tsx", content: "// App router" },
+        { path: "client/src/index.css", content: "/* Global styles */" },
+        { path: "drizzle/schema.ts", content: "// Database schema" },
+        { path: "server/index.ts", content: "// Server entry" },
+        { path: "package.json", content: "// Project config" },
+      ];
+    }),
+});

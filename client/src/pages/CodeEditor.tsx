@@ -25,10 +25,14 @@ export default function CodeEditor() {
   const [newFileName, setNewFileName] = useState("");
   const [showNewFileDialog, setShowNewFileDialog] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<"uploaded" | "project">("uploaded");
+  const [projectFiles, setProjectFiles] = useState<{ path: string; content: string }[]>([]);
+  const [activeProjectFile, setActiveProjectFile] = useState<string | null>(null);
 
   const listFiles = trpc.files.list.useQuery();
   const uploadFile = trpc.files.upload.useMutation();
   const deleteFile = trpc.files.delete.useMutation();
+  const getProjectFiles = trpc.files.getProjectFiles.useQuery();
 
   useEffect(() => {
     if (listFiles.data) {
@@ -45,7 +49,18 @@ export default function CodeEditor() {
     }
   }, [listFiles.data]);
 
+  useEffect(() => {
+    if (getProjectFiles.data) {
+      setProjectFiles(getProjectFiles.data);
+      if (getProjectFiles.data.length > 0 && !activeProjectFile) {
+        setActiveProjectFile(getProjectFiles.data[0].path);
+        setEditorValue(getProjectFiles.data[0].content);
+      }
+    }
+  }, [getProjectFiles.data]);
+
   const activeFile = files.find((f) => f.id === activeFileId);
+  const currentProjectFile = projectFiles.find((f) => f.path === activeProjectFile);
 
   const handleEditorChange = (value: string | undefined) => {
     if (value !== undefined) {
@@ -128,6 +143,7 @@ export default function CodeEditor() {
       css: "text/css",
       js: "text/javascript",
       ts: "application/typescript",
+      tsx: "application/typescript",
       txt: "text/plain",
     };
     return types[ext || ""] || "text/plain";
@@ -151,7 +167,7 @@ export default function CodeEditor() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Editor de Código</h1>
-          <p className="text-gray-400">Edita archivos de código directamente</p>
+          <p className="text-gray-400">Edita archivos de código y del proyecto</p>
         </div>
 
         <div className="grid grid-cols-4 gap-6">
@@ -161,12 +177,38 @@ export default function CodeEditor() {
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold">Archivos</h2>
+                  {viewMode === "uploaded" && (
+                    <button
+                      onClick={() => setShowNewFileDialog(true)}
+                      className="p-1 hover:bg-gray-700 rounded transition"
+                      title="Nuevo archivo"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* View Mode Tabs */}
+                <div className="flex gap-2 mb-4 border-b border-gray-700">
                   <button
-                    onClick={() => setShowNewFileDialog(true)}
-                    className="p-1 hover:bg-gray-700 rounded transition"
-                    title="Nuevo archivo"
+                    onClick={() => { setViewMode("uploaded"); setActiveFileId(null); }}
+                    className={`pb-2 px-2 text-sm transition-colors ${
+                      viewMode === "uploaded"
+                        ? "text-red-500 border-b-2 border-red-500"
+                        : "text-gray-400 hover:text-gray-300"
+                    }`}
                   >
-                    <Plus className="w-4 h-4" />
+                    Subidos
+                  </button>
+                  <button
+                    onClick={() => { setViewMode("project"); setActiveProjectFile(null); getProjectFiles.refetch(); }}
+                    className={`pb-2 px-2 text-sm transition-colors ${
+                      viewMode === "project"
+                        ? "text-red-500 border-b-2 border-red-500"
+                        : "text-gray-400 hover:text-gray-300"
+                    }`}
+                  >
+                    Proyecto
                   </button>
                 </div>
 
@@ -201,35 +243,59 @@ export default function CodeEditor() {
                 )}
 
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {files.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No hay archivos</p>
+                  {viewMode === "uploaded" ? (
+                    files.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No hay archivos</p>
+                    ) : (
+                      files.map((file) => (
+                        <div
+                          key={file.id}
+                          className={`p-2 rounded cursor-pointer transition flex items-center justify-between group ${
+                            activeFileId === file.id
+                              ? "bg-red-600 text-white"
+                              : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                          }`}
+                          onClick={() => {
+                            setActiveFileId(file.id);
+                            setEditorValue("");
+                          }}
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <FileText className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-sm truncate">{file.fileName}</span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(file.id);
+                            }}
+                            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-red-700 rounded transition"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))
+                    )
+                  ) : projectFiles.length === 0 ? (
+                    <p className="text-gray-500 text-sm">Cargando archivos...</p>
                   ) : (
-                    files.map((file) => (
+                    projectFiles.map((file) => (
                       <div
-                        key={file.id}
+                        key={file.path}
                         className={`p-2 rounded cursor-pointer transition flex items-center justify-between group ${
-                          activeFileId === file.id
+                          activeProjectFile === file.path
                             ? "bg-red-600 text-white"
                             : "bg-gray-800 hover:bg-gray-700 text-gray-300"
                         }`}
                         onClick={() => {
-                          setActiveFileId(file.id);
-                          setEditorValue("");
+                          setActiveProjectFile(file.path);
+                          setEditorValue(file.content);
                         }}
                       >
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <FileText className="w-4 h-4 flex-shrink-0" />
-                          <span className="text-sm truncate">{file.fileName}</span>
+                          <span className="text-sm truncate">{file.path}</span>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(file.id);
-                          }}
-                          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-red-700 rounded transition"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
                       </div>
                     ))
                   )}
@@ -240,32 +306,40 @@ export default function CodeEditor() {
 
           {/* Main Editor */}
           <div className="col-span-3">
-            {activeFile ? (
+            {(viewMode === "uploaded" ? activeFile : currentProjectFile) ? (
               <Card className="bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 backdrop-blur-md bg-opacity-50 h-full overflow-hidden">
                 <div className="h-full flex flex-col">
                   {/* Editor Toolbar */}
                   <div className="border-b border-gray-700 p-4 flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold">{activeFile.fileName}</h3>
-                      <p className="text-xs text-gray-500">{activeFile.fileType || "text/plain"}</p>
+                      <h3 className="font-semibold">
+                        {viewMode === "uploaded" ? activeFile?.fileName : currentProjectFile?.path}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {viewMode === "uploaded" ? activeFile?.fileType || "text/plain" : "Archivo del proyecto"}
+                      </p>
                     </div>
-                    <Button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
-                    >
-                      <Save className="w-4 h-4" />
-                      {saving ? "Guardando..." : "Guardar"}
-                    </Button>
+                    {viewMode === "uploaded" && (
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        {saving ? "Guardando..." : "Guardar"}
+                      </Button>
+                    )}
                   </div>
 
                   {/* Editor */}
                   <div className="flex-1 overflow-hidden">
                     <Editor
                       height="100%"
-                      language={getLanguage(activeFile.fileType)}
+                      language={getLanguage(
+                        viewMode === "uploaded" ? (activeFile?.fileType || null) : null
+                      )}
                       value={editorValue}
-                      onChange={handleEditorChange}
+                      onChange={viewMode === "uploaded" ? handleEditorChange : undefined}
                       theme="vs-dark"
                       options={{
                         minimap: { enabled: false },
@@ -273,6 +347,7 @@ export default function CodeEditor() {
                         lineNumbers: "on",
                         scrollBeyondLastLine: false,
                         automaticLayout: true,
+                        readOnly: viewMode === "project",
                       }}
                     />
                   </div>

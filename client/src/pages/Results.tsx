@@ -309,7 +309,7 @@ export default function Results() {
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {leaderRatings.map((leader) => {
                     const leaderImages: Record<string, string> = {
-                      'val_feijoo': '/assets/icons/AlbertoNúñezFeijoo.png',
+                      'val_feijoo': '/assets/icons/AlbertoNuñezFeijoo.png',
                       'val_sanchez': '/assets/icons/PedroSanchez.png',
                       'val_abascal': '/assets/icons/SantiagoAbascal.png',
                       'val_alvise': '/assets/icons/AlvisePerez.png',
