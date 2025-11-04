@@ -22,12 +22,15 @@ export default function CodeEditor() {
   const [files, setFiles] = useState<CodeFile[]>([]);
   const [activeFileId, setActiveFileId] = useState<number | null>(null);
   const [editorValue, setEditorValue] = useState("");
+  const [originalValue, setOriginalValue] = useState("");
   const [newFileName, setNewFileName] = useState("");
   const [showNewFileDialog, setShowNewFileDialog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [viewMode, setViewMode] = useState<"uploaded" | "project">("uploaded");
   const [projectFiles, setProjectFiles] = useState<{ path: string; content: string }[]>([]);
   const [activeProjectFile, setActiveProjectFile] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const listFiles = trpc.files.list.useQuery();
   const uploadFile = trpc.files.upload.useMutation();

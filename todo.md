@@ -50,7 +50,11 @@
 - [x] Implementar función de carga de archivos a S3
 - [x] Crear interfaz de explorador de archivos para admin
 - [x] Editor de código con Monaco Editor
-- [ ] Permitir editar archivos del proyecto desde admin (main.tsx, etc.)
+- [x] Permitir editar archivos del proyecto desde admin (main.tsx, etc.)
+- [ ] Crear editor de código que acceda a archivos reales del proyecto
+- [ ] Implementar lectura de archivos del proyecto (client/src, server, drizzle, etc.)
+- [ ] Implementar edición y guardado de archivos reales
+- [ ] Agregar previsualización de cambios antes de guardar
 
 ## Pruebas y Optimización
 - [ ] Pruebas funcionales de la encuesta

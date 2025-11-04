@@ -14,7 +14,7 @@ export const PARTIES_GENERAL = {
   SAF: { name: 'Se Acabó La Fiesta', logo: '/assets/icons/SeAcabóLaFiesta.png' },
   CC: { name: 'Coalición Canaria', logo: '/assets/icons/coalicióncanaria.png' },
   UPN: { name: 'UPN', logo: '/assets/icons/UPN.png' },
-  CIUDADANOS: { name: 'Ciudadanos', logo: '/assets/icons/CS.PNG' },
+  CIUDADANOS: { name: 'Ciudadanos', logo: '/assets/icons/ciudadanos.png' },
   CAMINANDO: { name: 'Caminando Juntos', logo: '/assets/icons/CaminandoJuntos.png' },
   FRENTE: { name: 'Frente Obrero', logo: '/assets/icons/FrenteObrero.png' },
   IZQUIERDA: { name: 'Izquierda Española', logo: '/assets/icons/JuventudesDeIzquierdaUnida.jpg' },
@@ -22,6 +22,7 @@ export const PARTIES_GENERAL = {
   PLIB: { name: 'P-Lib', logo: '/assets/icons/P-Lib.jpg' },
   EB: { name: 'Escaños en Blanco', logo: '/assets/icons/EscañosEnBlanco.png' },
   BNG: { name: 'BNG', logo: '/assets/icons/bng.png' },
+  OTROS: { name: 'Otros', logo: '/assets/icons/otro.png' },
 };
 
 export const YOUTH_ASSOCIATIONS = {
@@ -46,6 +47,7 @@ export const YOUTH_ASSOCIATIONS = {
   ACL: { name: 'Acción Castilla y León', logo: '/assets/icons/AcciónCastillayLeón.png' },
   JEC: { name: 'Juventud Estudiante Católica', logo: '/assets/icons/JuventudEstudianteCatólica.jpg' },
   AGORA: { name: 'ÁGORA Canarias', logo: '/assets/icons/agora.png' },
+  OTROS: { name: 'Otros', logo: '/assets/icons/otro.png' },
 };
 
 export const LEADERS = {

@@ -129,4 +129,85 @@ export const fileRouter = router({
         { path: "package.json", content: "// Project config" },
       ];
     }),
+
+  // Leer archivos reales del proyecto
+  readProjectFile: protectedProcedure
+    .input(z.object({ filePath: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        const fs = await import("fs").then(m => m.promises);
+        const path = await import("path");
+        
+        // Validar ruta para seguridad
+        const projectRoot = path.resolve(process.cwd());
+        const fullPath = path.resolve(projectRoot, input.filePath);
+        
+        if (!fullPath.startsWith(projectRoot)) {
+          throw new Error("Acceso denegado");
+        }
+        
+        const content = await fs.readFile(fullPath, "utf-8");
+        return { content, success: true };
+      } catch (error) {
+        console.error("Error reading file:", error);
+        throw new Error("Error al leer archivo");
+      }
+    }),
+
+  // Escribir archivos reales del proyecto
+  writeProjectFile: protectedProcedure
+    .input(z.object({ filePath: z.string(), content: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        const fs = await import("fs").then(m => m.promises);
+        const path = await import("path");
+        
+        // Validar ruta para seguridad
+        const projectRoot = path.resolve(process.cwd());
+        const fullPath = path.resolve(projectRoot, input.filePath);
+        
+        if (!fullPath.startsWith(projectRoot)) {
+          throw new Error("Acceso denegado");
+        }
+        
+        await fs.writeFile(fullPath, input.content, "utf-8");
+        return { success: true };
+      } catch (error) {
+        console.error("Error writing file:", error);
+        throw new Error("Error al guardar archivo");
+      }
+    }),
+
+  // Listar archivos del proyecto
+  listProjectFiles: protectedProcedure
+    .query(async () => {
+      try {
+        const fs = await import("fs").then(m => m.promises);
+        const path = await import("path");
+        
+        const projectRoot = path.resolve(process.cwd());
+        const files: string[] = [];
+        
+        const walk = async (dir: string) => {
+          const entries = await fs.readdir(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (["node_modules", ".git", "dist", "build", ".next"].includes(entry.name)) continue;
+            const fullPath = path.join(dir, entry.name);
+            const relativePath = path.relative(projectRoot, fullPath);
+            
+            if (entry.isDirectory()) {
+              await walk(fullPath);
+            } else {
+              files.push(relativePath);
+            }
+          }
+        };
+        
+        await walk(projectRoot);
+        return files.slice(0, 100); // Limitar a 100 archivos
+      } catch (error) {
+        console.error("Error listing files:", error);
+        throw new Error("Error al listar archivos");
+      }
+    }),
 });
