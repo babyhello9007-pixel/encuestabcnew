@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
+import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from '@/lib/surveyData';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -112,7 +112,12 @@ export default function Results() {
               logos[key] = party.logo;
             });
 
+            console.log('exampleVotos keys:', Object.keys(exampleVotos));
+            console.log('PARTIES_GENERAL keys:', Object.keys(PARTIES_GENERAL));
+            console.log('logos keys:', Object.keys(logos));
             const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos);
+            console.log('Stats generales:', stats);
+            console.log('Logos disponibles:', logos);
             setGeneralStats(stats);
           }
         } catch (err) {
@@ -417,15 +422,55 @@ export default function Results() {
                   <p>No hay datos disponibles aún. Sé el primero en responder la encuesta.</p>
                 </div>
               ) : (
-                stats.map((party) => (
+                stats.map((party) => {
+                  // Buscar el logo en PARTIES_GENERAL o YOUTH_ASSOCIATIONS basándose en el nombre
+                  let logoUrl = party.logo;
+                  
+                  // Si no hay logo, buscar en PARTIES_GENERAL por nombre
+                  if (!logoUrl) {
+                    for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
+                      if (partyData.name === party.nombre) {
+                        logoUrl = partyData.logo;
+                        break;
+                      }
+                    }
+                  }
+                  
+                  // Si aún no hay logo, buscar en YOUTH_ASSOCIATIONS por nombre
+                  if (!logoUrl) {
+                    for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
+                      if (assocData.name === party.nombre) {
+                        logoUrl = assocData.logo;
+                        break;
+                      }
+                    }
+                  }
+                  
+                  // Si aún no hay logo, intentar con el ID en PARTIES_GENERAL
+                  if (!logoUrl) {
+                    const partyData = PARTIES_GENERAL[party.id as keyof typeof PARTIES_GENERAL];
+                    if (partyData) {
+                      logoUrl = partyData.logo;
+                    }
+                  }
+                  
+                  // Si aún no hay logo, intentar con el ID en YOUTH_ASSOCIATIONS
+                  if (!logoUrl) {
+                    const assocData = YOUTH_ASSOCIATIONS[party.id as keyof typeof YOUTH_ASSOCIATIONS];
+                    if (assocData) {
+                      logoUrl = assocData.logo;
+                    }
+                  }
+                  
+                  return (
                   <div
                     key={party.id}
                     className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow"
                   >
                     <div className="flex items-center gap-4">
-                      {party.logo && (
+                      {logoUrl && (
                         <img
-                          src={party.logo}
+                          src={logoUrl}
                           alt={party.nombre}
                           className="h-12 w-12 object-contain rounded-lg bg-white p-1"
                         />
@@ -455,7 +500,8 @@ export default function Results() {
                       </div>
                     </div>
                   </div>
-                ))
+                );
+                })
               )}
             </div>
 

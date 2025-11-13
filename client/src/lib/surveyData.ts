@@ -17,7 +17,7 @@ export const PARTIES_GENERAL = {
   CIUDADANOS: { name: 'Ciudadanos', logo: '/assets/icons/ciudadanos.png' },
   CAMINANDO: { name: 'Caminando Juntos', logo: '/assets/icons/CaminandoJuntos.png' },
   FRENTE: { name: 'Frente Obrero', logo: '/assets/icons/FrenteObrero.png' },
-  IZQUIERDA: { name: 'Izquierda Española', logo: '/assets/icons/JuventudesDeIzquierdaUnida.jpg' },
+  IZQUIERDA: { name: 'Izquierda Española', logo: '/assets/icons/IzquierdaEspanola.png' },
   JUNTOS_EXT: { name: 'Juntos por Extremadura', logo: '/assets/icons/juntosporextremadura.png' },
   PLIB: { name: 'P-Lib', logo: '/assets/icons/plib.jpg' },
   EB: { name: 'Escaños en Blanco', logo: '/assets/icons/EscañosEnBlanco.png' },
