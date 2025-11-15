@@ -1,0 +1,13 @@
+{
+  "query": "\n-- Crear VIEW para media de edad\nCREATE OR REPLACE VIEW edad_promedio AS\nSELECT \n  ROUND(AVG(CAST(edad AS NUMERIC)), 1) as edad_media,\n  COUNT(*) as total_respuestas,\n  MIN(edad) as edad_minima,\n  MAX(edad) as edad_maxima\nFROM respuestas\nWHERE edad IS NOT NULL;\n\n-- Crear VIEW para media de ideología\nCREATE OR REPLACE VIEW ideologia_promedio AS\nSELECT \n  ROUND(AVG(CAST(posicion_ideologica AS NUMERIC)), 1) as ideologia_media,\n  COUNT(*) as total_respuestas,\n  MIN(posicion_ideologica) as ideologia_minima,\n  MAX(posicion_ideologica) as ideologia_maxima\nFROM respuestas\nWHERE posicion_ideologica IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute \n-- Crear VIEW para media de edad\nCREATE OR REPLACE VIEW edad_promedio AS\nSELECT \n  ROUND(AVG(CAST(edad AS NUMERIC)), 1) as edad_media,\n  COUNT(*) as total_respuestas,\n  MIN(edad) as edad_minima,\n  MAX(edad) as edad_maxima\nFROM respuestas\nWHERE edad IS NOT NULL;\n\n-- Crear VIEW para media de ideología\nCREATE OR REPLACE VIEW ideologia_promedio AS\nSELECT \n  ROUND(AVG(CAST(posicion_ideologica AS NUMERIC)), 1) as ideologia_media,\n  COUNT(*) as total_respuestas,\n  MIN(posicion_ideologica) as ideologia_minima,\n  MAX(posicion_ideologica) as ideologia_maxima\nFROM respuestas\nWHERE posicion_ideologica IS NOT NULL;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 3: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 3 column 33 near \"NUMERIC)), 1) as edad_media,",
+    "  COUNT(*) as total_respuestas,",
+    "  MIN(edad) as edad_minima,",
+    "  MAX(edad) as edad_maxima",
+    "FROM respuestas",
+    "WHERE edad IS NOT NULL\""
+  ]
+}

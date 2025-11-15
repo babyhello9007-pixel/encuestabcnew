@@ -6,6 +6,7 @@ import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from '@/lib/surveyData';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Download } from "lucide-react";
 
 interface PartyStats {
   id: string;
@@ -31,6 +32,8 @@ export default function Results() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"general" | "youth">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
+  const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
+  const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -330,6 +333,26 @@ export default function Results() {
             setLeaderRatings(ratings);
           }
         }
+
+        // Obtener edad promedio
+        try {
+          const { data: edadData } = await supabase.from("edad_promedio").select("edad_media");
+          if (edadData && edadData.length > 0) {
+            setEdadPromedio(edadData[0].edad_media);
+          }
+        } catch (err) {
+          console.error("Error fetching edad promedio:", err);
+        }
+
+        // Obtener ideología promedio
+        try {
+          const { data: ideologiaData } = await supabase.from("ideologia_promedio").select("ideologia_media");
+          if (ideologiaData && ideologiaData.length > 0) {
+            setIdeologiaPromedio(ideologiaData[0].ideologia_media);
+          }
+        } catch (err) {
+          console.error("Error fetching ideologia promedio:", err);
+        }
       } catch (error) {
         console.error("Error fetching results:", error);
       } finally {
@@ -344,6 +367,64 @@ export default function Results() {
 
   const stats = activeTab === "general" ? generalStats : youthStats;
   const totalEscanos = activeTab === "general" ? 350 : 50;
+
+  const exportToCSV = () => {
+    const headers = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Porcentaje de Escaños'];
+    const rows = stats.map(party => [
+      party.nombre,
+      party.votos,
+      party.porcentaje.toFixed(2) + '%',
+      party.escanos,
+      ((party.escanos / totalEscanos) * 100).toFixed(2) + '%'
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `resultados-${activeTab}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const { autoTable } = await import('jspdf-autotable');
+      
+      const doc = new jsPDF();
+      const title = activeTab === 'general' ? 'Resultados - Elecciones Generales' : 'Resultados - Asociaciones Juveniles';
+      
+      doc.setFontSize(16);
+      doc.text(title, 14, 22);
+      
+      const tableData = stats.map(party => [
+        party.nombre,
+        party.votos.toString(),
+        party.porcentaje.toFixed(2) + '%',
+        party.escanos.toString(),
+        ((party.escanos / totalEscanos) * 100).toFixed(2) + '%'
+      ]);
+      
+      autoTable(doc, {
+        head: [['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', '% Escaños']],
+        body: tableData,
+        startY: 30,
+        theme: 'grid'
+      });
+      
+      doc.save(`resultados-${activeTab}-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+      console.error('Error exporting to PDF:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
@@ -391,6 +472,22 @@ export default function Results() {
                   <p className="text-lg font-semibold text-[#2D2D2D]">Tiempo Real</p>
                 </div>
               </div>
+              <div className="grid md:grid-cols-2 gap-4 mt-4">
+                {edadPromedio !== null && (
+                  <div className="frosted-glass p-4 rounded-lg text-center">
+                    <p className="text-sm text-[#666666]">Edad Media</p>
+                    <p className="text-3xl font-bold text-[#C41E3A]">{edadPromedio}</p>
+                    <p className="text-xs text-[#999999]">años</p>
+                  </div>
+                )}
+                {ideologiaPromedio !== null && (
+                  <div className="frosted-glass p-4 rounded-lg text-center">
+                    <p className="text-sm text-[#666666]">Posición Ideológica Media</p>
+                    <p className="text-3xl font-bold text-[#C41E3A]">{ideologiaPromedio}</p>
+                    <p className="text-xs text-[#999999]">en escala 1-10</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-4 border-b border-[#E0D5CC]">
@@ -414,6 +511,24 @@ export default function Results() {
               >
                 Asociaciones Juveniles
               </button>
+              <div className="ml-auto flex gap-2">
+                <Button
+                  onClick={exportToCSV}
+                  variant="outline"
+                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  CSV
+                </Button>
+                <Button
+                  onClick={exportToPDF}
+                  variant="outline"
+                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  PDF
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-4">
