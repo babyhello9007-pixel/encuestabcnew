@@ -24,6 +24,13 @@ interface LeaderRating {
   count: number;
 }
 
+interface PartyMetrics {
+  nombre: string;
+  edad_promedio: number;
+  ideologia_promedio: number;
+  total_votos: number;
+}
+
 export default function Results() {
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
@@ -34,6 +41,9 @@ export default function Results() {
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
+  const [generalMetrics, setGeneralMetrics] = useState<PartyMetrics[]>([]);
+  const [youthMetrics, setYouthMetrics] = useState<PartyMetrics[]>([]);
+  const [historialVotos, setHistorialVotos] = useState<Array<{fecha: string, votos: number}>>([]);
 
   useEffect(() => {
     const fetchResults = async () => {
