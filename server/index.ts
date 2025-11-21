@@ -24,6 +24,9 @@ async function startServer() {
       // Set cache headers for assets
       if (req.path.includes('/assets/')) {
         res.setHeader('Cache-Control', 'public, max-age=31536000');
+        // Add headers to prevent adblocker from blocking images
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Content-Disposition', 'inline');
       } else if (req.path.endsWith('.js') || req.path.endsWith('.css')) {
         res.setHeader('Cache-Control', 'public, max-age=3600');
       }
