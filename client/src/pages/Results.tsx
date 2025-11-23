@@ -7,6 +7,9 @@ import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas
 import { Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Download } from "lucide-react";
+import { LoadingAnimation } from "@/components/LoadingAnimation";
+import { ShareResults } from "@/components/ShareResults";
+import { CommentsSection } from "@/components/CommentsSection";
 
 interface PartyStats {
   id: string;
@@ -456,12 +459,7 @@ export default function Results() {
 
       <main className="flex-1 container py-12">
         {loading ? (
-          <div className="flex items-center justify-center min-h-96">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-[#C41E3A] mx-auto" />
-              <p className="text-[#666666]">Cargando resultados...</p>
-            </div>
-          </div>
+          <LoadingAnimation />
         ) : (
           <div className="space-y-8">
             <div className="liquid-glass p-8 rounded-2xl space-y-4">
@@ -538,6 +536,12 @@ export default function Results() {
                   <Download className="h-4 w-4" />
                   PDF
                 </Button>
+                <ShareResults 
+                  activeTab={activeTab} 
+                  topParty={stats.length > 0 ? stats[0].nombre : "Partido"}
+                  topPartyVotes={stats.length > 0 ? stats[0].votos : 0}
+                  totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
+                />
               </div>
             </div>
 
@@ -712,6 +716,8 @@ export default function Results() {
                 </p>
               </div>
             </div>
+
+            <CommentsSection activeTab={activeTab} />
 
             <div className="text-center space-y-4">
               <p className="text-[#666666]">¿Aún no has respondido la encuesta?</p>
