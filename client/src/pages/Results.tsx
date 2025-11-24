@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Download } from "lucide-react";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
-import { ShareResults } from "@/components/ShareResults";
+import { ShareResultsAdvanced } from "@/components/ShareResultsAdvanced";
 import { CommentsSection } from "@/components/CommentsSection";
 
 interface PartyStats {
@@ -536,10 +536,9 @@ export default function Results() {
                   <Download className="h-4 w-4" />
                   PDF
                 </Button>
-                <ShareResults 
+                <ShareResultsAdvanced 
                   activeTab={activeTab} 
-                  topParty={stats.length > 0 ? stats[0].nombre : "Partido"}
-                  topPartyVotes={stats.length > 0 ? stats[0].votos : 0}
+                  stats={stats}
                   totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
                 />
               </div>

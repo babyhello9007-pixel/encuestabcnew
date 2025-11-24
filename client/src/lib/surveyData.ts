@@ -47,6 +47,7 @@ export const YOUTH_ASSOCIATIONS = {
   ACL: { name: 'Acción Castilla y León', logo: '/assets/icons/AcciónCastillayLeón.png' },
   JEC: { name: 'Juventud Estudiante Católica', logo: '/assets/icons/JuventudEstudianteCatólica.jpg' },
   AGORA: { name: 'ÁGORA Canarias', logo: '/assets/icons/agora.png' },
+  GENOP: { name: 'Generación Operativa', logo: '/assets/icons/GeneracionOperativa.webp' },
   OTROS: { name: 'Otros', logo: '/assets/icons/otro.png' },
 };
 
