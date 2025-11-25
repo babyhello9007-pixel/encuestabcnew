@@ -21,8 +21,9 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Cargar comentarios
+  // Cargar comentarios cuando cambia el tab
   useEffect(() => {
     loadComments();
   }, [activeTab]);
@@ -30,37 +31,27 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
   const loadComments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      setError(null);
+      
+      const { data, error: fetchError } = await supabase
         .from("comentarios_resultados")
         .select("*")
         .eq("tab", activeTab)
+        .eq("estado", "aprobado")
         .order("created_at", { ascending: false })
         .limit(20);
 
-      if (!error && data) {
-        setComments(data);
+      if (fetchError) {
+        console.error("Error loading comments:", fetchError);
+        setError("Error al cargar comentarios");
+        setComments([]);
+      } else {
+        setComments(data || []);
       }
     } catch (err) {
       console.error("Error loading comments:", err);
-      // Usar comentarios de ejemplo si hay error
-      setComments([
-        {
-          id: "1",
-          nombre: "Usuario Anónimo",
-          texto: "Excelente encuesta, muy completa y bien organizada.",
-          likes: 5,
-          created_at: new Date().toISOString(),
-          tab: activeTab,
-        },
-        {
-          id: "2",
-          nombre: "Ciudadano Interesado",
-          texto: "Los resultados son muy interesantes. ¿Cuándo se actualizan?",
-          likes: 3,
-          created_at: new Date().toISOString(),
-          tab: activeTab,
-        },
-      ]);
+      setError("Error al conectar con el servidor");
+      setComments([]);
     } finally {
       setLoading(false);
     }
@@ -68,41 +59,40 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
 
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !userName.trim()) return;
+    
+    if (!newComment.trim()) {
+      setError("Por favor escribe un comentario");
+      return;
+    }
 
     try {
       setSubmitting(true);
-      const { data, error } = await supabase
+      setError(null);
+
+      const { error: insertError } = await supabase
         .from("comentarios_resultados")
         .insert([
           {
-            nombre: userName,
-            texto: newComment,
+            nombre: userName.trim() || "Anónimo",
+            texto: newComment.trim(),
             tab: activeTab,
             likes: 0,
+            estado: "aprobado",
           },
-        ])
-        .select();
+        ]);
 
-      if (!error && data) {
-        setComments([data[0], ...comments]);
+      if (insertError) {
+        console.error("Error inserting comment:", insertError);
+        setError("Error al publicar comentario. Intenta de nuevo.");
+      } else {
         setNewComment("");
         setUserName("");
+        // Recargar comentarios
+        await loadComments();
       }
     } catch (err) {
       console.error("Error submitting comment:", err);
-      // Agregar comentario localmente si hay error
-      const newCommentObj: Comment = {
-        id: Date.now().toString(),
-        nombre: userName,
-        texto: newComment,
-        likes: 0,
-        created_at: new Date().toISOString(),
-        tab: activeTab,
-      };
-      setComments([newCommentObj, ...comments]);
-      setNewComment("");
-      setUserName("");
+      setError("Error al publicar comentario");
     } finally {
       setSubmitting(false);
     }
@@ -110,22 +100,25 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
 
   const handleLike = async (commentId: string, currentLikes: number) => {
     try {
-      await supabase
+      const { error: updateError } = await supabase
         .from("comentarios_resultados")
         .update({ likes: currentLikes + 1 })
         .eq("id", commentId);
 
-      setComments(
-        comments.map((c) =>
-          c.id === commentId ? { ...c, likes: c.likes + 1 } : c
-        )
-      );
+      if (!updateError) {
+        // Actualizar localmente
+        setComments(
+          comments.map((c) =>
+            c.id === commentId ? { ...c, likes: c.likes + 1 } : c
+          )
+        );
+      }
     } catch (err) {
-      console.error("Error liking comment:", err);
+      console.error("Error updating likes:", err);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -137,71 +130,72 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
     if (diffMins < 60) return `Hace ${diffMins}m`;
     if (diffHours < 24) return `Hace ${diffHours}h`;
     if (diffDays < 7) return `Hace ${diffDays}d`;
+    
     return date.toLocaleDateString("es-ES");
   };
 
   return (
-    <section className="mb-12 space-y-6">
-      <div className="flex items-center gap-3">
-        <MessageCircle className="h-6 w-6 text-[#C41E3A]" />
-        <h2 className="text-3xl font-bold text-white">Comentarios de Usuarios</h2>
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-6">
+        <MessageCircle className="h-5 w-5 text-[#C41E3A]" />
+        <h3 className="text-xl font-bold text-white">Comentarios de Usuarios</h3>
       </div>
 
-      {/* Formulario de nuevo comentario */}
-      <form onSubmit={handleSubmitComment} className="glass-card p-6 rounded-xl space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm text-[#999999]">Tu nombre (opcional)</label>
+      {/* Formulario de comentario */}
+      <form onSubmit={handleSubmitComment} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
+            placeholder="Tu nombre (opcional)"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            placeholder="Nombre o apodo"
-            className="w-full bg-[#0F1419] border border-[#2D2D2D] rounded-lg px-4 py-2 text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A]"
+            className="px-4 py-2 bg-[#0F1419] border border-[#2D2D2D] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A]"
+          />
+          <textarea
+            placeholder="Tu comentario"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            rows={3}
+            className="px-4 py-2 bg-[#0F1419] border border-[#2D2D2D] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A] md:col-span-2"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm text-[#999999]">Tu comentario</label>
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Comparte tu opinión sobre los resultados..."
-            rows={3}
-            className="w-full bg-[#0F1419] border border-[#2D2D2D] rounded-lg px-4 py-2 text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A] resize-none"
-          />
-        </div>
+        {error && (
+          <p className="text-red-500 text-sm">{error}</p>
+        )}
 
         <button
           type="submit"
-          disabled={submitting || !newComment.trim()}
-          className="w-full bg-[#C41E3A] hover:bg-[#A01830] disabled:bg-[#666666] text-white py-2 rounded-lg flex items-center justify-center gap-2 transition"
+          disabled={submitting}
+          className="w-full md:w-auto bg-[#C41E3A] hover:bg-[#A01830] disabled:bg-[#666666] text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 transition"
         >
           <Send className="h-4 w-4" />
-          {submitting ? "Enviando..." : "Publicar Comentario"}
+          {submitting ? "Publicando..." : "Publicar Comentario"}
         </button>
       </form>
 
       {/* Lista de comentarios */}
       <div className="space-y-4">
         {loading ? (
-          <div className="text-center py-8">
-            <p className="text-[#999999]">Cargando comentarios...</p>
-          </div>
+          <div className="text-center text-[#999999]">Cargando comentarios...</div>
         ) : comments.length === 0 ? (
-          <div className="glass-card p-8 rounded-xl text-center">
-            <p className="text-[#999999]">Sé el primero en comentar sobre estos resultados</p>
+          <div className="text-center text-[#999999]">
+            Sé el primero en comentar sobre estos resultados
           </div>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="glass-card p-6 rounded-xl space-y-3">
+            <div
+              key={comment.id}
+              className="bg-[#0F1419] border border-[#2D2D2D] rounded-lg p-4 space-y-2 hover:border-[#C41E3A] transition"
+            >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-white">{comment.nombre || "Usuario Anónimo"}</p>
-                  <p className="text-xs text-[#666666]">{formatDate(comment.created_at)}</p>
+                  <p className="font-semibold text-white">{comment.nombre}</p>
+                  <p className="text-xs text-[#666666]">{formatTime(comment.created_at)}</p>
                 </div>
               </div>
 
-              <p className="text-[#E8E8E8] leading-relaxed">{comment.texto}</p>
+              <p className="text-[#CCCCCC] text-sm">{comment.texto}</p>
 
               <button
                 onClick={() => handleLike(comment.id, comment.likes)}
@@ -214,7 +208,7 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
           ))
         )}
       </div>
-    </section>
+    </div>
   );
 }
 
