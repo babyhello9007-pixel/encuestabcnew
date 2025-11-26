@@ -46,6 +46,7 @@ export default function Results() {
   const [generalMetrics, setGeneralMetrics] = useState<PartyMetrics[]>([]);
   const [youthMetrics, setYouthMetrics] = useState<PartyMetrics[]>([]);
   const [historialVotos, setHistorialVotos] = useState<Array<{fecha: string, votos: number}>>([]);
+  const [notaEjecutivo, setNotaEjecutivo] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -346,6 +347,18 @@ export default function Results() {
           }
         }
 
+        // Obtener nota ejecutivo
+        try {
+          const { data: notaData } = await supabase
+            .from("media_nota_ejecutivo")
+            .select("nota_media");
+          if (notaData && notaData.length > 0) {
+            setNotaEjecutivo(notaData[0].nota_media);
+          }
+        } catch (err) {
+          console.log('Nota ejecutivo no disponible');
+        }
+
         // Obtener edad promedio
         try {
           const { data: edadData } = await supabase.from("edad_promedio").select("edad_media");
@@ -582,7 +595,7 @@ export default function Results() {
                   <p className="text-lg font-semibold text-[#2D2D2D]">Tiempo Real</p>
                 </div>
               </div>
-              <div className="grid md:grid-cols-2 gap-4 mt-4">
+              <div className="grid md:grid-cols-3 gap-4 mt-4">
                 {edadPromedio !== null && (
                   <div className="frosted-glass p-4 rounded-lg text-center">
                     <p className="text-sm text-[#666666]">Edad Media</p>
@@ -595,6 +608,13 @@ export default function Results() {
                     <p className="text-sm text-[#666666]">Posición Ideológica Media</p>
                     <p className="text-3xl font-bold text-[#C41E3A]">{ideologiaPromedio}</p>
                     <p className="text-xs text-[#999999]">en escala 1-10</p>
+                  </div>
+                )}
+                {notaEjecutivo !== null && (
+                  <div className="frosted-glass p-4 rounded-lg text-center">
+                    <p className="text-sm text-[#666666]">Nota Ejecutivo</p>
+                    <p className="text-3xl font-bold text-[#C41E3A]">{notaEjecutivo}</p>
+                    <p className="text-xs text-[#999999]">sobre 10</p>
                   </div>
                 )}
               </div>
