@@ -1,5 +1,4 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import { supabase } from './supabase';
 
 export interface PartyStats {
@@ -18,6 +17,85 @@ export interface PartyMetricsView {
   total_votos: number;
 }
 
+const COLUMN_WIDTH = 30;
+const ROW_HEIGHT = 8;
+const MARGIN_LEFT = 15;
+const MARGIN_RIGHT = 15;
+
+function drawTable(
+  doc: jsPDF,
+  startY: number,
+  headers: string[],
+  rows: string[][],
+  columnWidths?: number[]
+): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 15;
+  const availableWidth = pageWidth - margin * 2;
+
+  // Default column widths
+  if (!columnWidths) {
+    columnWidths = headers.map(() => availableWidth / headers.length);
+  }
+
+  let yPos = startY;
+  const headerHeight = 8;
+  const cellPadding = 2;
+
+  // Draw header
+  doc.setFillColor(196, 30, 58);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+
+  let xPos = margin;
+  headers.forEach((header, i) => {
+    doc.rect(xPos, yPos, columnWidths![i], headerHeight, 'F');
+    doc.text(header, xPos + cellPadding, yPos + headerHeight - cellPadding, {
+      maxWidth: columnWidths![i] - cellPadding * 2,
+    });
+    xPos += columnWidths![i];
+  });
+
+  yPos += headerHeight;
+
+  // Draw rows
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+
+  rows.forEach((row, rowIndex) => {
+    // Check if we need a new page
+    if (yPos + ROW_HEIGHT > pageHeight - 20) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    // Alternate row colors
+    if (rowIndex % 2 === 1) {
+      doc.setFillColor(245, 241, 232);
+      xPos = margin;
+      headers.forEach((_, i) => {
+        doc.rect(xPos, yPos, columnWidths![i], ROW_HEIGHT, 'F');
+        xPos += columnWidths![i];
+      });
+    }
+
+    xPos = margin;
+    row.forEach((cell, i) => {
+      doc.text(cell, xPos + cellPadding, yPos + ROW_HEIGHT - cellPadding, {
+        maxWidth: columnWidths![i] - cellPadding * 2,
+      });
+      xPos += columnWidths![i];
+    });
+
+    yPos += ROW_HEIGHT;
+  });
+
+  return yPos;
+}
+
 export async function exportPDFWithMetrics(
   stats: PartyStats[],
   activeTab: "general" | "youth",
@@ -34,7 +112,7 @@ export async function exportPDFWithMetrics(
   const metricsPerParty = await getMetricsFromViews(activeTab);
 
   // Header
-  doc.setFillColor(196, 30, 58); // #C41E3A
+  doc.setFillColor(196, 30, 58);
   doc.rect(0, 0, pageWidth, 30, 'F');
 
   doc.setTextColor(255, 255, 255);
@@ -53,8 +131,7 @@ export async function exportPDFWithMetrics(
   doc.text('Resumen General', 15, yPosition);
   yPosition += 10;
 
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
+  const summaryHeaders = ['Métrica', 'Valor'];
   const summaryData = [
     ['Total de Respuestas', totalResponses.toString()],
     ['Edad Media General', edadPromedio ? `${edadPromedio.toFixed(1)} años` : 'N/A'],
@@ -62,17 +139,7 @@ export async function exportPDFWithMetrics(
     ['Fecha de Generación', new Date().toLocaleDateString('es-ES')],
   ];
 
-  (doc as any).autoTable({
-    startY: yPosition,
-    head: [['Métrica', 'Valor']],
-    body: summaryData,
-    headStyles: { fillColor: [196, 30, 58], textColor: 255, fontStyle: 'bold' },
-    bodyStyles: { textColor: 0 },
-    alternateRowStyles: { fillColor: [245, 241, 232] },
-    margin: { left: 15, right: 15 },
-  });
-
-  yPosition = (doc as any).lastAutoTable.finalY + 15;
+  yPosition = drawTable(doc, yPosition, summaryHeaders, summaryData, [50, 80]) + 15;
 
   // Tabla de resultados con métricas por partido
   doc.setFontSize(14);
@@ -80,6 +147,7 @@ export async function exportPDFWithMetrics(
   doc.text('Resultados Electorales', 15, yPosition);
   yPosition += 10;
 
+  const tableHeaders = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Edad Media', 'Ideología Media'];
   const tableData = stats.map((party) => {
     const metrics = metricsPerParty[party.nombre] || { edad_promedio: 0, ideologia_promedio: 0 };
     return [
@@ -92,24 +160,7 @@ export async function exportPDFWithMetrics(
     ];
   });
 
-  (doc as any).autoTable({
-    startY: yPosition,
-    head: [['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Edad Media', 'Ideología Media']],
-    body: tableData,
-    headStyles: { fillColor: [196, 30, 58], textColor: 255, fontStyle: 'bold' },
-    bodyStyles: { textColor: 0 },
-    alternateRowStyles: { fillColor: [245, 241, 232] },
-    margin: { left: 15, right: 15 },
-    columnStyles: {
-      1: { halign: 'right' },
-      2: { halign: 'right' },
-      3: { halign: 'right' },
-      4: { halign: 'right' },
-      5: { halign: 'right' },
-    },
-  });
-
-  yPosition = (doc as any).lastAutoTable.finalY + 20;
+  yPosition = drawTable(doc, yPosition, tableHeaders, tableData, [30, 20, 20, 20, 25, 25]) + 20;
 
   // Check if we need a new page
   if (yPosition > pageHeight - 50) {
