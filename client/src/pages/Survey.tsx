@@ -153,7 +153,7 @@ export default function Survey() {
                           placeholder="Especifica tu opción..."
                           value={typeof responses[currentQuestion.fieldName] === 'string' && responses[currentQuestion.fieldName].startsWith('Otros:') ? responses[currentQuestion.fieldName].substring(6) : ''}
                           onChange={(e) => handleAnswer(e.target.value ? `Otros: ${e.target.value}` : 'Otros')}
-                          className="w-full mt-2 ml-7 p-3 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#C41E3A]"
+                          className="w-full mt-2 ml-7 p-3 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#C41E3A] box-border overflow-hidden"
                         />
                       )}
                     </div>

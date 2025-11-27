@@ -22,7 +22,6 @@ export const PARTIES_GENERAL = {
   PLIB: { name: 'P-Lib', logo: '/assets/icons/plib.jpg' },
   EB: { name: 'Escaños en Blanco', logo: '/assets/icons/escanios-blanco.png' },
   BNG: { name: 'BNG', logo: '/assets/icons/bng-new.png' },
-  OTROS: { name: 'Otros', logo: '/assets/icons/otro.png' },
 };
 
 export const YOUTH_ASSOCIATIONS = {
@@ -48,7 +47,6 @@ export const YOUTH_ASSOCIATIONS = {
   JEC: { name: 'Juventud Estudiante Católica', logo: '/assets/icons/jec.jpg' },
   AGORA: { name: 'ÁGORA Canarias', logo: '/assets/icons/agora.png' },
   GENOP: { name: 'Generación Operativa', logo: '/assets/icons/GeneracionOperativa.webp' },
-  OTROS: { name: 'Otros', logo: '/assets/icons/otro.png' },
 };
 
 export const LEADERS = {
