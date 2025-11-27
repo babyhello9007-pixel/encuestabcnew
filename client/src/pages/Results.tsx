@@ -39,7 +39,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -641,6 +641,16 @@ export default function Results() {
               >
                 Asociaciones Juveniles
               </button>
+              <button
+                onClick={() => setActiveTab("leaders")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "leaders"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Líderes Preferidos
+              </button>
               <div className="ml-auto flex gap-2">
                 <Button
                   onClick={exportToCSV}
@@ -755,6 +765,8 @@ export default function Results() {
               )}
             </div>
 
+            <>
+            {activeTab === "leaders" && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
               {leaderRatings.length === 0 ? (
@@ -819,7 +831,9 @@ export default function Results() {
                 </>
               )}
             </div>
+            )}
 
+            {activeTab !== "leaders" && (
             <div className="liquid-glass p-8 rounded-2xl space-y-4">
               <h3 className="text-xl font-bold text-[#2D2D2D]">Metodología</h3>
               <div className="space-y-3 text-sm text-[#666666]">
@@ -837,8 +851,10 @@ export default function Results() {
                 </p>
               </div>
             </div>
+            )}
 
             <CommentsSection activeTab={activeTab} />
+            </>
 
             <div className="text-center space-y-4">
               <p className="text-[#666666]">¿Aún no has respondido la encuesta?</p>
