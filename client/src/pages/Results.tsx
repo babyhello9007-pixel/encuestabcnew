@@ -390,8 +390,8 @@ export default function Results() {
     return () => clearInterval(interval);
   }, []);
 
-  const stats = activeTab === "general" ? generalStats : youthStats;
-  const totalEscanos = activeTab === "general" ? 350 : 50;
+  const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
+  const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 50 : 0;
 
   const exportToCSV = () => {
     const headers = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Porcentaje de Escaños'];

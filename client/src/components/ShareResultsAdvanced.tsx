@@ -36,10 +36,35 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes }: ShareResu
       const canvas = await html2canvas(infographyRef.current, {
         backgroundColor: "#1A1A1A",
         scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
       });
 
+      // Crear un canvas con aspecto 16:9
+      const finalCanvas = document.createElement('canvas');
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) return;
+
+      // Dimensiones 16:9 en alta resolución (1920x1080)
+      finalCanvas.width = 1920;
+      finalCanvas.height = 1080;
+
+      // Fondo oscuro
+      ctx.fillStyle = '#1A1A1A';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      // Centrar y escalar la imagen
+      const scale = Math.min(
+        finalCanvas.width / canvas.width,
+        finalCanvas.height / canvas.height
+      );
+      const x = (finalCanvas.width - canvas.width * scale) / 2;
+      const y = (finalCanvas.height - canvas.height * scale) / 2;
+      ctx.drawImage(canvas, x, y, canvas.width * scale, canvas.height * scale);
+
       const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
+      link.href = finalCanvas.toDataURL("image/png");
       link.download = `batalla-cultural-${selectedParty?.nombre || "resultado"}-${new Date().toISOString().split("T")[0]}.png`;
       link.click();
     } catch (error) {
@@ -103,42 +128,42 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes }: ShareResu
             {/* Infografía */}
             {selectedParty && (
               <div className="mb-6">
-                <label className="text-sm text-[#999999] mb-3 block">Vista previa:</label>
+                <label className="text-sm text-[#999999] mb-3 block">Vista previa (16:9):</label>
                 <div
                   ref={infographyRef}
-                  className="bg-gradient-to-br from-[#0F1419] to-[#1A1A1A] rounded-lg p-8 border border-[#2D2D2D]"
+                  className="bg-gradient-to-br from-[#0F1419] to-[#1A1A1A] rounded-lg p-12 border border-[#2D2D2D] aspect-video flex flex-col items-center justify-center"
                 >
-                  <div className="text-center space-y-4">
-                    <p className="text-[#999999] text-sm font-semibold">ENCUESTA DE BATALLA CULTURAL</p>
+                  <div className="text-center space-y-6 w-full">
+                    <p className="text-[#999999] text-lg font-semibold tracking-widest">ENCUESTA DE BATALLA CULTURAL</p>
                     
                     {selectedParty.logo && (
                       <div className="flex justify-center">
                         <img 
                           src={selectedParty.logo} 
                           alt={selectedParty.nombre} 
-                          className="h-16 w-16 object-contain"
+                          className="h-24 w-24 object-contain drop-shadow-lg"
                         />
                       </div>
                     )}
                     
-                    <p className="text-2xl font-bold text-white">{selectedParty.nombre}</p>
+                    <p className="text-4xl font-bold text-white">{selectedParty.nombre}</p>
                     
-                    <div className="space-y-2">
-                      <p className="text-5xl font-bold text-[#C41E3A]">
+                    <div className="space-y-3">
+                      <p className="text-7xl font-bold text-[#C41E3A] drop-shadow-lg">
                         {selectedParty.porcentaje.toFixed(1)}%
                       </p>
-                      <p className="text-[#999999] text-sm">
-                        {selectedParty.votos.toLocaleString()} votos
+                      <p className="text-[#999999] text-lg">
+                        {selectedParty.votos.toLocaleString()} votos de {totalVotes.toLocaleString()}
                       </p>
                     </div>
 
-                    <div className="pt-4 border-t border-[#2D2D2D]">
-                      <p className="text-[#999999] text-xs mb-2">
+                    <div className="pt-6 border-t border-[#2D2D2D]">
+                      <p className="text-[#999999] text-sm mb-3">
                         {activeTab === "general" ? "Elecciones Generales" : "Asociaciones Juveniles"}
                       </p>
-                      <div className="flex items-center justify-center gap-2">
-                        <img src="/favicon.png" alt="BC Logo" className="h-6 w-6" />
-                        <span className="text-[#C41E3A] font-semibold">Batalla Cultural</span>
+                      <div className="flex items-center justify-center gap-3">
+                        <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+                        <span className="text-[#C41E3A] font-bold text-lg">Batalla Cultural</span>
                       </div>
                     </div>
                   </div>
