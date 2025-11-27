@@ -50,11 +50,21 @@ function drawTable(
   doc.setFontSize(10);
 
   let xPos = margin;
+  // Dibujar fondo rojo para todo el encabezado
+  doc.setFillColor(196, 30, 58);
+  doc.rect(margin, yPos, availableWidth, headerHeight, 'F');
+  
+  // Dibujar bordes de cada columna
+  doc.setDrawColor(196, 30, 58);
+  xPos = margin;
   headers.forEach((header, i) => {
-    doc.rect(xPos, yPos, columnWidths![i], headerHeight, 'F');
-    // Dibujar borde de la celda
-    doc.setDrawColor(196, 30, 58);
     doc.rect(xPos, yPos, columnWidths![i], headerHeight);
+    xPos += columnWidths![i];
+  });
+  
+  // Dibujar texto
+  xPos = margin;
+  headers.forEach((header, i) => {
     // Alinear texto al centro verticalmente
     doc.text(header, xPos + columnWidths![i] / 2, yPos + 5, {
       align: 'center',
