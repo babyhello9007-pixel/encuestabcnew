@@ -10,6 +10,7 @@ import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { ShareResultsAdvanced } from "@/components/ShareResultsAdvanced";
 import { CommentsSection } from "@/components/CommentsSection";
 import { PartyMetricsDisplay } from "@/components/PartyMetricsDisplay";
+import { TrendenciesChart } from "@/components/TrendenciesChart";
 
 interface PartyStats {
   id: string;
@@ -40,7 +41,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -526,6 +527,16 @@ export default function Results() {
               >
                 Líderes Preferidos
               </button>
+              <button
+                onClick={() => setActiveTab("tendencias")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "tendencias"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Tendencias
+              </button>
               <div className="ml-auto flex gap-2">
                 <Button
                   onClick={exportToCSV}
@@ -641,6 +652,9 @@ export default function Results() {
             </div>
 
             <>
+            {activeTab === "tendencias" && (
+              <TrendenciesChart activeTab={activeTab === "general" ? "general" : "youth"} />
+            )}
             {activeTab === "leaders" && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
