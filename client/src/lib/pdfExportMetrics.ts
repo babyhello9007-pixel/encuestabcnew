@@ -52,7 +52,12 @@ function drawTable(
   let xPos = margin;
   headers.forEach((header, i) => {
     doc.rect(xPos, yPos, columnWidths![i], headerHeight, 'F');
-    doc.text(header, xPos + cellPadding, yPos + headerHeight - cellPadding, {
+    // Dibujar borde de la celda
+    doc.setDrawColor(196, 30, 58);
+    doc.rect(xPos, yPos, columnWidths![i], headerHeight);
+    // Alinear texto al centro verticalmente
+    doc.text(header, xPos + columnWidths![i] / 2, yPos + 5, {
+      align: 'center',
       maxWidth: columnWidths![i] - cellPadding * 2,
     });
     xPos += columnWidths![i];
@@ -84,7 +89,15 @@ function drawTable(
 
     xPos = margin;
     row.forEach((cell, i) => {
-      doc.text(cell, xPos + cellPadding, yPos + ROW_HEIGHT - cellPadding, {
+      // Dibujar borde de la celda
+      doc.setDrawColor(200, 200, 200);
+      doc.rect(xPos, yPos, columnWidths![i], ROW_HEIGHT);
+      // Alinear números a la derecha, texto a la izquierda
+      const isNumeric = !isNaN(Number(cell.replace('%', '').replace('años', '')));
+      const align = isNumeric && i > 0 ? 'right' : 'left';
+      const xOffset = align === 'right' ? columnWidths![i] - cellPadding : cellPadding;
+      doc.text(cell, xPos + xOffset, yPos + ROW_HEIGHT / 2 + 1, {
+        align: align as any,
         maxWidth: columnWidths![i] - cellPadding * 2,
       });
       xPos += columnWidths![i];
