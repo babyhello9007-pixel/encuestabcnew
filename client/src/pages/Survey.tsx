@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -132,22 +132,33 @@ export default function Survey() {
           <div className="space-y-3">
             {currentQuestion.type === "radio" && currentQuestion.options && (
               <div className="space-y-2">
-                {currentQuestion.options.map((option) => (
-                  <label
-                    key={option}
-                    className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white hover:bg-opacity-50 transition"
-                  >
-                    <input
-                      type="radio"
-                      name={currentQuestion.id}
-                      value={option}
-                      checked={responses[currentQuestion.fieldName] === option}
-                      onChange={(e) => handleAnswer(e.target.value)}
-                      className="w-4 h-4 accent-[#C41E3A]"
-                    />
-                    <span className="text-[#2D2D2D]">{option}</span>
-                  </label>
-                ))}
+                {currentQuestion.options.map((option) => {
+                  const isOtrosSelected = option === 'Otros' && (responses[currentQuestion.fieldName] === 'Otros' || (typeof responses[currentQuestion.fieldName] === 'string' && responses[currentQuestion.fieldName].startsWith('Otros:')));
+                  return (
+                    <div key={option}>
+                      <label className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white hover:bg-opacity-50 transition">
+                        <input
+                          type="radio"
+                          name={currentQuestion.id}
+                          value={option}
+                          checked={responses[currentQuestion.fieldName] === option || isOtrosSelected}
+                          onChange={(e) => handleAnswer(e.target.value)}
+                          className="w-4 h-4 accent-[#C41E3A]"
+                        />
+                        <span className="text-[#2D2D2D]">{option}</span>
+                      </label>
+                      {isOtrosSelected && (
+                        <input
+                          type="text"
+                          placeholder="Especifica tu opción..."
+                          value={typeof responses[currentQuestion.fieldName] === 'string' && responses[currentQuestion.fieldName].startsWith('Otros:') ? responses[currentQuestion.fieldName].substring(6) : ''}
+                          onChange={(e) => handleAnswer(e.target.value ? `Otros: ${e.target.value}` : 'Otros')}
+                          className="w-full mt-2 ml-7 p-3 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#C41E3A]"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
