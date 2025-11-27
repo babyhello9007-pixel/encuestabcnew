@@ -1,6 +1,9 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { supabase } from './supabase';
+
+// Inicializar autoTable con jsPDF
+autoTable(jsPDF);
 
 export interface PartyStats {
   nombre: string;
