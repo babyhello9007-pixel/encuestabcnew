@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from '@/lib/surveyData';
+import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { Loader2, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -684,7 +685,16 @@ export default function Results() {
                     };
                     const leaderKey = leaderKeyMap[leader.fieldName];
                     const leaderData = leaderKey ? LEADERS[leaderKey] : null;
-                    const leaderImage = leaderData?.image;
+                    const leaderImagePath = leaderData?.image;
+                    let leaderImage: string | undefined;
+                    if (leaderImagePath) {
+                      const filename = leaderImagePath.split('/').pop();
+                      if (filename) {
+                        const embeddedKey = Object.keys(EMBEDDED_LEADERS).find(key => key.toLowerCase().includes(filename.toLowerCase().replace(/\.[^/.]+$/, '')));
+                        if (embeddedKey) leaderImage = EMBEDDED_LEADERS[embeddedKey];
+                      }
+                    }
+                    if (!leaderImage && leaderImagePath) leaderImage = leaderImagePath;
                     
                     // Debug logging para Feijóo
                     if (leader.fieldName === 'FEIJOO') {

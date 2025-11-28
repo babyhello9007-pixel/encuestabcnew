@@ -49,10 +49,10 @@ export const YOUTH_ASSOCIATIONS = {
 };
 
 export const LEADERS = {
-  FEIJOO: { name: 'Alberto Núñez Feijóo', image: '/assets/leaders/AlbertoNuñezFeijooNEW.png' },
+  FEIJOO: { name: 'Alberto Núñez Feijóo', image: '/assets/leaders/feijoo-nuevo.png' },
   SANCHEZ: { name: 'Pedro Sánchez', image: '/assets/leaders/PedroSanchez.png' },
   ABASCAL: { name: 'Santiago Abascal', image: '/assets/leaders/SantiagoAbascal.png' },
-  ALVISE: { name: 'Alvise Pérez', image: '/assets/leaders/AlvisePerez.png' },
+  ALVISE: { name: 'Alvise Pérez', image: '/assets/leaders/alvise-nuevo.png' },
   YOLANDA: { name: 'Yolanda Díaz', image: '/assets/leaders/YolandaDiaz.png' },
   IRENE: { name: 'Irene Montero', image: '/assets/leaders/IreneMontero.png' },
   AYUSO: { name: 'Isabel Díaz Ayuso', image: '/assets/leaders/IsabelDiazAyuso.png' },
