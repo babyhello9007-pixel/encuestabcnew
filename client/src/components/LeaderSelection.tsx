@@ -117,7 +117,8 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
               placeholder="Escribe el nombre de tu partido político"
               value={customParty}
               onChange={(e) => setCustomParty(e.target.value)}
-              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-20"
+              style={{ color: '#000000' }}
+              className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-20 text-black"
             />
           </div>
         )}
@@ -176,7 +177,8 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
                   placeholder="Escribe el nombre del líder que prefieres"
                   value={customLeader}
                   onChange={(e) => setCustomLeader(e.target.value)}
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-20"
+                  style={{ color: '#000000' }}
+                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-20 text-black"
                   onKeyPress={(e) => {
                     if (e.key === "Enter") {
                       handleSubmit();
