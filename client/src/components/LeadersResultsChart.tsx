@@ -79,17 +79,6 @@ export function LeadersResultsChart() {
         </p>
       </div>
 
-      {/* Export Button */}
-      <div className="flex justify-end">
-        <Button
-          onClick={() => exportLeadersToPDF(leadersByParty)}
-          className="bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center gap-2"
-        >
-          <Download className="h-4 w-4" />
-          Descargar PDF
-        </Button>
-      </div>
-
       {/* Party Selection Buttons */}
       <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
         {parties.map((party) => (
@@ -220,7 +209,11 @@ export function LeadersResultsChart() {
       {selectedLeaders.length > 0 && (
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <h4 className="text-lg font-semibold text-[#2D2D2D] mb-4">Compartir Resultados</h4>
-          <LeadersInfographic leadersByParty={leadersByParty} selectedParty={selectedParty} />
+          <LeadersInfographic
+            leadersByParty={leadersByParty}
+            selectedParty={selectedParty}
+            onExportPDF={() => exportLeadersToPDF(leadersByParty)}
+          />
         </div>
       )}
     </div>

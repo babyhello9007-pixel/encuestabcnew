@@ -17,9 +17,10 @@ interface PartyLeaders {
 interface LeadersInfographicProps {
   leadersByParty: PartyLeaders;
   selectedParty: string | null;
+  onExportPDF?: () => void;
 }
 
-export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInfographicProps) {
+export function LeadersInfographic({ leadersByParty, selectedParty, onExportPDF }: LeadersInfographicProps) {
   const infographicRef = useRef<HTMLDivElement>(null);
 
   const selectedLeaders = selectedParty ? leadersByParty[selectedParty] : [];
@@ -67,6 +68,42 @@ export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInf
 
   return (
     <div className="space-y-4">
+      {/* Action Buttons - Top */}
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-2">
+          {onExportPDF && (
+            <Button
+              onClick={onExportPDF}
+              className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              PDF
+            </Button>
+          )}
+          <Button
+            onClick={shareOnX}
+            className="flex-1 bg-black hover:bg-gray-800 text-white font-semibold flex items-center justify-center gap-2"
+          >
+            <Share2 className="h-4 w-4" />
+            X
+          </Button>
+          <Button
+            onClick={shareOnFacebook}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2"
+          >
+            <Share2 className="h-4 w-4" />
+            Facebook
+          </Button>
+        </div>
+        <Button
+          onClick={downloadInfographic}
+          className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold flex items-center justify-center gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Descargar Infografía
+        </Button>
+      </div>
+
       {/* Infographic Container */}
       <div
         ref={infographicRef}
@@ -111,33 +148,6 @@ export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInf
             <p className="text-xs mt-2">www.batallaacultural.es</p>
           </div>
         </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-3">
-        <div className="flex gap-2">
-          <Button
-            onClick={downloadInfographic}
-            className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Descargar Infografía
-          </Button>
-          <Button
-            onClick={shareOnX}
-            className="flex-1 bg-black hover:bg-gray-800 text-white font-semibold flex items-center justify-center gap-2"
-          >
-            <Share2 className="h-4 w-4" />
-            Compartir en X
-          </Button>
-        </div>
-        <Button
-          onClick={shareOnFacebook}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2"
-        >
-          <Share2 className="h-4 w-4" />
-          Compartir en Facebook
-        </Button>
       </div>
     </div>
   );
