@@ -1,29 +1,27 @@
 import { useState, useEffect, useMemo } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
 
-interface TrendenciesChartProps {
-  activeTab: "general" | "youth";
-}
-
 interface VotoData {
   fecha: string;
-  partido: string;
+  partido?: string;
+  asociacion?: string;
   votos_diarios: number;
 }
 
-export function TrendenciesChart({ activeTab }: TrendenciesChartProps) {
+export function TrendenciesChart() {
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
   const [trendData, setTrendData] = useState<any[]>([]);
   const [parties, setParties] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [voteType, setVoteType] = useState<"generales" | "juveniles">("generales");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const viewName = activeTab === "general" 
+        const viewName = voteType === "generales" 
           ? "historial_votos_por_fecha"
           : "historial_votos_asociaciones_por_fecha";
 
@@ -40,6 +38,7 @@ export function TrendenciesChart({ activeTab }: TrendenciesChartProps) {
         if (!data || data.length === 0) {
           setTrendData([]);
           setParties([]);
+          setSelectedParties([]);
           return;
         }
 
@@ -49,14 +48,16 @@ export function TrendenciesChart({ activeTab }: TrendenciesChartProps) {
 
         (data as VotoData[]).forEach((item) => {
           const fecha = item.fecha;
-          const partido = item.partido;
+          const key = voteType === "generales" ? item.partido : item.asociacion;
           
-          partiesSet.add(partido);
+          if (key) {
+            partiesSet.add(key);
 
-          if (!groupedByDate[fecha]) {
-            groupedByDate[fecha] = { fecha };
+            if (!groupedByDate[fecha]) {
+              groupedByDate[fecha] = { fecha };
+            }
+            groupedByDate[fecha][key] = item.votos_diarios;
           }
-          groupedByDate[fecha][partido] = item.votos_diarios;
         });
 
         const sortedData = Object.values(groupedByDate).sort((a, b) => {
@@ -75,12 +76,13 @@ export function TrendenciesChart({ activeTab }: TrendenciesChartProps) {
     };
 
     fetchData();
-  }, [activeTab]);
+  }, [voteType]);
 
   const colors = [
     "#C41E3A", "#0066CC", "#FFC400", "#00AA00", 
     "#FF6600", "#9933FF", "#00CCCC", "#FF0099",
-    "#33CC33", "#FF3333", "#3333FF", "#FFCC00"
+    "#33CC33", "#FF3333", "#3333FF", "#FFCC00",
+    "#FF9900", "#00FF99", "#9900FF", "#FF00CC"
   ];
 
   const toggleParty = (party: string) => {
@@ -111,10 +113,6 @@ export function TrendenciesChart({ activeTab }: TrendenciesChartProps) {
     );
   }
 
-  const maxVotes = Math.max(
-    ...trendData.flatMap(d => visibleParties.map(p => d[p] || 0))
-  );
-
   const totalVotes = trendData.reduce((sum, d) => {
     return sum + visibleParties.reduce((partSum, p) => partSum + (d[p] || 0), 0);
   }, 0);
@@ -126,13 +124,37 @@ export function TrendenciesChart({ activeTab }: TrendenciesChartProps) {
       <div className="liquid-glass p-8 rounded-2xl space-y-4">
         <h3 className="text-2xl font-bold text-[#2D2D2D]">Variación de Votaciones por Día</h3>
         
-        {/* Selector de partidos */}
+        {/* Selector Generales/Juveniles */}
+        <div className="flex gap-4 mb-4">
+          <button
+            onClick={() => setVoteType("generales")}
+            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              voteType === "generales"
+                ? "bg-[#C41E3A] text-white"
+                : "bg-[#E0D5CC] text-[#2D2D2D] hover:bg-[#D0C5BC]"
+            }`}
+          >
+            Elecciones Generales
+          </button>
+          <button
+            onClick={() => setVoteType("juveniles")}
+            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
+              voteType === "juveniles"
+                ? "bg-[#C41E3A] text-white"
+                : "bg-[#E0D5CC] text-[#2D2D2D] hover:bg-[#D0C5BC]"
+            }`}
+          >
+            Asociaciones Juveniles
+          </button>
+        </div>
+
+        {/* Selector de partidos/asociaciones */}
         <div className="flex flex-wrap gap-2">
           {parties.map((party, idx) => (
             <button
               key={party}
               onClick={() => toggleParty(party)}
-              className={`px-4 py-2 rounded-lg font-semibold transition-all text-sm ${
+              className={`px-3 py-1 rounded-lg font-semibold transition-all text-xs ${
                 selectedParties.length === 0 || selectedParties.includes(party)
                   ? "text-white"
                   : "text-[#999999] opacity-50"

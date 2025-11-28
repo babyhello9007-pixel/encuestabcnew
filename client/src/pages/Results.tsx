@@ -535,7 +535,7 @@ export default function Results() {
                     : "text-[#666666] hover:text-[#2D2D2D]"
                 }`}
               >
-                Tendencias
+                Variación de Votaciones por Día
               </button>
               <div className="ml-auto flex gap-2">
                 <Button
@@ -649,7 +649,7 @@ export default function Results() {
 
             <>
             {activeTab === "tendencias" && (
-              <TrendenciesChart activeTab={activeTab === "general" ? "general" : "youth"} />
+              <TrendenciesChart />
             )}
             {activeTab === "leaders" && (
             <div className="space-y-6">
