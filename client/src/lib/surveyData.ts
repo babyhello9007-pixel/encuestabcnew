@@ -50,7 +50,7 @@ export const YOUTH_ASSOCIATIONS = {
 };
 
 export const LEADERS = {
-  FEIJOO: { name: 'Alberto Núñez Feijóo', image: '/assets/icons/AlbertoNuñezFeijoo.png' },
+  FEIJOO: { name: 'Alberto Núñez Feijóo', image: '/assets/leaders/feijoo.jpg' },
   SANCHEZ: { name: 'Pedro Sánchez', image: '/assets/icons/PedroSanchez.png' },
   ABASCAL: { name: 'Santiago Abascal', image: '/assets/icons/SantiagoAbascal.png' },
   ALVISE: { name: 'Alvise Pérez', image: '/assets/icons/AlvisePerez.png' },
