@@ -20,7 +20,7 @@ export const PARTIES_GENERAL = {
   IZQUIERDA: { name: 'Izquierda Española', logo: '/assets/icons/IzquierdaEspanola.png' },
   JUNTOS_EXT: { name: 'Juntos por Extremadura', logo: '/assets/icons/juntosporextremadura.png' },
   PLIB: { name: 'P-Lib', logo: '/assets/icons/plib.jpg' },
-  EB: { name: 'Escaños en Blanco', logo: '/assets/icons/EscañosEnBlancoNEW.jpg' },
+  EB: { name: 'Escaños en Blanco', logo: '/assets/icons/escanios-blanco-new.png' },
   BNG: { name: 'BNG', logo: '/assets/icons/bng-new.png' },
 };
 

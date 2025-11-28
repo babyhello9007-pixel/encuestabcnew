@@ -603,12 +603,22 @@ export default function Results() {
                     className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow"
                   >
                     <div className="flex items-center gap-4">
-                      {logoUrl && (
+                      {logoUrl ? (
                         <img
                           src={logoUrl}
                           alt={party.nombre}
                           className="h-12 w-12 object-contain rounded-lg bg-white p-1"
+                          style={{ display: 'block', width: '48px', height: '48px', backgroundColor: '#ffffff' }}
+                          onError={(e) => {
+                            console.error('Error loading logo for', party.nombre, ':', e);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          onLoad={() => {
+                            if (party.nombre === 'Escaños en Blanco') console.log('Escaños en Blanco logo loaded');
+                          }}
                         />
+                      ) : (
+                        <div className="h-12 w-12 bg-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-500">N/A</div>
                       )}
                       <div className="flex-1">
                         <h3 className="font-bold text-[#2D2D2D]">{party.nombre}</h3>
