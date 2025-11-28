@@ -25,15 +25,18 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
     const fetchMetrics = async () => {
       setLoading(true);
       try {
-        // Determinar la tabla según el tipo de partido
-        const tableName = partyType === "general" 
-          ? "metricas_partidos_generales" 
-          : "metricas_asociaciones_juveniles";
+        // Determinar la vista según el tipo de partido
+        const viewName = partyType === "general" 
+          ? "edad_ideologia_por_partido" 
+          : "edad_ideologia_por_asociacion";
+        
+        // Determinar el campo de búsqueda
+        const searchField = partyType === "general" ? "partido" : "asociacion";
 
         const { data, error } = await supabase
-          .from(tableName)
+          .from(viewName)
           .select("edad_promedio, ideologia_promedio, total_votos")
-          .eq("nombre_partido", partyName)
+          .eq(searchField, partyName)
           .single();
 
         if (error) {
