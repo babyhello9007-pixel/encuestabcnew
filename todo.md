@@ -83,3 +83,11 @@
 - [x] Crear página de agradecimiento post-NanoEncuestaBC
 - [x] Agregar validación obligatoria en NanoEncuestaBC - todas las preguntas requeridas antes de enviar
 
+## Reorganización de Líderes - ACTUAL
+- [x] Mover botón PDF a sección Compartir Resultados
+- [x] Crear vista SQL ranking_lideres_por_partido
+- [x] Actualizar pdfExportLeaders para usar la nueva vista (pdfExportLeadersV2.ts)
+- [x] Integrar compartir resultados directamente en botón
+- [x] Actualizar URL en infografía a https://encuestabc-6q57y6uz.manus.space/
+- [ ] Ejecutar script SQL en Supabase para crear la vista
+- [ ] Verificar que PDF funciona correctamente después de crear la vista

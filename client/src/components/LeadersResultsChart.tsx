@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { PARTY_COLORS } from "@/lib/partyColors";
-import { exportLeadersToPDF } from "@/lib/pdfExportLeaders";
+
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadersInfographic } from "@/components/LeadersInfographic";
@@ -212,7 +212,6 @@ export function LeadersResultsChart() {
           <LeadersInfographic
             leadersByParty={leadersByParty}
             selectedParty={selectedParty}
-            onExportPDF={() => exportLeadersToPDF(leadersByParty)}
           />
         </div>
       )}

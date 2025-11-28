@@ -2,6 +2,7 @@ import { useRef } from "react";
 import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import { Download, Share2 } from "lucide-react";
+import { exportLeadersToPDFV2 } from "@/lib/pdfExportLeadersV2";
 
 interface LeaderResult {
   partido: string;
@@ -17,10 +18,9 @@ interface PartyLeaders {
 interface LeadersInfographicProps {
   leadersByParty: PartyLeaders;
   selectedParty: string | null;
-  onExportPDF?: () => void;
 }
 
-export function LeadersInfographic({ leadersByParty, selectedParty, onExportPDF }: LeadersInfographicProps) {
+export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInfographicProps) {
   const infographicRef = useRef<HTMLDivElement>(null);
 
   const selectedLeaders = selectedParty ? leadersByParty[selectedParty] : [];
@@ -71,15 +71,13 @@ export function LeadersInfographic({ leadersByParty, selectedParty, onExportPDF 
       {/* Action Buttons - Top */}
       <div className="flex flex-col gap-3">
         <div className="flex gap-2">
-          {onExportPDF && (
-            <Button
-              onClick={onExportPDF}
-              className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              PDF
-            </Button>
-          )}
+          <Button
+            onClick={() => exportLeadersToPDFV2(selectedParty)}
+            className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            PDF
+          </Button>
           <Button
             onClick={shareOnX}
             className="flex-1 bg-black hover:bg-gray-800 text-white font-semibold flex items-center justify-center gap-2"
@@ -145,7 +143,7 @@ export function LeadersInfographic({ leadersByParty, selectedParty, onExportPDF 
           {/* Footer */}
           <div className="pt-4 border-t border-gray-600 text-sm text-gray-400">
             <p>Encuesta en tiempo real • Todos los datos son anónimos y públicos</p>
-            <p className="text-xs mt-2">www.batallaacultural.es</p>
+            <p className="text-xs mt-2">https://encuestabc-6q57y6uz.manus.space/</p>
           </div>
         </div>
       </div>
