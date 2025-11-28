@@ -21,6 +21,8 @@ interface PartyLeaders {
 export function LeadersResultsChart() {
   const [leadersByParty, setLeadersByParty] = useState<PartyLeaders>({});
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
+  const [customParty, setCustomParty] = useState<string>("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,18 +82,22 @@ export function LeadersResultsChart() {
       </div>
 
       {/* Party Selection Buttons */}
-      <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+      <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto items-start">
         {parties.map((party) => (
           <button
             key={party}
-            onClick={() => setSelectedParty(party)}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              selectedParty === party
+            onClick={() => {
+              setSelectedParty(party);
+              setShowCustomInput(false);
+              setCustomParty("");
+            }}
+            className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+              selectedParty === party && !showCustomInput
                 ? "bg-[#C41E3A] text-white"
                 : "bg-[#F5F1E8] text-[#2D2D2D] hover:bg-[#E0D5CC]"
             }`}
             style={
-              selectedParty === party
+              selectedParty === party && !showCustomInput
                 ? { backgroundColor: PARTY_COLORS[party] || "#C41E3A" }
                 : {}
             }
@@ -99,7 +105,46 @@ export function LeadersResultsChart() {
             {party}
           </button>
         ))}
+        <button
+          onClick={() => {
+            setShowCustomInput(!showCustomInput);
+            if (!showCustomInput) {
+              setSelectedParty(null);
+              setCustomParty("");
+            }
+          }}
+          className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+            showCustomInput
+              ? "bg-[#C41E3A] text-white"
+              : "bg-[#F5F1E8] text-[#2D2D2D] hover:bg-[#E0D5CC]"
+          }`}
+        >
+          + Otro
+        </button>
       </div>
+
+      {/* Custom Party Input */}
+      {showCustomInput && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Escribe el nombre del partido..."
+            value={customParty}
+            onChange={(e) => setCustomParty(e.target.value)}
+            className="flex-1 px-4 py-2 border border-[#E0D5CC] rounded-lg focus:outline-none focus:border-[#C41E3A]"
+          />
+          <Button
+            onClick={() => {
+              if (customParty.trim()) {
+                setSelectedParty(customParty.trim());
+              }
+            }}
+            className="bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold"
+          >
+            Buscar
+          </Button>
+        </div>
+      )}
 
       {/* Charts */}
       {selectedLeaders.length > 0 && (
@@ -200,7 +245,7 @@ export function LeadersResultsChart() {
         </div>
       )}
 
-      {selectedLeaders.length === 0 && (
+      {selectedLeaders.length === 0 && selectedParty && (
         <div className="text-center py-8 text-[#666666]">
           No hay resultados disponibles para {selectedParty}
         </div>
