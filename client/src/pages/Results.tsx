@@ -655,21 +655,26 @@ export default function Results() {
                 <>
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {leaderRatings.map((leader) => {
-                    const leaderImages: Record<string, string> = {
-                      'val_feijoo': '/assets/images/feijoo-nuevo.png',
-                      'val_sanchez': '/assets/icons/PedroSanchez.png',
-                      'val_abascal': '/assets/icons/SantiagoAbascal.png',
-                      'val_alvise': '/assets/icons/AlvisePerez.png',
-                      'val_yolanda_diaz': '/assets/icons/YolandaDiaz.png',
-                      'val_irene_montero': '/assets/icons/IreneMontero.png',
-                      'val_ayuso': '/assets/icons/IsabelDiazAyuso.png',
-                      'val_buxade': '/assets/icons/JorgeBuxade.png',
+                    // Mapeo de fieldName a clave de LEADERS
+                    const leaderKeyMap: Record<string, keyof typeof LEADERS> = {
+                      'val_feijoo': 'FEIJOO',
+                      'val_sanchez': 'SANCHEZ',
+                      'val_abascal': 'ABASCAL',
+                      'val_alvise': 'ALVISE',
+                      'val_yolanda_diaz': 'YOLANDA',
+                      'val_irene_montero': 'IRENE',
+                      'val_ayuso': 'AYUSO',
+                      'val_buxade': 'BUXADE',
                     };
+                    const leaderKey = leaderKeyMap[leader.fieldName];
+                    const leaderData = leaderKey ? LEADERS[leaderKey] : null;
+                    const leaderImage = leaderData?.image;
+                    
                     return (
                     <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                      {leaderImages[leader.fieldName] && (
+                      {leaderImage && (
                         <img
-                          src={leaderImages[leader.fieldName]}
+                          src={leaderImage}
                           alt={leader.name}
                           className="w-full h-32 object-cover rounded-lg"
                         />
