@@ -11,11 +11,13 @@ interface LeaderSelectionProps {
 
 export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSelectionProps) {
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
+  const [customParty, setCustomParty] = useState("");
+  const [showCustomPartyInput, setShowCustomPartyInput] = useState(false);
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
   const [customLeader, setCustomLeader] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
 
-  const leaderOptions = selectedParty ? getLeaderOptions(selectedParty) : [];
+  const leaderOptions = selectedParty && !showCustomPartyInput ? getLeaderOptions(selectedParty) : [];
 
   const handleSelectLeader = (leader: string) => {
     setSelectedLeader(leader);
@@ -29,8 +31,9 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
   };
 
   const handleSubmit = () => {
-    if (!selectedParty) {
-      alert("Por favor selecciona un partido");
+    const partyName = showCustomPartyInput ? customParty.trim() : selectedParty;
+    if (!partyName) {
+      alert("Por favor selecciona o escribe un partido");
       return;
     }
 
@@ -39,9 +42,9 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
         alert("Por favor escribe el nombre del líder");
         return;
       }
-      onLeaderSelected(selectedParty, customLeader.trim(), true);
+      onLeaderSelected(partyName, customLeader.trim(), true);
     } else if (selectedLeader) {
-      onLeaderSelected(selectedParty, selectedLeader, false);
+      onLeaderSelected(partyName, selectedLeader, false);
     } else {
       alert("Por favor selecciona un líder");
       return;
@@ -59,12 +62,14 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
               key={key}
               onClick={() => {
                 setSelectedParty(key);
+                setShowCustomPartyInput(false);
+                setCustomParty("");
                 setSelectedLeader(null);
                 setShowCustomInput(false);
                 setCustomLeader("");
               }}
               className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
-                selectedParty === key
+                selectedParty === key && !showCustomPartyInput
                   ? "border-[#C41E3A] bg-[#C41E3A] bg-opacity-10 text-[#C41E3A]"
                   : "border-[#E0D5CC] bg-white text-[#2D2D2D] hover:border-[#C41E3A]"
               }`}
@@ -72,14 +77,46 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
               {party.name}
             </button>
           ))}
+          <button
+            onClick={() => {
+              setShowCustomPartyInput(!showCustomPartyInput);
+              if (!showCustomPartyInput) {
+                setSelectedParty(null);
+                setCustomParty("");
+                setSelectedLeader(null);
+                setShowCustomInput(false);
+                setCustomLeader("");
+              }
+            }}
+            className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+              showCustomPartyInput
+                ? "border-[#C41E3A] bg-[#C41E3A] bg-opacity-10 text-[#C41E3A]"
+                : "border-[#E0D5CC] bg-white text-[#2D2D2D] hover:border-[#C41E3A]"
+            }`}
+          >
+            + Otro
+          </button>
         </div>
+
+        {/* Custom Party Input */}
+        {showCustomPartyInput && (
+          <div className="mt-3">
+            <Input
+              type="text"
+              placeholder="Escribe el nombre de tu partido político"
+              value={customParty}
+              onChange={(e) => setCustomParty(e.target.value)}
+              className="w-full p-3 border-2 border-[#E0D5CC] rounded-lg focus:border-[#C41E3A] focus:outline-none"
+            />
+          </div>
+        )}
       </div>
 
       {/* Leader Selection */}
-      {selectedParty && (
+      {(selectedParty || (showCustomPartyInput && customParty.trim())) && (
         <div className="space-y-3 p-6 bg-gradient-to-br from-[#F5F1E8] to-[#EEEEEE] rounded-xl">
           <h3 className="text-lg font-semibold text-[#2D2D2D]">
-            ¿Quién quieres que sea el líder de {PARTIES_GENERAL[selectedParty]?.name}?
+            ¿Quién quieres que sea el líder de {showCustomPartyInput && customParty.trim() ? customParty : (selectedParty ? PARTIES_GENERAL[selectedParty]?.name : "tu partido")}?
           </h3>
 
           <div className="space-y-2">
@@ -130,7 +167,7 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
 
           <Button
             onClick={handleSubmit}
-            disabled={loading || !selectedParty || (!selectedLeader && !showCustomInput)}
+            disabled={loading || (!selectedParty && (!showCustomPartyInput || !customParty.trim())) || (!selectedLeader && !showCustomInput)}
             className="w-full mt-4 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Guardando..." : "Confirmar Selección"}
