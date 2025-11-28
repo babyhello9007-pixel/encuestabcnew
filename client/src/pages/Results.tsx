@@ -11,6 +11,7 @@ import { ShareResultsAdvanced } from "@/components/ShareResultsAdvanced";
 import { CommentsSection } from "@/components/CommentsSection";
 import { PartyMetricsDisplay } from "@/components/PartyMetricsDisplay";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
+import PartyLogo from "@/components/PartyLogo";
 
 interface PartyStats {
   id: string;
@@ -604,22 +605,7 @@ export default function Results() {
                   >
                     <div className="flex items-center gap-4">
                       {logoUrl ? (
-                        <img
-                          src={logoUrl}
-                          alt={party.nombre}
-                          className="h-12 w-12 object-contain rounded-lg bg-white p-1"
-                          style={{ display: 'block', width: '48px', height: '48px', backgroundColor: '#ffffff' }}
-                          onError={(e) => {
-                            console.error('Error loading logo for', party.nombre, ':', e);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                          onLoad={() => {
-                            if (party.nombre === 'Escaños en Blanco') console.log('Escaños en Blanco logo loaded');
-                            if (party.nombre === 'BNG') console.log('BNG logo loaded from:', logoUrl);
-                            if (party.nombre === 'Falange Española de las JONS') console.log('Falange logo loaded from:', logoUrl);
-                            if (party.nombre === 'Soberanía y Trabajo') console.log('Soberanía y Trabajo logo loaded from:', logoUrl);
-                          }}
-                        />
+                        <PartyLogo src={logoUrl} alt={party.nombre} partyName={party.nombre} size={48} />
                       ) : (
                         <div className="h-12 w-12 bg-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-500">N/A</div>
                       )}
