@@ -11,6 +11,7 @@ import Results from "./pages/Results";
 import About from "./pages/About";
 import Admin from "./pages/Admin";
 import CodeEditor from "./pages/CodeEditor";
+import LeaderSurvey from "./pages/LeaderSurvey";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/encuesta"} component={Survey} />
       <Route path={"/nano-encuesta"} component={NanoEncuestaBC} />
+      <Route path={"/lideres"} component={LeaderSurvey} />
       <Route path={"/resultados"} component={Results} />
       <Route path={"/acerca-de"} component={About} />
       <Route path={"/admin"} component={Admin} />
