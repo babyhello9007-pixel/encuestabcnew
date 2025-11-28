@@ -607,7 +607,7 @@ export default function Results() {
                       {logoUrl ? (
                         <PartyLogo src={logoUrl} alt={party.nombre} partyName={party.nombre} size={48} />
                       ) : (
-                        <div className="h-12 w-12 bg-gray-300 rounded-lg flex items-center justify-center text-xs text-gray-500">N/A</div>
+                        <div className="h-12 w-12 bg-gray-300 rounded-2xl flex items-center justify-center text-xs text-gray-500">N/A</div>
                       )}
                       <div className="flex-1">
                         <h3 className="font-bold text-[#2D2D2D]">{party.nombre}</h3>
