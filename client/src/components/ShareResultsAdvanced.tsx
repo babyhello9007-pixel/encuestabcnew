@@ -40,7 +40,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
   const generateShareText = (party: PartyStats) => {
     const percentage = party.porcentaje.toFixed(1);
     const type = activeTab === "general" ? "Elecciones Generales" : "Asociaciones Juveniles";
-    return `🗳️ Según la III Encuesta de Batalla Cultural, ${party.nombre} lidera con ${percentage}% de los votos en ${type}. ¡Participa en la encuesta! #BatallasCultural`;
+    return `🗳️ Según la La Encuesta de Batalla Cultural, ${party.nombre} lidera con ${percentage}% de los votos en ${type}. ¡Participa en la encuesta! #BatallasCultural`;
   };
 
   const downloadInfography = async () => {

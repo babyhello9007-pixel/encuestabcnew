@@ -145,7 +145,7 @@ export async function exportResultsToPDFAdvanced(
         { align: 'center' }
       );
       doc.text(
-        'III Encuesta de Batalla Cultural © 2025',
+        'La Encuesta de Batalla Cultural © 2025',
         14,
         doc.internal.pageSize.getHeight() - 10
       );

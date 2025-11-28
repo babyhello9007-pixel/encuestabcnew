@@ -15,7 +15,7 @@ export function ShareResults({ activeTab, topParty, topPartyVotes, totalVotes }:
   const generateShareText = () => {
     const percentage = ((topPartyVotes / totalVotes) * 100).toFixed(1);
     const type = activeTab === "general" ? "Elecciones Generales" : "Asociaciones Juveniles";
-    return `🗳️ Según la III Encuesta de Batalla Cultural, ${topParty} lidera con ${percentage}% de los votos en ${type}. ¡Participa en la encuesta! #BatallasCultural`;
+    return `🗳️ Según la La Encuesta de Batalla Cultural, ${topParty} lidera con ${percentage}% de los votos en ${type}. ¡Participa en la encuesta! #BatallasCultural`;
   };
 
   const shareOnX = () => {

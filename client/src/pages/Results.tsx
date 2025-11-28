@@ -13,6 +13,7 @@ import { PartyMetricsDisplay } from "@/components/PartyMetricsDisplay";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
 import { PartyStatsModal } from "@/components/PartyStatsModal";
+import { LeadersResultsChart } from "@/components/LeadersResultsChart";
 
 interface PartyStats {
   id: string;
@@ -43,7 +44,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -540,6 +541,16 @@ export default function Results() {
               >
                 Variación de Votaciones por Día
               </button>
+              <button
+                onClick={() => setActiveTab("lideres-preferidos")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "lideres-preferidos"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                ¿Quién quieres que sea el líder de tu partido?
+              </button>
               <div className="ml-auto flex gap-2">
                 <Button
                   onClick={exportToPDF}
@@ -645,6 +656,9 @@ export default function Results() {
             <>
             {activeTab === "tendencias" && (
               <TrendenciesChart />
+            )}
+            {activeTab === "lideres-preferidos" && (
+              <LeadersResultsChart />
             )}
             {activeTab === "leaders" && (
             <div className="space-y-6">
@@ -781,7 +795,7 @@ export default function Results() {
       <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
         <div className="container py-8 text-center text-sm text-[#666666]">
           <p>
-            III Encuesta de Batalla Cultural © 2025 | Todos los datos son anónimos y públicos
+            La Encuesta de Batalla Cultural © 2025 | Todos los datos son anónimos y públicos
           </p>
         </div>
       </footer>

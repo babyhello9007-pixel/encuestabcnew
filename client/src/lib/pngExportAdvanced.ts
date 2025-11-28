@@ -46,7 +46,7 @@ export const generateAdvancedInfographic = async (
   logoContainer.appendChild(logoImg);
 
   const title = document.createElement('h1');
-  title.textContent = 'III Encuesta de Batalla Cultural';
+  title.textContent = 'La Encuesta de Batalla Cultural';
   title.style.color = '#C41E3A';
   title.style.fontSize = '56px';
   title.style.fontWeight = 'bold';
@@ -192,7 +192,7 @@ export const generateAdvancedInfographic = async (
   footer.style.fontSize = '13px';
 
   const leftFooter = document.createElement('span');
-  leftFooter.textContent = 'III Encuesta de Batalla Cultural © 2025';
+  leftFooter.textContent = 'La Encuesta de Batalla Cultural © 2025';
 
   const rightFooter = document.createElement('span');
   rightFooter.textContent = new Date().toLocaleDateString('es-ES', { 
@@ -268,7 +268,7 @@ export const generateAllLogosInfographic = async (
   logoContainer.appendChild(logoImg);
 
   const title = document.createElement('h1');
-  title.textContent = 'III Encuesta de Batalla Cultural';
+  title.textContent = 'La Encuesta de Batalla Cultural';
   title.style.color = '#C41E3A';
   title.style.fontSize = '56px';
   title.style.fontWeight = 'bold';

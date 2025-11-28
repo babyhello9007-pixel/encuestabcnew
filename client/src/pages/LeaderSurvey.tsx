@@ -109,7 +109,7 @@ export default function LeaderSurvey() {
       <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
         <div className="container py-8 text-center text-sm text-[#666666]">
           <p>
-            III Encuesta de Batalla Cultural 2025 | Todos los datos son anonimos y publicos
+            La Encuesta de Batalla Cultural 2025 | Todos los datos son anonimos y publicos
           </p>
         </div>
       </footer>

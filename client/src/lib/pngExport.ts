@@ -36,7 +36,7 @@ export async function generateInfographicPNG(data: InfographicData): Promise<Blo
   header.style.marginBottom = '30px';
   header.innerHTML = `
     <h1 style="font-size: 48px; font-weight: bold; margin: 0; color: #C41E3A;">${data.title}</h1>
-    <p style="font-size: 18px; color: #999999; margin: 10px 0 0 0;">III Encuesta de Batalla Cultural</p>
+    <p style="font-size: 18px; color: #999999; margin: 10px 0 0 0;">La Encuesta de Batalla Cultural</p>
   `;
   container.appendChild(header);
 
@@ -131,7 +131,7 @@ export async function generateInfographicPNG(data: InfographicData): Promise<Blo
   footer.style.borderTop = '1px solid #333333';
   footer.style.paddingTop = '20px';
   footer.innerHTML = `
-    <p style="margin: 0;">III Encuesta de Batalla Cultural © 2025 | Análisis político, juventud y futuro de España</p>
+    <p style="margin: 0;">La Encuesta de Batalla Cultural © 2025 | Análisis político, juventud y futuro de España</p>
   `;
   container.appendChild(footer);
 
