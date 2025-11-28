@@ -121,11 +121,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
                         <img 
                           src={party.logo} 
                           alt={party.nombre} 
-                          className="h-5 w-5 object-contain" 
-                          onError={(e) => {
-                            console.warn(`Logo no cargó: ${party.logo}`);
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
+                          className="h-5 w-5 object-contain flex-shrink-0" 
                         />
                       )}
                       <span className="truncate">{party.nombre}</span>
@@ -153,10 +149,6 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
                           alt={selectedParty.nombre} 
                           className="h-24 w-24 object-contain drop-shadow-lg"
                           crossOrigin="anonymous"
-                          onError={(e) => {
-                            console.warn(`Logo no cargó en infografía: ${selectedParty.logo}`);
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
                         />
                       </div>
                     )}
