@@ -1,5 +1,7 @@
+import { useRef } from "react";
+import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
-import { Download, Share2 } from "lucide-react";
+import { Download, Share2, Image } from "lucide-react";
 import { exportLeadersToPDFV4 } from "@/lib/pdfExportLeadersV4";
 
 interface LeaderResult {
@@ -15,6 +17,26 @@ interface LeadersInfographicSimpleProps {
 }
 
 export function LeadersInfographicSimple({ selectedParty, leaders }: LeadersInfographicSimpleProps) {
+  const infographicRef = useRef<HTMLDivElement>(null);
+
+  const downloadInfographic = async () => {
+    if (!infographicRef.current) return;
+
+    try {
+      const canvas = await html2canvas(infographicRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+      });
+
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = `infografia-lideres-${selectedParty}-${new Date().toISOString().split("T")[0]}.png`;
+      link.click();
+    } catch (err) {
+      console.error("Error downloading infographic:", err);
+    }
+  };
+
   const shareOnX = () => {
     const text = `Resultados de preferencia de líderes en ${selectedParty}: ${leaders
       .slice(0, 3)
@@ -58,6 +80,13 @@ export function LeadersInfographicSimple({ selectedParty, leaders }: LeadersInfo
           PDF
         </Button>
         <Button
+          onClick={downloadInfographic}
+          className="flex-1 min-w-[120px] bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2"
+        >
+          <Image className="h-4 w-4" />
+          PNG
+        </Button>
+        <Button
           onClick={shareOnX}
           className="flex-1 min-w-[120px] bg-black hover:bg-gray-800 text-white font-semibold flex items-center justify-center gap-2"
         >
@@ -73,8 +102,11 @@ export function LeadersInfographicSimple({ selectedParty, leaders }: LeadersInfo
         </Button>
       </div>
 
-      {/* Ranking List */}
-      <div className="bg-white p-6 rounded-xl shadow-sm space-y-4">
+      {/* Ranking List - Infographic Container */}
+      <div
+        ref={infographicRef}
+        className="bg-white p-6 rounded-xl shadow-sm space-y-4"
+      >
         <div className="text-center mb-6">
           <h3 className="text-2xl font-bold text-[#C41E3A] mb-2">
             Ranking de Líderes - {selectedParty}
