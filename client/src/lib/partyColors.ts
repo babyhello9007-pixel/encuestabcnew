@@ -8,7 +8,7 @@ export const PARTY_COLORS: Record<string, string> = {
   'PP': '#0066CC',           // Azul marino (Partido Popular)
   'PSOE': '#E31C23',         // Rojo (Partido Socialista Obrero Español)
   'VOX': '#63B432',          // Verde (VOX)
-  'Ciudadanos': '#FF6600',   // Naranja (Ciudadanos)
+  'Ciudadanos': '#FF9900',   // Naranja (Ciudadanos)
   'PODEMOS': '#7B2D6B',      // Púrpura (Podemos)
   'SUMAR': '#EE5A24',        // Naranja-rojo (Sumar)
   
@@ -46,7 +46,7 @@ export const CHART_COLORS = {
   'PP': '#0066CC',
   'PSOE': '#E31C23',
   'VOX': '#63B432',
-  'Ciudadanos': '#FF6600',
+  'Ciudadanos': '#FF9900',
   'PODEMOS': '#7B2D6B',
   'SUMAR': '#EE5A24',
 };
