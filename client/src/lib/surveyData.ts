@@ -40,7 +40,7 @@ export const YOUTH_ASSOCIATIONS = {
   JERC: { name: "Joventuts d'Esquerra Republicana de Catalunya", logo: '/assets/icons/ERCNew.png' },
   JNC: { name: 'Joventut Nacionalista de Catalunya', logo: '/assets/icons/JoventutNacionalistadeCatalunyaNEW.png' },
   GALIZANOVA: { name: 'Galiza Nova', logo: '/assets/icons/galizanovanew.png' },
-  ARRAN: { name: 'Arran', logo: '/assets/icons/juntosporextremadura.png' },
+  ARRAN: { name: 'Arran', logo: '/assets/icons/arran-new.png' },
   JNCANA: { name: 'Jóvenes Nacionalistas de Canarias', logo: '/assets/icons/jncana.jpg' },
   JPV: { name: 'Joves del País Valencià – Compromís', logo: '/assets/icons/jpv.png' },
   ACL: { name: 'Acción Castilla y León', logo: '/assets/icons/AcciónCastillayLeónNEW.png' },
