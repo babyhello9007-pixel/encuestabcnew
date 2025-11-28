@@ -12,6 +12,7 @@ import { CommentsSection } from "@/components/CommentsSection";
 import { PartyMetricsDisplay } from "@/components/PartyMetricsDisplay";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
+import { PartyStatsModal } from "@/components/PartyStatsModal";
 
 interface PartyStats {
   id: string;
@@ -50,6 +51,7 @@ export default function Results() {
   const [youthMetrics, setYouthMetrics] = useState<PartyMetrics[]>([]);
   const [historialVotos, setHistorialVotos] = useState<Array<{fecha: string, votos: number}>>([]);
   const [notaEjecutivo, setNotaEjecutivo] = useState<number | null>(null);
+  const [selectedPartyForStats, setSelectedPartyForStats] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -601,7 +603,8 @@ export default function Results() {
                   return (
                   <div
                     key={party.id}
-                    className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow"
+                    className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => setSelectedPartyForStats(party.nombre)}
                   >
                     <div className="flex items-center gap-4">
                       {logoUrl ? (
@@ -767,6 +770,13 @@ export default function Results() {
           </div>
         )}
       </main>
+
+      <PartyStatsModal
+        isOpen={!!selectedPartyForStats}
+        onClose={() => setSelectedPartyForStats(null)}
+        partyName={selectedPartyForStats || ""}
+        partyType={activeTab === "general" ? "general" : "youth"}
+      />
 
       <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
         <div className="container py-8 text-center text-sm text-[#666666]">
