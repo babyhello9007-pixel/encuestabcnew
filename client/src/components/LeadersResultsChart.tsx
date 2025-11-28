@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { PARTY_COLORS } from "@/lib/partyColors";
-
-import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LeadersInfographic } from "@/components/LeadersInfographic";
+import { ShareLeadersModal } from "@/components/ShareLeadersModal";
 
 interface LeaderResult {
   partido: string;
@@ -207,12 +205,8 @@ export function LeadersResultsChart() {
       )}
 
       {selectedLeaders.length > 0 && (
-        <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h4 className="text-lg font-semibold text-[#2D2D2D] mb-4">Compartir Resultados</h4>
-          <LeadersInfographic
-            leadersByParty={leadersByParty}
-            selectedParty={selectedParty}
-          />
+        <div className="flex gap-2">
+          <ShareLeadersModal leadersByParty={leadersByParty} selectedParty={selectedParty} />
         </div>
       )}
     </div>
