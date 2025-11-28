@@ -21,7 +21,7 @@ export const PARTIES_GENERAL = {
   JUNTOS_EXT: { name: 'Juntos por Extremadura', logo: '/assets/icons/juntosporextremadura.png' },
   PLIB: { name: 'P-Lib', logo: '/assets/icons/plib.jpg' },
   EB: { name: 'Escaños en Blanco', logo: '/assets/icons/escanios-blanco-new.png' },
-  BNG: { name: 'BNG', logo: '/assets/icons/bng-new.png' },
+  BNG: { name: 'BNG', logo: '/assets/leaders/bng.png' },
 };
 
 export const YOUTH_ASSOCIATIONS = {

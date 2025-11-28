@@ -615,6 +615,7 @@ export default function Results() {
                           }}
                           onLoad={() => {
                             if (party.nombre === 'Escaños en Blanco') console.log('Escaños en Blanco logo loaded');
+                            if (party.nombre === 'BNG') console.log('BNG logo loaded from:', logoUrl);
                           }}
                         />
                       ) : (
