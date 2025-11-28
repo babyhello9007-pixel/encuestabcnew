@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { PARTY_COLORS } from "@/lib/partyColors";
+import { exportLeadersToPDF } from "@/lib/pdfExportLeaders";
+import { Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface LeaderResult {
   partido: string;
@@ -74,6 +77,17 @@ export function LeadersResultsChart() {
         <p className="text-sm text-blue-800">
           <strong>Nota:</strong> Estos resultados son independientes a los de "La Encuesta de Batalla Cultural". Esta es una encuesta complementaria sobre preferencias de líderes.
         </p>
+      </div>
+
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={() => exportLeadersToPDF(leadersByParty)}
+          className="bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Descargar PDF
+        </Button>
       </div>
 
       {/* Party Selection Buttons */}

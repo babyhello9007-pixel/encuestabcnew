@@ -69,7 +69,7 @@ export default function Home() {
           <div className="space-y-6">
             <div className="space-y-2">
               <h2 className="text-4xl md:text-5xl font-bold text-[#2D2D2D] leading-tight">
-                III Encuesta de <span className="text-[#C41E3A]">Batalla Cultural</span>
+                La Encuesta de <span className="text-[#C41E3A]">Batalla Cultural</span>
               </h2>
               <p className="text-lg text-[#666666]">
                 Tu voz importa. Participa en la encuesta más importante sobre el futuro político y cultural de España.
@@ -123,6 +123,12 @@ export default function Home() {
                 className="w-full border-[#999999] text-[#999999] hover:bg-[#F5F1E8] h-10 text-sm font-semibold rounded-lg"
               >
                 Responder NanoEncuestaBC (Versión Rápida)
+              </Button>
+              <Button
+                onClick={() => setLocation("/lideres")}
+                className="w-full bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1528] text-white h-11 text-sm font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
+              >
+                ¿Quién quieres que sea el líder de tu partido?
               </Button>
             </div>
           </div>
