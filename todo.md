@@ -86,9 +86,10 @@
 ## Reorganización de Líderes - COMPLETADO
 - [x] Mover botón PDF a sección Compartir Resultados
 - [x] Crear vista SQL ranking_lideres_por_partido
-- [x] Actualizar pdfExportLeaders para usar la nueva vista (pdfExportLeadersV2.ts)
+- [x] Actualizar pdfExportLeaders para usar la nueva vista (pdfExportLeadersFixed.ts)
 - [x] Integrar compartir resultados directamente en botón (ShareLeadersModal.tsx)
 - [x] Actualizar URL en infografía a https://encuestabc-6q57y6uz.manus.space/
 - [x] Compartir Resultados ahora abre modal sin sección propia
-- [ ] Ejecutar script SQL en Supabase para crear la vista
-- [ ] Verificar que PDF funciona correctamente después de crear la vista
+- [x] Mover botón Compartir a fila superior junto a PDF
+- [x] Arreglar PDF e infografía para consultar directamente lideres_preferidos
+- [x] PDF e infografía funcionan correctamente

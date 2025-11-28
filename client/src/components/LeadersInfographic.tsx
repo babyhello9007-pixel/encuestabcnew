@@ -2,7 +2,7 @@ import { useRef } from "react";
 import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import { Download, Share2 } from "lucide-react";
-import { exportLeadersToPDFV2 } from "@/lib/pdfExportLeadersV2";
+import { exportLeadersToPDFFixed } from "@/lib/pdfExportLeadersFixed";
 
 interface LeaderResult {
   partido: string;
@@ -72,7 +72,7 @@ export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInf
       <div className="flex flex-col gap-3">
         <div className="flex gap-2">
           <Button
-            onClick={() => exportLeadersToPDFV2(selectedParty)}
+            onClick={() => exportLeadersToPDFFixed(selectedParty)}
             className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
           >
             <Download className="h-4 w-4" />

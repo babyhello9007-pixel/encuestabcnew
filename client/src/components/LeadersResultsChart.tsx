@@ -4,6 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { PARTY_COLORS } from "@/lib/partyColors";
 import { Button } from "@/components/ui/button";
 import { ShareLeadersModal } from "@/components/ShareLeadersModal";
+import { Download } from "lucide-react";
+import { exportLeadersToPDFFixed } from "@/lib/pdfExportLeadersFixed";
 
 interface LeaderResult {
   partido: string;
@@ -204,8 +206,16 @@ export function LeadersResultsChart() {
         </div>
       )}
 
+      {/* Action Buttons Row - Top Level */}
       {selectedLeaders.length > 0 && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 bg-white p-4 rounded-xl shadow-sm">
+          <Button
+            onClick={() => exportLeadersToPDFFixed(selectedParty)}
+            className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            PDF
+          </Button>
           <ShareLeadersModal leadersByParty={leadersByParty} selectedParty={selectedParty} />
         </div>
       )}
