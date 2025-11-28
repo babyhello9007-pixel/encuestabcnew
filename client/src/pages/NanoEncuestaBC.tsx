@@ -297,7 +297,7 @@ export default function NanoEncuestaBC() {
                     {currentStepData.key === "asociacion_juvenil" && (
                       <>
                         {Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => (
-                          <option key={key} value={key}>{assoc.name}</option>
+                          <option key={key} value={assoc.name}>{assoc.name}</option>
                         ))}
                         <option value="OTRO">Otro (especificar)</option>
                       </>
