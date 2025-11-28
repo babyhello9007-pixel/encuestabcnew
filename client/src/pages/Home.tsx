@@ -100,19 +100,28 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-col gap-3 pt-4">
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => setLocation("/encuesta")}
+                  className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 text-base font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
+                >
+                  Comenzar Encuesta
+                </Button>
+                <Button
+                  onClick={() => setLocation("/resultados")}
+                  variant="outline"
+                  className="flex-1 border-[#C41E3A] text-[#C41E3A] hover:bg-[#F5F1E8] h-12 text-base font-semibold rounded-lg"
+                >
+                  Ver Resultados
+                </Button>
+              </div>
               <Button
-                onClick={() => setLocation("/encuesta")}
-                className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 text-base font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
-              >
-                Comenzar Encuesta
-              </Button>
-              <Button
-                onClick={() => setLocation("/resultados")}
+                onClick={() => setLocation("/nano-encuesta")}
                 variant="outline"
-                className="flex-1 border-[#C41E3A] text-[#C41E3A] hover:bg-[#F5F1E8] h-12 text-base font-semibold rounded-lg"
+                className="w-full border-[#999999] text-[#999999] hover:bg-[#F5F1E8] h-10 text-sm font-semibold rounded-lg"
               >
-                Ver Resultados
+                Responder NanoEncuestaBC (Versión Rápida)
               </Button>
             </div>
           </div>

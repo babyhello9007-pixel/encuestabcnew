@@ -68,3 +68,17 @@
 - [ ] Crear checkpoint final
 - [ ] Documentación de uso
 
+
+
+## NanoEncuestaBC - Nueva Encuesta Compacta
+- [x] Crear página NanoEncuestaBC.tsx con formulario compacto
+- [x] Implementar preguntas: edad, provincia, comunidad autónoma, nacionalidad
+- [x] Agregar preguntas de voto: generales, autonómicas, municipales, europeas
+- [x] Implementar pregunta de nota al ejecutivo (0-10)
+- [x] Agregar valoración de líderes políticos (Feijóo, Sánchez, Abascal, etc.)
+- [x] Implementar pregunta de asociación juvenil
+- [x] Crear tabla en BD para respuestas de NanoEncuestaBC
+- [x] Integrar guardado de respuestas en base de datos
+- [x] Agregar enlace desde página principal a NanoEncuestaBC
+- [x] Crear página de agradecimiento post-NanoEncuestaBC
+

@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Survey from "./pages/Survey";
+import NanoEncuestaBC from "./pages/NanoEncuestaBC";
 import Results from "./pages/Results";
 import About from "./pages/About";
 import Admin from "./pages/Admin";
@@ -17,6 +18,7 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/encuesta"} component={Survey} />
+      <Route path={"/nano-encuesta"} component={NanoEncuestaBC} />
       <Route path={"/resultados"} component={Results} />
       <Route path={"/acerca-de"} component={About} />
       <Route path={"/admin"} component={Admin} />
