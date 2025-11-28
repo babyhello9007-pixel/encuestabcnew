@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface PartyLogoProps {
   src: string;
@@ -8,59 +8,58 @@ interface PartyLogoProps {
 }
 
 export default function PartyLogo({ src, alt, partyName, size = 48 }: PartyLogoProps) {
-  const [loadError, setLoadError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
 
-  // Si no hay src, mostrar fallback
-  if (!src || src.trim() === '') {
+  useEffect(() => {
+    setCurrentSrc(src);
+    setHasError(false);
+  }, [src]);
+
+  const handleError = () => {
+    if (hasError) return; // Evitar loops infinitos
+    
+    // Generar variantes del nombre para intentar cargar
+    const variants = [
+      src,
+      src.replace(/NEW\./, 'new.'),
+      src.replace(/NEW\./, '.'),
+      src.replace(/ó/g, 'o').replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i').replace(/ú/g, 'u').replace(/ñ/g, 'n'),
+    ];
+
+    // Intentar la siguiente variante
+    for (let i = 0; i < variants.length; i++) {
+      if (variants[i] !== currentSrc) {
+        setCurrentSrc(variants[i]);
+        return;
+      }
+    }
+
+    // Si todas las variantes fallaron, mostrar fallback
+    setHasError(true);
+  };
+
+  if (hasError) {
     return (
       <div
         style={{
           width: `${size}px`,
           height: `${size}px`,
-          backgroundColor: '#cccccc',
-          border: '1px solid #999999',
+          backgroundColor: '#E8E8E8',
+          borderRadius: '12px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '12px',
-          fontSize: '10px',
-          color: '#666666',
-          fontWeight: 'bold',
-          textAlign: 'center',
-          padding: '2px',
-          boxSizing: 'border-box',
-          flexShrink: 0,
-        }}
-        title={`Sin logo: ${partyName}`}
-      >
-        N/A
-      </div>
-    );
-  }
-
-  // Si hay error de carga, mostrar fallback
-  if (loadError) {
-    return (
-      <div
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #ddd',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: '12px',
           fontSize: '10px',
           color: '#999',
           fontWeight: 'bold',
-          textAlign: 'center',
-          padding: '2px',
-          boxSizing: 'border-box',
+          border: '1px solid #d0d0d0',
           flexShrink: 0,
+          minWidth: `${size}px`,
+          minHeight: `${size}px`,
         }}
-        title={`Error cargando logo: ${partyName}`}
+        title={partyName}
       >
         {partyName.substring(0, 2).toUpperCase()}
       </div>
@@ -69,7 +68,7 @@ export default function PartyLogo({ src, alt, partyName, size = 48 }: PartyLogoP
 
   return (
     <img
-      src={src}
+      src={currentSrc}
       alt={alt}
       style={{
         width: `${size}px`,
@@ -85,11 +84,14 @@ export default function PartyLogo({ src, alt, partyName, size = 48 }: PartyLogoP
         flexShrink: 0,
         transform: isHovered ? 'scale(1.15)' : 'scale(1)',
         cursor: 'pointer',
+        minWidth: `${size}px`,
+        minHeight: `${size}px`,
       }}
-      onLoad={() => setLoadError(false)}
-      onError={() => setLoadError(true)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onError={handleError}
+      loading="eager"
+      decoding="async"
     />
   );
 }
