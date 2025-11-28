@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
+import { PARTY_COLORS } from "@/lib/partyColors";
 
 interface VotoData {
   fecha: string;
@@ -78,12 +79,17 @@ export function TrendenciesChart() {
     fetchData();
   }, [voteType]);
 
-  const colors = [
+  const fallbackColors = [
     "#C41E3A", "#0066CC", "#FFC400", "#00AA00", 
     "#FF6600", "#9933FF", "#00CCCC", "#FF0099",
     "#33CC33", "#FF3333", "#3333FF", "#FFCC00",
     "#FF9900", "#00FF99", "#9900FF", "#FF00CC"
   ];
+
+  const getColorWithFallback = (party: string, index: number): string => {
+    const color = PARTY_COLORS[party];
+    return color || fallbackColors[index % fallbackColors.length];
+  };
 
   const toggleParty = (party: string) => {
     setSelectedParties(prev => 
@@ -161,7 +167,7 @@ export function TrendenciesChart() {
               }`}
               style={{
                 backgroundColor: selectedParties.length === 0 || selectedParties.includes(party) 
-                  ? colors[idx % colors.length]
+                  ? getColorWithFallback(party, idx)
                   : "#E0D5CC"
               }}
             >
@@ -199,7 +205,7 @@ export function TrendenciesChart() {
                   key={party}
                   dataKey={party}
                   stackId="votes"
-                  fill={colors[parties.indexOf(party) % colors.length]}
+                  fill={getColorWithFallback(party, parties.indexOf(party))}
                   isAnimationActive={false}
                 />
               ))}
