@@ -11,6 +11,7 @@ export default function PartyLogo({ src, alt, partyName, size = 48 }: PartyLogoP
   const [imageUrl, setImageUrl] = useState<string>(src);
   const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const maxRetries = 3;
 
@@ -130,11 +131,15 @@ export default function PartyLogo({ src, alt, partyName, size = 48 }: PartyLogoP
         display: 'block',
         border: '1px solid #e0e0e0',
         opacity: '0.8',
-        transition: 'opacity 0.3s ease-in-out',
+        transition: 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
         flexShrink: 0,
+        transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+        cursor: 'pointer',
       }}
       onLoad={handleImageLoad}
       onError={handleImageError}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       data-testid={`party-logo-img-${partyName}`}
     />
   );
