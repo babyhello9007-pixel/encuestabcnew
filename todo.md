@@ -87,10 +87,11 @@
 - [x] Mover botón PDF a sección Compartir Resultados
 - [x] Crear vista SQL ranking_lideres_por_partido
 - [x] Actualizar pdfExportLeaders para usar la nueva vista (pdfExportLeadersV3.ts)
-- [x] Integrar compartir resultados directamente en botón (ShareLeadersModal.tsx)
+- [x] Integrar compartir resultados directamente en botón (ShareLeadersModalSimple.tsx)
 - [x] Actualizar URL en infografía a https://encuestabc-6q57y6uz.manus.space/
 - [x] Compartir Resultados ahora abre modal sin sección propia
 - [x] Mover botones PDF y Compartir al header
-- [x] Restaurar botones PDF y Compartir en TODOS los tabs (Elecciones, Asociaciones, Lideres)
+- [x] Restaurar botones PDF y Compartir en TODOS los tabs
 - [x] Arreglar PDF e infografía para consultar ranking_lideres_por_partido
-- [x] PDF e infografía funcionan correctamente con datos de la vista
+- [x] Simplificar infografía (LeadersInfographicSimple.tsx)
+- [x] PDF e infografía funcionan correctamente

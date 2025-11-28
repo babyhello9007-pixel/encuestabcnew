@@ -3,9 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { PARTY_COLORS } from "@/lib/partyColors";
 import { Button } from "@/components/ui/button";
-import { ShareLeadersModal } from "@/components/ShareLeadersModal";
-import { Download } from "lucide-react";
-import { exportLeadersToPDFFixed } from "@/lib/pdfExportLeadersFixed";
+import { ShareLeadersModalSimple } from "@/components/ShareLeadersModalSimple";
 
 interface LeaderResult {
   partido: string;
@@ -216,7 +214,7 @@ export function LeadersResultsChart() {
             <Download className="h-4 w-4" />
             PDF
           </Button>
-          <ShareLeadersModal leadersByParty={leadersByParty} selectedParty={selectedParty} />
+          <ShareLeadersModalSimple leadersByParty={leadersByParty} selectedParty={selectedParty} />
         </div>
       )}
     </div>
