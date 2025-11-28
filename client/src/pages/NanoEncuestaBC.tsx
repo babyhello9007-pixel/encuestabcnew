@@ -90,6 +90,60 @@ export default function NanoEncuestaBC() {
   };
 
   const handleSubmit = async () => {
+    // Validar que todas las preguntas sean respondidas
+    const requiredFields = [
+      'edad',
+      'provincia',
+      'comunidad_autonoma',
+      'nacionalidad',
+      'voto_generales',
+      'voto_autonomicas',
+      'voto_municipales',
+      'voto_europeas',
+      'nota_ejecutivo',
+      'valoracion_feijoo',
+      'valoracion_sanchez',
+      'valoracion_abascal',
+      'valoracion_alvise',
+      'valoracion_yolanda',
+      'valoracion_irene',
+      'valoracion_ayuso',
+      'valoracion_buxade',
+      'asociacion_juvenil'
+    ];
+
+    const missingFields = requiredFields.filter(field => {
+      const value = responses[field as keyof NanoSurveyResponse];
+      return value === undefined || value === null || value === '' || (typeof value === 'number' && isNaN(value));
+    });
+
+    if (missingFields.length > 0) {
+      toast.error(`Por favor, responde todas las preguntas. Faltan ${missingFields.length} respuestas.`);
+      return;
+    }
+
+    // Validar que si se selecciona "Otro", haya texto en el campo
+    if (responses.voto_generales === 'OTRO' && !responses.voto_generales_otro) {
+      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Generales.');
+      return;
+    }
+    if (responses.voto_autonomicas === 'OTRO' && !responses.voto_autonomicas_otro) {
+      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Autonómicas.');
+      return;
+    }
+    if (responses.voto_municipales === 'OTRO' && !responses.voto_municipales_otro) {
+      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Municipales.');
+      return;
+    }
+    if (responses.voto_europeas === 'OTRO' && !responses.voto_europeas_otro) {
+      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Europeas.');
+      return;
+    }
+    if (responses.asociacion_juvenil === 'OTRO' && !responses.asociacion_juvenil_otro) {
+      toast.error('Por favor, especifica tu opción en "Otro" para Asociación Juvenil.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const dataToSubmit = {

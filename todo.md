@@ -81,4 +81,5 @@
 - [x] Integrar guardado de respuestas en base de datos
 - [x] Agregar enlace desde página principal a NanoEncuestaBC
 - [x] Crear página de agradecimiento post-NanoEncuestaBC
+- [x] Agregar validación obligatoria en NanoEncuestaBC - todas las preguntas requeridas antes de enviar
 
