@@ -5,6 +5,7 @@ import { PARTY_COLORS } from "@/lib/partyColors";
 import { exportLeadersToPDF } from "@/lib/pdfExportLeaders";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LeadersInfographic } from "@/components/LeadersInfographic";
 
 interface LeaderResult {
   partido: string;
@@ -213,6 +214,13 @@ export function LeadersResultsChart() {
       {selectedLeaders.length === 0 && (
         <div className="text-center py-8 text-[#666666]">
           No hay resultados disponibles para {selectedParty}
+        </div>
+      )}
+
+      {selectedLeaders.length > 0 && (
+        <div className="bg-white p-6 rounded-xl shadow-sm">
+          <h4 className="text-lg font-semibold text-[#2D2D2D] mb-4">Compartir Resultados</h4>
+          <LeadersInfographic leadersByParty={leadersByParty} selectedParty={selectedParty} />
         </div>
       )}
     </div>
