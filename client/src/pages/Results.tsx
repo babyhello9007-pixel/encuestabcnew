@@ -563,11 +563,7 @@ export default function Results() {
             </div>
 
             <div className="space-y-4">
-              {stats.length === 0 ? (
-                <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
-                  <p>No hay datos disponibles aún. Sé el primero en responder la encuesta.</p>
-                </div>
-              ) : (
+              {stats.length > 0 && (
                 stats.map((party) => {
                   // Buscar el logo en PARTIES_GENERAL o YOUTH_ASSOCIATIONS basándose en el nombre
                   let logoUrl = party.logo;
