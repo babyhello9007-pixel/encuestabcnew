@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { EMBEDDED_LOGOS } from '@/lib/embeddedLogos';
 
 interface ImageLoaderProps {
   src: string;
@@ -17,18 +18,36 @@ export default function ImageLoader({
   className = '',
   style = {}
 }: ImageLoaderProps) {
-  const [currentSrc, setCurrentSrc] = useState(src);
+  const [currentSrc, setCurrentSrc] = useState<string>(() => {
+    // Primero intenta obtener desde logos embebidos
+    const filename = src.split('/').pop() || '';
+    if (filename && EMBEDDED_LOGOS[filename]) {
+      return EMBEDDED_LOGOS[filename];
+    }
+    return src;
+  });
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setCurrentSrc(src);
+    const filename = src.split('/').pop() || '';
+    if (filename && EMBEDDED_LOGOS[filename]) {
+      setCurrentSrc(EMBEDDED_LOGOS[filename]);
+    } else {
+      setCurrentSrc(src);
+    }
     setHasError(false);
     setIsLoading(true);
   }, [src]);
 
   const generateFallbacks = (originalSrc: string): string[] => {
     const fallbacks = [originalSrc];
+    const filename = originalSrc.split('/').pop() || '';
+    
+    // Si existe en logos embebidos, agregarlo como fallback
+    if (filename && EMBEDDED_LOGOS[filename] && !fallbacks.includes(EMBEDDED_LOGOS[filename])) {
+      fallbacks.push(EMBEDDED_LOGOS[filename]);
+    }
     
     // Variante 1: Cambiar acentos
     const noAccents = originalSrc
@@ -38,7 +57,13 @@ export default function ImageLoader({
       .replace(/í/g, 'i')
       .replace(/ú/g, 'u')
       .replace(/ñ/g, 'n');
-    if (noAccents !== originalSrc) fallbacks.push(noAccents);
+    if (noAccents !== originalSrc) {
+      fallbacks.push(noAccents);
+      const noAccentsFilename = noAccents.split('/').pop() || '';
+      if (noAccentsFilename && EMBEDDED_LOGOS[noAccentsFilename]) {
+        fallbacks.push(EMBEDDED_LOGOS[noAccentsFilename]);
+      }
+    }
     
     // Variante 2: Cambiar mayúsculas/minúsculas
     const lowerCase = originalSrc.toLowerCase();
