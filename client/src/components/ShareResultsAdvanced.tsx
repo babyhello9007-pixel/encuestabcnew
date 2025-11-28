@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { Share2, X, Facebook, Download, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
-import { generateAdvancedInfographic, generateAllLogosInfographic } from "@/lib/pngExportAdvanced";
+import { generateAdvancedInfographic } from "@/lib/pngExportAdvanced";
+import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
 
 interface PartyStats {
   id: string;
@@ -24,6 +25,17 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<PartyStats | null>(stats.length > 0 ? stats[0] : null);
   const infographyRef = useRef<HTMLDivElement>(null);
+
+  // Obtener logos directamente de los datos
+  const getLogoForParty = (partyId: string) => {
+    if (activeTab === "general") {
+      const party = Object.entries(PARTIES_GENERAL).find(([key]) => key === partyId);
+      return party ? party[1].logo : '';
+    } else {
+      const party = Object.entries(YOUTH_ASSOCIATIONS).find(([key]) => key === partyId);
+      return party ? party[1].logo : '';
+    }
+  };
 
   const generateShareText = (party: PartyStats) => {
     const percentage = party.porcentaje.toFixed(1);
@@ -106,28 +118,31 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
             <div className="mb-6">
               <label className="text-sm text-[#999999] mb-3 block">Selecciona un resultado para compartir:</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {stats.map((party) => (
-                  <button
-                    key={party.id}
-                    onClick={() => setSelectedParty(party)}
-                    className={`p-3 rounded-lg border-2 transition text-sm font-semibold ${
-                      selectedParty?.id === party.id
-                        ? "border-[#C41E3A] bg-[#C41E3A] bg-opacity-20 text-[#C41E3A]"
-                        : "border-[#2D2D2D] bg-[#0F1419] text-[#999999] hover:border-[#C41E3A]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 justify-center">
-                      {party.logo && (
-                        <img 
-                          src={party.logo} 
-                          alt={party.nombre} 
-                          className="h-5 w-5 object-contain flex-shrink-0" 
-                        />
-                      )}
-                      <span className="truncate">{party.nombre}</span>
-                    </div>
-                  </button>
-                ))}
+                {stats.map((party) => {
+                  const logo = getLogoForParty(party.id);
+                  return (
+                    <button
+                      key={party.id}
+                      onClick={() => setSelectedParty(party)}
+                      className={`p-3 rounded-lg border-2 transition text-sm font-semibold ${
+                        selectedParty?.id === party.id
+                          ? "border-[#C41E3A] bg-[#C41E3A] bg-opacity-20 text-[#C41E3A]"
+                          : "border-[#2D2D2D] bg-[#0F1419] text-[#999999] hover:border-[#C41E3A]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 justify-center">
+                        {logo && (
+                          <img 
+                            src={logo} 
+                            alt={party.nombre} 
+                            className="h-5 w-5 object-contain flex-shrink-0" 
+                          />
+                        )}
+                        <span className="truncate">{party.nombre}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -142,10 +157,10 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
                   <div className="text-center space-y-6 w-full">
                     <p className="text-[#999999] text-lg font-semibold tracking-widest">ENCUESTA DE BATALLA CULTURAL</p>
                     
-                    {selectedParty.logo && (
+                    {getLogoForParty(selectedParty.id) && (
                       <div className="flex justify-center">
                         <img 
-                          src={selectedParty.logo} 
+                          src={getLogoForParty(selectedParty.id)} 
                           alt={selectedParty.nombre} 
                           className="h-24 w-24 object-contain drop-shadow-lg"
                           crossOrigin="anonymous"
