@@ -24,6 +24,14 @@ export default function ImageLoader({
     if (filename && EMBEDDED_LOGOS[filename]) {
       return EMBEDDED_LOGOS[filename];
     }
+    // Buscar variantes (ej: arran-new.png si busca arran.png)
+    const basename = filename.replace(/\.[^.]+$/, '').toLowerCase();
+    const embeddedKey = Object.keys(EMBEDDED_LOGOS).find(key => 
+      key.toLowerCase().includes(basename) || basename.includes(key.toLowerCase().replace(/\.[^.]+$/, ''))
+    );
+    if (embeddedKey) {
+      return EMBEDDED_LOGOS[embeddedKey];
+    }
     return src;
   });
   const [hasError, setHasError] = useState(false);
@@ -34,7 +42,16 @@ export default function ImageLoader({
     if (filename && EMBEDDED_LOGOS[filename]) {
       setCurrentSrc(EMBEDDED_LOGOS[filename]);
     } else {
-      setCurrentSrc(src);
+      // Buscar variantes (ej: arran-new.png si busca arran.png)
+      const basename = filename.replace(/\.[^.]+$/, '').toLowerCase();
+      const embeddedKey = Object.keys(EMBEDDED_LOGOS).find(key => 
+        key.toLowerCase().includes(basename) || basename.includes(key.toLowerCase().replace(/\.[^.]+$/, ''))
+      );
+      if (embeddedKey) {
+        setCurrentSrc(EMBEDDED_LOGOS[embeddedKey]);
+      } else {
+        setCurrentSrc(src);
+      }
     }
     setHasError(false);
     setIsLoading(true);
