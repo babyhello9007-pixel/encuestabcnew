@@ -45,9 +45,8 @@ export function LeadersResultsChart() {
         });
 
         setLeadersByParty(grouped);
-        if (Object.keys(grouped).length > 0) {
-          setSelectedParty(Object.keys(grouped)[0]);
-        }
+        // Solo establecer partido inicial si no hay uno seleccionado
+        setSelectedParty((prev) => prev || Object.keys(grouped)[0]);
         setLoading(false);
       } catch (err) {
         console.error("Error:", err);
