@@ -427,11 +427,6 @@ export default function Results() {
 
   const exportToPDF = async () => {
     try {
-      if (activeTab === "lideres-preferidos") {
-        // Para líderes preferidos, no hacer nada aquí
-        // Los botones de PDF están en LeadersResultsChart
-        return;
-      }
       const { downloadPDFWithMetrics } = await import("@/lib/pdfExportMetrics");
       await downloadPDFWithMetrics(stats, activeTab, totalResponses, edadPromedio, ideologiaPromedio);
     } catch (err) {
@@ -557,32 +552,20 @@ export default function Results() {
                 ¿Quién quieres que sea el líder de tu partido?
               </button>
               <div className="ml-auto flex gap-2">
-                {activeTab === "lideres-preferidos" && (
-                  <>
-                    <Button
-                      onClick={exportToPDF}
-                      variant="outline"
-                      className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      PDF
-                    </Button>
-                    <ShareResultsAdvanced 
-                      activeTab={activeTab} 
-                      stats={stats}
-                      totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
-                      edadPromedio={edadPromedio}
-                    />
-                  </>
-                )}
-                {activeTab !== "lideres-preferidos" && (
-                  <ShareResultsAdvanced 
-                    activeTab={activeTab} 
-                    stats={stats}
-                    totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
-                    edadPromedio={edadPromedio}
-                  />
-                )}
+                <Button
+                  onClick={exportToPDF}
+                  variant="outline"
+                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  PDF
+                </Button>
+                <ShareResultsAdvanced 
+                  activeTab={activeTab} 
+                  stats={stats}
+                  totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
+                  edadPromedio={edadPromedio}
+                />
               </div>
             </div>
 
