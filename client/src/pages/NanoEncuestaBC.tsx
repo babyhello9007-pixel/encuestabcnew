@@ -146,6 +146,15 @@ export default function NanoEncuestaBC() {
 
     setIsSubmitting(true);
     try {
+      // Convertir ID de asociación a nombre completo
+      let asociacionNombre = null;
+      if (responses.asociacion_juvenil && responses.asociacion_juvenil !== 'OTRO') {
+        const assoc = YOUTH_ASSOCIATIONS[responses.asociacion_juvenil as keyof typeof YOUTH_ASSOCIATIONS];
+        asociacionNombre = assoc ? assoc.name : null;
+      } else if (responses.asociacion_juvenil === 'OTRO') {
+        asociacionNombre = responses.asociacion_juvenil_otro || null;
+      }
+
       const dataToSubmit = {
         edad: responses.edad ? parseInt(responses.edad) : 18,
         provincia: responses.provincia || null,
@@ -168,8 +177,8 @@ export default function NanoEncuestaBC() {
         val_irene_montero: responses.valoracion_irene || 0,
         val_ayuso: responses.valoracion_ayuso || 0,
         val_buxade: responses.valoracion_buxade || 0,
-        voto_asociacion_juvenil: responses.asociacion_juvenil || null,
-        voto_asociacion_juvenil_otro: responses.asociacion_juvenil_otro || null,
+        voto_asociacion_juvenil: asociacionNombre,
+        voto_asociacion_juvenil_otro: null,
       };
       
       const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
