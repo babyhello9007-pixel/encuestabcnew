@@ -12,9 +12,13 @@ interface NanoSurveyResponse {
   comunidad_autonoma?: string;
   nacionalidad?: string;
   voto_generales?: string;
+  voto_generales_otro?: string;
   voto_autonomicas?: string;
+  voto_autonomicas_otro?: string;
   voto_municipales?: string;
+  voto_municipales_otro?: string;
   voto_europeas?: string;
+  voto_europeas_otro?: string;
   nota_ejecutivo?: number;
   valoracion_feijoo?: number;
   valoracion_sanchez?: number;
@@ -25,6 +29,7 @@ interface NanoSurveyResponse {
   valoracion_ayuso?: number;
   valoracion_buxade?: number;
   asociacion_juvenil?: string;
+  asociacion_juvenil_otro?: string;
   created_at?: string;
 }
 
@@ -34,6 +39,7 @@ export default function NanoEncuestaBC() {
   const [responses, setResponses] = useState<NanoSurveyResponse>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [showOtroInput, setShowOtroInput] = useState(false);
 
   const steps = [
     { title: "Edad", key: "edad", type: "text" },
@@ -61,6 +67,12 @@ export default function NanoEncuestaBC() {
 
   const handleAnswer = (value: any) => {
     setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
+    setShowOtroInput(value === "OTRO");
+  };
+
+  const handleOtroAnswer = (value: string) => {
+    const otroKey = `${currentStepData.key}_otro`;
+    setResponses(prev => ({ ...prev, [otroKey]: value }));
   };
 
   const handleNext = () => {
@@ -184,25 +196,46 @@ export default function NanoEncuestaBC() {
               )}
 
               {currentStepData.type === "select" && (
-                <select
-                  value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
-                  onChange={(e) => handleAnswer(e.target.value)}
-                  className="w-full bg-[#0F1419] border border-[#2D2D2D] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C41E3A]"
-                >
-                  <option value="">Selecciona una opción...</option>
-                  {currentStepData.key === "provincia" && PROVINCES.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                  {currentStepData.key === "comunidad_autonoma" && CCAA.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                  {(currentStepData.key.includes("voto_")) && Object.entries(PARTIES_GENERAL).map(([key, party]) => (
-                    <option key={key} value={key}>{party.name}</option>
-                  ))}
-                  {currentStepData.key === "asociacion_juvenil" && Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => (
-                    <option key={key} value={key}>{assoc.name}</option>
-                  ))}
-                </select>
+                <div className="space-y-3">
+                  <select
+                    value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
+                    onChange={(e) => handleAnswer(e.target.value)}
+                    className="w-full bg-[#0F1419] border border-[#2D2D2D] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C41E3A]"
+                  >
+                    <option value="">Selecciona una opcion...</option>
+                    {currentStepData.key === "provincia" && PROVINCES.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                    {currentStepData.key === "comunidad_autonoma" && CCAA.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                    {(currentStepData.key.includes("voto_")) && (
+                      <>
+                        {Object.entries(PARTIES_GENERAL).map(([key, party]) => (
+                          <option key={key} value={key}>{party.name}</option>
+                        ))}
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                    {currentStepData.key === "asociacion_juvenil" && (
+                      <>
+                        {Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => (
+                          <option key={key} value={key}>{assoc.name}</option>
+                        ))}
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                  </select>
+                  {showOtroInput && (
+                    <input
+                      type="text"
+                      value={responses[`${currentStepData.key}_otro` as keyof NanoSurveyResponse] || ""}
+                      onChange={(e) => handleOtroAnswer(e.target.value)}
+                      placeholder="Especifica tu opcion..."
+                      className="w-full bg-[#0F1419] border border-[#C41E3A] rounded-lg px-4 py-3 text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A]"
+                    />
+                  )}
+                </div>
               )}
 
               {currentStepData.type === "slider" && (
