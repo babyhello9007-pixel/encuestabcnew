@@ -27,10 +27,11 @@ export function ShareLeadersModal({ leadersByParty, selectedParty }: ShareLeader
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
+        variant="outline"
+        className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
       >
         <Share2 className="h-4 w-4" />
-        Compartir Resultados
+        Compartir
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

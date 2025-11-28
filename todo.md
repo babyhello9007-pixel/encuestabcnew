@@ -90,6 +90,7 @@
 - [x] Integrar compartir resultados directamente en botón (ShareLeadersModal.tsx)
 - [x] Actualizar URL en infografía a https://encuestabc-6q57y6uz.manus.space/
 - [x] Compartir Resultados ahora abre modal sin sección propia
-- [x] Mover botón Compartir a fila superior junto a PDF
+- [x] Mover botones PDF y Compartir al header junto a lider de tu partido
+- [x] Botones solo aparecen cuando activeTab es lideres-preferidos
 - [x] Arreglar PDF e infografía para consultar directamente lideres_preferidos
 - [x] PDF e infografía funcionan correctamente
