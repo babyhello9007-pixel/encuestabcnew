@@ -289,7 +289,7 @@ export default function NanoEncuestaBC() {
                     {(currentStepData.key.includes("voto_")) && (
                       <>
                         {Object.entries(PARTIES_GENERAL).map(([key, party]) => (
-                          <option key={key} value={key}>{party.name}</option>
+                          <option key={key} value={party.name}>{party.name}</option>
                         ))}
                         <option value="OTRO">Otro (especificar)</option>
                       </>
