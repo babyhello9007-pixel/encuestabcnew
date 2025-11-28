@@ -550,6 +550,7 @@ export default function Results() {
                   activeTab={activeTab} 
                   stats={stats}
                   totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
+                  edadPromedio={edadPromedio}
                 />
               </div>
             </div>

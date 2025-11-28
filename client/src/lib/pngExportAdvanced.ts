@@ -295,7 +295,7 @@ export const generateAllLogosInfographic = async (
 
   const parties = activeTab === 'general' ? PARTIES_GENERAL : YOUTH_ASSOCIATIONS;
 
-  Object.entries(parties).forEach(([key, party]) => {
+  Object.entries(parties).forEach(([key, partyData]) => {
     const logoContainer = document.createElement('div');
     logoContainer.style.display = 'flex';
     logoContainer.style.flexDirection = 'column';
@@ -314,13 +314,13 @@ export const generateAllLogosInfographic = async (
     imgContainer.style.padding = '10px';
 
     const logo = document.createElement('img');
-    logo.src = party.logo;
+    logo.src = partyData.logo;
     logo.style.width = '100px';
     logo.style.height = '100px';
     logo.style.objectFit = 'contain';
 
     const name = document.createElement('p');
-    name.textContent = party.name;
+    name.textContent = partyData.name;
     name.style.color = '#E8E8E8';
     name.style.fontSize = '13px';
     name.style.textAlign = 'center';

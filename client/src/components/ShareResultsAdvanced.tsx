@@ -17,9 +17,10 @@ interface ShareResultsAdvancedProps {
   activeTab: "general" | "youth";
   stats: PartyStats[];
   totalVotes: number;
+  edadPromedio?: number | null;
 }
 
-export function ShareResultsAdvanced({ activeTab, stats, totalVotes }: ShareResultsAdvancedProps) {
+export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedio }: ShareResultsAdvancedProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<PartyStats | null>(stats.length > 0 ? stats[0] : null);
   const infographyRef = useRef<HTMLDivElement>(null);
@@ -182,18 +183,11 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes }: ShareResu
                 Descargar Resultado Individual
               </button>
               <button
-                onClick={() => generateAdvancedInfographic(stats, activeTab, totalVotes)}
+                onClick={() => generateAdvancedInfographic(stats, activeTab, totalVotes, edadPromedio)}
                 className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
               >
                 <Image className="h-5 w-5" />
                 Descargar Infografía Completa (PNG)
-              </button>
-              <button
-                onClick={() => generateAllLogosInfographic(activeTab, totalVotes)}
-                className="w-full bg-[#0066CC] hover:bg-[#0052A3] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
-              >
-                <Image className="h-5 w-5" />
-                Descargar Todos los Logos (PNG)
               </button>
               <button
                 onClick={shareOnX}
