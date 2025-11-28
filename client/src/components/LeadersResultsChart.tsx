@@ -22,6 +22,13 @@ export function LeadersResultsChart() {
   const [leadersByParty, setLeadersByParty] = useState<PartyLeaders>({});
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Función para obtener el color del partido, forzando naranja para CIUDADANOS
+  const getPartyColor = (party: string | null) => {
+    if (!party) return '#FF9900';
+    if (party === 'CIUDADANOS') return '#FF9900';
+    return PARTY_COLORS[party] || '#FF9900';
+  };
 
   useEffect(() => {
     const fetchLeadersResults = async () => {
@@ -92,7 +99,7 @@ export function LeadersResultsChart() {
             }`}
             style={
               selectedParty === party
-                ? { backgroundColor: PARTY_COLORS[party] || "#C41E3A" }
+                ? { backgroundColor: getPartyColor(party) }
                 : {}
             }
           >
@@ -117,7 +124,7 @@ export function LeadersResultsChart() {
                 <Tooltip />
                 <Bar
                   dataKey="total_votos"
-                  fill={PARTY_COLORS[selectedParty] || "#C41E3A"}
+                  fill={getPartyColor(selectedParty)}
                   radius={[8, 8, 0, 0]}
                 />
               </BarChart>
@@ -143,7 +150,7 @@ export function LeadersResultsChart() {
                   {selectedLeaders.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={PARTY_COLORS[selectedParty] || "#C41E3A"}
+                      fill={getPartyColor(selectedParty)}
                       opacity={0.6 + (index * 0.15)}
                     />
                   ))}
@@ -183,7 +190,7 @@ export function LeadersResultsChart() {
                           className="h-full rounded-full transition-all"
                           style={{
                             width: `${leader.porcentaje}%`,
-                            backgroundColor: PARTY_COLORS[selectedParty] || "#C41E3A",
+                            backgroundColor: getPartyColor(selectedParty),
                           }}
                         />
                       </div>

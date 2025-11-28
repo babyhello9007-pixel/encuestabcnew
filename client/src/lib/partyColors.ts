@@ -9,6 +9,7 @@ export const PARTY_COLORS: Record<string, string> = {
   'PSOE': '#E31C23',         // Rojo (Partido Socialista Obrero Español)
   'VOX': '#63B432',          // Verde (VOX)
   'Ciudadanos': '#FF9900',   // Naranja (Ciudadanos)
+  'CIUDADANOS': '#FF9900',   // Naranja (Ciudadanos - mayúsculas)
   'PODEMOS': '#7B2D6B',      // Púrpura (Podemos)
   'SUMAR': '#EE5A24',        // Naranja-rojo (Sumar)
   
