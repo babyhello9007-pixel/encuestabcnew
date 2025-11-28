@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { TwitterFeed } from "@/components/TwitterFeed";
 
 export default function Home() {
   // The userAuth hooks provides authentication state
@@ -224,6 +225,9 @@ export default function Home() {
           </Button>
         </section>
       </main>
+
+      {/* Twitter Feed Section */}
+      <TwitterFeed />
 
       {/* Footer */}
       <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
