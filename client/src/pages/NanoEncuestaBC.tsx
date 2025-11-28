@@ -92,12 +92,33 @@ export default function NanoEncuestaBC() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("nano_encuesta_respuestas").insert([
-        {
-          ...responses,
-          created_at: new Date().toISOString(),
-        }
-      ]);
+      const dataToSubmit = {
+        edad: responses.edad ? parseInt(responses.edad) : 18,
+        provincia: responses.provincia || null,
+        ccaa: responses.comunidad_autonoma || null,
+        nacionalidad: responses.nacionalidad || null,
+        voto_generales: responses.voto_generales || null,
+        voto_generales_otro: responses.voto_generales_otro || null,
+        voto_autonomicas: responses.voto_autonomicas || null,
+        voto_autonomicas_otro: responses.voto_autonomicas_otro || null,
+        voto_municipales: responses.voto_municipales || null,
+        voto_municipales_otro: responses.voto_municipales_otro || null,
+        voto_europeas: responses.voto_europeas || null,
+        voto_europeas_otro: responses.voto_europeas_otro || null,
+        nota_ejecutivo: responses.nota_ejecutivo || null,
+        val_feijoo: responses.valoracion_feijoo || 0,
+        val_sanchez: responses.valoracion_sanchez || 0,
+        val_abascal: responses.valoracion_abascal || 0,
+        val_alvise: responses.valoracion_alvise || 0,
+        val_yolanda_diaz: responses.valoracion_yolanda || 0,
+        val_irene_montero: responses.valoracion_irene || 0,
+        val_ayuso: responses.valoracion_ayuso || 0,
+        val_buxade: responses.valoracion_buxade || 0,
+        voto_asociacion_juvenil: responses.asociacion_juvenil || null,
+        voto_asociacion_juvenil_otro: responses.asociacion_juvenil_otro || null,
+      };
+      
+      const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
 
       if (error) {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
