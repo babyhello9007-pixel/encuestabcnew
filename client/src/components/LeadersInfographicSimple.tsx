@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Download, Share2 } from "lucide-react";
-import { exportLeadersToPDFV3 } from "@/lib/pdfExportLeadersV3";
+import { exportLeadersToPDFV4 } from "@/lib/pdfExportLeadersV4";
 
 interface LeaderResult {
   partido: string;
@@ -51,7 +51,7 @@ export function LeadersInfographicSimple({ selectedParty, leaders }: LeadersInfo
       {/* Action Buttons */}
       <div className="flex gap-2 flex-wrap">
         <Button
-          onClick={() => exportLeadersToPDFV3(selectedParty)}
+          onClick={() => exportLeadersToPDFV4(selectedParty)}
           className="flex-1 min-w-[120px] bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
         >
           <Download className="h-4 w-4" />

@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { PARTY_COLORS } from "@/lib/partyColors";
 import { Button } from "@/components/ui/button";
 import { ShareLeadersModalSimple } from "@/components/ShareLeadersModalSimple";
-import { exportLeadersToPDFV3 } from "@/lib/pdfExportLeadersV3";
+import { exportLeadersToPDFV4 } from "@/lib/pdfExportLeadersV4";
 import { Download } from "lucide-react";
 
 interface LeaderResult {
@@ -210,7 +210,7 @@ export function LeadersResultsChart() {
       {selectedLeaders.length > 0 && (
         <div className="flex gap-2 bg-white p-4 rounded-xl shadow-sm">
           <Button
-            onClick={() => exportLeadersToPDFV3(selectedParty)}
+            onClick={() => exportLeadersToPDFV4(selectedParty)}
             className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
           >
             <Download className="h-4 w-4" />
