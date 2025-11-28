@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
-import { Share2, X, Facebook, Download } from "lucide-react";
+import { Share2, X, Facebook, Download, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
+import { generateAdvancedInfographic, generateAllLogosInfographic } from "@/lib/pngExportAdvanced";
 
 interface PartyStats {
   id: string;
@@ -178,7 +179,21 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes }: ShareResu
                 className="w-full bg-[#2D2D2D] hover:bg-[#3D3D3D] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
               >
                 <Download className="h-5 w-5" />
-                Descargar como PNG
+                Descargar Resultado Individual
+              </button>
+              <button
+                onClick={() => generateAdvancedInfographic(stats, activeTab, totalVotes)}
+                className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
+              >
+                <Image className="h-5 w-5" />
+                Descargar Infografía Completa (PNG)
+              </button>
+              <button
+                onClick={() => generateAllLogosInfographic(activeTab, totalVotes)}
+                className="w-full bg-[#0066CC] hover:bg-[#0052A3] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
+              >
+                <Image className="h-5 w-5" />
+                Descargar Todos los Logos (PNG)
               </button>
               <button
                 onClick={shareOnX}

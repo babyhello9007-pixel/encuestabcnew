@@ -539,14 +539,6 @@ export default function Results() {
               </button>
               <div className="ml-auto flex gap-2">
                 <Button
-                  onClick={exportToCSV}
-                  variant="outline"
-                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  CSV
-                </Button>
-                <Button
                   onClick={exportToPDF}
                   variant="outline"
                   className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
