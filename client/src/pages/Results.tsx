@@ -616,6 +616,8 @@ export default function Results() {
                           onLoad={() => {
                             if (party.nombre === 'Escaños en Blanco') console.log('Escaños en Blanco logo loaded');
                             if (party.nombre === 'BNG') console.log('BNG logo loaded from:', logoUrl);
+                            if (party.nombre === 'Falange Española de las JONS') console.log('Falange logo loaded from:', logoUrl);
+                            if (party.nombre === 'Soberanía y Trabajo') console.log('Soberanía y Trabajo logo loaded from:', logoUrl);
                           }}
                         />
                       ) : (

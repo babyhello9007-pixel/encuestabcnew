@@ -22,6 +22,8 @@ export const PARTIES_GENERAL = {
   PLIB: { name: 'P-Lib', logo: '/assets/icons/plib.jpg' },
   EB: { name: 'Escaños en Blanco', logo: '/assets/icons/escanios-blanco-new.png' },
   BNG: { name: 'BNG', logo: '/assets/leaders/bng.png' },
+  FALANGE: { name: 'Falange Española de las JONS', logo: '/assets/icons/FalangeEspanolaJONS.png' },
+  SOBERANIA: { name: 'Soberanía y Trabajo', logo: '/assets/icons/SoberaniaYTrabajo.png' },
 };
 
 export const YOUTH_ASSOCIATIONS = {
