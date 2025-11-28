@@ -670,14 +670,31 @@ export default function Results() {
                     const leaderData = leaderKey ? LEADERS[leaderKey] : null;
                     const leaderImage = leaderData?.image;
                     
+                    // Debug logging para Feijóo
+                    if (leader.fieldName === 'FEIJOO') {
+                      console.log('Feijóo image:', leaderImage, 'Leader data:', leaderData);
+                    }
+                    
                     return (
                     <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                      {leaderImage && (
+                      {leaderImage ? (
                         <img
                           src={leaderImage}
                           alt={leader.name}
                           className="w-full h-32 object-cover rounded-lg"
+                          style={{ display: 'block', width: '100%', height: '128px' }}
+                          onError={(e) => {
+                            console.error('Error loading image for', leader.name, ':', e);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          onLoad={() => {
+                            if (leader.fieldName === 'FEIJOO') console.log('Feijóo image loaded successfully');
+                          }}
                         />
+                      ) : (
+                        <div className="w-full h-32 bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+                          Sin imagen
+                        </div>
                       )}
                       <h4 className="font-semibold text-[#2D2D2D] text-sm">{leader.name}</h4>
                       <div className="space-y-2">
