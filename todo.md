@@ -223,6 +223,14 @@
 - [x] Verificar visualización del hemiciclo
 - [x] Guardar checkpoint con hemiciclo real
 
+## Personalización de Colores en Infografías - COMPLETADO
+- [x] Crear sistema de temas de colores (Claro, Oscuro, Corporativo)
+- [x] Agregar selector de tema en modal de compartir
+- [x] Asegurar que el recuadro de escaños sea visible en todos los temas
+- [x] Cambiar recuadro de escaños a fondo rojo con texto blanco
+- [x] Probar descarga PNG con diferentes temas
+- [x] Verificar que todos los elementos sean visibles en descarga
+
 ## Mejora del Mapa Realista - Formas Reales de Provincias - COMPLETADO
 - [x] Obtener GeoJSON de provincias españolas con límites reales
 - [x] Normalizar nombres: A Coruña ↔ Coruña, Bizkaia ↔ Vizcaya, Gipuzkoa ↔ Guipúzcoa

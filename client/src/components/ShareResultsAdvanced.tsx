@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import { generateAdvancedInfographic } from "@/lib/pngExportAdvanced";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
 import ImageLoader from "./ImageLoader";
+import { ColorTheme, getThemeColors, getThemeList } from "@/lib/colorThemes";
 
 interface PartyStats {
   id: string;
@@ -33,7 +34,10 @@ export function ShareResultsAdvanced({
     stats.length > 0 ? stats[0] : null
   );
   const [infographyMode, setInfographyMode] = useState<"individual" | "complete">("individual");
+  const [selectedTheme, setSelectedTheme] = useState<ColorTheme>("light");
   const infographyRef = useRef<HTMLDivElement>(null);
+
+  const theme = getThemeColors(selectedTheme);
 
   // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
   const getLogoForParty = (partyId: string, partyName?: string) => {
@@ -77,12 +81,26 @@ export function ShareResultsAdvanced({
     if (!infographyRef.current) return;
 
     try {
-      const canvas = await html2canvas(infographyRef.current, {
-        backgroundColor: "#FFFFFF",
+      // Clonar el elemento para obtener sus dimensiones reales
+      const element = infographyRef.current;
+      const rect = element.getBoundingClientRect();
+      const scrollHeight = element.scrollHeight;
+      const scrollWidth = element.scrollWidth;
+      
+      const canvas = await html2canvas(element, {
+        backgroundColor: theme.background,
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
+        windowWidth: Math.max(scrollWidth, 1200),
+        windowHeight: Math.max(scrollHeight, 800),
+        width: scrollWidth,
+        height: scrollHeight,
+        ignoreElements: (el) => {
+          // No ignorar ningún elemento
+          return false;
+        },
       });
 
       // Descargar la captura exacta de la preview
@@ -102,12 +120,20 @@ export function ShareResultsAdvanced({
   const shareOnX = async () => {
     if (!selectedParty || !infographyRef.current) return;
     try {
-      const canvas = await html2canvas(infographyRef.current, {
-        backgroundColor: "#FFFFFF",
+      const element = infographyRef.current;
+      const scrollHeight = element.scrollHeight;
+      const scrollWidth = element.scrollWidth;
+      
+      const canvas = await html2canvas(element, {
+        backgroundColor: theme.background,
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
+        windowWidth: Math.max(scrollWidth, 1200),
+        windowHeight: Math.max(scrollHeight, 800),
+        width: scrollWidth,
+        height: scrollHeight,
       });
 
       canvas.toBlob(async (blob) => {
@@ -142,12 +168,20 @@ export function ShareResultsAdvanced({
   const shareOnBluesky = async () => {
     if (!selectedParty || !infographyRef.current) return;
     try {
-      const canvas = await html2canvas(infographyRef.current, {
-        backgroundColor: "#FFFFFF",
+      const element = infographyRef.current;
+      const scrollHeight = element.scrollHeight;
+      const scrollWidth = element.scrollWidth;
+      
+      const canvas = await html2canvas(element, {
+        backgroundColor: theme.background,
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
+        windowWidth: Math.max(scrollWidth, 1200),
+        windowHeight: Math.max(scrollHeight, 800),
+        width: scrollWidth,
+        height: scrollHeight,
       });
 
       canvas.toBlob(async (blob) => {
@@ -232,6 +266,37 @@ export function ShareResultsAdvanced({
               </button>
             </div>
 
+            {/* Selector de Tema de Colores */}
+            <div className="mb-6">
+              <label className="text-sm text-[#666666] mb-3 block font-medium">
+                Selecciona el esquema de colores:
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {getThemeList().map((themeOption) => (
+                  <button
+                    key={themeOption.id}
+                    onClick={() => setSelectedTheme(themeOption.id)}
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                      selectedTheme === themeOption.id
+                        ? "border-[#C41E3A] bg-[#FFF5F7]"
+                        : "border-[#E0E0E0] bg-white hover:border-[#C41E3A]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-8 h-8 rounded-full border-2 border-gray-300"
+                        style={{ backgroundColor: getThemeColors(themeOption.id).background }}
+                      />
+                      <div className="text-left">
+                        <p className="font-semibold text-[#1D1D1F]">{themeOption.name}</p>
+                        <p className="text-xs text-[#999999]">{themeOption.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Selector de resultado (solo en modo individual) */}
             {infographyMode === "individual" && (
               <div className="mb-6">
@@ -269,7 +334,7 @@ export function ShareResultsAdvanced({
               </div>
             )}
 
-            {/* Infografía Individual - MINIMALISTA */}
+            {/* Infografía Individual - CON TEMA DINÁMICO */}
             {infographyMode === "individual" && selectedParty && (
               <div className="mb-6">
                 <label className="text-sm text-[#666666] mb-3 block font-medium">
@@ -277,12 +342,16 @@ export function ShareResultsAdvanced({
                 </label>
                 <div
                   ref={infographyRef}
-                  className="relative rounded-xl p-20 border flex flex-col items-center justify-center overflow-hidden bg-white border-[#E0E0E0] w-full"
+                  className="relative rounded-xl p-20 border flex flex-col items-center justify-center w-full"
                   style={{
-                    minHeight: '600px',
+                    minHeight: '700px',
+                    height: 'auto',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'space-around'
+                    justifyContent: 'space-around',
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    overflow: 'visible',
                   }}
                 >
                   {/* Contenido minimalista */}
@@ -303,35 +372,62 @@ export function ShareResultsAdvanced({
                     )}
 
                     {/* Nombre del partido - Tipografía grande y clara */}
-                    <p className="text-6xl font-bold text-[#1D1D1F] leading-tight">
+                    <p
+                      className="text-6xl font-bold leading-tight"
+                      style={{ color: theme.text }}
+                    >
                       {selectedParty.nombre}
                     </p>
 
                     {/* Porcentaje - Destacado */}
                     <div className="space-y-3">
-                      <p className="text-9xl font-bold text-[#C41E3A] leading-none">
+                      <p
+                        className="text-9xl font-bold leading-none"
+                        style={{ color: theme.accent }}
+                      >
                         {selectedParty.porcentaje.toFixed(1)}%
                       </p>
-                      <p className="text-xl text-[#666666] font-medium">
+                      <p
+                        className="text-xl font-medium"
+                        style={{ color: theme.textSecondary }}
+                      >
                         {selectedParty.votos.toLocaleString()} votos
                       </p>
                     </div>
 
                     {/* Escaños - Visualización clara y destacada */}
                     <div className="pt-6">
-                      <div className="inline-block px-12 py-6 border-3 border-[#C41E3A] rounded-xl bg-[#FFF5F7]">
-                        <p className="text-7xl font-bold text-[#C41E3A] leading-none">
+                      <div
+                        className="inline-block px-12 py-6 border-3 rounded-xl"
+                        style={{
+                          borderColor: theme.accent,
+                          backgroundColor: theme.accent,
+                        }}
+                      >
+                        <p
+                          className="text-7xl font-bold leading-none"
+                          style={{ color: '#FFFFFF' }}
+                        >
                           {selectedParty.escanos}
                         </p>
-                        <p className="text-base text-[#666666] mt-3 font-semibold tracking-wide">
+                        <p
+                          className="text-base mt-3 font-semibold tracking-wide"
+                          style={{ color: '#FFFFFF' }}
+                        >
                           ESCAÑOS {activeTab === "general" ? "(de 350)" : "(de 50)"}
                         </p>
                       </div>
                     </div>
 
                     {/* Footer minimalista */}
-                    <div className="pt-8 border-t border-[#E0E0E0] w-full">
-                      <p className="text-base text-[#999999] mb-3 font-semibold tracking-wide">
+                    <div
+                      className="pt-8 border-t w-full"
+                      style={{ borderColor: theme.border }}
+                    >
+                      <p
+                        className="text-base mb-3 font-semibold tracking-wide"
+                        style={{ color: theme.textSecondary }}
+                      >
                         {activeTab === "general"
                           ? "ELECCIONES GENERALES"
                           : "ASOCIACIONES JUVENILES"}
@@ -342,7 +438,10 @@ export function ShareResultsAdvanced({
                           alt="BC Logo"
                           className="h-7 w-7"
                         />
-                        <span className="text-[#C41E3A] font-bold text-lg">
+                        <span
+                          className="font-bold text-lg"
+                          style={{ color: theme.accent }}
+                        >
                           Batalla Cultural
                         </span>
                       </div>
@@ -352,7 +451,7 @@ export function ShareResultsAdvanced({
               </div>
             )}
 
-            {/* Infografía Completa - MINIMALISTA */}
+            {/* Infografía Completa - CON TEMA DINÁMICO */}
             {infographyMode === "complete" && (
               <div className="mb-6">
                 <label className="text-sm text-[#666666] mb-3 block font-medium">
@@ -360,28 +459,41 @@ export function ShareResultsAdvanced({
                 </label>
                 <div
                   ref={infographyRef}
-                  className="relative rounded-xl p-12 border flex flex-col items-center justify-center overflow-hidden bg-white border-[#E0E0E0] w-full"
+                  className="relative rounded-xl p-12 border flex flex-col items-center justify-center w-full"
                   style={{
-                    minHeight: '500px',
+                    minHeight: '600px',
+                    height: 'auto',
                     display: 'flex',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    overflow: 'visible',
                   }}
                 >
                   {/* Contenido minimalista */}
                   <div className="text-center space-y-6 w-full flex flex-col">
                     {/* Header */}
-                    <div className="pb-6 border-b border-[#E0E0E0]">
+                    <div
+                      className="pb-6 border-b"
+                      style={{ borderColor: theme.border }}
+                    >
                       <div className="flex items-center justify-center gap-2 mb-4">
                         <img
                           src="/favicon.png"
                           alt="BC Logo"
                           className="h-9 w-9"
                         />
-                        <span className="text-[#C41E3A] font-bold text-xl">
+                        <span
+                          className="font-bold text-xl"
+                          style={{ color: theme.accent }}
+                        >
                           Batalla Cultural
                         </span>
                       </div>
-                      <p className="text-[#666666] text-base font-semibold">
+                      <p
+                        className="text-base font-semibold"
+                        style={{ color: theme.textSecondary }}
+                      >
                         {activeTab === "general"
                           ? "Elecciones Generales"
                           : "Asociaciones Juveniles"}
@@ -390,7 +502,10 @@ export function ShareResultsAdvanced({
 
                     {/* Top 10 Partidos/Asociaciones */}
                     <div className="w-full flex-1">
-                      <p className="text-[#999999] text-sm mb-5 font-bold uppercase tracking-wider">
+                      <p
+                        className="text-sm mb-5 font-bold uppercase tracking-wider"
+                        style={{ color: theme.textSecondary }}
+                      >
                         Top 10{" "}
                         {activeTab === "general"
                           ? "Partidos"
@@ -402,9 +517,13 @@ export function ShareResultsAdvanced({
                           return (
                             <div
                               key={party.id}
-                              className="flex items-center gap-4 px-4 py-3 rounded-lg bg-[#F9F9F9]"
+                              className="flex items-center gap-4 px-4 py-3 rounded-lg"
+                              style={{ backgroundColor: theme.cardBg }}
                             >
-                              <span className="text-[#999999] font-bold w-6 text-base">
+                              <span
+                                className="font-bold w-6 text-base"
+                                style={{ color: theme.textSecondary }}
+                              >
                                 {index + 1}.
                               </span>
 
@@ -419,15 +538,24 @@ export function ShareResultsAdvanced({
                                 </div>
                               )}
 
-                              <span className="text-[#1D1D1F] font-semibold flex-1 text-left truncate text-base">
+                              <span
+                                className="font-semibold flex-1 text-left truncate text-base"
+                                style={{ color: theme.text }}
+                              >
                                 {party.nombre}
                               </span>
 
-                              <span className="text-[#C41E3A] font-bold text-base">
+                              <span
+                                className="font-bold text-base"
+                                style={{ color: theme.accent }}
+                              >
                                 {party.porcentaje.toFixed(1)}%
                               </span>
 
-                              <span className="text-[#666666] text-sm font-semibold min-w-fit">
+                              <span
+                                className="text-sm font-semibold min-w-fit"
+                                style={{ color: theme.textSecondary }}
+                              >
                                 {party.escanos} esc.
                               </span>
                             </div>
@@ -437,18 +565,30 @@ export function ShareResultsAdvanced({
                     </div>
 
                     {/* Footer */}
-                    <div className="pt-6 border-t border-[#E0E0E0]">
-                      <p className="text-[#999999] text-sm">
+                    <div
+                      className="pt-6 border-t"
+                      style={{ borderColor: theme.border }}
+                    >
+                      <p
+                        className="text-sm"
+                        style={{ color: theme.textSecondary }}
+                      >
                         {activeTab === "general"
                           ? "350 escaños (umbral 3%)"
                           : "50 escaños (umbral 7%)"}
                       </p>
                       {edadPromedio && (
-                        <p className="text-[#999999] text-sm mt-1">
+                        <p
+                          className="text-sm mt-1"
+                          style={{ color: theme.textSecondary }}
+                        >
                           Edad promedio: {edadPromedio.toFixed(1)} años
                         </p>
                       )}
-                      <p className="text-[#C41E3A] text-sm mt-2 font-semibold">
+                      <p
+                        className="text-sm mt-2 font-semibold"
+                        style={{ color: theme.accent }}
+                      >
                         #BatallaaCultural
                       </p>
                     </div>
