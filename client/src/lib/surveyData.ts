@@ -60,18 +60,64 @@ export const LEADERS = {
 };
 
 export const PROVINCES = [
-  'Álava', 'Albacete', 'Alicante', 'Almería', 'Ávila', 'Asturias', 'Badajoz', 'Barcelona', 'Burgos',
-  'Cáceres', 'Cádiz', 'Cantabria', 'Castellón', 'Ciudad Real', 'Córdoba', 'Cuenca', 'Girona',
-  'Granada', 'Guadalajara', 'Guipúzcoa', 'Huelva', 'Huesca', 'Jaén', 'La Coruña', 'La Rioja',
-  'Las Palmas', 'León', 'Lleida', 'Lugo', 'Madrid', 'Málaga', 'Murcia', 'Navarra', 'Ourense',
-  'Palencia', 'Palma de Mallorca', 'Palmas', 'Pontevedra', 'Salamanca', 'Segovia', 'Sevilla',
-  'Soria', 'Tarragona', 'Teruel', 'Toledo', 'Valencia', 'Valladolid', 'Vizcaya', 'Zamora', 'Zaragoza'
+  // Andalucía (8)
+  'Almería', 'Cádiz', 'Córdoba', 'Granada', 'Huelva', 'Jaén', 'Málaga', 'Sevilla',
+  // Aragón (3)
+  'Huesca', 'Teruel', 'Zaragoza',
+  // Asturias (1)
+  'Asturias',
+  // Islas Baleares (1)
+  'Illes Balears',
+  // Canarias (2)
+  'Las Palmas', 'Santa Cruz de Tenerife',
+  // Cantabria (1)
+  'Cantabria',
+  // Castilla-La Mancha (5)
+  'Albacete', 'Ciudad Real', 'Cuenca', 'Guadalajara', 'Toledo',
+  // Castilla y León (9)
+  'Ávila', 'Burgos', 'León', 'Palencia', 'Salamanca', 'Segovia', 'Soria', 'Valladolid', 'Zamora',
+  // Cataluña (4)
+  'Barcelona', 'Girona', 'Lleida', 'Tarragona',
+  // Comunidad Valenciana (3)
+  'Alicante', 'Castellón', 'Valencia',
+  // Extremadura (2)
+  'Badajoz', 'Cáceres',
+  // Galicia (4)
+  'A Coruña', 'Lugo', 'Ourense', 'Pontevedra',
+  // La Rioja (1)
+  'La Rioja',
+  // Comunidad de Madrid (1)
+  'Madrid',
+  // Murcia (1)
+  'Murcia',
+  // Navarra (1)
+  'Navarra',
+  // País Vasco (3)
+  'Álava', 'Bizkaia', 'Gipuzkoa',
+  // Ceuta y Melilla (2)
+  'Ceuta', 'Melilla'
 ];
 
 export const CCAA = [
-  'Andalucía', 'Aragón', 'Asturias', 'Baleares', 'Canarias', 'Cantabria', 'Castilla-La Mancha',
-  'Castilla y León', 'Cataluña', 'Comunidad Valenciana', 'Extremadura', 'Galicia', 'La Rioja',
-  'Madrid', 'Murcia', 'Navarra', 'País Vasco', 'Ceuta', 'Melilla'
+  'Andalucía',
+  'Aragón',
+  'Asturias',
+  'Islas Baleares',
+  'Canarias',
+  'Cantabria',
+  'Castilla-La Mancha',
+  'Castilla y León',
+  'Cataluña',
+  'Comunidad Valenciana',
+  'Extremadura',
+  'Galicia',
+  'La Rioja',
+  'Comunidad de Madrid',
+  'Murcia',
+  'Navarra',
+  'País Vasco',
+  'Ceuta',
+  'Melilla'
 ];
 
 export const PROBLEMS = [

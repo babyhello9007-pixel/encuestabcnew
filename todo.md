@@ -95,3 +95,8 @@
 - [x] Arreglar PDF e infografía para consultar ranking_lideres_por_partido
 - [x] Simplificar infografía (LeadersInfographicSimple.tsx)
 - [x] PDF e infografía funcionan correctamente
+
+## Actualización de Provincias - NUEVO
+- [x] Actualizar lista de provincias en surveyData.ts (52 provincias completas)
+- [x] Verificar que Encuesta y NanoEncuesta muestren todas las provincias
+- [x] Guardar checkpoint con provincias actualizadas
