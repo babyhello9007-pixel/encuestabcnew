@@ -79,6 +79,22 @@ export default function NanoEncuestaBC() {
     return PROVINCES;
   };
 
+  // Validar si el campo actual esta completo
+  const isCurrentFieldComplete = () => {
+    const currentValue = responses[currentStepData.key as keyof NanoSurveyResponse];
+    
+    if (currentStepData.type === 'text') {
+      return currentValue && String(currentValue).trim().length > 0;
+    }
+    if (currentStepData.type === 'select') {
+      return currentValue && String(currentValue).length > 0;
+    }
+    if (currentStepData.type === 'slider') {
+      return currentValue !== undefined && currentValue !== null && currentValue !== '';
+    }
+    return false;
+  };
+
   const handleAnswer = (value: any) => {
     setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
     setShowOtroInput(value === "OTRO");
@@ -304,15 +320,30 @@ export default function NanoEncuestaBC() {
       <div className="flex-1 container py-8">
         {/* Progress Bar */}
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
+          <div className="flex justify-between items-center mb-4">
             <span className="text-sm text-[#999999]">Pregunta {currentStep + 1} de {steps.length}</span>
             <span className="text-sm text-[#C41E3A] font-semibold">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-[#2D2D2D] rounded-full h-2">
+          <div className="w-full bg-[#2D2D2D] rounded-full h-2 mb-4">
             <div
               className="bg-[#C41E3A] h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
+          </div>
+          
+          {/* Indicador de pasos completados */}
+          <div className="flex gap-1 flex-wrap">
+            {steps.map((step, index) => {
+              const isCompleted = responses[step.key as keyof NanoSurveyResponse] !== undefined && responses[step.key as keyof NanoSurveyResponse] !== null && responses[step.key as keyof NanoSurveyResponse] !== '';
+              const isCurrent = index === currentStep;
+              return (
+                <div
+                  key={index}
+                  className={`h-2 flex-1 rounded-full transition-all duration-300 ${isCurrent ? 'bg-[#C41E3A]' : isCompleted ? 'bg-green-500' : 'bg-[#2D2D2D]'}`}
+                  title={`${step.title}: ${isCompleted ? 'Completado' : 'Pendiente'}`}
+                />
+              );
+            })}
           </div>
         </div>
 
@@ -419,14 +450,15 @@ export default function NanoEncuestaBC() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white flex-1"
+                className="bg-[#C41E3A] hover:bg-[#A01830] text-white flex-1 disabled:opacity-50"
               >
                 {isSubmitting ? "Enviando..." : "Enviar Encuesta"}
               </Button>
             ) : (
               <Button
                 onClick={handleNext}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white flex-1"
+                disabled={!isCurrentFieldComplete()}
+                className="bg-[#C41E3A] hover:bg-[#A01830] text-white flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4 ml-2" />

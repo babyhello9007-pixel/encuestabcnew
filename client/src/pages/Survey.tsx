@@ -11,6 +11,40 @@ import ReviewSurvey from "@/components/ReviewSurvey";
 
 export default function Survey() {
   const [, setLocation] = useLocation();
+  
+  // Mostrar página de mantenimiento
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A] p-4">
+      <div className="liquid-glass p-12 rounded-2xl text-center max-w-md space-y-8">
+        <div className="text-6xl">🔧</div>
+        <div className="space-y-4">
+          <h1 className="text-3xl font-bold text-white">En Mantenimiento</h1>
+          <p className="text-[#999999] text-lg">
+            La Encuesta de Batalla Cultural está siendo mejorada. Por ahora, puedes participar en la NanoEncuestaBC.
+          </p>
+        </div>
+        <div className="space-y-3 pt-4">
+          <Button
+            onClick={() => setLocation("/nano-encuesta")}
+            className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold text-lg"
+          >
+            Ir a NanoEncuestaBC
+          </Button>
+          <Button
+            onClick={() => setLocation("/")}
+            variant="outline"
+            className="w-full border-[#2D2D2D] text-[#999999] h-12 rounded-lg font-semibold hover:text-white"
+          >
+            Volver al Inicio
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SurveyOld() {
+  const [, setLocation] = useLocation();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState<SurveyResponse>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
