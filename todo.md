@@ -279,3 +279,18 @@
 - [x] Actualizar textos y elementos de compartir
 - [x] Usar logos de partidos desde código existente (sin tocar)
 - [x] Usar logos de asociaciones desde código existente (sin tocar)
+
+## ShareResultsAdvanced - Modos Individual/Completo - NUEVO
+- [x] Agregar selector de modos Individual/Completo
+- [x] Modo Individual: infografía de partido seleccionado
+- [x] Modo Completo: infografía con top 10 partidos
+- [x] Agregar botones de X, Bluesky y Discord
+- [x] Mejorar ImageLoader para carga forzada de logos
+- [x] Búsqueda exhaustiva en EMBEDDED_LOGOS
+- [x] Descarga de PNG en alta resolución (1920x1080)
+
+## Bug Fix - Error OKLCH en html2canvas
+- [x] Identificar elementos con colores OKLCH en ShareResultsAdvanced
+- [x] Reemplazar colores OKLCH con RGB/HEX en infografías
+- [x] Probar descarga de PNG sin errores
+- [x] Guardar checkpoint final
