@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import { blogPosts, InsertBlogPost } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -53,8 +53,7 @@ export const blogRouter = router({
     }),
 
   // Obtener todas las entradas (admin)
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-
+  getAll: publicProcedure.query(async () => {
     const db = await getDb();
     if (!db) return [];
 
@@ -72,7 +71,7 @@ export const blogRouter = router({
   }),
 
   // Crear nueva entrada (admin)
-  create: protectedProcedure
+  create: publicProcedure
     .input(
       z.object({
         title: z.string().min(1),
@@ -83,8 +82,7 @@ export const blogRouter = router({
         published: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -110,7 +108,7 @@ export const blogRouter = router({
     }),
 
   // Actualizar entrada (admin)
-  update: protectedProcedure
+  update: publicProcedure
     .input(
       z.object({
         id: z.number(),
@@ -122,8 +120,7 @@ export const blogRouter = router({
         published: z.boolean().optional(),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
@@ -160,10 +157,9 @@ export const blogRouter = router({
     }),
 
   // Eliminar entrada (admin)
-  delete: protectedProcedure
+  delete: publicProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input, ctx }) => {
-
+    .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
