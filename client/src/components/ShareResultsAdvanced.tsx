@@ -220,7 +220,7 @@ export function ShareResultsAdvanced({
 
       {showShareModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full border border-[#E0E0E0] max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl p-8 max-w-6xl w-full border border-[#E0E0E0] max-h-[95vh] overflow-y-auto">
             <h3 className="text-2xl font-bold text-[#1D1D1F] mb-2">
               Compartir Resultados
             </h3>
@@ -293,14 +293,20 @@ export function ShareResultsAdvanced({
             {infographyMode === "individual" && selectedParty && (
               <div className="mb-6">
                 <label className="text-sm text-[#666666] mb-3 block font-medium">
-                  Vista previa (16:9):
+                  Vista previa:
                 </label>
                 <div
                   ref={infographyRef}
-                  className="relative rounded-xl p-16 border aspect-video flex flex-col items-center justify-center overflow-hidden bg-white border-[#E0E0E0]"
+                  className="relative rounded-xl p-20 border flex flex-col items-center justify-center overflow-hidden bg-white border-[#E0E0E0] w-full"
+                  style={{
+                    minHeight: '600px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-around'
+                  }}
                 >
                   {/* Contenido minimalista */}
-                  <div className="text-center space-y-8 w-full">
+                  <div className="text-center space-y-10 w-full flex flex-col items-center">
                     {/* Logo del partido */}
                     {getLogoForParty(selectedParty.id, selectedParty.nombre) && (
                       <div className="flex justify-center">
@@ -310,53 +316,53 @@ export function ShareResultsAdvanced({
                             selectedParty.nombre
                           )}
                           alt={selectedParty.nombre}
-                          size={120}
-                          className="h-32 w-32 object-contain"
+                          size={140}
+                          className="h-40 w-40 object-contain"
                         />
                       </div>
                     )}
 
                     {/* Nombre del partido - Tipografía grande y clara */}
-                    <p className="text-5xl font-bold text-[#1D1D1F]">
+                    <p className="text-6xl font-bold text-[#1D1D1F] leading-tight">
                       {selectedParty.nombre}
                     </p>
 
                     {/* Porcentaje - Destacado */}
-                    <div className="space-y-2">
-                      <p className="text-8xl font-bold text-[#C41E3A]">
+                    <div className="space-y-3">
+                      <p className="text-9xl font-bold text-[#C41E3A] leading-none">
                         {selectedParty.porcentaje.toFixed(1)}%
                       </p>
-                      <p className="text-lg text-[#666666]">
+                      <p className="text-xl text-[#666666] font-medium">
                         {selectedParty.votos.toLocaleString()} votos
                       </p>
                     </div>
 
-                    {/* Escaños - Visualización clara */}
-                    <div className="pt-4">
-                      <div className="inline-block px-8 py-4 border-2 border-[#C41E3A] rounded-lg">
-                        <p className="text-5xl font-bold text-[#C41E3A]">
+                    {/* Escaños - Visualización clara y destacada */}
+                    <div className="pt-6">
+                      <div className="inline-block px-12 py-6 border-3 border-[#C41E3A] rounded-xl bg-[#FFF5F7]">
+                        <p className="text-7xl font-bold text-[#C41E3A] leading-none">
                           {selectedParty.escanos}
                         </p>
-                        <p className="text-sm text-[#666666] mt-2 font-medium">
-                          escaños {activeTab === "general" ? "(de 350)" : "(de 50)"}
+                        <p className="text-base text-[#666666] mt-3 font-semibold tracking-wide">
+                          ESCAÑOS {activeTab === "general" ? "(de 350)" : "(de 50)"}
                         </p>
                       </div>
                     </div>
 
                     {/* Footer minimalista */}
-                    <div className="pt-6 border-t border-[#E0E0E0]">
-                      <p className="text-sm text-[#999999] mb-2">
+                    <div className="pt-8 border-t border-[#E0E0E0] w-full">
+                      <p className="text-base text-[#999999] mb-3 font-semibold tracking-wide">
                         {activeTab === "general"
-                          ? "Elecciones Generales"
-                          : "Asociaciones Juveniles"}
+                          ? "ELECCIONES GENERALES"
+                          : "ASOCIACIONES JUVENILES"}
                       </p>
                       <div className="flex items-center justify-center gap-2">
                         <img
                           src="/favicon.png"
                           alt="BC Logo"
-                          className="h-6 w-6"
+                          className="h-7 w-7"
                         />
-                        <span className="text-[#C41E3A] font-bold text-base">
+                        <span className="text-[#C41E3A] font-bold text-lg">
                           Batalla Cultural
                         </span>
                       </div>
@@ -370,27 +376,32 @@ export function ShareResultsAdvanced({
             {infographyMode === "complete" && (
               <div className="mb-6">
                 <label className="text-sm text-[#666666] mb-3 block font-medium">
-                  Infografía Top 10 (16:9):
+                  Infografía Top 10:
                 </label>
                 <div
                   ref={infographyRef}
-                  className="relative rounded-xl p-12 border aspect-video flex flex-col items-center justify-center overflow-hidden bg-white border-[#E0E0E0]"
+                  className="relative rounded-xl p-12 border flex flex-col items-center justify-center overflow-hidden bg-white border-[#E0E0E0] w-full"
+                  style={{
+                    minHeight: '500px',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
                 >
                   {/* Contenido minimalista */}
-                  <div className="text-center space-y-6 w-full">
+                  <div className="text-center space-y-6 w-full flex flex-col">
                     {/* Header */}
-                    <div className="pb-4 border-b border-[#E0E0E0]">
-                      <div className="flex items-center justify-center gap-2 mb-3">
+                    <div className="pb-6 border-b border-[#E0E0E0]">
+                      <div className="flex items-center justify-center gap-2 mb-4">
                         <img
                           src="/favicon.png"
                           alt="BC Logo"
-                          className="h-8 w-8"
+                          className="h-9 w-9"
                         />
-                        <span className="text-[#C41E3A] font-bold text-lg">
+                        <span className="text-[#C41E3A] font-bold text-xl">
                           Batalla Cultural
                         </span>
                       </div>
-                      <p className="text-[#666666] text-sm font-medium">
+                      <p className="text-[#666666] text-base font-semibold">
                         {activeTab === "general"
                           ? "Elecciones Generales"
                           : "Asociaciones Juveniles"}
@@ -398,22 +409,22 @@ export function ShareResultsAdvanced({
                     </div>
 
                     {/* Top 10 Partidos/Asociaciones */}
-                    <div className="w-full">
-                      <p className="text-[#999999] text-xs mb-4 font-bold uppercase tracking-wider">
+                    <div className="w-full flex-1">
+                      <p className="text-[#999999] text-sm mb-5 font-bold uppercase tracking-wider">
                         Top 10{" "}
                         {activeTab === "general"
                           ? "Partidos"
                           : "Asociaciones"}
                       </p>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {topParties.map((party, index) => {
                           const logo = getLogoForParty(party.id, party.nombre);
                           return (
                             <div
                               key={party.id}
-                              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#F9F9F9]"
+                              className="flex items-center gap-4 px-4 py-3 rounded-lg bg-[#F9F9F9]"
                             >
-                              <span className="text-[#999999] font-bold w-5 text-sm">
+                              <span className="text-[#999999] font-bold w-6 text-base">
                                 {index + 1}.
                               </span>
 
@@ -422,21 +433,21 @@ export function ShareResultsAdvanced({
                                   <ImageLoader
                                     src={logo}
                                     alt={party.nombre}
-                                    size={20}
-                                    className="h-5 w-5 object-contain"
+                                    size={24}
+                                    className="h-6 w-6 object-contain"
                                   />
                                 </div>
                               )}
 
-                              <span className="text-[#1D1D1F] font-semibold flex-1 text-left truncate text-sm">
+                              <span className="text-[#1D1D1F] font-semibold flex-1 text-left truncate text-base">
                                 {party.nombre}
                               </span>
 
-                              <span className="text-[#C41E3A] font-bold text-sm">
+                              <span className="text-[#C41E3A] font-bold text-base">
                                 {party.porcentaje.toFixed(1)}%
                               </span>
 
-                              <span className="text-[#666666] text-xs font-medium min-w-fit">
+                              <span className="text-[#666666] text-sm font-semibold min-w-fit">
                                 {party.escanos} esc.
                               </span>
                             </div>
@@ -446,18 +457,18 @@ export function ShareResultsAdvanced({
                     </div>
 
                     {/* Footer */}
-                    <div className="pt-4 border-t border-[#E0E0E0]">
-                      <p className="text-[#999999] text-xs">
+                    <div className="pt-6 border-t border-[#E0E0E0]">
+                      <p className="text-[#999999] text-sm">
                         {activeTab === "general"
                           ? "350 escaños (umbral 3%)"
                           : "50 escaños (umbral 7%)"}
                       </p>
                       {edadPromedio && (
-                        <p className="text-[#999999] text-xs mt-1">
+                        <p className="text-[#999999] text-sm mt-1">
                           Edad promedio: {edadPromedio.toFixed(1)} años
                         </p>
                       )}
-                      <p className="text-[#C41E3A] text-xs mt-2 font-semibold">
+                      <p className="text-[#C41E3A] text-sm mt-2 font-semibold">
                         #BatallaaCultural
                       </p>
                     </div>
