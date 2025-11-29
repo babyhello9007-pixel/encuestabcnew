@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PARTIES_GENERAL } from "@/lib/surveyData";
 import { getPartyColor } from "@/lib/partyConfig";
+import { normalizeProvinceName } from "@/lib/provinceNameNormalizer";
+import { getProvinceGeoJsonId } from "@/lib/provinceGeoJsonMapper";
 
 interface Province {
   name: string;
@@ -17,148 +19,262 @@ interface SpainMapRealisticProps {
   selectedProvince: string | null;
 }
 
-// Coordenadas aproximadas del centroide de cada provincia para el mapa
-const provinceCoordinates: { [key: string]: { x: number; y: number } } = {
-  "Álava": { x: 520, y: 200 },
-  "Albacete": { x: 650, y: 380 },
-  "Alicante": { x: 720, y: 420 },
-  "Almería": { x: 750, y: 480 },
-  "Ávila": { x: 580, y: 300 },
-  "Badajoz": { x: 420, y: 380 },
-  "Baleares": { x: 800, y: 380 },
-  "Barcelona": { x: 780, y: 150 },
-  "Burgos": { x: 580, y: 200 },
-  "Cáceres": { x: 450, y: 340 },
-  "Cádiz": { x: 350, y: 520 },
-  "Castellón": { x: 750, y: 300 },
-  "Ciudad Real": { x: 580, y: 380 },
-  "Córdoba": { x: 500, y: 420 },
-  "Cuenca": { x: 650, y: 320 },
-  "Girona": { x: 800, y: 120 },
-  "Granada": { x: 650, y: 480 },
-  "Guadalajara": { x: 620, y: 300 },
-  "Guipúzcoa": { x: 500, y: 160 },
-  "Huelva": { x: 380, y: 480 },
-  "Huesca": { x: 650, y: 150 },
-  "Jaén": { x: 600, y: 440 },
-  "La Coruña": { x: 300, y: 100 },
-  "La Rioja": { x: 600, y: 180 },
-  "Las Palmas": { x: 200, y: 550 },
-  "León": { x: 480, y: 180 },
-  "Lleida": { x: 700, y: 140 },
-  "Lugo": { x: 320, y: 80 },
-  "Madrid": { x: 620, y: 320 },
-  "Málaga": { x: 550, y: 500 },
-  "Murcia": { x: 700, y: 420 },
-  "Navarra": { x: 580, y: 160 },
-  "Ourense": { x: 350, y: 120 },
-  "Palencia": { x: 540, y: 220 },
-  "Palma de Mallorca": { x: 780, y: 380 },
-  "Pontevedra": { x: 320, y: 140 },
-  "Salamanca": { x: 500, y: 280 },
-  "Santa Cruz de Tenerife": { x: 180, y: 600 },
-  "Segovia": { x: 600, y: 280 },
-  "Sevilla": { x: 450, y: 460 },
-  "Soria": { x: 620, y: 220 },
-  "Tarragona": { x: 760, y: 180 },
-  "Teruel": { x: 680, y: 240 },
-  "Toledo": { x: 600, y: 360 },
-  "Valencia": { x: 720, y: 360 },
-  "Valladolid": { x: 540, y: 240 },
-  "Vizcaya": { x: 500, y: 180 },
-  "Zamora": { x: 480, y: 240 },
-  "Zaragoza": { x: 680, y: 200 },
-  "Ceuta": { x: 380, y: 520 },
-  "Melilla": { x: 800, y: 520 },
-};
+interface TopoJSON {
+  type: string;
+  bbox: number[];
+  transform: {
+    scale: number[];
+    translate: number[];
+  };
+  objects: {
+    provinces: {
+      type: string;
+      geometries: Array<{
+        type: string;
+        arcs: number[][][];
+        id: string;
+        properties: {
+          name: string;
+        };
+      }>;
+    };
+  };
+}
 
-export function SpainMapRealistic({ provincesData, onProvinceSelect, selectedProvince }: SpainMapRealisticProps) {
+// Función para decodificar arcos de TopoJSON
+function decodeArcs(arcs: number[][], transform: any): number[][][] {
+  const scale = transform.scale;
+  const translate = transform.translate;
+  const decodedArcs: number[][][] = [];
+
+  arcs.forEach((arc) => {
+    const points: number[][] = [];
+    let x = 0,
+      y = 0;
+
+    arc.forEach((point) => {
+      x += point[0];
+      y += point[1];
+      points.push([
+        x * scale[0] + translate[0],
+        y * scale[1] + translate[1],
+      ]);
+    });
+
+    decodedArcs.push(points);
+  });
+
+  return decodedArcs;
+}
+
+// Función para convertir coordenadas geográficas a coordenadas SVG
+function geoToSvg(
+  lon: number,
+  lat: number,
+  bbox: number[],
+  width: number,
+  height: number
+): [number, number] {
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  const x = ((lon - minLon) / (maxLon - minLon)) * width;
+  const y = ((maxLat - lat) / (maxLat - minLat)) * height;
+  return [x, y];
+}
+
+export function SpainMapRealistic({
+  provincesData,
+  onProvinceSelect,
+  selectedProvince,
+}: SpainMapRealisticProps) {
+  const [topoData, setTopoData] = useState<TopoJSON | null>(null);
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Cargar el archivo TopoJSON
+    fetch("/data/provinces.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setTopoData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error cargando TopoJSON:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading || !topoData) {
+    return (
+      <div className="w-full flex items-center justify-center p-8">
+        <p className="text-[#555555]">Cargando mapa...</p>
+      </div>
+    );
+  }
+
+  const bbox = topoData.bbox;
+  const width = 900;
+  const height = 650;
+
+  // Decodificar todos los arcos
+  const allArcs = topoData.objects.provinces.geometries.flatMap(
+    (geom) => geom.arcs
+  );
+  const decodedArcs = decodeArcs(allArcs, topoData.transform);
+
+  // Crear un mapa de arcos decodificados por índice
+  const arcMap: { [key: number]: number[][] } = {};
+  let arcIndex = 0;
+  topoData.objects.provinces.geometries.forEach((geom) => {
+    geom.arcs.forEach((arcIndices) => {
+      arcIndices.forEach((arcIdx) => {
+        if (!arcMap[arcIdx]) {
+          arcMap[arcIdx] = decodedArcs[arcIndex];
+          arcIndex++;
+        }
+      });
+    });
+  });
+
+  // Función para construir el path SVG a partir de los arcos
+  function buildPath(arcIndices: number[][]): string {
+    let pathData = "";
+
+    arcIndices.forEach((ring, ringIndex) => {
+      if (ringIndex > 0) {
+        // Nuevo anillo (para MultiPolygon)
+        pathData += " ";
+      }
+
+      ring.forEach((arcIdx, pointIndex) => {
+        const arc = arcMap[Math.abs(arcIdx)];
+        if (!arc) return;
+
+        const points = arcIdx < 0 ? [...arc].reverse() : arc;
+
+        points.forEach((point, idx) => {
+          const [svgX, svgY] = geoToSvg(point[0], point[1], bbox, width, height);
+
+          if (pointIndex === 0 && idx === 0) {
+            pathData += `M${svgX},${svgY}`;
+          } else {
+            pathData += `L${svgX},${svgY}`;
+          }
+        });
+      });
+
+      pathData += "Z";
+    });
+
+    return pathData;
+  }
 
   return (
     <div className="w-full flex flex-col items-center gap-6">
       <svg
-        viewBox="0 0 900 650"
+        viewBox={`0 0 ${width} ${height}`}
         className="w-full max-w-4xl border border-[#D5D5D7] rounded-2xl bg-[#F5F5F7]"
         style={{ aspectRatio: "16/11" }}
       >
         {/* Fondo del mapa */}
-        <rect width="900" height="650" fill="#F5F5F7" />
+        <rect width={width} height={height} fill="#F5F5F7" />
 
-        {/* Provincias como círculos (representación simplificada) */}
-        {Object.entries(provincesData).map(([province, data]) => {
-          const coords = provinceCoordinates[province];
-          if (!coords) return null;
+        {/* Provincias como polígonos reales */}
+        {topoData.objects.provinces.geometries.map((geometry) => {
+          const provinceName = geometry.properties.name;
+          
+          // Normalizar nombre y buscar en los datos
+          const normalizedName = normalizeProvinceName(provinceName);
+          let matchingProvince: string | null = null;
 
-          const winnerColor = getPartyColor(data.winnerParty) || "#CCCCCC";
-          const isSelected = selectedProvince === province;
-          const isHovered = hoveredProvince === province;
+          // Buscar provincia coincidente en los datos
+          for (const [key] of Object.entries(provincesData)) {
+            if (normalizeProvinceName(key) === normalizedName) {
+              matchingProvince = key;
+              break;
+            }
+          }
+
+          const data = matchingProvince
+            ? provincesData[matchingProvince]
+            : null;
+          const winnerColor = data
+            ? getPartyColor(data.winnerParty) || "#CCCCCC"
+            : "#CCCCCC";
+          const isSelected = selectedProvince === matchingProvince;
+          const isHovered = hoveredProvince === matchingProvince;
+
+          const pathData = buildPath(geometry.arcs);
 
           return (
-            <g key={province}>
-              {/* Círculo de provincia */}
-              <circle
-                cx={coords.x}
-                cy={coords.y}
-                r={isHovered || isSelected ? 28 : 22}
+            <g key={geometry.id}>
+              {/* Polígono de provincia */}
+              <path
+                d={pathData}
                 fill={winnerColor}
-                opacity={data.totalVotes > 0 ? 1 : 0.3}
-                stroke={isSelected ? "#1D1D1F" : isHovered ? "#C41E3A" : "white"}
-                strokeWidth={isSelected ? 3 : isHovered ? 2 : 1}
-                className="cursor-pointer transition-all"
-                onMouseEnter={() => setHoveredProvince(province)}
+                opacity={data && data.totalVotes > 0 ? 1 : 0.2}
+                stroke={
+                  isSelected
+                    ? "#1D1D1F"
+                    : isHovered
+                      ? "#C41E3A"
+                      : "#D5D5D7"
+                }
+                strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.5}
+                className="cursor-pointer transition-all hover:opacity-90"
+                onMouseEnter={() =>
+                  matchingProvince && setHoveredProvince(matchingProvince)
+                }
                 onMouseLeave={() => setHoveredProvince(null)}
-                onClick={() => onProvinceSelect(province)}
+                onClick={() =>
+                  matchingProvince && onProvinceSelect(matchingProvince)
+                }
               />
 
-              {/* Etiqueta de provincia */}
-              {(isHovered || isSelected) && (
-                <text
-                  x={coords.x}
-                  y={coords.y + 40}
-                  textAnchor="middle"
-                  className="text-xs font-semibold fill-[#1D1D1F] pointer-events-none"
-                >
-                  {province.substring(0, 3).toUpperCase()}
-                </text>
-              )}
-
               {/* Tooltip */}
-              {isHovered && (
+              {isHovered && data && (
                 <g>
                   <rect
-                    x={coords.x - 60}
-                    y={coords.y - 70}
-                    width="120"
-                    height="60"
+                    x="10"
+                    y="10"
+                    width="180"
+                    height="80"
                     rx="8"
                     fill="white"
                     stroke="#D5D5D7"
                     strokeWidth="1"
                   />
                   <text
-                    x={coords.x}
-                    y={coords.y - 50}
+                    x="100"
+                    y="30"
                     textAnchor="middle"
-                    className="text-xs font-semibold fill-[#1D1D1F]"
+                    className="text-sm font-semibold fill-[#1D1D1F]"
                   >
-                    {province}
+                    {matchingProvince}
                   </text>
                   <text
-                    x={coords.x}
-                    y={coords.y - 35}
+                    x="100"
+                    y="50"
                     textAnchor="middle"
                     className="text-xs fill-[#555555]"
                   >
                     {data.totalVotes} votos
                   </text>
                   <text
-                    x={coords.x}
-                    y={coords.y - 20}
+                    x="100"
+                    y="65"
                     textAnchor="middle"
                     className="text-xs fill-[#555555]"
                   >
                     Edad: {data.age.toFixed(1)}
+                  </text>
+                  <text
+                    x="100"
+                    y="80"
+                    textAnchor="middle"
+                    className="text-xs fill-[#555555]"
+                  >
+                    {data.winnerParty}
                   </text>
                 </g>
               )}
@@ -167,24 +283,24 @@ export function SpainMapRealistic({ provincesData, onProvinceSelect, selectedPro
         })}
 
         {/* Leyenda */}
-        <g transform="translate(20, 580)">
-          <text x="0" y="0" className="text-sm font-semibold fill-[#1D1D1F]">
+        <g transform="translate(20, 600)">
+          <text x="0" y="0" className="text-xs font-semibold fill-[#1D1D1F]">
             Leyenda:
           </text>
-          <circle cx="80" cy="-8" r="6" fill="#0066CC" />
-          <text x="92" y="0" className="text-xs fill-[#555555]">
+          <rect x="70" y="-10" width="10" height="10" fill="#0066CC" />
+          <text x="85" y="0" className="text-xs fill-[#555555]">
             PP
           </text>
-          <circle cx="130" cy="-8" r="6" fill="#E81828" />
-          <text x="142" y="0" className="text-xs fill-[#555555]">
+          <rect x="120" y="-10" width="10" height="10" fill="#E81828" />
+          <text x="135" y="0" className="text-xs fill-[#555555]">
             PSOE
           </text>
-          <circle cx="190" cy="-8" r="6" fill="#24AA3D" />
-          <text x="202" y="0" className="text-xs fill-[#555555]">
+          <rect x="180" y="-10" width="10" height="10" fill="#24AA3D" />
+          <text x="195" y="0" className="text-xs fill-[#555555]">
             VOX
           </text>
-          <circle cx="250" cy="-8" r="6" fill="#CCCCCC" opacity="0.3" />
-          <text x="262" y="0" className="text-xs fill-[#555555]">
+          <rect x="240" y="-10" width="10" height="10" fill="#CCCCCC" opacity="0.2" />
+          <text x="255" y="0" className="text-xs fill-[#555555]">
             Sin datos
           </text>
         </g>
@@ -193,7 +309,9 @@ export function SpainMapRealistic({ provincesData, onProvinceSelect, selectedPro
       {/* Información de provincia seleccionada */}
       {selectedProvince && provincesData[selectedProvince] && (
         <div className="w-full max-w-4xl frosted-glass p-6 rounded-2xl space-y-4">
-          <h3 className="text-xl font-semibold text-[#1D1D1F]">{selectedProvince}</h3>
+          <h3 className="text-xl font-semibold text-[#1D1D1F]">
+            {selectedProvince}
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-xs text-[#555555] mb-1">Total Votos</p>

@@ -222,3 +222,12 @@
 - [x] Agregar interactividad (hover) en escaños
 - [x] Verificar visualización del hemiciclo
 - [x] Guardar checkpoint con hemiciclo real
+
+## Mejora del Mapa Realista - Formas Reales de Provincias - COMPLETADO
+- [x] Obtener GeoJSON de provincias españolas con límites reales
+- [x] Normalizar nombres: A Coruña ↔ Coruña, Bizkaia ↔ Vizcaya, Gipuzkoa ↔ Guipúzcoa
+- [x] Agregar Islas Baleares (Illes Balears), Canarias (Las Palmas, Santa Cruz de Tenerife), Ceuta y Melilla
+- [x] Crear mapeo entre nombres de provincias y GeoJSON
+- [x] Reemplazar cuadrados por polígonos reales en SpainMapRealistic
+- [x] Probar mapa completo en navegador
+- [ ] Guardar checkpoint final con mapa realista mejorado
