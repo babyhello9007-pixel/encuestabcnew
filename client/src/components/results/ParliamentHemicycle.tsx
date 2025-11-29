@@ -5,6 +5,9 @@ import { PARTIES_GENERAL } from '@/lib/surveyData';
 interface ParliamentHemicycleProps {
   escanos: Record<string, number>;
   totalEscanos?: number;
+  provinciaSeleccionada?: string | null;
+  votosProvincia?: Record<string, number>;
+  escanosProvincia?: Record<string, number>;
 }
 
 /**
@@ -13,6 +16,9 @@ interface ParliamentHemicycleProps {
 export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
   escanos,
   totalEscanos = 350,
+  provinciaSeleccionada,
+  votosProvincia,
+  escanosProvincia,
 }) => {
   const [hoveredParty, setHoveredParty] = useState<string | null>(null);
 
@@ -50,6 +56,28 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
 
   return (
     <div className="w-full space-y-4">
+      {/* Información de provincia seleccionada */}
+      {provinciaSeleccionada && votosProvincia && Object.keys(votosProvincia).length > 0 && (
+        <div className="p-4 bg-blue-900 rounded-lg border border-blue-600">
+          <h3 className="text-white font-bold mb-3">Provincia: {provinciaSeleccionada}</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.entries(votosProvincia)
+              .sort((a, b) => b[1] - a[1])
+              .map(([party, votos]) => {
+                const escanosPart = escanosProvincia?.[party] || 0;
+                const partyName = PARTIES_GENERAL[party as keyof typeof PARTIES_GENERAL]?.name || party;
+                return (
+                  <div key={party} className="p-3 rounded bg-blue-800 border-l-4" style={{ borderColor: getPartyColor(party) }}>
+                    <div className="text-blue-200 text-sm font-semibold">{partyName}</div>
+                    <div className="text-white text-lg font-bold">{votos} votos</div>
+                    <div className="text-blue-100 text-sm">{escanosPart} escaños</div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+      
       {/* Leyenda */}
       <div className="flex flex-wrap gap-2 p-3 bg-gray-900 rounded-lg text-sm">
         {Object.entries(escanos)

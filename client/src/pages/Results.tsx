@@ -62,6 +62,9 @@ export default function Results() {
   const [selectedPartyForStats, setSelectedPartyForStats] = useState<string | null>(null);
   const [votosPorProvincia, setVotosPorProvincia] = useState<Record<string, Record<string, number>>>({});
   const [escanosGeneralesPorProvincia, setEscanosGeneralesPorProvincia] = useState<Record<string, number>>({});
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string | null>(null);
+  const [votosPorPartidoProvincia, setVotosPorPartidoProvincia] = useState<Record<string, number>>({});
+  const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
@@ -778,8 +781,10 @@ export default function Results() {
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Mapa de Provincias</h2>
                       <SpainMapProvincial 
                         votosPorProvincia={votosPorProvincia}
-                        onProvinceClick={(province, data) => {
-                          console.log(`Provincia: ${province}`, data);
+                        onProvinceClick={(province, data, votos, escanos) => {
+                          setProvinciaSeleccionada(province);
+                          setVotosPorPartidoProvincia(votos);
+                          setEscanosProvincia(escanos);
                         }}
                       />
                     </div>
@@ -789,6 +794,9 @@ export default function Results() {
                       <ParliamentHemicycle 
                         escanos={escanosGeneralesPorProvincia}
                         totalEscanos={350}
+                        provinciaSeleccionada={provinciaSeleccionada}
+                        votosProvincia={votosPorPartidoProvincia}
+                        escanosProvincia={escanosProvincia}
                       />
                     </div>
                   </>

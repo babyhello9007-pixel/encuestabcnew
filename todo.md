@@ -181,3 +181,10 @@
 - [x] Sincronizar lógica de cálculo entre ambos
 - [x] Verificar que muestren los mismos números (ahora ambos muestran: VOX 152, PP 70, Ciudadanos 36, PSOE 27, etc.)
 - [x] Guardar checkpoint con correcciones
+
+## Mejora de Visualización Hemiciclo por Provincia - COMPLETADO
+- [x] Agregar estado para provincia seleccionada en Results.tsx
+- [x] Modificar hemiciclo para mostrar votos y escaños de provincia seleccionada
+- [x] Actualizar mapa para pasar provincia seleccionada al hemiciclo
+- [x] Verificar que la visualización funcione correctamente
+- [ ] Guardar checkpoint con mejoras
