@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { getPartyColor } from '@/lib/partyConfig';
 import { PARTIES_GENERAL } from '@/lib/surveyData';
 import { getEscanosPorProvincia, calcularEscanosProvincia } from '@/lib/dhondtByProvince';
+import { VerifySeatsModal } from '@/components/VerifySeatsModal';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2 } from 'lucide-react';
 
 interface ProvinceData {
   name: string;
@@ -23,6 +26,13 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
   onProvinceClick,
 }) => {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyData, setVerifyData] = useState<{
+    provincia: string;
+    votos: Record<string, number>;
+    escanos: Record<string, number>;
+    escanosPorPartido: Record<string, number>;
+  } | null>(null);
 
   // Calcular el partido ganador por provincia
   const getProvinceData = (province: string): ProvinceData => {
@@ -130,6 +140,35 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
         ))}
       </div>
 
+      {/* Botón de verificación de escaños */}
+      {selectedProvince && Object.keys(votosPorProvincia[selectedProvince] || {}).length > 0 && (
+        <div className="p-4 bg-blue-100 rounded-lg border border-blue-300 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-blue-900">Verificar Escaños</h3>
+            <p className="text-sm text-blue-700">Comprueba si la distribución de escaños es correcta según la Ley d'Hondt</p>
+          </div>
+          <Button
+            onClick={() => {
+              const votos = votosPorProvincia[selectedProvince] || {};
+              const escanos = calcularEscanosPorProvinciaCorrecta(selectedProvince, votos);
+              const escanosPorPartido = calcularEscanosPorProvinciaCorrecta(selectedProvince, votos);
+              setVerifyData({
+                provincia: selectedProvince,
+                votos,
+                escanos,
+                escanosPorPartido,
+              });
+              setShowVerifyModal(true);
+            }}
+            className="flex items-center gap-2"
+            variant="default"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Verificar
+          </Button>
+        </div>
+      )}
+
       {/* Información de la provincia seleccionada */}
       {selectedProvince && (
         <div className="p-4 bg-gray-900 rounded-lg">
@@ -165,6 +204,18 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
               })}
           </div>
         </div>
+      )}
+
+      {/* Modal de verificación de escaños */}
+      {verifyData && (
+        <VerifySeatsModal
+          isOpen={showVerifyModal}
+          onClose={() => setShowVerifyModal(false)}
+          provincia={verifyData.provincia}
+          votosProvincia={verifyData.votos}
+          escanosProvincia={verifyData.escanos}
+          escanosPorPartido={verifyData.escanosPorPartido}
+        />
       )}
     </div>
   );

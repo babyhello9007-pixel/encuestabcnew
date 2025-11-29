@@ -196,4 +196,13 @@
 - [x] Actualizar SpainMapProvincial para usar escaños correctos de la BD
 - [x] Actualizar ParliamentHemicycle para mostrar escaños correctos
 - [x] Verificar que los cálculos sean correctos con datos reales
-- [ ] Guardar checkpoint con corrección de escaños
+- [x] Guardar checkpoint con corrección de escaños (v: b9557385)
+
+
+## Verificador de Escaños por Provincia - COMPLETADO
+- [x] Crear vista SQL para calcular escaños por provincia
+- [x] Crear función para comparar escaños calculados vs esperados
+- [x] Agregar botón de verificación en SpainMapProvincial
+- [x] Crear modal de resultados de verificación
+- [x] Verificar que la verificación funcione correctamente
+- [ ] Guardar checkpoint con verificador de escaños
