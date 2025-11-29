@@ -23,6 +23,7 @@ import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
+import { MapFilters, FilterState } from "@/components/results/MapFilters";
 import { Map, Grid3x3 } from "lucide-react";
 
 interface PartyStats {
@@ -70,6 +71,12 @@ export default function Results() {
   const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
   const [sortBy, setSortBy] = useState<'votos' | 'escanos'>('votos');
   const [mapView, setMapView] = useState<'schematic' | 'realistic'>('realistic');
+  const [mapFilters, setMapFilters] = useState<FilterState>({
+    ageRange: [18, 80],
+    ideologyRange: [1, 10],
+    selectedParties: [],
+  });
+  const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
@@ -163,6 +170,44 @@ export default function Results() {
                 });
                 
                 setVotosPorProvincia(votosProv);
+                
+                // Cargar métricas por provincia
+                try {
+                  const { data: metricsData } = await supabase
+                    .from("respuestas")
+                    .select("provincia, edad, ideologia");
+                  
+                  if (metricsData && metricsData.length > 0) {
+                    const metricsMap: Record<string, { edad_promedio: number; ideologia_promedio: number }> = {};
+                    const provinciaCounts: Record<string, { edad_sum: number; ideologia_sum: number; count: number }> = {};
+                    
+                    metricsData.forEach((row: any) => {
+                      if (row.provincia) {
+                        if (!provinciaCounts[row.provincia]) {
+                          provinciaCounts[row.provincia] = { edad_sum: 0, ideologia_sum: 0, count: 0 };
+                        }
+                        if (row.edad !== null && row.edad !== undefined) {
+                          provinciaCounts[row.provincia].edad_sum += row.edad;
+                        }
+                        if (row.ideologia !== null && row.ideologia !== undefined) {
+                          provinciaCounts[row.provincia].ideologia_sum += row.ideologia;
+                        }
+                        provinciaCounts[row.provincia].count += 1;
+                      }
+                    });
+                    
+                    Object.entries(provinciaCounts).forEach(([provincia, counts]) => {
+                      metricsMap[provincia] = {
+                        edad_promedio: counts.count > 0 ? counts.edad_sum / counts.count : 0,
+                        ideologia_promedio: counts.count > 0 ? counts.ideologia_sum / counts.count : 0,
+                      };
+                    });
+                    
+                    setProvinciaMetricsMap(metricsMap);
+                  }
+                } catch (err) {
+                  console.error("Error fetching provincia metrics:", err);
+                }
               }
             } catch (err) {
               console.error("Error fetching votos por provincia:", err);
@@ -801,6 +846,17 @@ export default function Results() {
               <div className="space-y-8">
                 {Object.keys(votosPorProvincia).length > 0 ? (
                   <>
+                    {/* Filtros dinámicos */}
+                    <div className="liquid-glass p-8 rounded-2xl">
+                      <MapFilters 
+                        allParties={Object.keys(votosPorProvincia).length > 0 
+                          ? Array.from(new Set(Object.values(votosPorProvincia).flatMap(p => Object.keys(p))))
+                          : []
+                        }
+                        onFilterChange={setMapFilters}
+                      />
+                    </div>
+
                     <div className="liquid-glass p-8 rounded-2xl">
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias</h2>
@@ -843,6 +899,8 @@ export default function Results() {
                       ) : (
                         <SpainMapRealistic 
                           votosPorProvincia={votosPorProvincia}
+                          provinciaMetricsMap={provinciaMetricsMap}
+                          filters={mapFilters}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);

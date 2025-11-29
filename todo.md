@@ -231,3 +231,18 @@
 - [x] Reemplazar cuadrados por polígonos reales en SpainMapRealistic
 - [x] Probar mapa completo en navegador
 - [x] Guardar checkpoint final con mapa realista mejorado
+
+## Mejora de Popup y Filtros Dinamicos del Mapa - NUEVO
+- [x] Crear componente ProvincePopup con todos los resultados de la provincia
+- [x] Mostrar top 10 partidos con votos, porcentajes y barras de progreso
+- [x] Agregar edad promedio e ideologia promedio en popup
+- [x] Crear componente MapFilters con filtros dinamicos
+- [x] Implementar filtro por rango de edad (18-80 anos)
+- [x] Implementar filtro por rango de ideologia (1-10)
+- [x] Implementar filtro por partidos seleccionados
+- [x] Cargar metricas por provincia (edad y ideologia promedio)
+- [x] Integrar filtros en SpainMapRealistic
+- [x] Aplicar filtros visualmente (provincias que no coinciden en gris)
+- [x] Mostrar leyenda de filtros activos
+- [ ] Pruebas funcionales de filtros dinamicos
+- [ ] Validar que popup muestre datos correctamente
