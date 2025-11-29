@@ -317,4 +317,4 @@
 - [x] Agregar enlaces a Redes Sociales (X, Discord, Bluesky, Instagram)
 - [x] Integrar ruta /bio en App.tsx
 - [x] Probar página Bio en navegador
-- [ ] Guardar checkpoint con página Bio
+- [x] Guardar checkpoint con página Bio

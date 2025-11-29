@@ -1,7 +1,70 @@
+import { useState } from 'react';
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { APP_LOGO } from "@/const";
+
+interface SocialLink {
+  name: string;
+  url: string;
+  logo: string;
+  alt: string;
+  color: string;
+}
+
+const SOCIAL_LINKS: SocialLink[] = [
+  {
+    name: 'X',
+    url: 'https://x.com/bcultural_es',
+    logo: '/assets/icons/x-logo.png',
+    alt: 'X Logo',
+    color: '#000000',
+  },
+  {
+    name: 'Discord',
+    url: 'https://discord.gg/Tc8JabgY3T',
+    logo: '/assets/icons/discord-logo.png',
+    alt: 'Discord Logo',
+    color: '#5865F2',
+  },
+  {
+    name: 'Bluesky',
+    url: 'https://bsky.app/profile/bcultural-es.bsky.social',
+    logo: '/assets/icons/bluesky-logo.png',
+    alt: 'Bluesky Logo',
+    color: '#1185FE',
+  },
+  {
+    name: 'Instagram',
+    url: 'https://www.instagram.com/bcultural_es/',
+    logo: '/assets/icons/instagram-logo.gif',
+    alt: 'Instagram Logo',
+    color: '#E4405F',
+  },
+];
+
+function SocialLogo({ src, alt, name }: { src: string; alt: string; name: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return (
+      <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#C41E3A] to-[#A01830] rounded-lg text-xs font-bold text-white shadow-md">
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="eager"
+      decoding="sync"
+      className="w-10 h-10 object-contain"
+      style={{ maxWidth: '100%', maxHeight: '100%', display: 'block' }}
+      onError={() => setHasError(true)}
+    />
+  );
+}
 
 export default function Bio() {
   const [, setLocation] = useLocation();
@@ -20,33 +83,6 @@ export default function Bio() {
       action: () => setLocation("/resultados"),
       icon: "📊",
       color: "from-blue-400 to-blue-600",
-    },
-  ];
-
-  const socialLinks = [
-    {
-      name: "X",
-      url: "https://x.com/bcultural_es",
-      icon: "𝕏",
-      color: "hover:text-black dark:hover:text-white",
-    },
-    {
-      name: "Discord",
-      url: "https://discord.gg/Tc8JabgY3T",
-      icon: "💬",
-      color: "hover:text-blue-600",
-    },
-    {
-      name: "Bluesky",
-      url: "https://bsky.app/profile/bcultural-es.bsky.social",
-      icon: "🦋",
-      color: "hover:text-blue-400",
-    },
-    {
-      name: "Instagram",
-      url: "https://www.instagram.com/bcultural_es/",
-      icon: "📷",
-      color: "hover:text-pink-500",
     },
   ];
 
@@ -102,17 +138,23 @@ export default function Bio() {
         </div>
 
         <div className="grid grid-cols-4 gap-4 mb-8">
-          {socialLinks.map((social) => (
+          {SOCIAL_LINKS.map((social) => (
             <a
               key={social.name}
               href={social.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex flex-col items-center justify-center p-4 rounded-xl bg-muted hover:bg-accent transition-all duration-300 transform hover:scale-110 ${social.color}`}
+              className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 transform hover:scale-110 group"
+              style={{
+                background: `${social.color}15`,
+                border: `2px solid ${social.color}30`,
+              }}
               title={social.name}
             >
-              <span className="text-3xl mb-2">{social.icon}</span>
-              <span className="text-xs font-medium text-center">
+              <div className="mb-2 group-hover:drop-shadow-lg transition-all duration-300">
+                <SocialLogo src={social.logo} alt={social.alt} name={social.name} />
+              </div>
+              <span className="text-xs font-medium text-center text-foreground group-hover:text-[#C41E3A] transition-colors duration-300">
                 {social.name}
               </span>
             </a>
