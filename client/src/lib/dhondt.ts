@@ -89,7 +89,16 @@ export function obtenerEstadisticas(
 }> {
   const totalVotos = Object.values(votos).reduce((a, b) => a + b, 0);
 
+  const seenIds = new Set<string>();
+  
   return Object.entries(votos)
+    .filter(([id, votoCount]) => {
+      if (votoCount <= 0 || seenIds.has(id)) {
+        return false;
+      }
+      seenIds.add(id);
+      return true;
+    })
     .map(([id, votoCount]) => ({
       id,
       nombre: nombres[id] || id,

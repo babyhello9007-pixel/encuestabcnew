@@ -339,3 +339,6 @@
 - [x] Crear página de login Discord para /admin/blog
 - [x] Proteger rutas del admin con verificación Discord
 - [x] Probar flujo completo de autenticación
+
+## Bug Fix - Elementos Duplicados en Resultados - NUEVO
+- [x] Corregir elementos duplicados en la página de resultados (partidos con 0 votos aparecen duplicados)
