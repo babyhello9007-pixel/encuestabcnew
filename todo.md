@@ -187,4 +187,13 @@
 - [x] Modificar hemiciclo para mostrar votos y escaños de provincia seleccionada
 - [x] Actualizar mapa para pasar provincia seleccionada al hemiciclo
 - [x] Verificar que la visualización funcione correctamente
-- [ ] Guardar checkpoint con mejoras
+- [x] Guardar checkpoint con mejoras (v: ef13bca0)
+
+
+## Corrección de Cálculo de Escaños por Provincia - COMPLETADO
+- [x] Crear tabla escanos_provincias en BD con distribución real de escaños
+- [x] Crear función de Ley d'Hondt que respete escaños asignados a cada provincia
+- [x] Actualizar SpainMapProvincial para usar escaños correctos de la BD
+- [x] Actualizar ParliamentHemicycle para mostrar escaños correctos
+- [x] Verificar que los cálculos sean correctos con datos reales
+- [ ] Guardar checkpoint con corrección de escaños

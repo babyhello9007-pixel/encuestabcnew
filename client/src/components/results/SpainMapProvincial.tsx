@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getPartyColor } from '@/lib/partyConfig';
 import { PARTIES_GENERAL } from '@/lib/surveyData';
-import { getEscanosPorProvincia } from '@/lib/dhondtByProvince';
+import { getEscanosPorProvincia, calcularEscanosProvincia } from '@/lib/dhondtByProvince';
 
 interface ProvinceData {
   name: string;
@@ -47,47 +47,15 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
     };
   };
 
-  // Función para calcular escaños por provincia (umbral 3%)
-  const calcularEscanosPorProvincia = (votos: Record<string, number>): Record<string, number> => {
-    const totalVotos = Object.values(votos).reduce((a, b) => a + b, 0);
-    const umbral = totalVotos * 0.03;
-    
-    const escanos: Record<string, number> = {};
-    const partidos = Object.entries(votos)
-      .filter(([, v]) => v >= umbral)
-      .sort((a, b) => b[1] - a[1]);
-    
-    // Aplicar Ley d'Hondt simplificada
-    const divisores = Array.from({ length: 4 }, (_, i) => i + 1);
-    const cocientes: Array<{ partido: string; cociente: number; escano: number }> = [];
-    
-    partidos.forEach(([partido]) => {
-      divisores.forEach((divisor) => {
-        cocientes.push({
-          partido,
-          cociente: votos[partido] / divisor,
-          escano: divisor,
-        });
-      });
-    });
-    
-    cocientes.sort((a, b) => b.cociente - a.cociente);
-    
-    // Asignar máximo 4 escaños por provincia
-    const asignados = new Set<string>();
-    for (let i = 0; i < Math.min(4, cocientes.length); i++) {
-      const { partido } = cocientes[i];
-      escanos[partido] = (escanos[partido] || 0) + 1;
-      asignados.add(partido);
-    }
-    
-    return escanos;
+  // Función para calcular escaños por provincia usando Ley d'Hondt correcta
+  const calcularEscanosPorProvinciaCorrecta = (provincia: string, votos: Record<string, number>): Record<string, number> => {
+    return calcularEscanosProvincia(provincia, votos);
   };
 
   const handleProvinceClick = (province: string) => {
     const data = getProvinceData(province);
     const votos = votosPorProvincia[province] || {};
-    const escanos = calcularEscanosPorProvincia(votos);
+    const escanos = calcularEscanosPorProvinciaCorrecta(province, votos);
     setSelectedProvince(province);
     onProvinceClick?.(province, data, votos, escanos);
   };
@@ -176,7 +144,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
                   votosPorProvincia[selectedProvince] || {}
                 ).reduce((a, b) => a + b, 0);
                 const porcentaje = total > 0 ? (votos / total) * 100 : 0;
-                const escanosPart = calcularEscanosPorProvincia(votosPorProvincia[selectedProvince] || {})[partido] || 0;
+                const escanosPart = calcularEscanosPorProvinciaCorrecta(selectedProvince, votosPorProvincia[selectedProvince] || {})[partido] || 0;
                 const partyName = PARTIES_GENERAL[partido as keyof typeof PARTIES_GENERAL]?.name || partido;
 
                 return (
