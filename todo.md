@@ -129,3 +129,13 @@
 - [x] Mover CCAA y Provincias al lado de Elecciones Generales
 - [x] Verificar nuevo orden de botones
 - [x] Guardar checkpoint con nuevo orden
+
+## Vista de Comparación de CCAA - NUEVO
+- [x] Crear componente CCAAComparisonSection
+- [x] Agregar selector de 2-3 CCAA
+- [x] Crear gráficas comparativas de votos
+- [x] Agregar tabla comparativa de datos
+- [x] Integrar en Results.tsx
+- [x] Agregar botón de navegación
+- [x] Verificar funcionamiento
+- [x] Guardar checkpoint con comparación de CCAA

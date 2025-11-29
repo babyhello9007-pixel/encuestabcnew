@@ -17,6 +17,7 @@ import { PartyStatsModal } from "@/components/PartyStatsModal";
 import { LeadersResultsChart } from "@/components/LeadersResultsChart";
 import { CCAAResltsSection } from "@/components/CCAAResltsSection";
 import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
+import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
 
 interface PartyStats {
   id: string;
@@ -47,7 +48,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -535,6 +536,16 @@ export default function Results() {
                 Provincias
               </button>
               <button
+                onClick={() => setActiveTab("comparacion-ccaa")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "comparacion-ccaa"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Comparar CCAA
+              </button>
+              <button
                 onClick={() => setActiveTab("youth")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
                   activeTab === "youth"
@@ -688,6 +699,9 @@ export default function Results() {
             )}
             {activeTab === "provincias" && (
               <ProvincesResultsSection />
+            )}
+            {activeTab === "comparacion-ccaa" && (
+              <CCAAComparisonSection />
             )}
             {activeTab === "leaders" && (
             <div className="space-y-6">
