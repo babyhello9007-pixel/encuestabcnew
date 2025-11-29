@@ -10,6 +10,14 @@ interface CongressHemicycleProps {
   escanosProvincia?: Record<string, number>;
 }
 
+interface SeatInfo {
+  party: string;
+  x: number;
+  y: number;
+  totalSeats: number;
+  percentage: number;
+}
+
 /**
  * Hemiciclo del Congreso de los Diputados Español
  * Distribución política real: Izquierda (PSOE), Centro (VOX), Derecha (PP)
@@ -22,113 +30,133 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
   escanosProvincia,
 }) => {
   const [hoveredParty, setHoveredParty] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; party: string; seats: number; percentage: number } | null>(null);
 
-  // Clasificación política de partidos: izquierda, centro, derecha
+  // Clasificación política de partidos
   const getPartyPosition = (party: string): 'left' | 'center' | 'right' => {
     const leftParties = ['PSOE', 'PODEMOS', 'SUMAR', 'Izquierda Española', 'ERC', 'BILDU', 'Bloque Nacionalista Galego'];
-    const rightParties = ['PP', 'Ciudadanos', 'UPN'];
+    const rightParties = ['PP', 'Ciudadanos', 'UPN', 'Aliança Catalana', 'JUNTS'];
     const centerParties = ['VOX', 'Se Acabó La Fiesta', 'P-Lib'];
-    const catalanParties = ['Aliança Catalana', 'JUNTS'];
-    const otherParties = ['PNV', 'Coalición Canaria', 'Escaños en Blanco', 'Frente Obrero', 'Caminando Juntos', 'Falange Española de las JONS', 'Soberanía y Trabajo.', 'Otros'];
 
     if (leftParties.includes(party)) return 'left';
     if (rightParties.includes(party)) return 'right';
     if (centerParties.includes(party)) return 'center';
-    if (catalanParties.includes(party)) return 'right'; // Nacionalistas a la derecha
-    if (otherParties.includes(party)) return 'center'; // Otros al centro
 
-    return 'center'; // Default
+    return 'center';
   };
 
-  // Crear array de escaños ordenados por posición política y votos
-  const seatArray: Array<{ party: string; index: number; position: 'left' | 'center' | 'right' }> = [];
-  let seatIndex = 0;
+  // Crear lista de escaños individuales con su posición política
+  const allSeats: Array<{ party: string; position: 'left' | 'center' | 'right'; totalSeats: number }> = [];
+  
+  Object.entries(escanos)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([party, count]) => {
+      const position = getPartyPosition(party);
+      for (let i = 0; i < count; i++) {
+        allSeats.push({ party, position, totalSeats: count });
+      }
+    });
 
-  // Agrupar por posición política
-  const leftParties: Array<[string, number]> = [];
-  const centerParties: Array<[string, number]> = [];
-  const rightParties: Array<[string, number]> = [];
-
-  Object.entries(escanos).forEach(([party, count]) => {
-    const pos = getPartyPosition(party);
-    if (pos === 'left') leftParties.push([party, count]);
-    else if (pos === 'center') centerParties.push([party, count]);
-    else rightParties.push([party, count]);
-  });
-
-  // Ordenar cada grupo por votos (descendente)
-  leftParties.sort((a, b) => b[1] - a[1]);
-  centerParties.sort((a, b) => b[1] - a[1]);
-  rightParties.sort((a, b) => b[1] - a[1]);
-
-  // Crear array de escaños: izquierda, centro, derecha
-  for (const [party, count] of leftParties) {
-    for (let i = 0; i < count; i++) {
-      seatArray.push({ party, index: seatIndex++, position: 'left' });
-    }
-  }
-  for (const [party, count] of centerParties) {
-    for (let i = 0; i < count; i++) {
-      seatArray.push({ party, index: seatIndex++, position: 'center' });
-    }
-  }
-  for (const [party, count] of rightParties) {
-    for (let i = 0; i < count; i++) {
-      seatArray.push({ party, index: seatIndex++, position: 'right' });
-    }
-  }
-
-  // Distribución en 12 filas semicirculares
+  // Distribuir escaños por fila: izquierda | centro | derecha
   const rows = 12;
   const seatsPerRow = Math.ceil(totalEscanos / rows);
+  
+  // Calcular cuántos escaños de cada posición hay
+  const leftCount = allSeats.filter(s => s.position === 'left').length;
+  const centerCount = allSeats.filter(s => s.position === 'center').length;
+  const rightCount = allSeats.filter(s => s.position === 'right').length;
 
-  const hemicycleRows: Array<Array<{ party: string; index: number; position: 'left' | 'center' | 'right' }>> = [];
-  for (let i = 0; i < rows; i++) {
-    const start = i * seatsPerRow;
-    const end = Math.min(start + seatsPerRow, seatArray.length);
-    hemicycleRows.push(seatArray.slice(start, end));
-  }
+  // Crear arreglos separados por posición
+  const leftSeats = allSeats.filter(s => s.position === 'left');
+  const centerSeats = allSeats.filter(s => s.position === 'center');
+  const rightSeats = allSeats.filter(s => s.position === 'right');
 
-  // Calcular posiciones de escaños en semicírculo REAL
-  const getSeatPositions = () => {
-    const positions: Array<{ x: number; y: number; party: string; index: number }> = [];
+  // Calcular posiciones de escaños en semicírculo
+  const getSeatPositions = (): SeatInfo[] => {
+    const positions: SeatInfo[] = [];
     const centerX = 400;
     const centerY = 450;
     const startRadius = 80;
     const radiusStep = 28;
 
-    hemicycleRows.forEach((row, rowIndex) => {
+    let leftIdx = 0;
+    let centerIdx = 0;
+    let rightIdx = 0;
+
+    for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
       const radius = startRadius + rowIndex * radiusStep;
-      const seatsInRow = row.length;
+      const seatsInThisRow = Math.min(seatsPerRow, totalEscanos - rowIndex * seatsPerRow);
 
-      row.forEach((seat, seatIdx) => {
-        // Distribuir en SEMICÍRCULO (0 a π radianes)
-        // Izquierda: π a π/2, Centro: π/2 a 0, Derecha: 0 a -π/2
-        let angle: number;
+      // Calcular cuántos escaños de cada lado en esta fila
+      const leftInRow = Math.round((seatsInThisRow / 3) * (leftCount / totalEscanos));
+      const rightInRow = Math.round((seatsInThisRow / 3) * (rightCount / totalEscanos));
+      const centerInRow = seatsInThisRow - leftInRow - rightInRow;
 
-        if (seat.position === 'left') {
-          // Lado izquierdo: π a π/2
-          angle = Math.PI - (Math.PI / 2) * (seatIdx / (seatsInRow - 1 || 1));
-        } else if (seat.position === 'right') {
-          // Lado derecho: 0 a -π/2
-          angle = -(Math.PI / 2) * (seatIdx / (seatsInRow - 1 || 1));
-        } else {
-          // Centro: π/2 a 0
-          angle = (Math.PI / 2) - (Math.PI / 2) * (seatIdx / (seatsInRow - 1 || 1));
-        }
+      let seatIdx = 0;
 
-        // Convertir a coordenadas cartesianas
+      // Escaños de izquierda
+      for (let i = 0; i < leftInRow && leftIdx < leftSeats.length; i++) {
+        const angle = Math.PI - (Math.PI / 2) * (seatIdx / (seatsInThisRow - 1 || 1));
         const x = centerX + radius * Math.cos(angle);
         const y = centerY - radius * Math.sin(angle);
 
+        const seat = leftSeats[leftIdx];
+        const percentage = ((seat.totalSeats / totalEscanos) * 100).toFixed(1);
+
         positions.push({
+          party: seat.party,
           x,
           y,
-          party: seat.party,
-          index: seat.index,
+          totalSeats: seat.totalSeats,
+          percentage: parseFloat(percentage),
         });
-      });
-    });
+
+        leftIdx++;
+        seatIdx++;
+      }
+
+      // Escaños del centro
+      for (let i = 0; i < centerInRow && centerIdx < centerSeats.length; i++) {
+        const angle = (Math.PI / 2) - (Math.PI / 2) * (seatIdx / (seatsInThisRow - 1 || 1));
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY - radius * Math.sin(angle);
+
+        const seat = centerSeats[centerIdx];
+        const percentage = ((seat.totalSeats / totalEscanos) * 100).toFixed(1);
+
+        positions.push({
+          party: seat.party,
+          x,
+          y,
+          totalSeats: seat.totalSeats,
+          percentage: parseFloat(percentage),
+        });
+
+        centerIdx++;
+        seatIdx++;
+      }
+
+      // Escaños de derecha
+      for (let i = 0; i < rightInRow && rightIdx < rightSeats.length; i++) {
+        const angle = -(Math.PI / 2) * (seatIdx / (seatsInThisRow - 1 || 1));
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY - radius * Math.sin(angle);
+
+        const seat = rightSeats[rightIdx];
+        const percentage = ((seat.totalSeats / totalEscanos) * 100).toFixed(1);
+
+        positions.push({
+          party: seat.party,
+          x,
+          y,
+          totalSeats: seat.totalSeats,
+          percentage: parseFloat(percentage),
+        });
+
+        rightIdx++;
+        seatIdx++;
+      }
+    }
 
     return positions;
   };
@@ -182,7 +210,7 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
       </div>
 
       {/* Hemiciclo SVG */}
-      <div className="p-4 bg-gray-900 rounded-lg flex justify-center items-center overflow-x-auto">
+      <div className="p-4 bg-gray-900 rounded-lg flex justify-center items-center overflow-x-auto relative">
         <svg
           width="900"
           height="500"
@@ -218,8 +246,20 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
             return (
               <g
                 key={`seat-${idx}`}
-                onMouseEnter={() => setHoveredParty(seat.party)}
-                onMouseLeave={() => setHoveredParty(null)}
+                onMouseEnter={() => {
+                  setHoveredParty(seat.party);
+                  setTooltip({
+                    x: seat.x,
+                    y: seat.y,
+                    party: seat.party,
+                    seats: seat.totalSeats,
+                    percentage: seat.percentage,
+                  });
+                }}
+                onMouseLeave={() => {
+                  setHoveredParty(null);
+                  setTooltip(null);
+                }}
                 className="cursor-pointer"
               >
                 <circle
@@ -297,6 +337,22 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
             {totalEscanos} escaños
           </text>
         </svg>
+
+        {/* Tooltip */}
+        {tooltip && (
+          <div
+            className="absolute bg-gray-800 text-white px-3 py-2 rounded shadow-lg text-sm border border-gray-600 pointer-events-none z-10"
+            style={{
+              left: `${(tooltip.x / 800) * 100}%`,
+              top: `${(tooltip.y / 500) * 100}%`,
+              transform: 'translate(-50%, -120%)',
+            }}
+          >
+            <div className="font-bold">{PARTIES_GENERAL[tooltip.party as keyof typeof PARTIES_GENERAL]?.name || tooltip.party}</div>
+            <div className="text-gray-300">{tooltip.seats} escaños</div>
+            <div className="text-gray-400">{tooltip.percentage}% del total</div>
+          </div>
+        )}
       </div>
 
       {/* Tabla de distribución */}
