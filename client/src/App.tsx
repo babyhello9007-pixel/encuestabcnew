@@ -15,6 +15,8 @@ import Admin from "./pages/Admin";
 import CodeEditor from "./pages/CodeEditor";
 import LeaderSurvey from "./pages/LeaderSurvey";
 import Bio from "./pages/Bio";
+import Blog from "./pages/Blog";
+import AdminBlog from "./pages/AdminBlog";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -29,6 +31,8 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/editor"} component={CodeEditor} />
       <Route path={"/bio"} component={Bio} />
+      <Route path={"/blog"} component={Blog} />
+      <Route path={"/admin/blog"} component={AdminBlog} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

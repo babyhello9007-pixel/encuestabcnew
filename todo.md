@@ -318,3 +318,13 @@
 - [x] Integrar ruta /bio en App.tsx
 - [x] Probar página Bio en navegador
 - [x] Guardar checkpoint con página Bio
+
+## Blog de BC - NUEVO
+- [x] Crear tabla blog_posts en Supabase
+- [x] Crear procedimientos tRPC para blog (crear, editar, eliminar, obtener)
+- [x] Crear página pública /blog con listado de entradas
+- [x] Crear panel de administración /admin/blog
+- [x] Agregar enlace "El Blog de BC" en página Bio
+- [x] Agregar rutas /blog y /admin/blog en App.tsx
+- [x] Probar funcionalidades del blog
+- [x] Guardar checkpoint con sistema de blog

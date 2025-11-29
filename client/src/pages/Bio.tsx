@@ -84,6 +84,13 @@ export default function Bio() {
       icon: "📊",
       color: "from-blue-400 to-blue-600",
     },
+    {
+      title: "El Blog de BC",
+      description: "Artículos y análisis",
+      action: () => setLocation("/blog"),
+      icon: "📝",
+      color: "from-purple-400 to-pink-500",
+    },
   ];
 
   return (
