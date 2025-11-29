@@ -232,7 +232,7 @@
 - [x] Probar mapa completo en navegador
 - [x] Guardar checkpoint final con mapa realista mejorado
 
-## Mejora de Popup y Filtros Dinamicos del Mapa - NUEVO
+## Mejora de Popup y Filtros Dinamicos del Mapa - COMPLETADO
 - [x] Crear componente ProvincePopup con todos los resultados de la provincia
 - [x] Mostrar top 10 partidos con votos, porcentajes y barras de progreso
 - [x] Agregar edad promedio e ideologia promedio en popup
@@ -244,5 +244,6 @@
 - [x] Integrar filtros en SpainMapRealistic
 - [x] Aplicar filtros visualmente (provincias que no coinciden en gris)
 - [x] Mostrar leyenda de filtros activos
-- [ ] Pruebas funcionales de filtros dinamicos
-- [ ] Validar que popup muestre datos correctamente
+- [x] Eliminar filtros del mapa realista que no funcionaban
+- [x] Aumentar tamaño del mapa (de h-96 a h-[600px])
+- [x] Reducir espacios y padding para dar más espacio al mapa

@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import { getPartyColor } from '@/lib/partyConfig';
 import { spanishToGeoJson, geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 import { ProvincePopup } from './ProvincePopup';
-import { FilterState } from './MapFilters';
 
 interface ProvinceData {
   name: string;
@@ -18,14 +17,12 @@ interface SpainMapRealisticProps {
   votosPorProvincia: Record<string, Record<string, number>>;
   provinciaMetricsMap?: Record<string, { edad_promedio: number; ideologia_promedio: number }>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
-  filters?: FilterState;
 }
 
 export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   votosPorProvincia,
   provinciaMetricsMap = {},
   onProvinceClick,
-  filters,
 }) => {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -79,38 +76,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     };
   };
 
-  // Verificar si una provincia cumple con los filtros
-  const provinceMatchesFilters = (province: string): boolean => {
-    if (!filters) return true;
 
-    const metrics = provinciaMetricsMap[province];
-    
-    // Filtro de edad
-    if (metrics) {
-      const edad = metrics.edad_promedio;
-      if (edad < filters.ageRange[0] || edad > filters.ageRange[1]) {
-        return false;
-      }
-
-      // Filtro de ideología
-      const ideologia = metrics.ideologia_promedio;
-      if (ideologia < filters.ideologyRange[0] || ideologia > filters.ideologyRange[1]) {
-        return false;
-      }
-    }
-
-    // Filtro de partidos
-    const votos = votosPorProvincia[province] || {};
-    const hasSelectedParty = Object.keys(votos).some(party =>
-      filters.selectedParties.includes(party)
-    );
-
-    if (filters.selectedParties.length > 0 && !hasSelectedParty) {
-      return false;
-    }
-
-    return true;
-  };
 
   const handleProvinceClick = (provinceName: string) => {
     const data = getProvinceData(provinceName);
@@ -128,7 +94,6 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     const spanishProvinceName = geoJsonToSpanish(geoJsonProvinceName);
     
     const hasData = spanishProvinceName in votosPorProvincia;
-    const matchesFilters = provinceMatchesFilters(spanishProvinceName);
     
     if (!hasData) {
       // Provincia sin datos
@@ -144,13 +109,9 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     const data = getProvinceData(spanishProvinceName);
     const color = getPartyColor(data.ganador) || '#999999';
 
-    // Si no coincide con los filtros, mostrar en gris claro
-    const finalColor = matchesFilters ? color : '#E5E7EB';
-    const finalOpacity = matchesFilters ? 0.8 : 0.3;
-
     (layer as L.Path).setStyle({
-      fillColor: finalColor,
-      fillOpacity: finalOpacity,
+      fillColor: color,
+      fillOpacity: 0.8,
       color: '#D5D5D7',
       weight: 1,
     });
@@ -162,7 +123,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     layer.on('mouseover', () => {
       (layer as L.Path).setStyle({
         weight: 2,
-        fillOpacity: matchesFilters ? 1 : 0.5,
+        fillOpacity: 1,
         color: '#C41E3A',
       });
     });
@@ -170,7 +131,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     layer.on('mouseout', () => {
       (layer as L.Path).setStyle({
         weight: 1,
-        fillOpacity: finalOpacity,
+        fillOpacity: 0.8,
         color: '#D5D5D7',
       });
     });
@@ -268,16 +229,16 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   }
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-2">
       {/* Cartel de versión funcional */}
-      <div className="w-full p-4 bg-green-50 border-2 border-green-400 rounded-lg">
-        <p className="text-green-800 font-semibold text-center">
+      <div className="w-full p-3 bg-green-50 border-2 border-green-400 rounded-lg">
+        <p className="text-green-800 font-semibold text-center text-sm">
           ✓ Versión Funcional. El mapa realista muestra los resultados de la encuesta por provincia.
         </p>
       </div>
 
       {/* Mapa con Leaflet - LAZY LOADED */}
-      <div className="w-full h-96 bg-gray-900 rounded-lg overflow-hidden">
+      <div className="w-full h-[600px] bg-gray-900 rounded-lg overflow-hidden">
         <MapContainer
           center={[40, -3.5]}
           zoom={6}
@@ -292,15 +253,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
         </MapContainer>
       </div>
 
-      {/* Leyenda de filtros */}
-      {filters && (
-        <div className="w-full p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-          <p className="font-semibold">Filtros aplicados:</p>
-          <p>Edad: {filters.ageRange[0]}-{filters.ageRange[1]} años | 
-             Ideología: {filters.ideologyRange[0]}-{filters.ideologyRange[1]} | 
-             Partidos: {filters.selectedParties.length} seleccionados</p>
-        </div>
-      )}
+
     </div>
   );
 };

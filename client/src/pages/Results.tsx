@@ -23,7 +23,7 @@ import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
-import { MapFilters, FilterState } from "@/components/results/MapFilters";
+
 import { Map, Grid3x3 } from "lucide-react";
 
 interface PartyStats {
@@ -71,11 +71,7 @@ export default function Results() {
   const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
   const [sortBy, setSortBy] = useState<'votos' | 'escanos'>('votos');
   const [mapView, setMapView] = useState<'schematic' | 'realistic'>('realistic');
-  const [mapFilters, setMapFilters] = useState<FilterState>({
-    ageRange: [18, 80],
-    ideologyRange: [1, 10],
-    selectedParties: [],
-  });
+
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
 
   useEffect(() => {
@@ -843,22 +839,11 @@ export default function Results() {
               <CCAAComparisonSection />
             )}
             {activeTab === "mapa-hemiciclo" && (
-              <div className="space-y-8">
+              <div className="space-y-4">
                 {Object.keys(votosPorProvincia).length > 0 ? (
                   <>
-                    {/* Filtros dinámicos */}
-                    <div className="liquid-glass p-8 rounded-2xl">
-                      <MapFilters 
-                        allParties={Object.keys(votosPorProvincia).length > 0 
-                          ? Array.from(new Set(Object.values(votosPorProvincia).flatMap(p => Object.keys(p))))
-                          : []
-                        }
-                        onFilterChange={setMapFilters}
-                      />
-                    </div>
-
-                    <div className="liquid-glass p-8 rounded-2xl">
-                      <div className="flex items-center justify-between mb-6">
+                    <div className="liquid-glass p-4 rounded-2xl">
+                      <div className="flex items-center justify-between mb-4">
                         <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias</h2>
                         <div className="flex gap-2">
                           <Button
@@ -900,7 +885,6 @@ export default function Results() {
                         <SpainMapRealistic 
                           votosPorProvincia={votosPorProvincia}
                           provinciaMetricsMap={provinciaMetricsMap}
-                          filters={mapFilters}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);
@@ -910,8 +894,8 @@ export default function Results() {
                       )}
                     </div>
                     
-                    <div className="liquid-glass p-8 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo del Congreso de los Diputados</h2>
+                    <div className="liquid-glass p-4 rounded-2xl">
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo del Congreso de los Diputados</h2>
                       <CongressHemicycle 
                         escanos={escanosGeneralesPorProvincia}
                         totalEscanos={350}
