@@ -515,6 +515,26 @@ export default function Results() {
                 Elecciones Generales
               </button>
               <button
+                onClick={() => setActiveTab("ccaa")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "ccaa"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                CCAA
+              </button>
+              <button
+                onClick={() => setActiveTab("provincias")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "provincias"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Provincias
+              </button>
+              <button
                 onClick={() => setActiveTab("youth")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
                   activeTab === "youth"
@@ -553,26 +573,6 @@ export default function Results() {
                 }`}
               >
                 Líderes de Partidos
-              </button>
-              <button
-                onClick={() => setActiveTab("ccaa")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
-                  activeTab === "ccaa"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
-                }`}
-              >
-                CCAA
-              </button>
-              <button
-                onClick={() => setActiveTab("provincias")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
-                  activeTab === "provincias"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
-                }`}
-              >
-                Provincias
               </button>
               <div className="ml-auto flex gap-2">
                 <Button

@@ -124,3 +124,8 @@
 - [x] Modificar ProvincesResultsSection para usar colores y logos en gráficas
 - [x] Verificar visualización correcta de colores y logos
 - [x] Guardar checkpoint con colores y logos de partidos
+
+## Reorganización de Botones de Navegación - NUEVO
+- [x] Mover CCAA y Provincias al lado de Elecciones Generales
+- [x] Verificar nuevo orden de botones
+- [x] Guardar checkpoint con nuevo orden
