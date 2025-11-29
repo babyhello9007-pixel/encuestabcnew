@@ -20,8 +20,8 @@ interface SeatInfo {
 
 /**
  * Hemiciclo del Congreso de los Diputados Español
- * Estructura real: filas de arcos concéntricos
- * Izquierda (PSOE), Centro (gris), Derecha (PP)
+ * Estructura: gradas semicirculares de 180° con distribución uniforme
+ * Sin agrupación por posición política
  */
 export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
   escanos,
@@ -33,95 +33,51 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
   const [hoveredParty, setHoveredParty] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; party: string; seats: number; percentage: number } | null>(null);
 
-  // Clasificación política de partidos
-  const getPartyPosition = (party: string): 'left' | 'center' | 'right' => {
-    const leftParties = ['PSOE', 'PODEMOS', 'SUMAR', 'Izquierda Española', 'ERC', 'BILDU', 'Bloque Nacionalista Galego'];
-    const rightParties = ['PP', 'Ciudadanos', 'UPN', 'Aliança Catalana', 'JUNTS'];
-    const centerParties = ['VOX', 'Se Acabó La Fiesta', 'P-Lib'];
-
-    if (leftParties.includes(party)) return 'left';
-    if (rightParties.includes(party)) return 'right';
-    if (centerParties.includes(party)) return 'center';
-
-    return 'center';
-  };
-
-  // Agrupar escaños por partido y posición
-  const leftByParty: Array<{ party: string; count: number }> = [];
-  const centerByParty: Array<{ party: string; count: number }> = [];
-  const rightByParty: Array<{ party: string; count: number }> = [];
-
+  // Crear lista de escaños individuales ordenados por partido
+  const allSeats: Array<{ party: string; totalSeats: number }> = [];
+  
   Object.entries(escanos)
     .sort((a, b) => b[1] - a[1])
     .forEach(([party, count]) => {
-      const pos = getPartyPosition(party);
-      if (pos === 'left') leftByParty.push({ party, count });
-      else if (pos === 'center') centerByParty.push({ party, count });
-      else rightByParty.push({ party, count });
+      for (let i = 0; i < count; i++) {
+        allSeats.push({ party, totalSeats: count });
+      }
     });
 
-  // Crear lista de escaños individuales
-  const allSeats: Array<{ party: string; position: 'left' | 'center' | 'right'; totalSeats: number }> = [];
-  
-  leftByParty.forEach(({ party, count }) => {
-    for (let i = 0; i < count; i++) {
-      allSeats.push({ party, position: 'left', totalSeats: count });
-    }
-  });
-  
-  centerByParty.forEach(({ party, count }) => {
-    for (let i = 0; i < count; i++) {
-      allSeats.push({ party, position: 'center', totalSeats: count });
-    }
-  });
-  
-  rightByParty.forEach(({ party, count }) => {
-    for (let i = 0; i < count; i++) {
-      allSeats.push({ party, position: 'right', totalSeats: count });
-    }
-  });
-
-  // Calcular posiciones de escaños en arcos concéntricos
+  // Calcular posiciones de escaños
   const getSeatPositions = (): SeatInfo[] => {
     const positions: SeatInfo[] = [];
-    const centerX = 400;
-    const centerY = 450;
-    const startRadius = 80;
-    const radiusStep = 28;
-    const rows = 12;
-    const seatSize = 8;
-
-    // Separar escaños por posición
-    const leftSeats = allSeats.filter(s => s.position === 'left');
-    const centerSeats = allSeats.filter(s => s.position === 'center');
-    const rightSeats = allSeats.filter(s => s.position === 'right');
-
-    const leftCount = leftSeats.length;
-    const centerCount = centerSeats.length;
-    const rightCount = rightSeats.length;
-
-    let leftIdx = 0;
-    let centerIdx = 0;
-    let rightIdx = 0;
-
-    for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
-      const radius = startRadius + rowIndex * radiusStep;
-      const seatsInThisRow = Math.ceil(totalEscanos / rows);
-
-      // Calcular cuántos escaños de cada lado en esta fila
-      const leftInRow = Math.round((seatsInThisRow / 3) * (leftCount / totalEscanos));
-      const rightInRow = Math.round((seatsInThisRow / 3) * (rightCount / totalEscanos));
-      const centerInRow = seatsInThisRow - leftInRow - rightInRow;
-
-      let seatIdx = 0;
-
-      // Escaños de izquierda (90° a 180°)
-      for (let i = 0; i < leftInRow && leftIdx < leftSeats.length; i++) {
-        const angle = Math.PI - (Math.PI / 2) * (seatIdx / (seatsInThisRow - 1 || 1));
+    const centerX = 600;
+    const centerY = 410;
+    const minRadius = 18;
+    const maxRadius = 380;
+    
+    // Crear gradas con distribucion uniforme de 350 escanos en 13 filas
+    const numRows = 13;
+    const totalSeatsToDistribute = allSeats.length;
+    const baseSeatsPerRow = Math.floor(totalSeatsToDistribute / numRows);
+    const extraSeats = totalSeatsToDistribute % numRows;
+    
+    let seatIndex = 0;
+    
+    for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+      // Calcular radio para esta fila
+      const radiusProgress = rowIndex / (numRows - 1);
+      const radius = minRadius + (maxRadius - minRadius) * radiusProgress;
+      
+      // Distribuir escanos: filas posteriores tienen mas escanos
+      const seatsInRow = baseSeatsPerRow + (rowIndex >= numRows - extraSeats ? 1 : 0);
+      
+      // Distribuir escaños uniformemente en esta fila (180° a 0°) con espaciado
+      for (let i = 0; i < seatsInRow && seatIndex < allSeats.length; i++) {
+        // Ángulo: 180° (izquierda) a 0° (derecha)
+        const angleProgress = i / Math.max(1, seatsInRow - 1);
+        const angle = Math.PI - (Math.PI * angleProgress); // 180° a 0°
+        
         const x = centerX + radius * Math.cos(angle);
         const y = centerY - radius * Math.sin(angle);
 
-        const seat = leftSeats[leftIdx];
+        const seat = allSeats[seatIndex];
         const percentage = ((seat.totalSeats / totalEscanos) * 100).toFixed(1);
 
         positions.push({
@@ -132,50 +88,7 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
           percentage: parseFloat(percentage),
         });
 
-        leftIdx++;
-        seatIdx++;
-      }
-
-      // Escaños del centro (0° a 90°)
-      for (let i = 0; i < centerInRow && centerIdx < centerSeats.length; i++) {
-        const angle = (Math.PI / 2) - (Math.PI / 2) * (seatIdx / (seatsInThisRow - 1 || 1));
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY - radius * Math.sin(angle);
-
-        const seat = centerSeats[centerIdx];
-        const percentage = ((seat.totalSeats / totalEscanos) * 100).toFixed(1);
-
-        positions.push({
-          party: seat.party,
-          x,
-          y,
-          totalSeats: seat.totalSeats,
-          percentage: parseFloat(percentage),
-        });
-
-        centerIdx++;
-        seatIdx++;
-      }
-
-      // Escaños de derecha (0° a -90°)
-      for (let i = 0; i < rightInRow && rightIdx < rightSeats.length; i++) {
-        const angle = -(Math.PI / 2) * (seatIdx / (seatsInThisRow - 1 || 1));
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY - radius * Math.sin(angle);
-
-        const seat = rightSeats[rightIdx];
-        const percentage = ((seat.totalSeats / totalEscanos) * 100).toFixed(1);
-
-        positions.push({
-          party: seat.party,
-          x,
-          y,
-          totalSeats: seat.totalSeats,
-          percentage: parseFloat(percentage),
-        });
-
-        rightIdx++;
-        seatIdx++;
+        seatIndex++;
       }
     }
 
@@ -231,38 +144,36 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
       </div>
 
       {/* Hemiciclo SVG */}
-      <div className="p-4 bg-gray-900 rounded-lg flex justify-center items-center overflow-x-auto relative">
+      <div className="p-4 bg-gray-900 rounded-lg flex flex-col justify-center items-center relative">
         <svg
-          width="900"
-          height="550"
-          viewBox="0 0 800 500"
-          className="min-w-full"
-          style={{ backgroundColor: '#1a1a1a' }}
+          width="100%"
+          height="auto"
+          viewBox="0 0 1200 500"
+          className="w-full"
+          style={{ backgroundColor: '#1a1a1a', maxWidth: '800px' }}
+          preserveAspectRatio="xMidYMid meet"
         >
-          {/* Fondo del hemiciclo - semicírculo */}
-          <path
-            d="M 50 450 A 350 350 0 0 1 750 450"
-            fill="#0a0a0a"
-            stroke="#444"
-            strokeWidth="2"
-          />
+          {/* Fondo del hemiciclo - sin sombra */}
 
-          {/* Líneas de referencia (arcos semicirculares) */}
-          {[1, 2, 3, 4, 5].map((i) => (
-            <path
-              key={`arc-${i}`}
-              d={`M ${400 - (80 + i * 28)} 450 A ${80 + i * 28} ${80 + i * 28} 0 0 1 ${400 + (80 + i * 28)} 450`}
-              fill="none"
-              stroke="#333"
-              strokeWidth="0.5"
-              opacity="0.3"
-            />
-          ))}
+          {/* Líneas de gradas (arcos de referencia) */}
+          {Array.from({ length: 13 }).map((_, i) => {
+            const radiusProgress = i / 12;
+            const radius = 18 + (380 - 18) * radiusProgress;
+            return (
+              <path
+                key={`grade-${i}`}
+                d={`M ${600 - radius} 410 A ${radius} ${radius} 0 0 1 ${600 + radius} 410`}
+                fill="none"
+                stroke="#333"
+                strokeWidth="0.5"
+                opacity="0.1"
+              />
+            );
+          })}
 
           {/* Escaños */}
           {seatPositions.map((seat, idx) => {
             const isHovered = hoveredParty === seat.party;
-            const seatSize = 8;
 
             return (
               <g
@@ -286,16 +197,16 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
                 <circle
                   cx={seat.x}
                   cy={seat.y}
-                  r={seatSize}
+                  r={9}
                   fill={getPartyColor(seat.party)}
-                  opacity={isHovered ? 1 : 0.85}
+                  opacity={isHovered ? 1 : 0.75}
                   className="transition-all"
                 />
                 {isHovered && (
                   <circle
                     cx={seat.x}
                     cy={seat.y}
-                    r={seatSize + 4}
+                    r={13}
                     fill="none"
                     stroke="#fff"
                     strokeWidth="2"
@@ -305,59 +216,13 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
             );
           })}
 
-          {/* Etiquetas de posición política */}
-          <text
-            x="100"
-            y="430"
-            textAnchor="middle"
-            fontSize="12"
-            fill="#999"
-            fontWeight="bold"
-          >
-            IZQUIERDA
-          </text>
-          <text
-            x="400"
-            y="430"
-            textAnchor="middle"
-            fontSize="12"
-            fill="#999"
-            fontWeight="bold"
-          >
-            CENTRO
-          </text>
-          <text
-            x="700"
-            y="430"
-            textAnchor="middle"
-            fontSize="12"
-            fill="#999"
-            fontWeight="bold"
-          >
-            DERECHA
-          </text>
-
-          {/* Texto central */}
-          <text
-            x="400"
-            y="470"
-            textAnchor="middle"
-            fontSize="18"
-            fontWeight="bold"
-            fill="#999"
-          >
-            Congreso de los Diputados
-          </text>
-          <text
-            x="400"
-            y="490"
-            textAnchor="middle"
-            fontSize="14"
-            fill="#666"
-          >
-            {totalEscanos} escaños
-          </text>
+          {/* Texto central - vacío */}
         </svg>
+        
+        {/* Número 350 debajo */}
+        <div className="mt-4 text-center text-gray-400 text-2xl font-bold">
+          {totalEscanos}
+        </div>
 
         {/* Tooltip */}
         {tooltip && (
