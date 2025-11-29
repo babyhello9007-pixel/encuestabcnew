@@ -261,4 +261,12 @@
 - [x] Integrar footer en página About
 - [x] Integrar footer en página LeaderSurvey
 - [x] Verificar que todos los enlaces funcionen correctamente
-- [ ] Guardar checkpoint con redes sociales en footer
+- [x] Guardar checkpoint con redes sociales en footer
+
+## Menú "Síguenos" en Header - NUEVO
+- [x] Copiar logos PNG reales a assets/icons (x-logo.png, discord-logo.png, bluesky-logo.png, instagram-logo.gif)
+- [x] Crear componente FollowUsMenu con desplegable y logos
+- [x] Integrar FollowUsMenu en header de Home.tsx
+- [x] Integrar FollowUsMenu en header de Results.tsx
+- [x] Implementar fallbacks robustos para carga de logos
+- [x] Forzar carga de logos con loading="eager" y decoding="sync"

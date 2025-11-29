@@ -24,8 +24,9 @@ import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
 import Footer from "@/components/Footer";
+import FollowUsMenu from "@/components/FollowUsMenu";
 
-import { Map, Grid3x3 } from "lucide-react";
+import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 
 interface PartyStats {
   id: string;
@@ -551,13 +552,16 @@ export default function Results() {
             <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
             <h1 className="text-lg font-semibold text-foreground">Resultados - Batalla Cultural</h1>
           </div>
-          <Button
-            onClick={() => setLocation("/")}
-            variant="outline"
-            className="btn-secondary text-sm"
-          >
-            Volver
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => setLocation("/")}
+              variant="outline"
+              className="btn-secondary text-sm"
+            >
+              Volver
+            </Button>
+            <FollowUsMenu />
+          </div>
         </div>
       </header>
 

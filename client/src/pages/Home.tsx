@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { TwitterFeed } from "@/components/TwitterFeed";
 import Footer from "@/components/Footer";
+import FollowUsMenu from "@/components/FollowUsMenu";
 import { ArrowRight, BarChart3, Lock, Zap, ChevronDown } from "lucide-react";
 
 export default function Home() {
@@ -83,6 +84,7 @@ export default function Home() {
             <a href="/acerca-de" className="text-foreground hover:text-primary transition font-medium">
               Acerca de
             </a>
+            <FollowUsMenu />
           </nav>
         </div>
       </header>
