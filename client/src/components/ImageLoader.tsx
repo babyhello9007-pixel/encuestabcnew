@@ -36,6 +36,7 @@ export default function ImageLoader({
   });
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
     const filename = src.split('/').pop() || '';
@@ -55,6 +56,7 @@ export default function ImageLoader({
     }
     setHasError(false);
     setIsLoading(true);
+    setAttemptCount(0);
   }, [src]);
 
   const generateFallbacks = (originalSrc: string): string[] => {
@@ -107,10 +109,36 @@ export default function ImageLoader({
   const handleError = () => {
     const fallbacks = generateFallbacks(currentSrc);
     const currentIndex = fallbacks.indexOf(currentSrc);
+    const newAttempt = attemptCount + 1;
+    setAttemptCount(newAttempt);
     
     if (currentIndex < fallbacks.length - 1) {
-      setCurrentSrc(fallbacks[currentIndex + 1]);
+      // Reintentar con siguiente fallback
+      const nextSrc = fallbacks[currentIndex + 1];
+      console.warn(`ImageLoader: Failed to load ${currentSrc}, trying ${nextSrc}`);
+      setCurrentSrc(nextSrc);
+    } else if (newAttempt < 3) {
+      // Último intento: buscar en EMBEDDED_LOGOS por similitud exhaustiva
+      const filename = src.split('/').pop() || '';
+      const basename = filename.replace(/\.[^.]+$/, '').toLowerCase();
+      
+      const embeddedKeys = Object.keys(EMBEDDED_LOGOS);
+      const similarKey = embeddedKeys.find(key => {
+        const keyBase = key.replace(/\.[^.]+$/, '').toLowerCase();
+        return keyBase.includes(basename) || basename.includes(keyBase) || 
+               keyBase.replace(/[-_]/g, '') === basename.replace(/[-_]/g, '');
+      });
+      
+      if (similarKey && EMBEDDED_LOGOS[similarKey]) {
+        console.warn(`ImageLoader: Using embedded logo ${similarKey} for ${filename}`);
+        setCurrentSrc(EMBEDDED_LOGOS[similarKey]);
+      } else {
+        console.error(`ImageLoader: No logo found for ${filename}`);
+        setHasError(true);
+        setIsLoading(false);
+      }
     } else {
+      console.error(`ImageLoader: Failed after multiple attempts for ${src}`);
       setHasError(true);
       setIsLoading(false);
     }
@@ -118,6 +146,7 @@ export default function ImageLoader({
 
   const handleLoad = () => {
     setIsLoading(false);
+    console.debug(`ImageLoader: Successfully loaded ${currentSrc}`);
   };
 
   if (hasError) {
@@ -171,8 +200,8 @@ export default function ImageLoader({
       }}
       loading="eager"
       decoding="async"
+      crossOrigin="anonymous"
       className={className}
     />
   );
 }
-
