@@ -17,6 +17,7 @@ import LeaderSurvey from "./pages/LeaderSurvey";
 import Bio from "./pages/Bio";
 import Blog from "./pages/Blog";
 import AdminBlogLogin from "./pages/AdminBlogLogin";
+import DiscordCallback from "./pages/DiscordCallback";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -32,6 +33,7 @@ function Router() {
       <Route path={"/editor"} component={CodeEditor} />
       <Route path={"/bio"} component={Bio} />
       <Route path={"/blog"} component={Blog} />
+      <Route path={"/auth/discord/callback"} component={DiscordCallback} />
       <Route path={"/admin/blog/login"} component={AdminBlogLogin} />
       <Route path={"/admin/blog"} component={AdminBlogLogin} />
       <Route path={"/404"} component={NotFound} />
