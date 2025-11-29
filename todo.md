@@ -328,3 +328,14 @@
 - [x] Agregar rutas /blog y /admin/blog en App.tsx
 - [x] Probar funcionalidades del blog
 - [x] Guardar checkpoint con sistema de blog
+
+
+## Autenticación Discord para Admin Blog - NUEVO
+- [x] Obtener ID del servidor Discord de Batalla Cultural
+- [x] Obtener ID del rol "Escritores" en Discord
+- [x] Configurar Discord OAuth en la aplicación
+- [x] Implementar verificación de membresía en servidor Discord
+- [x] Implementar verificación de rol "Escritores"
+- [x] Crear página de login Discord para /admin/blog
+- [x] Proteger rutas del admin con verificación Discord
+- [x] Probar flujo completo de autenticación

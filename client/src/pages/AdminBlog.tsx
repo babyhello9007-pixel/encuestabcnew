@@ -8,13 +8,22 @@ import { Loader2, Plus, Edit2, Trash2, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import type { BlogPost } from "@shared/types";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AdminBlog() {
   const [, setLocation] = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLocation("/admin/blog/login");
+    }
+  }, [user, authLoading, setLocation]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -119,12 +128,16 @@ export default function AdminBlog() {
     });
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect via useEffect
   }
 
   return (
