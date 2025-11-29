@@ -120,6 +120,12 @@ export default function Home() {
                   >
                     Versión Rápida (5 min)
                   </button>
+                  <button
+                    onClick={() => setLocation("/resultados")}
+                    className="liquid-glass w-full md:w-auto px-6 py-3 rounded-lg text-foreground font-semibold hover:bg-white/20 transition duration-200 border border-green-500/30 bg-gradient-to-r from-green-500/10 to-emerald-500/10"
+                  >
+                    Resultados en Vivo
+                  </button>
                 </div>
               </div>
 
