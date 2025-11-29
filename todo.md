@@ -294,3 +294,9 @@
 - [x] Reemplazar colores OKLCH con RGB/HEX en infografías
 - [x] Probar descarga de PNG sin errores
 - [x] Guardar checkpoint final
+
+## Mejoras de Compartir - Sesión Nov 29
+- [x] Agregar número de escaños en infografías (Individual y Completo)
+- [x] Mostrar imagen en selector de compartir (X, Bluesky, Discord)
+- [x] Vista previa de infografía antes de compartir
+- [x] Probar en todos los modos (Individual, Completo, Líderes)

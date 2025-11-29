@@ -119,29 +119,91 @@ export function ShareResultsAdvanced({
     }
   };
 
-  const shareOnX = () => {
-    if (!selectedParty) return;
-    const text = generateShareText(selectedParty);
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      text
-    )}&url=${encodeURIComponent(window.location.href)}`;
-    window.open(url, "_blank", "width=550,height=420");
+  const shareOnX = async () => {
+    if (!selectedParty || !infographyRef.current) return;
+    try {
+      const canvas = await html2canvas(infographyRef.current, {
+        backgroundColor: "#1A1A1A",
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        try {
+          const item = new ClipboardItem({ "image/png": blob });
+          await navigator.clipboard.write([item]);
+
+          const text = generateShareText(selectedParty);
+          const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+            text
+          )}&url=${encodeURIComponent(window.location.href)}`;
+
+          alert("Imagen copiada al portapapeles. Abre X y pega la imagen en el tweet.");
+          window.open(url, "_blank", "width=550,height=420");
+        } catch (err) {
+          console.error("Error al copiar imagen:", err);
+          const text = generateShareText(selectedParty);
+          const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+            text
+          )}&url=${encodeURIComponent(window.location.href)}`;
+          window.open(url, "_blank", "width=550,height=420");
+        }
+      });
+    } catch (error) {
+      console.error("Error en shareOnX:", error);
+      alert("Error al preparar la imagen. Intenta nuevamente.");
+    }
   };
 
-  const shareOnBluesky = () => {
-    if (!selectedParty) return;
-    const text = generateShareText(selectedParty);
-    const url = `https://bsky.app/intent/compose?text=${encodeURIComponent(
-      text + "\n\n" + window.location.href
-    )}`;
-    window.open(url, "_blank", "width=550,height=420");
+  const shareOnBluesky = async () => {
+    if (!selectedParty || !infographyRef.current) return;
+    try {
+      const canvas = await html2canvas(infographyRef.current, {
+        backgroundColor: "#1A1A1A",
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        try {
+          const item = new ClipboardItem({ "image/png": blob });
+          await navigator.clipboard.write([item]);
+
+          const text = generateShareText(selectedParty);
+          const url = `https://bsky.app/intent/compose?text=${encodeURIComponent(
+            text + "\n\n" + window.location.href
+          )}`;
+
+          alert("Imagen copiada al portapapeles. Abre Bluesky y pega la imagen en el post.");
+          window.open(url, "_blank", "width=550,height=420");
+        } catch (err) {
+          console.error("Error al copiar imagen:", err);
+          const text = generateShareText(selectedParty);
+          const url = `https://bsky.app/intent/compose?text=${encodeURIComponent(
+            text + "\n\n" + window.location.href
+          )}`;
+          window.open(url, "_blank", "width=550,height=420");
+        }
+      });
+    } catch (error) {
+      console.error("Error en shareOnBluesky:", error);
+      alert("Error al preparar la imagen. Intenta nuevamente.");
+    }
   };
 
   const shareOnDiscord = () => {
     if (!selectedParty) return;
     const text = generateShareText(selectedParty);
     navigator.clipboard.writeText(text);
-    alert("Texto copiado al portapapeles. Pégalo en tu servidor de Discord.");
+    alert("Texto copiado al portapapeles. Descarga la infografia y pégala en Discord.");
   };
 
   const topParties = stats.slice(0, 10);
@@ -287,19 +349,29 @@ export function ShareResultsAdvanced({
                       {selectedParty.nombre}
                     </p>
 
-                    <div className="space-y-3">
-                      <p
-                        className="text-7xl font-bold text-[#C41E3A] drop-shadow-lg"
-                        style={{
-                          textShadow: "0 0 20px rgba(196, 30, 58, 0.4)",
-                        }}
-                      >
-                        {selectedParty.porcentaje.toFixed(1)}%
-                      </p>
-                      <p className="text-[#CCCCCC] text-lg opacity-90">
-                        {selectedParty.votos.toLocaleString()} votos de{" "}
-                        {totalVotes.toLocaleString()}
-                      </p>
+                    <div className="space-y-4">
+                      <div>
+                        <p
+                          className="text-7xl font-bold text-[#C41E3A] drop-shadow-lg"
+                          style={{
+                            textShadow: "0 0 20px rgba(196, 30, 58, 0.4)",
+                          }}
+                        >
+                          {selectedParty.porcentaje.toFixed(1)}%
+                        </p>
+                        <p className="text-[#CCCCCC] text-lg opacity-90">
+                          {selectedParty.votos.toLocaleString()} votos de{" "}
+                          {totalVotes.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="pt-4 border-t border-[#2D2D2D]">
+                        <p className="text-[#C41E3A] text-4xl font-bold drop-shadow-lg">
+                          {selectedParty.escanos}
+                        </p>
+                        <p className="text-[#999999] text-sm">
+                          escaños {activeTab === "general" ? "(de 350)" : "(de 50)"}
+                        </p>
+                      </div>
                     </div>
 
                     <div
@@ -477,13 +549,15 @@ export function ShareResultsAdvanced({
               <button
                 onClick={shareOnX}
                 className="w-full bg-black hover:bg-[#1a1a1a] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                title="Compartir infografia en X. La imagen se acompanara automaticamente."
               >
                 <X className="h-5 w-5" />
-                Compartir en X
+                Compartir en X (con imagen)
               </button>
               <button
                 onClick={shareOnBluesky}
                 className="w-full bg-[#1185FE] hover:bg-[#0d6fd6] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                title="Compartir infografia en Bluesky. La imagen se acompanara automaticamente."
               >
                 <svg
                   className="h-5 w-5"
@@ -492,11 +566,12 @@ export function ShareResultsAdvanced({
                 >
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
                 </svg>
-                Compartir en Bluesky
+                Compartir en Bluesky (con imagen)
               </button>
               <button
                 onClick={shareOnDiscord}
                 className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                title="Copiar texto para Discord. Podras adjuntar la imagen manualmente."
               >
                 <svg
                   className="h-5 w-5"
