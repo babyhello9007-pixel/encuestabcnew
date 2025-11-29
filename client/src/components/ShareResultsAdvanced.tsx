@@ -85,33 +85,13 @@ export function ShareResultsAdvanced({
         logging: false,
       });
 
-      // Crear un canvas con aspecto 16:9
-      const finalCanvas = document.createElement("canvas");
-      const ctx = finalCanvas.getContext("2d");
-      if (!ctx) return;
-
-      // Dimensiones 16:9 en alta resolución (1920x1080)
-      finalCanvas.width = 1920;
-      finalCanvas.height = 1080;
-
-      // Fondo blanco
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-      // Centrar y escalar la imagen
-      const scale = Math.min(
-        finalCanvas.width / canvas.width,
-        finalCanvas.height / canvas.height
-      );
-      const x = (finalCanvas.width - canvas.width * scale) / 2;
-      const y = (finalCanvas.height - canvas.height * scale) / 2;
-      ctx.drawImage(canvas, x, y, canvas.width * scale, canvas.height * scale);
-
+      // Descargar la captura exacta de la preview
       const link = document.createElement("a");
-      link.href = finalCanvas.toDataURL("image/png");
-      link.download = `batalla-cultural-${selectedParty?.nombre || "resultado"}-${new Date()
-        .toISOString()
-        .split("T")[0]}.png`;
+      link.href = canvas.toDataURL("image/png");
+      const filename = infographyMode === "individual"
+        ? `batalla-cultural-${selectedParty?.nombre || "resultado"}-${new Date().toISOString().split("T")[0]}.png`
+        : `batalla-cultural-top10-${new Date().toISOString().split("T")[0]}.png`;
+      link.download = filename;
       link.click();
     } catch (error) {
       console.error("Error downloading infography:", error);
