@@ -120,7 +120,13 @@ export default function Results() {
             .select("*");
 
           if (generalData && generalData.length > 0) {
+            // Inicializar con todos los partidos de PARTIES_GENERAL con 0 votos
             const generalVotos: Record<string, number> = {};
+            Object.keys(PARTIES_GENERAL).forEach((key) => {
+              generalVotos[key] = 0;
+            });
+            
+            // Actualizar con datos reales de la base de datos
             generalData.forEach((row: any) => {
               generalVotos[row.partido_id] = row.votos;
             });

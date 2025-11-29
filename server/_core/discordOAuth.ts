@@ -35,6 +35,11 @@ async function exchangeDiscordCode(code: string): Promise<string> {
     throw new Error("Discord OAuth credentials not configured");
   }
 
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const redirectUri = `${frontendUrl}/api/auth/discord/callback`;
+  console.log("[Discord OAuth] Frontend URL from env:", frontendUrl);
+  console.log("[Discord OAuth] Exchanging code with redirect_uri:", redirectUri);
+
   const response = await fetch("https://discord.com/api/oauth2/token", {
     method: "POST",
     headers: {
@@ -45,7 +50,7 @@ async function exchangeDiscordCode(code: string): Promise<string> {
       client_secret: clientSecret,
       grant_type: "authorization_code",
       code,
-      redirect_uri: `${process.env.VITE_FRONTEND_FORGE_API_URL || "http://localhost:3000"}/api/auth/discord/callback`,
+      redirect_uri: redirectUri,
     }).toString(),
   });
 
@@ -155,11 +160,15 @@ export function registerDiscordOAuthRoutes(app: Express) {
     }
 
     try {
+      console.log("[Discord OAuth] Callback received with code:", code);
+      
       // Exchange code for access token
       const accessToken = await exchangeDiscordCode(code);
+      console.log("[Discord OAuth] Access token obtained");
 
       // Get Discord user info
       const discordUser = await getDiscordUser(accessToken);
+      console.log("[Discord OAuth] User info obtained:", discordUser.id, discordUser.username);
 
       // Check if user is in the server and has writer role
       const isWriter = await hasWriterRole(
@@ -167,6 +176,7 @@ export function registerDiscordOAuthRoutes(app: Express) {
         discordUser.id,
         accessToken
       );
+      console.log("[Discord OAuth] Is writer:", isWriter);
 
       if (!isWriter) {
         res.status(403).json({
@@ -177,6 +187,7 @@ export function registerDiscordOAuthRoutes(app: Express) {
 
       // Create or update user in database
       const openId = `discord_${discordUser.id}`;
+      console.log("[Discord OAuth] Upserting user:", openId);
       await db.upsertUser({
         openId,
         name: discordUser.username || null,
@@ -184,12 +195,14 @@ export function registerDiscordOAuthRoutes(app: Express) {
         loginMethod: "discord",
         lastSignedIn: new Date(),
       });
+      console.log("[Discord OAuth] User upserted");
 
       // Create session token
       const sessionToken = await sdk.createSessionToken(openId, {
         name: discordUser.username || "",
         expiresInMs: ONE_YEAR_MS,
       });
+      console.log("[Discord OAuth] Session token created");
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, {
@@ -201,7 +214,10 @@ export function registerDiscordOAuthRoutes(app: Express) {
       res.redirect(302, "/admin/blog");
     } catch (error) {
       console.error("[Discord OAuth] Callback failed:", error);
-      res.status(500).json({ error: "Discord OAuth callback failed" });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("[Discord OAuth] Error details:", errorMessage);
+      console.error("[Discord OAuth] Full error:", JSON.stringify(error, null, 2));
+      res.status(500).json({ error: "Discord OAuth callback failed", details: errorMessage });
     }
   });
 
@@ -216,7 +232,10 @@ export function registerDiscordOAuthRoutes(app: Express) {
       return;
     }
 
-    const redirectUri = `${process.env.VITE_FRONTEND_FORGE_API_URL || "http://localhost:3000"}/api/auth/discord/callback`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const redirectUri = `${frontendUrl}/api/auth/discord/callback`;
+    console.log("[Discord OAuth] Frontend URL from env:", frontendUrl);
+    console.log("[Discord OAuth] Redirect URI:", redirectUri);
     const scopes = ["identify", "email", "guilds", "guilds.members.read"];
     const state = Math.random().toString(36).substring(7);
 

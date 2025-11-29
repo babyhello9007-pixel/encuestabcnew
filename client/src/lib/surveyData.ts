@@ -22,6 +22,8 @@ export const PARTIES_GENERAL = {
   CJ: { name: 'Caminando Juntos', logo: '/assets/icons/CaminandoJuntos.png', color: '#0066CC' },
   FALANGE: { name: 'Falange', logo: '/assets/icons/FALANGENEW.webp', color: '#FF0000' },
   IE: { name: 'Izquierda Española', logo: '/assets/icons/IzquierdaEspañolaNEW.png', color: '#CC0000' },
+  COMPROMIS: { name: 'Compromís', logo: '/assets/logos/compromis-logo.png', color: '#FF9900' },
+  DO: { name: 'Democracia Ourensana', logo: '/assets/logos/democracia-ourensana-logo.png', color: '#FFD700' },
 };
 
 export const YOUTH_ASSOCIATIONS = {
