@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { normalizeProvinceName } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA } from "@/lib/provinceToCAA";
+import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 
 interface NanoSurveyResponse {
   edad?: string;
@@ -41,13 +42,14 @@ export default function NanoEncuestaBC() {
   const [responses, setResponses] = useState<NanoSurveyResponse>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [showOtroInput, setShowOtroInput] = useState(false);
   const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
 
   const steps = [
     { title: "Edad", key: "edad", type: "text" },
-    { title: "Provincia", key: "provincia", type: "select" },
     { title: "Comunidad Autónoma", key: "comunidad_autonoma", type: "select" },
+    { title: "Provincia", key: "provincia", type: "select" },
     { title: "Nacionalidad", key: "nacionalidad", type: "text" },
     { title: "Voto Elecciones Generales", key: "voto_generales", type: "select" },
     { title: "Voto Elecciones Autonómicas", key: "voto_autonomicas", type: "select" },
@@ -67,6 +69,16 @@ export default function NanoEncuestaBC() {
 
   const currentStepData = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
+  
+  // Obtener provincias filtradas por CCAA seleccionada
+  const getFilteredProvinces = () => {
+    if (currentStepData.key === 'provincia' && responses.comunidad_autonoma) {
+      const { getProvincesInCCAA } = require('@/lib/provinceToCAA');
+      const filtered = getProvincesInCCAA(responses.comunidad_autonoma as string);
+      return filtered.length > 0 ? filtered : PROVINCES;
+    }
+    return PROVINCES;
+  };
 
   const handleAnswer = (value: any) => {
     setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
@@ -109,6 +121,10 @@ export default function NanoEncuestaBC() {
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Al llegar al final, mostrar pantalla de revisión
+      setShowReview(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -222,6 +238,21 @@ export default function NanoEncuestaBC() {
     }
   };
 
+  if (showReview) {
+    return (
+      <ReviewNanoEncuesta
+        responses={responses}
+        onEdit={() => {
+          setShowReview(false);
+          setCurrentStep(0);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onConfirm={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
+    );
+  }
+
   if (showThankYou) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#FAFAF8] via-[#F5F1E8] to-[#FAFAF8] p-4">
@@ -318,7 +349,7 @@ export default function NanoEncuestaBC() {
                     className="w-full bg-[#0F1419] border border-[#2D2D2D] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C41E3A]"
                   >
                     <option value="">Selecciona una opcion...</option>
-                    {currentStepData.key === "provincia" && PROVINCES.map(p => (
+                    {currentStepData.key === "provincia" && getFilteredProvinces().map(p => (
                       <option key={p} value={p}>{p}</option>
                     ))}
                     {currentStepData.key === "comunidad_autonoma" && CCAA.map(c => (

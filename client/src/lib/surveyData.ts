@@ -116,8 +116,7 @@ export const CCAA = [
   'Murcia',
   'Navarra',
   'País Vasco',
-  'Ceuta',
-  'Melilla'
+  'Ceuta y Melilla'
 ];
 
 export const PROBLEMS = [
@@ -147,20 +146,20 @@ export const surveyQuestions: SurveyQuestion[] = [
     fieldName: 'edad',
   },
   {
-    id: 'provincia',
-    section: 'Datos personales',
-    question: '¿En qué provincia resides?',
-    type: 'radio',
-    options: PROVINCES,
-    fieldName: 'provincia',
-  },
-  {
     id: 'ccaa',
     section: 'Datos personales',
     question: '¿En qué Comunidad Autónoma resides?',
     type: 'radio',
     options: CCAA,
     fieldName: 'ccaa',
+  },
+  {
+    id: 'provincia',
+    section: 'Datos personales',
+    question: '¿En qué provincia resides?',
+    type: 'radio',
+    options: PROVINCES,
+    fieldName: 'provincia',
   },
   {
     id: 'nacionalidad',

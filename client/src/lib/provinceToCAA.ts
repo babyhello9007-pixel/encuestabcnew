@@ -89,8 +89,8 @@ export const PROVINCE_TO_CCAA: Record<string, string> = {
   'Gipuzkoa': 'País Vasco',
 
   // Ceuta y Melilla (2)
-  'Ceuta': 'Ceuta',
-  'Melilla': 'Melilla'
+  'Ceuta': 'Ceuta y Melilla',
+  'Melilla': 'Ceuta y Melilla'
 };
 
 /**

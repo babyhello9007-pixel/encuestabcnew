@@ -7,6 +7,7 @@ import { SurveyResponse } from "@/lib/types";
 import { toast } from "sonner";
 import { normalizeProvinceInResponse } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA } from "@/lib/provinceToCAA";
+import ReviewSurvey from "@/components/ReviewSurvey";
 
 export default function Survey() {
   const [, setLocation] = useLocation();
@@ -14,10 +15,21 @@ export default function Survey() {
   const [responses, setResponses] = useState<SurveyResponse>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
 
   const currentQuestion = surveyQuestions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / surveyQuestions.length) * 100;
+  
+  // Obtener provincias filtradas por CCAA seleccionada
+  const getFilteredProvinces = () => {
+    if (currentQuestion.fieldName === 'provincia' && responses.ccaa) {
+      const { getProvincesInCCAA } = require('@/lib/provinceToCAA');
+      const filtered = getProvincesInCCAA(responses.ccaa as string);
+      return filtered.length > 0 ? filtered : (currentQuestion.options || []);
+    }
+    return currentQuestion.options || [];
+  };
 
   const handleAnswer = (value: any) => {
     const fieldName = currentQuestion.fieldName;
@@ -65,6 +77,10 @@ export default function Survey() {
     if (currentQuestionIndex < surveyQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Al llegar al final, mostrar pantalla de revisión
+      setShowReview(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -95,6 +111,21 @@ export default function Survey() {
       setIsSubmitting(false);
     }
   };
+
+  if (showReview) {
+    return (
+      <ReviewSurvey
+        responses={responses}
+        onEdit={() => {
+          setShowReview(false);
+          setCurrentQuestionIndex(0);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onConfirm={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
+    );
+  }
 
   if (showThankYou) {
     return (
@@ -171,7 +202,7 @@ export default function Survey() {
           <div className="space-y-3">
             {currentQuestion.type === "radio" && currentQuestion.options && (
               <div className="space-y-2">
-                {currentQuestion.options.map((option) => {
+                {getFilteredProvinces().map((option) => {
                   const isOtrosSelected = option === 'Otros' && (responses[currentQuestion.fieldName] === 'Otros' || (typeof responses[currentQuestion.fieldName] === 'string' && responses[currentQuestion.fieldName].startsWith('Otros:')));
                   return (
                     <div key={option}>
