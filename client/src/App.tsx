@@ -4,7 +4,9 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { initFavicon } from "./lib/faviconLoader";
 import Home from "./pages/Home";
+import { useEffect } from "react";
 import Survey from "./pages/Survey";
 import NanoEncuestaBC from "./pages/NanoEncuestaBC";
 import Results from "./pages/Results";
@@ -33,6 +35,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Forzar carga del favicon al montar la aplicación
+    initFavicon();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
