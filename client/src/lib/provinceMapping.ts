@@ -63,6 +63,12 @@ export const TOPOJSON_TO_SURVEY_MAPPING: Record<string, string> = {
   'Castellón': 'Castellón',
   'Álava': 'Álava',
   'Valencia': 'Valencia',
+
+  // Nombres en valenciano/euskera sin barra diagonal
+  'Araba': 'Álava',
+  'Alacant': 'Alicante',
+  'Castelló': 'Castellón',
+  'València': 'Valencia',
 };
 
 /**
