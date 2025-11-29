@@ -16,13 +16,9 @@ interface NanoSurveyResponse {
   comunidad_autonoma?: string;
   nacionalidad?: string;
   voto_generales?: string;
-  voto_generales_otro?: string;
   voto_autonomicas?: string;
-  voto_autonomicas_otro?: string;
   voto_municipales?: string;
-  voto_municipales_otro?: string;
   voto_europeas?: string;
-  voto_europeas_otro?: string;
   nota_ejecutivo?: number;
   valoracion_feijoo?: number;
   valoracion_sanchez?: number;
@@ -33,7 +29,6 @@ interface NanoSurveyResponse {
   valoracion_ayuso?: number;
   valoracion_buxade?: number;
   asociacion_juvenil?: string;
-  asociacion_juvenil_otro?: string;
   created_at?: string;
 }
 
@@ -131,8 +126,10 @@ export default function NanoEncuestaBC() {
   };
 
   const handleOtroAnswer = (value: string) => {
-    const otroKey = `${currentStepData.key}_otro`;
-    setResponses(prev => ({ ...prev, [otroKey]: value }));
+    // Cuando el usuario selecciona "Otro", guarda el texto en el campo principal
+    // Ejemplo: voto_generales = "Otros: [texto]"
+    const mainValue = `Otros: ${value}`;
+    setResponses(prev => ({ ...prev, [currentStepData.key]: mainValue }));
   };
 
   const handleNext = () => {
@@ -195,23 +192,23 @@ export default function NanoEncuestaBC() {
     }
 
     // Validar que si se selecciona "Otro", haya texto en el campo
-    if (responses.voto_generales === 'OTRO' && !responses.voto_generales_otro) {
+    if (responses.voto_generales?.startsWith('Otros:') && responses.voto_generales === 'Otros:') {
       toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Generales.');
       return;
     }
-    if (responses.voto_autonomicas === 'OTRO' && !responses.voto_autonomicas_otro) {
+    if (responses.voto_autonomicas?.startsWith('Otros:') && responses.voto_autonomicas === 'Otros:') {
       toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Autonómicas.');
       return;
     }
-    if (responses.voto_municipales === 'OTRO' && !responses.voto_municipales_otro) {
+    if (responses.voto_municipales?.startsWith('Otros:') && responses.voto_municipales === 'Otros:') {
       toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Municipales.');
       return;
     }
-    if (responses.voto_europeas === 'OTRO' && !responses.voto_europeas_otro) {
+    if (responses.voto_europeas?.startsWith('Otros:') && responses.voto_europeas === 'Otros:') {
       toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Europeas.');
       return;
     }
-    if (responses.asociacion_juvenil === 'OTRO' && !responses.asociacion_juvenil_otro) {
+    if (responses.asociacion_juvenil?.startsWith('Otros:') && responses.asociacion_juvenil === 'Otros:') {
       toast.error('Por favor, especifica tu opción en "Otro" para Asociación Juvenil.');
       return;
     }
@@ -226,13 +223,9 @@ export default function NanoEncuestaBC() {
         ccaa: responses.comunidad_autonoma || null,
         nacionalidad: responses.nacionalidad || null,
         voto_generales: responses.voto_generales || null,
-        voto_generales_otro: responses.voto_generales_otro || null,
         voto_autonomicas: responses.voto_autonomicas || null,
-        voto_autonomicas_otro: responses.voto_autonomicas_otro || null,
         voto_municipales: responses.voto_municipales || null,
-        voto_municipales_otro: responses.voto_municipales_otro || null,
         voto_europeas: responses.voto_europeas || null,
-        voto_europeas_otro: responses.voto_europeas_otro || null,
         nota_ejecutivo: responses.nota_ejecutivo || null,
         val_feijoo: responses.valoracion_feijoo || 0,
         val_sanchez: responses.valoracion_sanchez || 0,
@@ -243,7 +236,6 @@ export default function NanoEncuestaBC() {
         val_ayuso: responses.valoracion_ayuso || 0,
         val_buxade: responses.valoracion_buxade || 0,
         voto_asociacion_juvenil: responses.asociacion_juvenil || null,
-        voto_asociacion_juvenil_otro: responses.asociacion_juvenil_otro || null,
       };
       
       const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
@@ -424,7 +416,7 @@ export default function NanoEncuestaBC() {
                   {showOtroInput && (
                     <input
                       type="text"
-                      value={responses[`${currentStepData.key}_otro` as keyof NanoSurveyResponse] || ""}
+                      value={responses[currentStepData.key as keyof NanoSurveyResponse]?.toString().replace('Otros: ', '') || ""}
                       onChange={(e) => handleOtroAnswer(e.target.value)}
                       placeholder="Especifica tu opcion..."
                       className="input-modern w-full border-primary"

@@ -10,13 +10,9 @@ export interface SurveyResponse {
   
   // Intención de voto
   voto_generales?: string;
-  voto_generales_otro?: string;
   voto_autonomicas?: string;
-  voto_autonomicas_otro?: string;
   voto_municipales?: string;
-  voto_municipales_otro?: string;
   voto_europeas?: string;
-  voto_europeas_otro?: string;
   
   // Participación y preferencias políticas
   probabilidad_voto?: string;
@@ -36,7 +32,6 @@ export interface SurveyResponse {
   
   // Juventud y estructuras sociales
   voto_asociacion_juvenil?: string;
-  voto_asociacion_juvenil_otro?: string;
   reformular_c_juventud?: string;
   unificar_apps_publicas?: string;
   conocer_gastos_publicos?: string;
