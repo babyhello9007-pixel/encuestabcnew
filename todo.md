@@ -167,3 +167,10 @@
 - [x] Aplicar normalización al enviar datos de NanoEncuestaBC.tsx
 - [x] Crear tests unitarios para la función de normalización
 - [x] Verificar que los tests pasen correctamente
+
+## Ley d'Hondt por Provincias en Elecciones Generales - COMPLETADO
+- [x] Revisar cálculo actual de Elecciones Generales (nacional vs provincial)
+- [x] Modificar GeneralElectionsSection para usar cálculo por provincias
+- [x] Verificar que los escaños se distribuyan correctamente
+- [x] Actualizar gráficas y tablas con nuevos datos
+- [x] Guardar checkpoint con Ley d'Hondt por provincias

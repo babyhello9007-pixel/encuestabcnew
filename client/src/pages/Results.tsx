@@ -104,7 +104,13 @@ export default function Results() {
               generalVotos[row.partido_id] = row.votos;
             });
 
-            const escanos = calcularEscanosGenerales(generalVotos);
+            // Usar cálculo por provincias si hay datos disponibles, si no usar cálculo nacional
+            let escanos: Record<string, number> = {};
+            if (Object.keys(votosPorProvincia).length > 0) {
+              escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
+            } else {
+              escanos = calcularEscanosGenerales(generalVotos);
+            }
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
@@ -115,6 +121,11 @@ export default function Results() {
 
             const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos);
             setGeneralStats(stats);
+            
+            // Actualizar escaños generales por provincia si se usan
+            if (Object.keys(votosPorProvincia).length > 0) {
+              setEscanosGeneralesPorProvincia(escanos);
+            }
             
             // Cargar votos por provincia para el mapa
             try {
