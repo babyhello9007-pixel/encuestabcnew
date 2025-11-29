@@ -51,7 +51,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -553,6 +553,16 @@ export default function Results() {
                 Elecciones Generales
               </button>
               <button
+                onClick={() => setActiveTab("mapa-hemiciclo")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "mapa-hemiciclo"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Mapa y Hemiciclo
+              </button>
+              <button
                 onClick={() => setActiveTab("ccaa")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
                   activeTab === "ccaa"
@@ -640,28 +650,7 @@ export default function Results() {
               </div>
             </div>
 
-            {/* Mostrar mapa y hemiciclo solo en tab de Elecciones Generales */}
-            {activeTab === "general" && Object.keys(votosPorProvincia).length > 0 && (
-              <div className="space-y-8">
-                <div className="liquid-glass p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Mapa de Provincias</h2>
-                  <SpainMapProvincial 
-                    votosPorProvincia={votosPorProvincia}
-                    onProvinceClick={(province, data) => {
-                      console.log(`Provincia: ${province}`, data);
-                    }}
-                  />
-                </div>
-                
-                <div className="liquid-glass p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo Parlamentario (350 Escaños)</h2>
-                  <ParliamentHemicycle 
-                    escanos={escanosGeneralesPorProvincia}
-                    totalEscanos={350}
-                  />
-                </div>
-              </div>
-            )}
+
 
             <div className="space-y-4">
               {stats.length > 0 && (
@@ -762,6 +751,27 @@ export default function Results() {
             )}
             {activeTab === "comparacion-ccaa" && (
               <CCAAComparisonSection />
+            )}
+            {activeTab === "mapa-hemiciclo" && Object.keys(votosPorProvincia).length > 0 && (
+              <div className="space-y-8">
+                <div className="liquid-glass p-8 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Mapa de Provincias</h2>
+                  <SpainMapProvincial 
+                    votosPorProvincia={votosPorProvincia}
+                    onProvinceClick={(province, data) => {
+                      console.log(`Provincia: ${province}`, data);
+                    }}
+                  />
+                </div>
+                
+                <div className="liquid-glass p-8 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo Parlamentario (350 Escaños)</h2>
+                  <ParliamentHemicycle 
+                    escanos={escanosGeneralesPorProvincia}
+                    totalEscanos={350}
+                  />
+                </div>
+              </div>
             )}
             {activeTab === "leaders" && (
             <div className="space-y-6">
