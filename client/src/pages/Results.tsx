@@ -239,7 +239,6 @@ export default function Results() {
               PLIB: 4,
               EB: 2,
               BNG: 7,
-              OTROS: 5,
             };
             const escanos = calcularEscanosGenerales(exampleVotos);
             const nombres: Record<string, string> = {};
@@ -283,7 +282,6 @@ export default function Results() {
             PLIB: 4,
             EB: 2,
             BNG: 7,
-            OTROS: 5,
           };
           const escanos = calcularEscanosGenerales(exampleVotos);
           const nombres: Record<string, string> = {};
@@ -345,7 +343,6 @@ export default function Results() {
               ACL: 14,
               JEC: 10,
               AGORA: 8,
-              OTROS: 5,
             };
             const escanos = calcularEscanosJuveniles(exampleYouthVotos);
             const nombres: Record<string, string> = {};
@@ -384,7 +381,6 @@ export default function Results() {
             ACL: 14,
             JEC: 10,
             AGORA: 8,
-            OTROS: 5,
           };
           const escanos = calcularEscanosJuveniles(exampleYouthVotos);
           const nombres: Record<string, string> = {};
