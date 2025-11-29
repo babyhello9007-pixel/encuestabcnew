@@ -16,6 +16,10 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
 }) => {
   const [hoveredParty, setHoveredParty] = useState<string | null>(null);
 
+  // Calcular escaños totales asignados
+  const totalAssigned = Object.values(escanos).reduce((a, b) => a + b, 0);
+  const unavailableSeats = totalEscanos - totalAssigned;
+
   // Crear array de escaños con información del partido
   const seatArray: Array<{ party: string; index: number }> = [];
   let seatIndex = 0;
@@ -26,9 +30,9 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
     }
   }
 
-  // Completar con escaños vacíos si es necesario
-  while (seatIndex < totalEscanos) {
-    seatArray.push({ party: 'EMPTY', index: seatIndex++ });
+  // Completar con escaños de datos no disponibles si es necesario
+  for (let i = 0; i < unavailableSeats; i++) {
+    seatArray.push({ party: 'DATOS_NO_DISPONIBLES', index: seatIndex++ });
   }
 
   // Distribuir escaños en forma de hemiciclo (semicírculo)
@@ -61,6 +65,13 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
               </span>
             </div>
           ))}
+        {/* Datos no disponibles */}
+        {unavailableSeats > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#666666' }} />
+            <span className="text-gray-300">Datos no disponibles: {unavailableSeats}</span>
+          </div>
+        )}
       </div>
 
       {/* Hemiciclo */}
@@ -84,20 +95,20 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
                 {row.map((seat) => (
                   <button
                     key={seat.index}
-                    onMouseEnter={() => seat.party !== 'EMPTY' && setHoveredParty(seat.party)}
+                    onMouseEnter={() => seat.party !== 'DATOS_NO_DISPONIBLES' && setHoveredParty(seat.party)}
                     onMouseLeave={() => setHoveredParty(null)}
                     className={`w-3 h-3 md:w-4 md:h-4 rounded-full transition-all transform ${
                       hoveredParty === seat.party ? 'scale-150 ring-2 ring-white' : ''
-                    } ${seat.party === 'EMPTY' ? 'opacity-30' : 'hover:scale-125 cursor-pointer'}`}
+                    } ${seat.party === 'DATOS_NO_DISPONIBLES' ? 'opacity-30 cursor-help' : 'hover:scale-125 cursor-pointer'}`}
                     style={{
                       backgroundColor:
-                        seat.party === 'EMPTY'
-                          ? '#444444'
+                        seat.party === 'DATOS_NO_DISPONIBLES'
+                          ? '#666666'
                           : getPartyColor(seat.party),
                     }}
                     title={
-                      seat.party === 'EMPTY'
-                        ? 'Escaño vacío'
+                      seat.party === 'DATOS_NO_DISPONIBLES'
+                        ? 'Datos no disponibles - Responde la encuesta'
                         : `${PARTIES_GENERAL[seat.party as keyof typeof PARTIES_GENERAL]?.name || seat.party} (Escaño ${seat.index + 1})`
                     }
                   />
@@ -112,7 +123,7 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
           <p className="text-gray-400 text-sm">
             Total: <span className="text-white font-semibold">{totalEscanos}</span> escaños
           </p>
-          {hoveredParty && hoveredParty !== 'EMPTY' && (
+          {hoveredParty && hoveredParty !== 'DATOS_NO_DISPONIBLES' && (
             <p className="text-white mt-2">
               {PARTIES_GENERAL[hoveredParty as keyof typeof PARTIES_GENERAL]?.name || hoveredParty}:{' '}
               <span className="font-semibold">{escanos[hoveredParty] || 0}</span> escaños

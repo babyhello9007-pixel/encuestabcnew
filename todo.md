@@ -144,8 +144,11 @@
 - [x] Implementar cálculo de Ley d'Hondt por provincia (no nacional)
 - [x] Crear mapa interactivo de provincias coloreado por partido ganador
 - [x] Crear visualización de hemiciclo con 350 escaños distribuidos
-- [x] Integrar mapa y hemiciclo en sección de Elecciones Generales
+- [x] Integrar mapa y hemiciclo en sección separada
 - [x] Agregar interactividad: click en provincia para detalles
 - [x] Agregar hover en escaños del hemiciclo para ver partido
+- [x] Crear vista SQL votos_por_provincia_view
+- [x] Agregar figura de "Datos no disponibles" en gris
+- [x] Escaños no disponibles ocupan espacio hasta que haya datos
+- [x] Agregar enlace a nano-encuesta en el mapa
 - [x] Verificar funcionamiento correcto
-- [x] Guardar checkpoint con mapa y hemiciclo

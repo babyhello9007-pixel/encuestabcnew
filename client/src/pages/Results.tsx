@@ -118,20 +118,23 @@ export default function Results() {
             
             // Cargar votos por provincia para el mapa
             try {
-              const { data: provinciaData } = await supabase
-                .from("respuestas")
-                .select("provincia, voto_generales");
+              const { data: provinciaData, error } = await supabase
+                .from("votos_por_provincia_view")
+                .select("provincia, partido, votos");
               
-              if (provinciaData) {
+              if (error) {
+                console.error("Error loading provincia data:", error);
+              }
+              
+              if (provinciaData && provinciaData.length > 0) {
                 const votosProv: Record<string, Record<string, number>> = {};
                 
                 provinciaData.forEach((row: any) => {
-                  if (row.provincia && row.voto_generales) {
+                  if (row.provincia && row.partido) {
                     if (!votosProv[row.provincia]) {
                       votosProv[row.provincia] = {};
                     }
-                    votosProv[row.provincia][row.voto_generales] = 
-                      (votosProv[row.provincia][row.voto_generales] || 0) + 1;
+                    votosProv[row.provincia][row.partido] = row.votos;
                   }
                 });
                 
@@ -142,8 +145,7 @@ export default function Results() {
             }
           } else {
             // Datos de ejemplo si no hay datos
-            const exampleVotos: Record<string, number> = {
-              PP: 180,
+            const exampleVotos: Record<string, number> = { PP: 180,
               PSOE: 120,
               VOX: 85,
               SUMAR: 65,
@@ -752,25 +754,33 @@ export default function Results() {
             {activeTab === "comparacion-ccaa" && (
               <CCAAComparisonSection />
             )}
-            {activeTab === "mapa-hemiciclo" && Object.keys(votosPorProvincia).length > 0 && (
+            {activeTab === "mapa-hemiciclo" && (
               <div className="space-y-8">
-                <div className="liquid-glass p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Mapa de Provincias</h2>
-                  <SpainMapProvincial 
-                    votosPorProvincia={votosPorProvincia}
-                    onProvinceClick={(province, data) => {
-                      console.log(`Provincia: ${province}`, data);
-                    }}
-                  />
-                </div>
-                
-                <div className="liquid-glass p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo Parlamentario (350 Escaños)</h2>
-                  <ParliamentHemicycle 
-                    escanos={escanosGeneralesPorProvincia}
-                    totalEscanos={350}
-                  />
-                </div>
+                {Object.keys(votosPorProvincia).length > 0 ? (
+                  <>
+                    <div className="liquid-glass p-8 rounded-2xl">
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Mapa de Provincias</h2>
+                      <SpainMapProvincial 
+                        votosPorProvincia={votosPorProvincia}
+                        onProvinceClick={(province, data) => {
+                          console.log(`Provincia: ${province}`, data);
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="liquid-glass p-8 rounded-2xl">
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo Parlamentario (350 Escaños)</h2>
+                      <ParliamentHemicycle 
+                        escanos={escanosGeneralesPorProvincia}
+                        totalEscanos={350}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="liquid-glass p-8 rounded-2xl text-center">
+                    <p className="text-[#666666]">Cargando datos de provincias...</p>
+                  </div>
+                )}
               </div>
             )}
             {activeTab === "leaders" && (
