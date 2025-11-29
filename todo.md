@@ -221,4 +221,4 @@
 - [x] Implementar distribución de escaños en arcos concéntricos
 - [x] Agregar interactividad (hover) en escaños
 - [x] Verificar visualización del hemiciclo
-- [ ] Guardar checkpoint con hemiciclo real
+- [x] Guardar checkpoint con hemiciclo real

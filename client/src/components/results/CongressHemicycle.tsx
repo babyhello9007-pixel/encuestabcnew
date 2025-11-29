@@ -13,7 +13,6 @@ interface CongressHemicycleProps {
 /**
  * Hemiciclo del Congreso de los Diputados Español
  * Forma semicircular real con distribución de escaños en arcos concéntricos
- * El hemiciclo tiene 350 escaños distribuidos en 15 filas semicirculares
  */
 export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
   escanos,
@@ -23,13 +22,11 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
   escanosProvincia,
 }) => {
   const [hoveredParty, setHoveredParty] = useState<string | null>(null);
-  const [hoveredSeat, setHoveredSeat] = useState<number | null>(null);
 
-  // Crear array de escaños con información del partido
+  // Crear array de escaños ordenados por partido (mayor a menor)
   const seatArray: Array<{ party: string; index: number }> = [];
   let seatIndex = 0;
 
-  // Ordenar partidos por escaños (mayor a menor) para distribución visual
   const sortedParties = Object.entries(escanos)
     .sort((a, b) => b[1] - a[1])
     .map(([party]) => party);
@@ -41,12 +38,10 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
     }
   }
 
-  // Distribución del hemiciclo del Congreso Español
-  // 15 filas semicirculares con distribución realista
+  // Distribución en 15 filas semicirculares
   const rows = 15;
   const seatsPerRow = Math.ceil(totalEscanos / rows);
 
-  // Agrupar escaños por filas
   const hemicycleRows: Array<Array<{ party: string; index: number }>> = [];
   for (let i = 0; i < rows; i++) {
     const start = i * seatsPerRow;
@@ -54,28 +49,39 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
     hemicycleRows.push(seatArray.slice(start, end));
   }
 
-  // Calcular posición de cada escaño en forma semicircular
-  const getSeatPosition = (rowIndex: number, seatIndexInRow: number, totalSeatsInRow: number) => {
-    // Radio del hemiciclo (aumenta con cada fila)
-    const baseRadius = 40;
-    const radius = baseRadius + rowIndex * 18;
+  // Calcular posiciones de escaños en semicírculo
+  const getSeatPositions = () => {
+    const positions: Array<{ x: number; y: number; party: string; index: number }> = [];
+    const centerX = 250;
+    const centerY = 250;
+    const startRadius = 50;
+    const radiusStep = 20;
 
-    // Ángulo: de 0 a π radianes (180 grados) para forma semicircular
-    // Distribuir los escaños en el arco
-    const angleSpan = Math.PI; // 180 grados
-    const startAngle = 0; // Comienza en la izquierda
+    hemicycleRows.forEach((row, rowIndex) => {
+      const radius = startRadius + rowIndex * radiusStep;
+      const seatsInRow = row.length;
 
-    // Calcular ángulo para este escaño
-    const anglePerSeat = angleSpan / (totalSeatsInRow - 1 || 1);
-    const angle = startAngle + seatIndexInRow * anglePerSeat;
+      row.forEach((seat, seatIdx) => {
+        // Distribuir en semicírculo (0 a π radianes)
+        const angle = (Math.PI * seatIdx) / (seatsInRow - 1 || 1);
+        
+        // Convertir a coordenadas cartesianas
+        const x = centerX + radius * Math.cos(angle - Math.PI / 2);
+        const y = centerY + radius * Math.sin(angle - Math.PI / 2);
 
-    // Convertir coordenadas polares a cartesianas
-    // Centro del hemiciclo en (0, 0)
-    const x = radius * Math.cos(angle - Math.PI / 2); // Ajustar para que sea semicircular hacia arriba
-    const y = radius * Math.sin(angle - Math.PI / 2);
+        positions.push({
+          x,
+          y,
+          party: seat.party,
+          index: seat.index,
+        });
+      });
+    });
 
-    return { x, y, angle };
+    return positions;
   };
+
+  const seatPositions = getSeatPositions();
 
   return (
     <div className="w-full space-y-4">
@@ -106,7 +112,12 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
         {Object.entries(escanos)
           .sort((a, b) => b[1] - a[1])
           .map(([party, count]) => (
-            <div key={party} className="flex items-center gap-2">
+            <div
+              key={party}
+              className="flex items-center gap-2 px-3 py-1 rounded cursor-pointer hover:bg-gray-800 transition-colors"
+              onMouseEnter={() => setHoveredParty(party)}
+              onMouseLeave={() => setHoveredParty(null)}
+            >
               <div
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: getPartyColor(party) }}
@@ -118,92 +129,95 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
           ))}
       </div>
 
-      {/* Hemiciclo Semicircular */}
-      <div className="p-8 bg-gray-900 rounded-lg overflow-x-auto">
-        <div className="flex justify-center items-end min-h-[600px]">
-          <svg
-            viewBox="-350 -50 700 450"
-            className="w-full max-w-4xl"
-            style={{ minHeight: '500px' }}
-          >
-            {/* Fondo del hemiciclo */}
-            <ellipse cx="0" cy="0" rx="320" ry="320" fill="#1a1a1a" stroke="#444" strokeWidth="2" />
+      {/* Hemiciclo SVG */}
+      <div className="p-4 bg-gray-900 rounded-lg flex justify-center items-center">
+        <svg
+          width="100%"
+          height="600"
+          viewBox="0 0 500 350"
+          className="max-w-4xl"
+          style={{ backgroundColor: '#1a1a1a' }}
+        >
+          {/* Fondo del hemiciclo */}
+          <ellipse
+            cx="250"
+            cy="250"
+            rx="230"
+            ry="230"
+            fill="#0a0a0a"
+            stroke="#444"
+            strokeWidth="2"
+          />
 
-            {/* Líneas de referencia (opcional) */}
-            <circle cx="0" cy="0" r="60" fill="none" stroke="#333" strokeWidth="1" opacity="0.3" />
-            <circle cx="0" cy="0" r="120" fill="none" stroke="#333" strokeWidth="1" opacity="0.3" />
-            <circle cx="0" cy="0" r="180" fill="none" stroke="#333" strokeWidth="1" opacity="0.3" />
-            <circle cx="0" cy="0" r="240" fill="none" stroke="#333" strokeWidth="1" opacity="0.3" />
+          {/* Líneas de referencia (arcos) */}
+          {[1, 2, 3, 4, 5].map((i) => (
+            <circle
+              key={`arc-${i}`}
+              cx="250"
+              cy="250"
+              r={50 + i * 20}
+              fill="none"
+              stroke="#333"
+              strokeWidth="0.5"
+              opacity="0.3"
+            />
+          ))}
 
-            {/* Escaños */}
-            {hemicycleRows.map((row, rowIndex) => (
-              <g key={`row-${rowIndex}`}>
-                {row.map((seat, seatIndexInRow) => {
-                  const { x, y } = getSeatPosition(rowIndex, seatIndexInRow, row.length);
-                  const seatSize = rowIndex < 5 ? 10 : rowIndex < 10 ? 12 : 14;
-                  const isHovered = hoveredParty === seat.party || hoveredSeat === seat.index;
+          {/* Escaños */}
+          {seatPositions.map((seat, idx) => {
+            const isHovered = hoveredParty === seat.party;
+            const seatSize = 6;
 
-                  return (
-                    <g
-                      key={`seat-${seat.index}`}
-                      onMouseEnter={() => {
-                        setHoveredParty(seat.party);
-                        setHoveredSeat(seat.index);
-                      }}
-                      onMouseLeave={() => {
-                        setHoveredParty(null);
-                        setHoveredSeat(null);
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r={seatSize / 2}
-                        fill={getPartyColor(seat.party)}
-                        stroke={isHovered ? '#fff' : 'none'}
-                        strokeWidth={isHovered ? 2 : 0}
-                        opacity={isHovered ? 1 : 0.85}
-                        className="transition-all"
-                      />
-                      {isHovered && (
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={seatSize / 2 + 4}
-                          fill="none"
-                          stroke="#fff"
-                          strokeWidth="1"
-                          opacity="0.5"
-                        />
-                      )}
-                    </g>
-                  );
-                })}
+            return (
+              <g
+                key={`seat-${idx}`}
+                onMouseEnter={() => setHoveredParty(seat.party)}
+                onMouseLeave={() => setHoveredParty(null)}
+                className="cursor-pointer"
+              >
+                <circle
+                  cx={seat.x}
+                  cy={seat.y}
+                  r={seatSize}
+                  fill={getPartyColor(seat.party)}
+                  opacity={isHovered ? 1 : 0.8}
+                  className="transition-all"
+                />
+                {isHovered && (
+                  <circle
+                    cx={seat.x}
+                    cy={seat.y}
+                    r={seatSize + 3}
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="1.5"
+                  />
+                )}
               </g>
-            ))}
+            );
+          })}
 
-            {/* Texto central */}
-            <text
-              x="0"
-              y="30"
-              textAnchor="middle"
-              className="text-gray-400 text-sm"
-              fill="#999"
-            >
-              Congreso de los Diputados
-            </text>
-            <text
-              x="0"
-              y="50"
-              textAnchor="middle"
-              className="text-gray-500 text-xs"
-              fill="#666"
-            >
-              {totalEscanos} escaños
-            </text>
-          </svg>
-        </div>
+          {/* Texto central */}
+          <text
+            x="250"
+            y="280"
+            textAnchor="middle"
+            fontSize="16"
+            fontWeight="bold"
+            fill="#999"
+          >
+            Congreso de los Diputados
+          </text>
+          <text
+            x="250"
+            y="300"
+            textAnchor="middle"
+            fontSize="12"
+            fill="#666"
+          >
+            {totalEscanos} escaños
+          </text>
+        </svg>
       </div>
 
       {/* Tabla de distribución */}
@@ -220,18 +234,13 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
                 onMouseEnter={() => setHoveredParty(party)}
                 onMouseLeave={() => setHoveredParty(null)}
               >
-                <div className="text-gray-300 text-sm">
+                <div className="text-gray-300 text-sm font-medium">
                   {PARTIES_GENERAL[party as keyof typeof PARTIES_GENERAL]?.name || party}
                 </div>
-                <div className="text-white text-lg font-bold">{count}</div>
+                <div className="text-white text-2xl font-bold">{count}</div>
               </div>
             ))}
         </div>
-      </div>
-
-      {/* Información adicional */}
-      <div className="p-4 bg-gray-800 rounded-lg text-center text-gray-300 text-sm">
-        <p>Pasa el mouse sobre los escaños para ver detalles. Haz clic en los partidos para resaltar.</p>
       </div>
     </div>
   );
