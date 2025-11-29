@@ -308,3 +308,13 @@
 - [x] Mostrar imagen en selector de compartir (X, Bluesky, Discord)
 - [x] Vista previa de infografía antes de compartir
 - [x] Probar en todos los modos (Individual, Completo, Líderes)
+
+## Página Bio (Linktree) - NUEVO
+- [x] Crear página Bio.tsx con diseño Linktree
+- [x] Agregar logo de Batalla Cultural
+- [x] Agregar enlace a Versión Rápida (NanoEncuestaBC)
+- [x] Agregar enlace a Resultados En Vivo
+- [x] Agregar enlaces a Redes Sociales (X, Discord, Bluesky, Instagram)
+- [x] Integrar ruta /bio en App.tsx
+- [x] Probar página Bio en navegador
+- [ ] Guardar checkpoint con página Bio
