@@ -130,6 +130,20 @@ export default function NanoEncuestaBC() {
     setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
   };
 
+  // Limpiar el input de "Otro" cuando se deselecciona
+  const handleSelectChange = (value: string) => {
+    if (value !== "OTRO") {
+      // Si se deselecciona "Otro", limpiar el campo
+      setShowOtroInput(false);
+      setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
+    } else {
+      // Si se selecciona "Otro", mostrar el input
+      setShowOtroInput(true);
+      // Limpiar el campo para que el usuario escriba desde cero
+      setResponses(prev => ({ ...prev, [currentStepData.key]: "" }));
+    }
+  };
+
   const handleNext = () => {
     setIsAnimating(true);
     setTimeout(() => {
@@ -366,7 +380,14 @@ export default function NanoEncuestaBC() {
                 <div className="space-y-3">
                   <select
                     value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
-                    onChange={(e) => handleAnswer(e.target.value)}
+                    onChange={(e) => {
+                      // Si es un campo de voto o asociacion juvenil, usar handleSelectChange para manejar "Otro"
+                      if ((currentStepData.key.includes("voto_") || currentStepData.key === "asociacion_juvenil")) {
+                        handleSelectChange(e.target.value);
+                      } else {
+                        handleAnswer(e.target.value);
+                      }
+                    }}
                     className="input-modern w-full"
                   >
                     <option value="">Selecciona una opcion...</option>

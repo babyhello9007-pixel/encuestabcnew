@@ -342,3 +342,10 @@
 
 ## Bug Fix - Elementos Duplicados en Resultados - NUEVO
 - [x] Corregir elementos duplicados en la página de resultados (partidos con 0 votos aparecen duplicados)
+
+## Mejora de Campo "Otros" en NanoEncuestaBC - NUEVO
+- [x] Mejorar lógica de handleOtroAnswer para limpiar el estado cuando se deselecciona "Otro"
+- [x] Crear función handleSelectChange para manejar correctamente la selección de "Otro"
+- [x] Cuando se selecciona "Otro": mostrar input de texto y limpiar el campo
+- [x] Cuando se deselecciona "Otro": ocultar input y guardar la nueva opción
+- [x] Probar funcionamiento en navegador
