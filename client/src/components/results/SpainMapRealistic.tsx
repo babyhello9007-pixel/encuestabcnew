@@ -1,4 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { getPartyColor } from '@/lib/partyConfig';
 import { PARTIES_GENERAL } from '@/lib/surveyData';
 import { calcularEscanosProvincia } from '@/lib/dhondtByProvince';
@@ -18,69 +21,65 @@ interface SpainMapRealisticProps {
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
 }
 
-// Mapeo de IDs del SVG a nombres de provincias
-const SVG_PROVINCE_MAPPING: Record<string, string> = {
-  "pr_la_corunya": "La Coruña",
-  "pr_lugo": "Lugo",
-  "pr_ourense": "Ourense",
-  "pr_pontevedra": "Pontevedra",
-  "pr_asturias": "Asturias",
-  "pr_cantabria": "Cantabria",
-  "pr_vizcaya": "Vizcaya",
-  "pr_guipuzcoa": "Guipúzcoa",
-  "pr_alava": "Álava",
-  "pr_navarra": "Navarra",
-  "pr_la_rioja": "La Rioja",
-  "pr_huesca": "Huesca",
-  "pr_teruel": "Teruel",
-  "pr_zaragoza": "Zaragoza",
-  "pr_barcelona": "Barcelona",
-  "pr_girona": "Girona",
-  "pr_lleida": "Lleida",
-  "pr_tarragona": "Tarragona",
-  "pr_leon": "León",
-  "pr_palencia": "Palencia",
-  "pr_valladolid": "Valladolid",
-  "pr_burgos": "Burgos",
-  "pr_soria": "Soria",
-  "pr_segovia": "Segovia",
-  "pr_avila": "Ávila",
-  "pr_salamanca": "Salamanca",
-  "pr_zamora": "Zamora",
-  "pr_madrid": "Madrid",
-  "pr_guadalajara": "Guadalajara",
-  "pr_cuenca": "Cuenca",
-  "pr_ciudad_real": "Ciudad Real",
-  "pr_albacete": "Albacete",
-  "pr_toledo": "Toledo",
-  "pr_caceres": "Cáceres",
-  "pr_badajoz": "Badajoz",
-  "pr_castellon": "Castellón",
-  "pr_valencia": "Valencia",
-  "pr_alicante": "Alicante",
-  "pr_murcia": "Murcia",
-  "pr_jaen": "Jaén",
-  "pr_cordoba": "Córdoba",
-  "pr_sevilla": "Sevilla",
-  "pr_huelva": "Huelva",
-  "pr_cadiz": "Cádiz",
-  "pr_malaga": "Málaga",
-  "pr_granada": "Granada",
-  "pr_almeria": "Almería",
-  "pr_ceuta": "Ceuta",
-  "pr_melilla": "Melilla",
+// GeoJSON con las provincias de España
+const SPAIN_GEOJSON = {
+  type: 'FeatureCollection' as const,
+  features: [
+    { type: 'Feature', properties: { name: 'Álava' }, geometry: { type: 'Polygon', coordinates: [[[-2.8, 43.3], [-2.8, 42.8], [-2.3, 42.8], [-2.3, 43.3], [-2.8, 43.3]]] } },
+    { type: 'Feature', properties: { name: 'Albacete' }, geometry: { type: 'Polygon', coordinates: [[[-1.5, 39.5], [-1.5, 38.5], [-0.5, 38.5], [-0.5, 39.5], [-1.5, 39.5]]] } },
+    { type: 'Feature', properties: { name: 'Alicante' }, geometry: { type: 'Polygon', coordinates: [[[-0.5, 38.8], [-0.5, 37.8], [0.5, 37.8], [0.5, 38.8], [-0.5, 38.8]]] } },
+    { type: 'Feature', properties: { name: 'Almería' }, geometry: { type: 'Polygon', coordinates: [[[-2.5, 37.5], [-2.5, 36.5], [-1.5, 36.5], [-1.5, 37.5], [-2.5, 37.5]]] } },
+    { type: 'Feature', properties: { name: 'Ávila' }, geometry: { type: 'Polygon', coordinates: [[[-5.5, 41.0], [-5.5, 40.0], [-4.5, 40.0], [-4.5, 41.0], [-5.5, 41.0]]] } },
+    { type: 'Feature', properties: { name: 'Badajoz' }, geometry: { type: 'Polygon', coordinates: [[[-6.5, 39.5], [-6.5, 38.0], [-5.5, 38.0], [-5.5, 39.5], [-6.5, 39.5]]] } },
+    { type: 'Feature', properties: { name: 'Barcelona' }, geometry: { type: 'Polygon', coordinates: [[[1.5, 42.5], [1.5, 41.3], [2.8, 41.3], [2.8, 42.5], [1.5, 42.5]]] } },
+    { type: 'Feature', properties: { name: 'Burgos' }, geometry: { type: 'Polygon', coordinates: [[[-3.8, 42.8], [-3.8, 41.8], [-2.8, 41.8], [-2.8, 42.8], [-3.8, 42.8]]] } },
+    { type: 'Feature', properties: { name: 'Cáceres' }, geometry: { type: 'Polygon', coordinates: [[[-6.0, 40.3], [-6.0, 39.3], [-5.0, 39.3], [-5.0, 40.3], [-6.0, 40.3]]] } },
+    { type: 'Feature', properties: { name: 'Cádiz' }, geometry: { type: 'Polygon', coordinates: [[[-6.3, 36.8], [-6.3, 35.8], [-5.3, 35.8], [-5.3, 36.8], [-6.3, 36.8]]] } },
+    { type: 'Feature', properties: { name: 'Castellón' }, geometry: { type: 'Polygon', coordinates: [[[0.3, 40.8], [0.3, 39.8], [1.3, 39.8], [1.3, 40.8], [0.3, 40.8]]] } },
+    { type: 'Feature', properties: { name: 'Ceuta' }, geometry: { type: 'Polygon', coordinates: [[[-5.3, 35.9], [-5.3, 35.8], [-5.2, 35.8], [-5.2, 35.9], [-5.3, 35.9]]] } },
+    { type: 'Feature', properties: { name: 'Ciudad Real' }, geometry: { type: 'Polygon', coordinates: [[[-3.8, 39.8], [-3.8, 38.8], [-2.8, 38.8], [-2.8, 39.8], [-3.8, 39.8]]] } },
+    { type: 'Feature', properties: { name: 'Córdoba' }, geometry: { type: 'Polygon', coordinates: [[[-4.8, 38.5], [-4.8, 37.5], [-3.8, 37.5], [-3.8, 38.5], [-4.8, 38.5]]] } },
+    { type: 'Feature', properties: { name: 'La Coruña' }, geometry: { type: 'Polygon', coordinates: [[[-8.8, 43.5], [-8.8, 42.5], [-7.8, 42.5], [-7.8, 43.5], [-8.8, 43.5]]] } },
+    { type: 'Feature', properties: { name: 'Cuenca' }, geometry: { type: 'Polygon', coordinates: [[[-1.8, 40.8], [-1.8, 39.8], [-0.8, 39.8], [-0.8, 40.8], [-1.8, 40.8]]] } },
+    { type: 'Feature', properties: { name: 'Girona' }, geometry: { type: 'Polygon', coordinates: [[[2.0, 42.5], [2.0, 41.8], [3.0, 41.8], [3.0, 42.5], [2.0, 42.5]]] } },
+    { type: 'Feature', properties: { name: 'Granada' }, geometry: { type: 'Polygon', coordinates: [[[-3.8, 37.5], [-3.8, 36.5], [-2.8, 36.5], [-2.8, 37.5], [-3.8, 37.5]]] } },
+    { type: 'Feature', properties: { name: 'Guadalajara' }, geometry: { type: 'Polygon', coordinates: [[[-3.0, 41.3], [-3.0, 40.3], [-2.0, 40.3], [-2.0, 41.3], [-3.0, 41.3]]] } },
+    { type: 'Feature', properties: { name: 'Guipúzcoa' }, geometry: { type: 'Polygon', coordinates: [[[-2.0, 43.5], [-2.0, 43.0], [-1.3, 43.0], [-1.3, 43.5], [-2.0, 43.5]]] } },
+    { type: 'Feature', properties: { name: 'Huelva' }, geometry: { type: 'Polygon', coordinates: [[[-7.3, 37.8], [-7.3, 36.8], [-6.3, 36.8], [-6.3, 37.8], [-7.3, 37.8]]] } },
+    { type: 'Feature', properties: { name: 'Huesca' }, geometry: { type: 'Polygon', coordinates: [[[-0.5, 42.8], [-0.5, 41.8], [0.5, 41.8], [0.5, 42.8], [-0.5, 42.8]]] } },
+    { type: 'Feature', properties: { name: 'Jaén' }, geometry: { type: 'Polygon', coordinates: [[[-4.0, 38.3], [-4.0, 37.3], [-3.0, 37.3], [-3.0, 38.3], [-4.0, 38.3]]] } },
+    { type: 'Feature', properties: { name: 'León' }, geometry: { type: 'Polygon', coordinates: [[[-5.8, 42.8], [-5.8, 41.8], [-4.8, 41.8], [-4.8, 42.8], [-5.8, 42.8]]] } },
+    { type: 'Feature', properties: { name: 'Lleida' }, geometry: { type: 'Polygon', coordinates: [[[0.5, 42.5], [0.5, 41.5], [1.5, 41.5], [1.5, 42.5], [0.5, 42.5]]] } },
+    { type: 'Feature', properties: { name: 'Lugo' }, geometry: { type: 'Polygon', coordinates: [[[-8.5, 43.2], [-8.5, 42.3], [-7.5, 42.3], [-7.5, 43.2], [-8.5, 43.2]]] } },
+    { type: 'Feature', properties: { name: 'Madrid' }, geometry: { type: 'Polygon', coordinates: [[[-4.0, 41.0], [-4.0, 40.0], [-3.0, 40.0], [-3.0, 41.0], [-4.0, 41.0]]] } },
+    { type: 'Feature', properties: { name: 'Málaga' }, geometry: { type: 'Polygon', coordinates: [[[-4.0, 37.3], [-4.0, 36.3], [-3.0, 36.3], [-3.0, 37.3], [-4.0, 37.3]]] } },
+    { type: 'Feature', properties: { name: 'Melilla' }, geometry: { type: 'Polygon', coordinates: [[[-3.0, 35.3], [-3.0, 35.2], [-2.9, 35.2], [-2.9, 35.3], [-3.0, 35.3]]] } },
+    { type: 'Feature', properties: { name: 'Murcia' }, geometry: { type: 'Polygon', coordinates: [[[-1.5, 38.3], [-1.5, 37.3], [-0.5, 37.3], [-0.5, 38.3], [-1.5, 38.3]]] } },
+    { type: 'Feature', properties: { name: 'Navarra' }, geometry: { type: 'Polygon', coordinates: [[[-1.8, 43.0], [-1.8, 42.0], [-0.8, 42.0], [-0.8, 43.0], [-1.8, 43.0]]] } },
+    { type: 'Feature', properties: { name: 'Ourense' }, geometry: { type: 'Polygon', coordinates: [[[-8.3, 42.5], [-8.3, 41.8], [-7.3, 41.8], [-7.3, 42.5], [-8.3, 42.5]]] } },
+    { type: 'Feature', properties: { name: 'Palencia' }, geometry: { type: 'Polygon', coordinates: [[[-4.8, 42.3], [-4.8, 41.3], [-3.8, 41.3], [-3.8, 42.3], [-4.8, 42.3]]] } },
+    { type: 'Feature', properties: { name: 'Pontevedra' }, geometry: { type: 'Polygon', coordinates: [[[-8.8, 42.5], [-8.8, 41.8], [-7.8, 41.8], [-7.8, 42.5], [-8.8, 42.5]]] } },
+    { type: 'Feature', properties: { name: 'La Rioja' }, geometry: { type: 'Polygon', coordinates: [[[-2.3, 42.5], [-2.3, 41.8], [-1.3, 41.8], [-1.3, 42.5], [-2.3, 42.5]]] } },
+    { type: 'Feature', properties: { name: 'Salamanca' }, geometry: { type: 'Polygon', coordinates: [[[-5.8, 41.3], [-5.8, 40.3], [-4.8, 40.3], [-4.8, 41.3], [-5.8, 41.3]]] } },
+    { type: 'Feature', properties: { name: 'Segovia' }, geometry: { type: 'Polygon', coordinates: [[[-4.3, 41.3], [-4.3, 40.8], [-3.8, 40.8], [-3.8, 41.3], [-4.3, 41.3]]] } },
+    { type: 'Feature', properties: { name: 'Sevilla' }, geometry: { type: 'Polygon', coordinates: [[[-6.3, 37.8], [-6.3, 36.8], [-5.3, 36.8], [-5.3, 37.8], [-6.3, 37.8]]] } },
+    { type: 'Feature', properties: { name: 'Soria' }, geometry: { type: 'Polygon', coordinates: [[[-2.5, 42.3], [-2.5, 41.3], [-1.5, 41.3], [-1.5, 42.3], [-2.5, 42.3]]] } },
+    { type: 'Feature', properties: { name: 'Tarragona' }, geometry: { type: 'Polygon', coordinates: [[[1.0, 41.5], [1.0, 40.8], [2.0, 40.8], [2.0, 41.5], [1.0, 41.5]]] } },
+    { type: 'Feature', properties: { name: 'Teruel' }, geometry: { type: 'Polygon', coordinates: [[[-0.5, 41.3], [-0.5, 40.3], [0.5, 40.3], [0.5, 41.3], [-0.5, 41.3]]] } },
+    { type: 'Feature', properties: { name: 'Toledo' }, geometry: { type: 'Polygon', coordinates: [[[-4.3, 40.3], [-4.3, 39.3], [-3.3, 39.3], [-3.3, 40.3], [-4.3, 40.3]]] } },
+    { type: 'Feature', properties: { name: 'Valencia' }, geometry: { type: 'Polygon', coordinates: [[[-0.3, 39.8], [-0.3, 38.8], [0.7, 38.8], [0.7, 39.8], [-0.3, 39.8]]] } },
+    { type: 'Feature', properties: { name: 'Valladolid' }, geometry: { type: 'Polygon', coordinates: [[[-4.8, 42.0], [-4.8, 41.0], [-3.8, 41.0], [-3.8, 42.0], [-4.8, 42.0]]] } },
+    { type: 'Feature', properties: { name: 'Vizcaya' }, geometry: { type: 'Polygon', coordinates: [[[-3.2, 43.5], [-3.2, 43.0], [-2.3, 43.0], [-2.3, 43.5], [-3.2, 43.5]]] } },
+    { type: 'Feature', properties: { name: 'Zamora' }, geometry: { type: 'Polygon', coordinates: [[[-6.3, 41.8], [-6.3, 41.0], [-5.3, 41.0], [-5.3, 41.8], [-6.3, 41.8]]] } },
+    { type: 'Feature', properties: { name: 'Zaragoza' }, geometry: { type: 'Polygon', coordinates: [[[-1.0, 42.3], [-1.0, 41.0], [0.3, 41.0], [0.3, 42.3], [-1.0, 42.3]]] } },
+  ]
 };
 
-/**
- * Mapa realista de España usando SVG de Wikipedia
- * Colorea provincias según el partido ganador
- */
 export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   votosPorProvincia,
   onProvinceClick,
 }) => {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyData, setVerifyData] = useState<{
     provincia: string;
@@ -88,7 +87,6 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     escanos: Record<string, number>;
     escanosPorPartido: Record<string, number>;
   } | null>(null);
-  const svgContainerRef = useRef<HTMLDivElement>(null);
 
   // Calcular el partido ganador por provincia
   const getProvinceData = (province: string): ProvinceData => {
@@ -113,81 +111,37 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     };
   };
 
-  const handleProvinceClick = (province: string) => {
-    const data = getProvinceData(province);
-    const votos = votosPorProvincia[province] || {};
-    const escanos = calcularEscanosProvincia(province, votos);
-    setSelectedProvince(province);
-    onProvinceClick?.(province, data, votos, escanos);
+  const handleProvinceClick = (provinceName: string) => {
+    const data = getProvinceData(provinceName);
+    const votos = votosPorProvincia[provinceName] || {};
+    const escanos = calcularEscanosProvincia(provinceName, votos);
+    setSelectedProvince(provinceName);
+    onProvinceClick?.(provinceName, data, votos, escanos);
   };
 
-  // Cargar y procesar el SVG
-  useEffect(() => {
-    const loadSVG = async () => {
-      try {
-        const response = await fetch('/assets/spain-provinces.svg');
-        let svgText = await response.text();
+  const onEachFeature = (feature: any, layer: L.Layer) => {
+    const provinceName = feature.properties.name;
+    const data = getProvinceData(provinceName);
+    const hasData = Object.keys(votosPorProvincia).includes(provinceName);
+    const color = hasData ? getPartyColor(data.ganador) : '#CCCCCC';
 
-        // Crear un parser para el SVG
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+    (layer as L.Path).setStyle({
+      fillColor: color,
+      fillOpacity: 0.8,
+      color: 'white',
+      weight: 2,
+    });
 
-        // Colorear cada provincia
-        Object.entries(SVG_PROVINCE_MAPPING).forEach(([svgId, provinceName]) => {
-          const element = svgDoc.getElementById(svgId);
-          if (element) {
-            const data = getProvinceData(provinceName);
-            const hasData = Object.keys(votosPorProvincia).includes(provinceName);
-            const color = hasData ? getPartyColor(data.ganador) : '#CCCCCC';
-            
-            element.setAttribute('fill', color);
-            element.setAttribute('class', 'province-path');
-            element.setAttribute('data-province', provinceName);
-            element.style.stroke = 'white';
-            element.style.strokeWidth = '1.5';
-            element.style.cursor = 'pointer';
-            element.style.transition = 'all 0.2s ease';
-            
-            // Agregar evento de click
-            element.addEventListener('click', () => handleProvinceClick(provinceName));
-            
-            // Agregar evento de hover
-            element.addEventListener('mouseenter', () => {
-              element.style.strokeWidth = '2.5';
-              element.style.opacity = '0.8';
-            });
-            element.addEventListener('mouseleave', () => {
-              element.style.strokeWidth = '1.5';
-              element.style.opacity = '1';
-            });
-          }
-        });
+    layer.on('click', () => handleProvinceClick(provinceName));
+    layer.on('mouseover', () => {
+      (layer as L.Path).setStyle({ weight: 3, fillOpacity: 1 });
+    });
+    layer.on('mouseout', () => {
+      (layer as L.Path).setStyle({ weight: 2, fillOpacity: 0.8 });
+    });
 
-        // Serializar el SVG modificado
-        const serializer = new XMLSerializer();
-        const modifiedSvgText = serializer.serializeToString(svgDoc);
-
-        // Renderizar en el contenedor
-        if (svgContainerRef.current) {
-          svgContainerRef.current.innerHTML = modifiedSvgText;
-        }
-      } catch (error) {
-        console.error('Error loading SVG:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSVG();
-  }, [votosPorProvincia]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="text-gray-400">Cargando mapa...</div>
-      </div>
-    );
-  }
+    layer.bindPopup(`<strong>${provinceName}</strong><br/>${data.ganador}: ${data.porcentajeGanador.toFixed(1)}%`);
+  };
 
   return (
     <div className="w-full space-y-4">
@@ -224,15 +178,19 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
         </div>
       </div>
 
-      {/* SVG del mapa */}
-      <div className="w-full flex justify-center p-4 bg-gray-900 rounded-lg overflow-auto">
-        <div
-          ref={svgContainerRef}
-          className="w-full flex justify-center"
-          style={{
-            maxWidth: '100%',
-          }}
-        />
+      {/* Mapa con Leaflet */}
+      <div className="w-full h-96 bg-gray-900 rounded-lg overflow-hidden">
+        <MapContainer
+          center={[40, -3.5]}
+          zoom={6}
+          style={{ height: '100%', width: '100%' }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; OpenStreetMap contributors'
+          />
+          <GeoJSON data={SPAIN_GEOJSON} onEachFeature={onEachFeature} />
+        </MapContainer>
       </div>
 
       {/* Botón de verificación de escaños */}
