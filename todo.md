@@ -160,3 +160,10 @@
 - [x] Mejorar visualización de escaños sin asignar en hemiciclo (gris, pulsante)
 - [x] Agregar leyenda para provincias sin datos
 - [x] Agregar información de escaños asignados vs sin asignar
+
+## Normalización de Nombres de Provincias Vascas - COMPLETADO
+- [x] Crear función de normalización de provincias (Vizcaya → Bizkaia, Guipúzcoa → Gipuzkoa)
+- [x] Aplicar normalización al enviar datos de Survey.tsx
+- [x] Aplicar normalización al enviar datos de NanoEncuestaBC.tsx
+- [x] Crear tests unitarios para la función de normalización
+- [x] Verificar que los tests pasen correctamente

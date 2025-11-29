@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { surveyQuestions, PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from "@/lib/surveyData";
 import { SurveyResponse } from "@/lib/types";
 import { toast } from "sonner";
+import { normalizeProvinceInResponse } from "@/lib/provinceNormalizer";
 
 export default function Survey() {
   const [, setLocation] = useLocation();
@@ -47,7 +48,8 @@ export default function Survey() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("respuestas").insert([responses]);
+      const normalizedResponses = normalizeProvinceInResponse(responses);
+      const { error } = await supabase.from("respuestas").insert([normalizedResponses]);
       
       if (error) {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");

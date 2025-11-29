@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS, PROVINCES, CCAA } from "@/lib/surveyData";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { normalizeProvinceName } from "@/lib/provinceNormalizer";
 
 interface NanoSurveyResponse {
   edad?: string;
@@ -150,7 +151,7 @@ export default function NanoEncuestaBC() {
       // Esto es idéntico a cómo Survey.tsx maneja los datos
       const dataToSubmit = {
         edad: responses.edad ? parseInt(responses.edad) : 18,
-        provincia: responses.provincia || null,
+        provincia: normalizeProvinceName(responses.provincia) || null,
         ccaa: responses.comunidad_autonoma || null,
         nacionalidad: responses.nacionalidad || null,
         voto_generales: responses.voto_generales || null,
