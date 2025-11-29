@@ -45,6 +45,8 @@ export default function NanoEncuestaBC() {
   const [showReview, setShowReview] = useState(false);
   const [showOtroInput, setShowOtroInput] = useState(false);
   const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [completedAnimation, setCompletedAnimation] = useState(false);
 
   const steps = [
     { title: "Edad", key: "edad", type: "text" },
@@ -99,6 +101,10 @@ export default function NanoEncuestaBC() {
     setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
     setShowOtroInput(value === "OTRO");
     
+    // Efecto visual cuando se completa un campo
+    setCompletedAnimation(true);
+    setTimeout(() => setCompletedAnimation(false), 600);
+    
     // Autocompletado de CCAA cuando se selecciona provincia
     if (currentStepData.key === 'provincia') {
       const ccaa = getCCAAFromProvince(value);
@@ -134,21 +140,29 @@ export default function NanoEncuestaBC() {
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      // Al llegar al final, mostrar pantalla de revisión
-      setShowReview(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setIsAnimating(true);
+    setTimeout(() => {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        // Al llegar al final, mostrar pantalla de revisión
+        setShowReview(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      setIsAnimating(false);
+    }, 300);
   };
 
   const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    setIsAnimating(true);
+    setTimeout(() => {
+      if (currentStep > 0) {
+        setCurrentStep(currentStep - 1);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      setIsAnimating(false);
+    }, 300);
   };
 
   const handleSubmit = async () => {
@@ -302,9 +316,18 @@ export default function NanoEncuestaBC() {
       {/* Header */}
       <header className="sticky top-0 z-50 header-dark border-b border-[#2D2D2D]">
         <div className="container h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
-            <h1 className="text-white font-bold">NanoEncuestaBC</h1>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+              <h1 className="text-white font-bold">NanoEncuestaBC</h1>
+            </div>
+            {/* Resumen de progreso */}
+            <div className="hidden md:flex items-center gap-2 text-sm">
+              <span className="text-[#999999]">Completados:</span>
+              <span className="text-[#C41E3A] font-semibold">
+                {Object.values(responses).filter(v => v !== undefined && v !== null && v !== '').length}/{steps.length}
+              </span>
+            </div>
           </div>
           <Button
             onClick={() => setLocation("/")}
@@ -349,7 +372,7 @@ export default function NanoEncuestaBC() {
 
         {/* Question Card */}
         <div className="max-w-2xl mx-auto">
-          <div className="liquid-glass p-8 rounded-2xl border border-[#2D2D2D]">
+          <div className={`liquid-glass p-8 rounded-2xl border border-[#2D2D2D] transition-all duration-300 ${isAnimating ? 'fade-out' : 'fade-in'} ${completedAnimation ? 'pulse-green' : ''}`}>
             <h2 className="text-2xl font-bold text-white mb-6">{currentStepData.title}</h2>
 
             {/* Advertencia de CCAA */}
