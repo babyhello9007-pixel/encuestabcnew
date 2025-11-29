@@ -89,66 +89,26 @@ export default function Results() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        // Establecer datos de ejemplo inmediatamente para que el mapa cargue rápido
-        setLoading(false);
-        
-        // Obtener total de respuestas usando el VIEW (en background)
+        // Obtener total de respuestas usando el VIEW
         try {
           const { data: viewData } = await supabase
             .from("total_respuestas_view")
             .select("total_respuestas");
-          setTotalResponses(viewData?.[0]?.total_respuestas || 631);
+          setTotalResponses(viewData?.[0]?.total_respuestas || 0);
         } catch (err) {
           // Fallback si el VIEW no existe
           try {
             const { count } = await supabase
               .from("respuestas")
               .select("*", { count: "exact", head: true });
-            setTotalResponses(count || 631);
+            setTotalResponses(count || 0);
           } catch (e) {
             // Si tampoco existe la tabla, usar datos de ejemplo
             setTotalResponses(631);
           }
         }
 
-        // Usar datos de ejemplo primero, luego cargar desde Supabase
-        const exampleVotos: Record<string, number> = {
-          PP: 180,
-          PSOE: 120,
-          VOX: 85,
-          SUMAR: 65,
-          PODEMOS: 45,
-          JUNTS: 35,
-          ERC: 30,
-          PNV: 25,
-          ALIANZA: 15,
-          BILDU: 20,
-          SAF: 40,
-          CC: 10,
-          UPN: 8,
-          CIUDADANOS: 12,
-          CAMINANDO: 5,
-          FRENTE: 3,
-          IZQUIERDA: 8,
-          JUNTOS_EXT: 6,
-          PLIB: 4,
-          EB: 2,
-          BNG: 7,
-          OTROS: 5,
-        };
-        const escanos = calcularEscanosGenerales(exampleVotos);
-        const nombres: Record<string, string> = {};
-        const logos: Record<string, string> = {};
-
-        Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
-          nombres[key] = party.name;
-          logos[key] = party.logo;
-        });
-
-        const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos);
-        setGeneralStats(stats);
-
-        // Intentar obtener datos de votos generales en background
+        // Intentar obtener datos de votos generales
         try {
           const { data: generalData } = await supabase
             .from("votos_generales_totales")
@@ -177,34 +137,77 @@ export default function Results() {
 
             const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos);
             setGeneralStats(stats);
-          }
-          
-          // Cargar votos por provincia para el mapa en background
-          try {
-            const { data: provinciaData, error } = await supabase
-              .from("votos_por_provincia_view")
-              .select("provincia, partido, votos");
+            // Los escaños se actualizarán en el useEffect cuando votosPorProvincia esté disponible
+            // (este useEffect se ejecutará después de que votosPorProvincia se haya cargado)
             
-            if (error) {
-              console.error("Error loading provincia data:", error);
-            }
-            
-            if (provinciaData && provinciaData.length > 0) {
-              const votosProv: Record<string, Record<string, number>> = {};
+            // Cargar votos por provincia para el mapa
+            try {
+              const { data: provinciaData, error } = await supabase
+                .from("votos_por_provincia_view")
+                .select("provincia, partido, votos");
               
-              provinciaData.forEach((row: any) => {
-                if (row.provincia && row.partido) {
-                  if (!votosProv[row.provincia]) {
-                    votosProv[row.provincia] = {};
+              if (error) {
+                console.error("Error loading provincia data:", error);
+              }
+              
+              if (provinciaData && provinciaData.length > 0) {
+                const votosProv: Record<string, Record<string, number>> = {};
+                
+                provinciaData.forEach((row: any) => {
+                  if (row.provincia && row.partido) {
+                    if (!votosProv[row.provincia]) {
+                      votosProv[row.provincia] = {};
+                    }
+                    votosProv[row.provincia][row.partido] = row.votos;
                   }
-                  votosProv[row.provincia][row.partido] = row.votos;
-                }
-              });
-              
-              setVotosPorProvincia(votosProv);
+                });
+                
+                setVotosPorProvincia(votosProv);
+              }
+            } catch (err) {
+              console.error("Error fetching votos por provincia:", err);
             }
-          } catch (err) {
-            console.error("Error fetching votos por provincia:", err);
+          } else {
+            // Datos de ejemplo si no hay datos
+            const exampleVotos: Record<string, number> = { PP: 180,
+              PSOE: 120,
+              VOX: 85,
+              SUMAR: 65,
+              PODEMOS: 45,
+              JUNTS: 35,
+              ERC: 30,
+              PNV: 25,
+              ALIANZA: 15,
+              BILDU: 20,
+              SAF: 40,
+              CC: 10,
+              UPN: 8,
+              CIUDADANOS: 12,
+              CAMINANDO: 5,
+              FRENTE: 3,
+              IZQUIERDA: 8,
+              JUNTOS_EXT: 6,
+              PLIB: 4,
+              EB: 2,
+              BNG: 7,
+              OTROS: 5,
+            };
+            const escanos = calcularEscanosGenerales(exampleVotos);
+            const nombres: Record<string, string> = {};
+            const logos: Record<string, string> = {};
+
+            Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
+              nombres[key] = party.name;
+              logos[key] = party.logo;
+            });
+
+            console.log('exampleVotos keys:', Object.keys(exampleVotos));
+            console.log('PARTIES_GENERAL keys:', Object.keys(PARTIES_GENERAL));
+            console.log('logos keys:', Object.keys(logos));
+            const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos);
+            console.log('Stats generales:', stats);
+            console.log('Logos disponibles:', logos);
+            setGeneralStats(stats);
           }
         } catch (err) {
           console.error("Error fetching general votes:", err);
