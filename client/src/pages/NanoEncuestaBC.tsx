@@ -46,7 +46,6 @@ export default function NanoEncuestaBC() {
   const [showOtroInput, setShowOtroInput] = useState(false);
   const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [completedAnimation, setCompletedAnimation] = useState(false);
 
   const steps = [
     { title: "Edad", key: "edad", type: "text" },
@@ -100,10 +99,6 @@ export default function NanoEncuestaBC() {
   const handleAnswer = (value: any) => {
     setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
     setShowOtroInput(value === "OTRO");
-    
-    // Efecto visual cuando se completa un campo
-    setCompletedAnimation(true);
-    setTimeout(() => setCompletedAnimation(false), 600);
     
     // Autocompletado de CCAA cuando se selecciona provincia
     if (currentStepData.key === 'provincia') {
@@ -372,7 +367,7 @@ export default function NanoEncuestaBC() {
 
         {/* Question Card */}
         <div className="max-w-2xl mx-auto">
-          <div className={`liquid-glass p-8 rounded-2xl border border-[#2D2D2D] transition-all duration-300 ${isAnimating ? 'fade-out' : 'fade-in'} ${completedAnimation ? 'pulse-green' : ''}`}>
+          <div className={`liquid-glass p-8 rounded-2xl border border-[#2D2D2D] transition-all duration-300 ${isAnimating ? 'fade-out' : 'fade-in'}`}>
             <h2 className="text-2xl font-bold text-white mb-6">{currentStepData.title}</h2>
 
             {/* Advertencia de CCAA */}
