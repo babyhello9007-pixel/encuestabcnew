@@ -23,6 +23,7 @@ import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
+import Footer from "@/components/Footer";
 
 import { Map, Grid3x3 } from "lucide-react";
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LeaderSelection } from "@/components/LeaderSelection";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import Footer from "@/components/Footer";
 
 export default function LeaderSurvey() {
   const [, setLocation] = useLocation();

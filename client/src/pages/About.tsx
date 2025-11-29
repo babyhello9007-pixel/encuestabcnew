@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import Footer from "@/components/Footer";
 
 export default function About() {
   const [, setLocation] = useLocation();

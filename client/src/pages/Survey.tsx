@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { normalizeProvinceInResponse } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
 import ReviewSurvey from "@/components/ReviewSurvey";
+import Footer from "@/components/Footer";
 
 export default function Survey() {
   const [, setLocation] = useLocation();

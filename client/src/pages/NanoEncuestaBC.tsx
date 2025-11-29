@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { normalizeProvinceName } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
 import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
+import Footer from "@/components/Footer";
 
 interface NanoSurveyResponse {
   edad?: string;

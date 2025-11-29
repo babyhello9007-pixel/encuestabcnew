@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { TwitterFeed } from "@/components/TwitterFeed";
+import Footer from "@/components/Footer";
 import { ArrowRight, BarChart3, Lock, Zap, ChevronDown } from "lucide-react";
 
 export default function Home() {
@@ -311,40 +312,7 @@ export default function Home() {
       <TwitterFeed />
 
       {/* Footer */}
-      <footer className="border-t border-border bg-secondary/50">
-        <div className="container py-16">
-          <div className="grid md:grid-cols-3 gap-12 mb-12">
-            <div>
-              <h4 className="font-semibold text-foreground mb-4 text-lg">Batalla Cultural</h4>
-              <p className="text-muted-foreground leading-relaxed">
-                La encuesta más importante sobre el futuro político y cultural de España.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-4 text-lg">Enlaces</h4>
-              <ul className="space-y-3 text-muted-foreground">
-                <li><a href="/encuesta" className="hover:text-primary transition">Encuesta</a></li>
-                <li><a href="/resultados" className="hover:text-primary transition">Resultados</a></li>
-                <li><a href="/acerca-de" className="hover:text-primary transition">Acerca de</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground mb-4 text-lg">Legal</h4>
-              <ul className="space-y-3 text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition">Privacidad</a></li>
-                <li><a href="#" className="hover:text-primary transition">Términos</a></li>
-                <li><a href="#" className="hover:text-primary transition">Contacto</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="section-divider mb-8" />
-          <div className="text-center text-sm text-muted-foreground">
-            <p>
-              La Encuesta de Batalla Cultural © 2025 | Todos los datos son anónimos y públicos
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

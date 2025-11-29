@@ -247,3 +247,18 @@
 - [x] Eliminar filtros del mapa realista que no funcionaban
 - [x] Aumentar tamaño del mapa (de h-96 a h-[600px])
 - [x] Reducir espacios y padding para dar más espacio al mapa
+
+## Redes Sociales en Footer - NUEVO
+- [x] Crear componente Footer reutilizable con enlaces de redes sociales
+- [x] Agregar enlace a X: https://x.com/bcultural_es
+- [x] Agregar enlace a Discord: https://discord.gg/Tc8JabgY3T
+- [x] Agregar enlace a Bluesky: https://bsky.app/profile/bcultural-es.bsky.social
+- [x] Agregar enlace a Instagram: https://www.instagram.com/bcultural_es/
+- [x] Integrar footer en página Home
+- [x] Integrar footer en página Survey
+- [x] Integrar footer en página NanoEncuestaBC
+- [x] Integrar footer en página Results
+- [x] Integrar footer en página About
+- [x] Integrar footer en página LeaderSurvey
+- [x] Verificar que todos los enlaces funcionen correctamente
+- [ ] Guardar checkpoint con redes sociales en footer
