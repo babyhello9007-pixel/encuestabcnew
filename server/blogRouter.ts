@@ -54,10 +54,6 @@ export const blogRouter = router({
 
   // Obtener todas las entradas (admin)
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    // Solo admins pueden ver todas las entradas
-    if (ctx.user?.role !== "admin") {
-      throw new Error("Unauthorized");
-    }
 
     const db = await getDb();
     if (!db) return [];
@@ -88,10 +84,6 @@ export const blogRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Solo admins pueden crear entradas
-      if (ctx.user?.role !== "admin") {
-        throw new Error("Unauthorized");
-      }
 
       const db = await getDb();
       if (!db) throw new Error("Database not available");
@@ -131,10 +123,6 @@ export const blogRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Solo admins pueden actualizar entradas
-      if (ctx.user?.role !== "admin") {
-        throw new Error("Unauthorized");
-      }
 
       const db = await getDb();
       if (!db) throw new Error("Database not available");
@@ -175,10 +163,6 @@ export const blogRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      // Solo admins pueden eliminar entradas
-      if (ctx.user?.role !== "admin") {
-        throw new Error("Unauthorized");
-      }
 
       const db = await getDb();
       if (!db) throw new Error("Database not available");
