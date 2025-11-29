@@ -77,9 +77,9 @@
   --secondary: #F5F5F7;
   --secondary-foreground: #1D1D1F;
   
-  /* Mutado */
-  --muted: #A1A1A6;
-  --muted-foreground: #86868B;
+  /* Mutado - Mejorado para mejor contraste */
+  --muted: #8A8A8F;
+  --muted-foreground: #6B6B70;
   
   /* Acento */
   --accent: #C41E3A;
@@ -89,8 +89,8 @@
   --destructive: #FF3B30;
   --destructive-foreground: #FFFFFF;
   
-  /* Bordes sutiles */
-  --border: #D5D5D7;
+  /* Bordes sutiles - Mejorados para mejor visibilidad */
+  --border: #BFBFBF;
   --input: #FFFFFF;
   --ring: #C41E3A;
   
@@ -263,7 +263,7 @@
 
   .dark .glass-card {
     background: rgba(45, 45, 48, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   }
 
@@ -291,7 +291,7 @@
 
   .dark .corp-card {
     background: rgba(45, 45, 48, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
@@ -451,7 +451,7 @@
 
   .stat-box .stat-label {
     font-size: 0.875rem;
-    color: var(--muted-foreground);
+    color: #555555;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;

@@ -106,23 +106,23 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-4 pt-4">
+                <div className="flex flex-col gap-3 sm:gap-4 pt-4">
                   <button
                     onClick={() => setLocation("/encuesta")}
-                    className="btn-primary w-full md:w-auto inline-flex items-center justify-center gap-2 group"
+                    className="btn-primary w-full inline-flex items-center justify-center gap-2 group text-sm sm:text-base"
                   >
                     Comenzar Encuesta
-                    <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
+                    <ArrowRight size={16} className="group-hover:translate-x-1 transition hidden sm:inline" />
                   </button>
                   <button
                     onClick={() => setLocation("/nano-encuesta")}
-                    className="btn-secondary w-full md:w-auto"
+                    className="btn-secondary w-full text-sm sm:text-base"
                   >
                     Versión Rápida (5 min)
                   </button>
                   <button
                     onClick={() => setLocation("/resultados")}
-                    className="liquid-glass w-full md:w-auto px-6 py-3 rounded-lg text-foreground font-semibold hover:bg-white/20 transition duration-200 border border-green-500/30 bg-gradient-to-r from-green-500/10 to-emerald-500/10"
+                    className="liquid-glass w-full px-4 sm:px-6 py-3 rounded-lg text-foreground font-semibold hover:bg-white/20 transition duration-200 border border-green-500/30 bg-gradient-to-r from-green-500/10 to-emerald-500/10 text-sm sm:text-base"
                   >
                     Resultados en Vivo
                   </button>
