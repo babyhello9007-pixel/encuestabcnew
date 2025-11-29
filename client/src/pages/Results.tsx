@@ -20,7 +20,9 @@ import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
 import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
 import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
+import { ParliamentHemicycleReal } from "@/components/results/ParliamentHemicycleReal";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
+import { Map, Grid3x3 } from "lucide-react";
 
 interface PartyStats {
   id: string;
@@ -673,9 +675,28 @@ export default function Results() {
 
 
 
+            {activeTab === "general" && (
+              <div className="flex gap-2 mb-4">
+                <Button
+                  onClick={() => setSortBy('votos')}
+                  variant={sortBy === 'votos' ? 'default' : 'outline'}
+                  className="text-sm"
+                >
+                  Ordenar por Votos
+                </Button>
+                <Button
+                  onClick={() => setSortBy('escanos')}
+                  variant={sortBy === 'escanos' ? 'default' : 'outline'}
+                  className="text-sm"
+                >
+                  Ordenar por Escanos
+                </Button>
+              </div>
+            )}
+
             <div className="space-y-4">
               {stats.length > 0 && (
-                stats.map((party) => {
+                (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
                   // Buscar el logo en PARTIES_GENERAL o YOUTH_ASSOCIATIONS basándose en el nombre
                   let logoUrl = party.logo;
                   
@@ -791,7 +812,7 @@ export default function Results() {
                     
                     <div className="liquid-glass p-8 rounded-2xl">
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo Parlamentario (350 Escaños)</h2>
-                      <ParliamentHemicycle 
+                      <ParliamentHemicycleReal 
                         escanos={escanosGeneralesPorProvincia}
                         totalEscanos={350}
                         provinciaSeleccionada={provinciaSeleccionada}

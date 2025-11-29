@@ -1,0 +1,212 @@
+import React, { useState } from 'react';
+import { getPartyColor } from '@/lib/partyConfig';
+import { PARTIES_GENERAL } from '@/lib/surveyData';
+
+interface ParliamentHemicycleRealProps {
+  escanos: Record<string, number>;
+  totalEscanos?: number;
+  provinciaSeleccionada?: string | null;
+  votosProvincia?: Record<string, number>;
+  escanosProvincia?: Record<string, number>;
+}
+
+/**
+ * Visualización realista de hemiciclo parlamentario con forma de semicírculo real
+ * Distribuye los escaños en arcos concéntricos como en un parlamento real
+ */
+export const ParliamentHemicycleReal: React.FC<ParliamentHemicycleRealProps> = ({
+  escanos,
+  totalEscanos = 350,
+  provinciaSeleccionada,
+  votosProvincia,
+  escanosProvincia,
+}) => {
+  const [hoveredParty, setHoveredParty] = useState<string | null>(null);
+
+  // Calcular escaños totales asignados
+  const totalAssigned = Object.values(escanos).reduce((a, b) => a + b, 0);
+  const unavailableSeats = totalEscanos - totalAssigned;
+
+  // Crear array de escaños con información del partido
+  const seatArray: Array<{ party: string; index: number }> = [];
+  let seatIndex = 0;
+
+  for (const [party, count] of Object.entries(escanos).sort((a, b) => b[1] - a[1])) {
+    for (let i = 0; i < count; i++) {
+      seatArray.push({ party, index: seatIndex++ });
+    }
+  }
+
+  // Completar con escaños de datos no disponibles si es necesario
+  for (let i = 0; i < unavailableSeats; i++) {
+    seatArray.push({ party: 'DATOS_NO_DISPONIBLES', index: seatIndex++ });
+  }
+
+  // Distribuir escaños en forma de hemiciclo real
+  // Usamos una distribución en arcos concéntricos con ángulo de 180 grados
+  const rows = 12; // Número de filas del hemiciclo
+  const seatsPerRow = Math.ceil(totalEscanos / rows);
+
+  // Agrupar escaños por filas
+  const hemicycleRows: Array<Array<{ party: string; index: number }>> = [];
+  for (let i = 0; i < rows; i++) {
+    const start = i * seatsPerRow;
+    const end = Math.min(start + seatsPerRow, seatArray.length);
+    hemicycleRows.push(seatArray.slice(start, end));
+  }
+
+  return (
+    <div className="w-full space-y-4">
+      {/* Información de provincia seleccionada */}
+      {provinciaSeleccionada && votosProvincia && Object.keys(votosProvincia).length > 0 && (
+        <div className="p-4 bg-blue-900 rounded-lg border border-blue-600">
+          <h3 className="text-white font-bold mb-3">Provincia: {provinciaSeleccionada}</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.entries(votosProvincia)
+              .sort((a, b) => b[1] - a[1])
+              .map(([party, votos]) => {
+                const escanosPart = escanosProvincia?.[party] || 0;
+                const partyName = PARTIES_GENERAL[party as keyof typeof PARTIES_GENERAL]?.name || party;
+                return (
+                  <div key={party} className="p-3 rounded bg-blue-800 border-l-4" style={{ borderColor: getPartyColor(party) }}>
+                    <div className="text-blue-200 text-sm font-semibold">{partyName}</div>
+                    <div className="text-white text-lg font-bold">{votos} votos</div>
+                    <div className="text-blue-100 text-sm">{escanosPart} escaños</div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Leyenda */}
+      <div className="flex flex-wrap gap-2 p-3 bg-gray-900 rounded-lg text-sm">
+        {Object.entries(escanos)
+          .sort((a, b) => b[1] - a[1])
+          .map(([party, count]) => (
+            <div key={party} className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: getPartyColor(party) }}
+              />
+              <span className="text-gray-300">
+                {PARTIES_GENERAL[party as keyof typeof PARTIES_GENERAL]?.name || party}: {count}
+              </span>
+            </div>
+          ))}
+        {/* Datos no disponibles */}
+        {unavailableSeats > 0 && (
+          <div className="flex items-center gap-2">
+            <div 
+              className="w-3 h-3 rounded-full animate-pulse" 
+              style={{ backgroundColor: '#999999' }} 
+            />
+            <span className="text-gray-300">Sin asignar: {unavailableSeats}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Hemiciclo Real */}
+      <div className="p-8 bg-gray-900 rounded-lg">
+        <div className="flex flex-col items-center justify-center space-y-1">
+          {hemicycleRows.map((row, rowIndex) => {
+            // Calcular el ángulo para distribuir en semicírculo (180 grados)
+            const angle = (rowIndex / (rows - 1)) * Math.PI; // 0 a π radianes
+            const radius = 80 + rowIndex * 15; // Radio aumenta con cada fila
+            
+            // Calcular el ancho máximo para este arco
+            const maxWidth = Math.sin(angle) * radius * 2;
+            
+            // Calcular el gap entre escaños basado en la fila
+            const gapSize = rowIndex === 0 ? 0.5 : 1;
+
+            return (
+              <div
+                key={rowIndex}
+                className="flex justify-center items-center"
+                style={{
+                  width: `${Math.min(maxWidth, 100)}%`,
+                  maxWidth: '100%',
+                  gap: `${gapSize}px`,
+                }}
+              >
+                {row.map((seat, seatIdx) => (
+                  <button
+                    key={`${rowIndex}-${seatIdx}`}
+                    onMouseEnter={() => seat.party !== 'DATOS_NO_DISPONIBLES' && setHoveredParty(seat.party)}
+                    onMouseLeave={() => setHoveredParty(null)}
+                    className={`rounded-full transition-all transform ${
+                      hoveredParty === seat.party ? 'scale-150 ring-2 ring-white' : ''
+                    } ${seat.party === 'DATOS_NO_DISPONIBLES' ? 'opacity-60 cursor-help animate-pulse' : 'hover:scale-125 cursor-pointer'}`}
+                    style={{
+                      width: rowIndex < 3 ? '6px' : rowIndex < 6 ? '7px' : '8px',
+                      height: rowIndex < 3 ? '6px' : rowIndex < 6 ? '7px' : '8px',
+                      backgroundColor:
+                        seat.party === 'DATOS_NO_DISPONIBLES'
+                          ? '#888888'
+                          : getPartyColor(seat.party),
+                      boxShadow: seat.party === 'DATOS_NO_DISPONIBLES' ? '0 0 6px rgba(136, 136, 136, 0.8), inset 0 0 3px rgba(0, 0, 0, 0.3)' : 'none',
+                    }}
+                    title={
+                      seat.party === 'DATOS_NO_DISPONIBLES'
+                        ? 'Escaño sin asignar - Responde la encuesta para completar datos'
+                        : `${PARTIES_GENERAL[seat.party as keyof typeof PARTIES_GENERAL]?.name || seat.party} (Escaño ${seat.index + 1})`
+                    }
+                  />
+                ))}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Información adicional */}
+        <div className="mt-8 p-3 bg-gray-800 rounded text-center">
+          <p className="text-gray-400 text-sm">
+            Total: <span className="text-white font-semibold">{totalEscanos}</span> escaños
+            {unavailableSeats > 0 && (
+              <span className="ml-3 text-gray-500">
+                ({totalAssigned} asignados, {unavailableSeats} sin asignar)
+              </span>
+            )}
+          </p>
+          {hoveredParty && hoveredParty !== 'DATOS_NO_DISPONIBLES' && (
+            <p className="text-white mt-2">
+              {PARTIES_GENERAL[hoveredParty as keyof typeof PARTIES_GENERAL]?.name || hoveredParty}:{' '}
+              <span className="font-semibold">{escanos[hoveredParty] || 0}</span> escaños
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Tabla de distribución */}
+      <div className="p-4 bg-gray-900 rounded-lg">
+        <h3 className="text-white font-semibold mb-3">Distribución de Escaños</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {Object.entries(escanos)
+            .sort((a, b) => b[1] - a[1])
+            .map(([party, count]) => (
+              <div
+                key={party}
+                className="p-3 rounded bg-gray-800 border-l-4"
+                style={{ borderColor: getPartyColor(party) }}
+              >
+                <div className="text-gray-300 text-sm">
+                  {PARTIES_GENERAL[party as keyof typeof PARTIES_GENERAL]?.name || party}
+                </div>
+                <div className="text-white text-lg font-bold">{count}</div>
+              </div>
+            ))}
+          {unavailableSeats > 0 && (
+            <div
+              className="p-3 rounded bg-gray-800 border-l-4"
+              style={{ borderColor: '#888888' }}
+            >
+              <div className="text-gray-300 text-sm">Sin asignar</div>
+              <div className="text-white text-lg font-bold">{unavailableSeats}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

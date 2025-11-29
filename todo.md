@@ -205,4 +205,13 @@
 - [x] Agregar botón de verificación en SpainMapProvincial
 - [x] Crear modal de resultados de verificación
 - [x] Verificar que la verificación funcione correctamente
-- [ ] Guardar checkpoint con verificador de escaños
+- [x] Guardar checkpoint con verificador de escaños (v: b537b072)
+
+
+## Mejoras Visuales: Hemiciclo, Mapa y Ordenamiento - COMPLETADO
+- [x] Crear hemiciclo con forma real de parlamento
+- [x] Agregar botón para alternar entre mapa grid y mapa realista
+- [x] Implementar mapa realista de España
+- [x] Agregar ordenamiento por votos/escaños en Elecciones Generales
+- [x] Verificar que todas las vistas funcionen correctamente
+- [ ] Guardar checkpoint con mejoras visuales
