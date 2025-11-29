@@ -173,6 +173,13 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
   return (
     <div className="w-full space-y-4">
+      {/* Cartel de advertencia beta */}
+      <div className="w-full p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+        <p className="text-yellow-800 font-semibold text-center">
+          ⚠️ Versión muy beta, todavía (como podéis ver) tiene demasiados fallos. Disculpad por ello.
+        </p>
+      </div>
+
       {/* Mapa con Leaflet */}
       <div className="w-full h-96 bg-gray-900 rounded-lg overflow-hidden">
         <MapContainer
