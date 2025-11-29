@@ -112,7 +112,7 @@ export const CCAA = [
   'Extremadura',
   'Galicia',
   'La Rioja',
-  'Comunidad de Madrid',
+  'Madrid',
   'Murcia',
   'Navarra',
   'País Vasco',
