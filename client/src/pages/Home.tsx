@@ -84,6 +84,9 @@ export default function Home() {
             <a href="/acerca-de" className="text-foreground hover:text-primary transition font-medium">
               Acerca de
             </a>
+            <a href="/blog" className="text-foreground hover:text-primary transition font-medium">
+              Blog
+            </a>
             <FollowUsMenu />
           </nav>
         </div>
