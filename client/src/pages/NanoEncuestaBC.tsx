@@ -307,19 +307,19 @@ export default function NanoEncuestaBC() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 header-dark border-b border-[#2D2D2D]">
+      <header className="sticky top-0 z-50 frosted-glass border-0 shadow-none">
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
-              <h1 className="text-white font-bold">NanoEncuestaBC</h1>
+              <h1 className="text-foreground font-semibold">NanoEncuestaBC</h1>
             </div>
             {/* Resumen de progreso */}
             <div className="hidden md:flex items-center gap-2 text-sm">
-              <span className="text-[#999999]">Completados:</span>
-              <span className="text-[#C41E3A] font-semibold">
+              <span className="text-muted-foreground">Completados:</span>
+              <span className="text-primary font-semibold">
                 {Object.values(responses).filter(v => v !== undefined && v !== null && v !== '').length}/{steps.length}
               </span>
             </div>
@@ -327,7 +327,7 @@ export default function NanoEncuestaBC() {
           <Button
             onClick={() => setLocation("/")}
             variant="ghost"
-            className="text-[#999999] hover:text-white"
+            className="text-muted-foreground hover:text-primary"
           >
             Cerrar
           </Button>
@@ -339,12 +339,12 @@ export default function NanoEncuestaBC() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
-            <span className="text-sm text-[#999999]">Pregunta {currentStep + 1} de {steps.length}</span>
-            <span className="text-sm text-[#C41E3A] font-semibold">{Math.round(progress)}%</span>
+            <span className="text-sm text-muted-foreground font-medium">Pregunta {currentStep + 1} de {steps.length}</span>
+            <span className="text-sm text-primary font-semibold">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-[#2D2D2D] rounded-full h-2 mb-4">
+          <div className="w-full bg-border rounded-full h-3 mb-4 overflow-hidden">
             <div
-              className="bg-[#C41E3A] h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -357,7 +357,7 @@ export default function NanoEncuestaBC() {
               return (
                 <div
                   key={index}
-                  className={`h-2 flex-1 rounded-full transition-all duration-300 ${isCurrent ? 'bg-[#C41E3A]' : isCompleted ? 'bg-green-500' : 'bg-[#2D2D2D]'}`}
+                  className={`h-2 flex-1 rounded-full transition-all duration-300 ${isCurrent ? 'bg-primary' : isCompleted ? 'bg-green-500' : 'bg-border'}`}
                   title={`${step.title}: ${isCompleted ? 'Completado' : 'Pendiente'}`}
                 />
               );
@@ -367,12 +367,12 @@ export default function NanoEncuestaBC() {
 
         {/* Question Card */}
         <div className="max-w-2xl mx-auto">
-          <div className={`liquid-glass p-8 rounded-2xl border border-[#2D2D2D] transition-all duration-300 ${isAnimating ? 'fade-out' : 'fade-in'}`}>
-            <h2 className="text-2xl font-bold text-white mb-6">{currentStepData.title}</h2>
+          <div className={`liquid-glass p-8 transition-all duration-300 ${isAnimating ? 'fade-out' : 'fade-in'}`}>
+            <h2 className="text-3xl font-bold text-foreground mb-6">{currentStepData.title}</h2>
 
             {/* Advertencia de CCAA */}
             {ccaaWarning && (
-              <div className="p-4 rounded-lg bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 mb-6">
+              <div className="p-4 rounded-lg bg-yellow-50 border-l-4 border-yellow-500 text-yellow-900 mb-6">
                 <p className="font-semibold">{ccaaWarning}</p>
               </div>
             )}
@@ -385,7 +385,7 @@ export default function NanoEncuestaBC() {
                   value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
                   onChange={(e) => handleAnswer(e.target.value)}
                   placeholder="Escribe tu respuesta..."
-                  className="w-full bg-[#0F1419] border border-[#2D2D2D] rounded-lg px-4 py-3 text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A]"
+                  className="input-modern w-full"
                 />
               )}
 
@@ -394,7 +394,7 @@ export default function NanoEncuestaBC() {
                   <select
                     value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
                     onChange={(e) => handleAnswer(e.target.value)}
-                    className="w-full bg-[#0F1419] border border-[#2D2D2D] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C41E3A]"
+                    className="input-modern w-full"
                   >
                     <option value="">Selecciona una opcion...</option>
                     {currentStepData.key === "provincia" && getFilteredProvinces().map(p => (
@@ -426,7 +426,7 @@ export default function NanoEncuestaBC() {
                       value={responses[`${currentStepData.key}_otro` as keyof NanoSurveyResponse] || ""}
                       onChange={(e) => handleOtroAnswer(e.target.value)}
                       placeholder="Especifica tu opcion..."
-                      className="w-full bg-[#0F1419] border border-[#C41E3A] rounded-lg px-4 py-3 text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A]"
+                      className="input-modern w-full border-primary"
                     />
                   )}
                 </div>
@@ -440,12 +440,12 @@ export default function NanoEncuestaBC() {
                     max="10"
                     value={responses[currentStepData.key as keyof NanoSurveyResponse] || 0}
                     onChange={(e) => handleAnswer(parseInt(e.target.value))}
-                    className="w-full h-2 bg-[#2D2D2D] rounded-lg appearance-none cursor-pointer accent-[#C41E3A]"
+                    className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
                   />
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-[#999999]">0 (Muy malo)</span>
-                    <span className="text-2xl font-bold text-[#C41E3A]">{responses[currentStepData.key as keyof NanoSurveyResponse] || 0}</span>
-                    <span className="text-sm text-[#999999]">10 (Muy bueno)</span>
+                    <span className="text-sm text-muted-foreground">0 (Muy malo)</span>
+                    <span className="text-2xl font-bold text-primary">{responses[currentStepData.key as keyof NanoSurveyResponse] || 0}</span>
+                    <span className="text-sm text-muted-foreground">10 (Muy bueno)</span>
                   </div>
                 </div>
               )}
@@ -458,7 +458,7 @@ export default function NanoEncuestaBC() {
               onClick={handlePrevious}
               disabled={currentStep === 0}
               variant="outline"
-              className="border-[#2D2D2D] text-[#999999] hover:text-white disabled:opacity-50"
+              className="btn-secondary disabled:opacity-50"
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               Anterior
@@ -468,7 +468,7 @@ export default function NanoEncuestaBC() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white flex-1 disabled:opacity-50"
+                className="btn-primary flex-1 disabled:opacity-50"
               >
                 {isSubmitting ? "Enviando..." : "Enviar Encuesta"}
               </Button>
@@ -476,7 +476,7 @@ export default function NanoEncuestaBC() {
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentFieldComplete()}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4 ml-2" />
