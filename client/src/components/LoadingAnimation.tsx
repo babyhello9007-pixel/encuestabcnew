@@ -2,12 +2,12 @@ import { Loader2 } from "lucide-react";
 
 export function LoadingAnimation() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#0F1419] to-[#1A1A1A]">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F5F5F7] via-[#FFFFFF] to-[#F5F5F7]">
       <div className="text-center space-y-8">
         {/* Logo animado */}
         <div className="flex justify-center">
           <div className="relative w-24 h-24">
-            <div className="absolute inset-0 rounded-full border-4 border-[#2D2D2D] border-t-[#C41E3A] animate-spin"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-[#D5D5D7] border-t-[#C41E3A] animate-spin"></div>
             <div className="absolute inset-2 rounded-full border-4 border-transparent border-r-[#C41E3A] animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }}></div>
             <img 
               src="/favicon.png" 
@@ -19,12 +19,12 @@ export function LoadingAnimation() {
 
         {/* Texto principal */}
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white">Cargando Resultados</h2>
-          <p className="text-[#999999]">Obteniendo datos de la encuesta...</p>
+          <h2 className="text-2xl font-bold text-[#1D1D1F]">Cargando Resultados</h2>
+          <p className="text-[#666666]">Obteniendo datos de la encuesta...</p>
         </div>
 
         {/* Barra de progreso animada */}
-        <div className="w-64 h-1 bg-[#2D2D2D] rounded-full overflow-hidden">
+        <div className="w-64 h-1 bg-[#D5D5D7] rounded-full overflow-hidden">
           <div 
             className="h-full bg-gradient-to-r from-[#C41E3A] to-[#E85C5C] rounded-full animate-pulse"
             style={{
@@ -41,7 +41,7 @@ export function LoadingAnimation() {
         </div>
 
         {/* Mensaje de estado */}
-        <div className="text-sm text-[#666666]">
+        <div className="text-sm text-[#999999]">
           <p>Por favor espera mientras procesamos los datos...</p>
         </div>
 
@@ -62,4 +62,3 @@ export function LoadingAnimation() {
     </div>
   );
 }
-

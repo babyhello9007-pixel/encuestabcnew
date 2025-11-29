@@ -172,7 +172,15 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
 
       {/* Vista esquemática (grid) */}
       {mapView === "schematic" && (
-        <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 p-4 bg-gray-900 rounded-lg">
+        <>
+          {/* Cartel de versión final y estable */}
+          <div className="w-full p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+            <p className="text-green-800 font-semibold text-center">
+              ✅ Versión Final. Estable. La versión realista es recomendable no verla dado los fallos que tiene.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 p-4 bg-gray-900 rounded-lg">
           {provinciasConDatos.map(({ province, data, tieneData }) => (
             <button
               key={province}
@@ -194,7 +202,8 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
               </div>
             </button>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Vista realista (mapa) */}
