@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Loader2 } from "lucide-react";
+import { getPartyColor, getPartyLogo } from "@/lib/partyConfig";
 
 interface CCAAReslts {
   ccaa: string;
@@ -87,7 +88,9 @@ export function CCAAResltsSection() {
   const chartData = selectedCCAAReslts.map(r => ({
     name: r.partido,
     votos: r.votos,
-    porcentaje: r.porcentaje
+    porcentaje: r.porcentaje,
+    color: getPartyColor(r.partido),
+    logo: getPartyLogo(r.partido)
   }));
 
   const analysisTitle = analysisType === "generales" 
@@ -203,9 +206,27 @@ export function CCAAResltsSection() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                       <YAxis />
-                      <Tooltip />
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white p-2 border border-slate-200 rounded shadow-lg">
+                                <p className="font-bold text-sm">{data.logo} {data.name}</p>
+                                <p className="text-sm text-red-600">Votos: {data.votos}</p>
+                                <p className="text-sm text-slate-600">Porcentaje: {data.porcentaje}%</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
                       <Legend />
-                      <Bar dataKey="votos" fill="#E81828" name="Votos" />
+                      <Bar dataKey="votos" name="Votos" radius={[8, 8, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -227,7 +248,14 @@ export function CCAAResltsSection() {
                   <tbody>
                     {selectedCCAAReslts.map((result, idx) => (
                       <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
-                        <td className="px-4 py-3 text-sm font-medium text-slate-900">{result.partido}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                          <span className="inline-flex items-center gap-2">
+                            <span style={{ color: getPartyColor(result.partido) }} className="text-lg">
+                              {getPartyLogo(result.partido)}
+                            </span>
+                            {result.partido}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-right text-sm font-bold text-red-600">{result.votos}</td>
                         <td className="px-4 py-3 text-right text-sm text-slate-600">{result.porcentaje}%</td>
                         <td className="px-4 py-3 text-right text-sm text-slate-600">{result.edad_promedio}</td>

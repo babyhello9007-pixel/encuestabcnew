@@ -117,3 +117,10 @@
 - [x] Modificar componente CCAAResltsSection para soportar ambos análisis
 - [x] Verificar que los datos se carguen correctamente
 - [x] Guardar checkpoint con análisis de CCAA mejorado
+
+## Colores y Logos de Partidos Políticos - NUEVO
+- [x] Crear archivo de configuración con colores y logos de partidos
+- [x] Modificar CCAAResltsSection para usar colores y logos en gráficas
+- [x] Modificar ProvincesResultsSection para usar colores y logos en gráficas
+- [x] Verificar visualización correcta de colores y logos
+- [x] Guardar checkpoint con colores y logos de partidos
