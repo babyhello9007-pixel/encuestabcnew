@@ -40,86 +40,90 @@ export default function LeaderSurvey() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
-      <header className="sticky top-0 z-50 header-dark border-b">
+    <div className="min-h-screen flex flex-col bg-white">
+      <header className="sticky top-0 z-50 border-b border-[#D5D5D7] bg-white/80 backdrop-blur-md">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
-            <h1 className="text-xl font-bold text-[#C41E3A]">Batalla Cultural</h1>
+            <h1 className="text-lg font-semibold text-[#1D1D1F]">Batalla Cultural</h1>
           </div>
           <Button
             onClick={() => setLocation("/")}
             variant="outline"
-            className="border-[#999999] text-[#999999] hover:bg-[#F5F1E8]"
+            className="border-[#D5D5D7] text-[#1D1D1F] hover:bg-[#F5F5F7]"
           >
             Volver
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 container py-12 md:py-20">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-[#2D2D2D] leading-tight mb-4">
-              Quien quieres que sea el <span className="text-[#C41E3A]">lider de tu partido</span>?
+      <main className="flex-1 container py-16 md:py-24">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12 space-y-4">
+            <h2 className="text-5xl md:text-6xl font-bold text-[#1D1D1F] leading-tight tracking-tight">
+              ¿Quién quieres que sea el <span className="text-[#C41E3A]">líder de tu partido?</span>
             </h2>
-            <p className="text-lg text-[#666666]">
-              Selecciona tu partido politico y elige quien crees que deberia liderarlo.
+            <p className="text-lg text-[#555555] max-w-2xl mx-auto">
+              Selecciona tu partido político y elige quién crees que debería liderarlo.
             </p>
           </div>
 
           {submitted && (
-            <div className="mb-8 p-6 bg-green-100 border-2 border-green-500 rounded-xl text-center space-y-4">
-              <p className="text-green-800 font-semibold text-lg">
-                Gracias por tu participacion! Tu voto ha sido registrado.
-              </p>
+            <div className="mb-8 p-8 bg-[#F5F5F7] border-2 border-[#C41E3A] rounded-2xl text-center space-y-6">
+              <div className="space-y-2">
+                <p className="text-[#1D1D1F] font-semibold text-lg">
+                  ✓ Gracias por tu participación
+                </p>
+                <p className="text-[#555555]">
+                  Tu voto ha sido registrado correctamente.
+                </p>
+              </div>
               <Button
                 onClick={() => setLocation("/resultados")}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg"
+                className="bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold px-8 py-3 rounded-lg"
               >
-                Ver Resultados de Lideres
+                Ver Resultados de Líderes
               </Button>
             </div>
           )}
 
           {!submitted && (
-            <div className="liquid-glass p-8 rounded-2xl">
+            <div className="frosted-glass p-10 rounded-2xl mb-12">
               <LeaderSelection onLeaderSelected={handleLeaderSelected} loading={loading} />
             </div>
           )}
 
-          <div className="mt-12 grid md:grid-cols-2 gap-6">
-            <div className="glass-card p-6 rounded-xl space-y-3">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="frosted-glass p-8 rounded-2xl space-y-4 hover:shadow-lg transition">
               <div className="h-12 w-12 rounded-lg bg-[#C41E3A] bg-opacity-10 flex items-center justify-center">
-                <span className="text-2xl">X</span>
+                <span className="text-2xl">🗳️</span>
               </div>
-              <h3 className="font-semibold text-[#2D2D2D]">Tu voz importa</h3>
-              <p className="text-sm text-[#666666]">
-                Participa en esta encuesta y ayuda a definir quien deberia liderar los partidos politicos.
+              <h3 className="font-semibold text-[#1D1D1F] text-lg">Tu voz importa</h3>
+              <p className="text-sm text-[#555555]">
+                Participa en esta encuesta y ayuda a definir quién debería liderar los partidos políticos españoles.
               </p>
             </div>
 
-            <div className="glass-card p-6 rounded-xl space-y-3">
+            <div className="frosted-glass p-8 rounded-2xl space-y-4 hover:shadow-lg transition">
               <div className="h-12 w-12 rounded-lg bg-[#C41E3A] bg-opacity-10 flex items-center justify-center">
-                <span className="text-2xl">O</span>
+                <span className="text-2xl">📊</span>
               </div>
-              <h3 className="font-semibold text-[#2D2D2D]">Resultados en vivo</h3>
-              <p className="text-sm text-[#666666]">
-                Visualiza los resultados en tiempo real y ve que lideres prefieren los españoles.
+              <h3 className="font-semibold text-[#1D1D1F] text-lg">Resultados en vivo</h3>
+              <p className="text-sm text-[#555555]">
+                Visualiza los resultados en tiempo real y ve qué líderes prefieren los españoles.
               </p>
             </div>
           </div>
         </div>
       </main>
 
-      <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
+      <footer className="border-t border-[#D5D5D7] bg-[#F5F5F7]">
         <div className="container py-8 text-center text-sm text-[#666666]">
           <p>
-            La Encuesta de Batalla Cultural 2025 | Todos los datos son anonimos y publicos
+            La Encuesta de Batalla Cultural © 2025 | Todos los datos son anónimos y públicos
           </p>
         </div>
       </footer>
     </div>
   );
 }
-

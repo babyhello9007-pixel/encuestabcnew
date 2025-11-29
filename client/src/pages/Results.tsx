@@ -19,6 +19,7 @@ import { CCAAResltsSection } from "@/components/CCAAResltsSection";
 import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
 import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
 import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
+import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
@@ -68,6 +69,7 @@ export default function Results() {
   const [votosPorPartidoProvincia, setVotosPorPartidoProvincia] = useState<Record<string, number>>({});
   const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
   const [sortBy, setSortBy] = useState<'votos' | 'escanos'>('votos');
+  const [mapView, setMapView] = useState<'schematic' | 'realistic'>('schematic');
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
@@ -500,17 +502,17 @@ export default function Results() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
-      <header className="sticky top-0 z-50 header-dark border-b">
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="sticky top-0 z-50 frosted-glass border-0 shadow-none">
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
-            <h1 className="text-lg font-bold text-[#C41E3A]">Resultados - Batalla Cultural</h1>
+            <h1 className="text-lg font-semibold text-foreground">Resultados - Batalla Cultural</h1>
           </div>
           <Button
             onClick={() => setLocation("/")}
             variant="outline"
-            className="border-[#C41E3A] text-[#C41E3A] text-sm"
+            className="btn-secondary text-sm"
           >
             Volver
           </Button>
@@ -522,30 +524,30 @@ export default function Results() {
           <LoadingAnimation />
         ) : (
           <div className="space-y-8">
-            <div className="liquid-glass p-8 rounded-2xl space-y-4">
-              <h2 className="text-3xl font-bold text-[#2D2D2D]">Resultados en Vivo</h2>
+            <div className="liquid-glass p-8 space-y-4">
+              <h2 className="text-3xl font-bold text-foreground">Resultados en Vivo</h2>
               <div className="grid md:grid-cols-3 gap-4">
-                <div className="frosted-glass p-4 rounded-lg text-center">
-                  <p className="text-sm text-[#666666]">Total de Respuestas</p>
-                  <p className="text-3xl font-bold text-[#C41E3A]">
+                <div className="stat-box">
+                  <p className="text-sm text-muted-foreground">Total de Respuestas</p>
+                  <p className="stat-value">
                     {totalResponses.toLocaleString()}
                   </p>
                 </div>
-                <div className="frosted-glass p-4 rounded-lg text-center">
-                  <p className="text-sm text-[#666666]">Escaños en Juego</p>
-                  <p className="text-3xl font-bold text-[#C41E3A]">{totalEscanos}</p>
+                <div className="stat-box">
+                  <p className="text-sm text-muted-foreground">Escaños en Juego</p>
+                  <p className="stat-value">{totalEscanos}</p>
                 </div>
-                <div className="frosted-glass p-4 rounded-lg text-center">
-                  <p className="text-sm text-[#666666]">Última Actualización</p>
-                  <p className="text-lg font-semibold text-[#2D2D2D]">Tiempo Real</p>
+                <div className="stat-box">
+                  <p className="text-sm text-muted-foreground">Última Actualización</p>
+                  <p className="text-lg font-semibold text-foreground">Tiempo Real</p>
                 </div>
               </div>
               <div className="grid md:grid-cols-3 gap-4 mt-4">
                 {edadPromedio !== null && (
-                  <div className="frosted-glass p-4 rounded-lg text-center">
-                    <p className="text-sm text-[#666666]">Edad Media</p>
-                    <p className="text-3xl font-bold text-[#C41E3A]">{edadPromedio}</p>
-                    <p className="text-xs text-[#999999]">años</p>
+                  <div className="stat-box">
+                    <p className="text-sm text-muted-foreground">Edad Media</p>
+                    <p className="stat-value">{edadPromedio}</p>
+                    <p className="text-xs text-muted-foreground">años</p>
                   </div>
                 )}
                 {ideologiaPromedio !== null && (
@@ -800,15 +802,54 @@ export default function Results() {
                 {Object.keys(votosPorProvincia).length > 0 ? (
                   <>
                     <div className="liquid-glass p-8 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Mapa de Provincias</h2>
-                      <SpainMapProvincial 
-                        votosPorProvincia={votosPorProvincia}
-                        onProvinceClick={(province, data, votos, escanos) => {
-                          setProvinciaSeleccionada(province);
-                          setVotosPorPartidoProvincia(votos);
-                          setEscanosProvincia(escanos);
-                        }}
-                      />
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias</h2>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => setMapView('schematic')}
+                            variant={mapView === 'schematic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'schematic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Grid3x3 className="w-4 h-4" />
+                            Esquemática
+                          </Button>
+                          <Button
+                            onClick={() => setMapView('realistic')}
+                            variant={mapView === 'realistic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'realistic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Map className="w-4 h-4" />
+                            Realista
+                          </Button>
+                        </div>
+                      </div>
+                      {mapView === 'schematic' ? (
+                        <SpainMapProvincial 
+                          votosPorProvincia={votosPorProvincia}
+                          onProvinceClick={(province, data, votos, escanos) => {
+                            setProvinciaSeleccionada(province);
+                            setVotosPorPartidoProvincia(votos);
+                            setEscanosProvincia(escanos);
+                          }}
+                        />
+                      ) : (
+                        <SpainMapRealistic 
+                          votosPorProvincia={votosPorProvincia}
+                          onProvinceClick={(province, data, votos, escanos) => {
+                            setProvinciaSeleccionada(province);
+                            setVotosPorPartidoProvincia(votos);
+                            setEscanosProvincia(escanos);
+                          }}
+                        />
+                      )}
                     </div>
                     
                     <div className="liquid-glass p-8 rounded-2xl">

@@ -135,7 +135,7 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-black rounded-2xl p-8">
       <div className="flex items-center gap-2 mb-6">
         <MessageCircle className="h-5 w-5 text-[#C41E3A]" />
         <h3 className="text-xl font-bold text-white">Comentarios de Usuarios</h3>
@@ -149,14 +149,14 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
             placeholder="Tu nombre (opcional)"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            className="px-4 py-2 bg-[#0F1419] border border-[#2D2D2D] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A]"
+            className="px-4 py-2 bg-[#1A1A1A] border border-[#333333] rounded-lg text-white placeholder-[#888888] focus:outline-none focus:border-[#C41E3A]"
           />
           <textarea
             placeholder="Tu comentario"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             rows={3}
-            className="px-4 py-2 bg-[#0F1419] border border-[#2D2D2D] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:border-[#C41E3A] md:col-span-2"
+            className="px-4 py-2 bg-[#1A1A1A] border border-[#333333] rounded-lg text-white placeholder-[#888888] focus:outline-none focus:border-[#C41E3A] md:col-span-2"
           />
         </div>
 
@@ -177,29 +177,29 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
       {/* Lista de comentarios */}
       <div className="space-y-4">
         {loading ? (
-          <div className="text-center text-[#999999]">Cargando comentarios...</div>
+          <div className="text-center text-[#888888]">Cargando comentarios...</div>
         ) : comments.length === 0 ? (
-          <div className="text-center text-[#999999]">
+          <div className="text-center text-[#888888]">
             Sé el primero en comentar sobre estos resultados
           </div>
         ) : (
           comments.map((comment) => (
             <div
               key={comment.id}
-              className="bg-[#0F1419] border border-[#2D2D2D] rounded-lg p-4 space-y-2 hover:border-[#C41E3A] transition"
+              className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-2 hover:border-[#C41E3A] transition"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-semibold text-white">{comment.nombre}</p>
-                  <p className="text-xs text-[#666666]">{formatTime(comment.created_at)}</p>
+                  <p className="text-xs text-[#888888]">{formatTime(comment.created_at)}</p>
                 </div>
               </div>
 
-              <p className="text-[#CCCCCC] text-sm">{comment.texto}</p>
+              <p className="text-[#DDDDDD] text-sm">{comment.texto}</p>
 
               <button
                 onClick={() => handleLike(comment.id, comment.likes)}
-                className="flex items-center gap-2 text-[#999999] hover:text-[#C41E3A] transition text-sm"
+                className="flex items-center gap-2 text-[#888888] hover:text-[#C41E3A] transition text-sm"
               >
                 <ThumbsUp className="h-4 w-4" />
                 {comment.likes > 0 && <span>{comment.likes}</span>}
@@ -211,4 +211,3 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
     </div>
   );
 }
-

@@ -4,13 +4,14 @@ import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { TwitterFeed } from "@/components/TwitterFeed";
-import { ArrowRight, BarChart3, Lock, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, Lock, Zap, ChevronDown } from "lucide-react";
 
 export default function Home() {
   let { user, loading, error, isAuthenticated, logout } = useAuth();
 
   const [, setLocation] = useLocation();
   const [responseCount, setResponseCount] = useState(0);
+  const [showEncuestaMenu, setShowEncuestaMenu] = useState(false);
 
   useEffect(() => {
     const fetchResponseCount = async () => {
@@ -43,10 +44,38 @@ export default function Home() {
             <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
             <h1 className="text-lg font-semibold text-primary">Batalla Cultural</h1>
           </div>
-          <nav className="hidden md:flex gap-8 text-sm">
-            <a href="#encuesta" className="text-foreground hover:text-primary transition font-medium">
-              Encuesta
-            </a>
+          <nav className="hidden md:flex gap-8 text-sm items-center">
+            <div className="relative group">
+              <button
+                onClick={() => setShowEncuestaMenu(!showEncuestaMenu)}
+                className="text-foreground hover:text-primary transition font-medium flex items-center gap-1"
+              >
+                Encuesta
+                <ChevronDown size={16} />
+              </button>
+              {showEncuestaMenu && (
+                <div className="absolute top-full left-0 mt-2 w-56 frosted-glass rounded-lg shadow-lg py-2 z-50">
+                  <button
+                    onClick={() => { setLocation("/nano-encuesta"); setShowEncuestaMenu(false); }}
+                    className="w-full text-left px-4 py-3 text-foreground hover:text-primary hover:bg-secondary/50 transition font-medium"
+                  >
+                    NanoEncuestaBC (5 min)
+                  </button>
+                  <button
+                    onClick={() => { setLocation("/encuesta"); setShowEncuestaMenu(false); }}
+                    className="w-full text-left px-4 py-3 text-foreground hover:text-primary hover:bg-secondary/50 transition font-medium"
+                  >
+                    Encuesta Completa (20 min)
+                  </button>
+                  <button
+                    onClick={() => { setLocation("/lideres"); setShowEncuestaMenu(false); }}
+                    className="w-full text-left px-4 py-3 text-foreground hover:text-primary hover:bg-secondary/50 transition font-medium"
+                  >
+                    Elige a tus Líderes
+                  </button>
+                </div>
+              )}
+            </div>
             <a href="/resultados" className="text-foreground hover:text-primary transition font-medium">
               Resultados
             </a>
@@ -238,16 +267,14 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="relative py-20 md:py-32 overflow-hidden">
-          <div className="absolute inset-0 header-gradient -z-10" />
-          
+        {/* CTA Section - Black Background */}
+        <section className="relative py-20 md:py-32 overflow-hidden bg-black">
           <div className="container text-center space-y-8">
             <h3 className="text-4xl md:text-5xl font-bold text-white">
               ¿Listo para participar?
             </h3>
             <p className="text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
-              Tu opinión es valiosa. Dedica unos minutos a responder la encuesta y forma parte de este importante análisis.
+              Tu opinión es valiosa. Dedica unos minutos a responder la encuesta y forma parte de este importante análisis sobre el futuro político y cultural de España.
             </p>
             <div className="flex flex-col md:flex-row gap-4 justify-center">
               <button
@@ -262,6 +289,12 @@ export default function Home() {
                 className="px-8 py-3.5 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg transition backdrop-blur-sm border border-white/30"
               >
                 Ver Resultados
+              </button>
+              <button
+                onClick={() => setLocation("/lideres")}
+                className="px-8 py-3.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition"
+              >
+                Elige a tus Líderes
               </button>
             </div>
           </div>
