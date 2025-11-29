@@ -110,3 +110,10 @@
 - [x] Integrar secciones en página de Resultados (debajo de generales)
 - [x] Verificar que los datos se carguen correctamente en vivo
 - [x] Guardar checkpoint con nuevas secciones
+
+## Análisis de CCAA - Generales vs Autónomicas - NUEVO
+- [x] Agregar botones para cambiar entre análisis de voto_generales y voto_autonomicas
+- [x] Crear vista SQL para votos_autonomicas_por_ccaa si no existe
+- [x] Modificar componente CCAAResltsSection para soportar ambos análisis
+- [x] Verificar que los datos se carguen correctamente
+- [x] Guardar checkpoint con análisis de CCAA mejorado

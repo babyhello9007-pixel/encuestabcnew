@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Loader2 } from "lucide-react";
-import { CCAA } from "@/lib/surveyData";
 
 interface CCAAReslts {
   ccaa: string;
@@ -21,25 +20,31 @@ interface CCAASummary {
   ideologia_promedio: number;
 }
 
-const COLORS = [
-  '#0066CC', '#E81828', '#24AA3D', '#9B2D96', '#6B2D8C',
-  '#003399', '#FFC400', '#00AA44', '#003D99', '#FF6600',
-  '#FFCC00', '#FF9900', '#FFD700', '#999999', '#CC0000'
-];
-
 export function CCAAResltsSection() {
   const [ccaaResults, setCCAAReslts] = useState<CCAAReslts[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
   const [selectedCCAA, setSelectedCCAA] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"summary" | "detail">("summary");
+  const [analysisType, setAnalysisType] = useState<"generales" | "autonomicas">("generales");
 
   useEffect(() => {
     const fetchCCAAReslts = async () => {
       try {
+        setLoading(true);
+        
+        // Determinar qué vista SQL usar según el tipo de análisis
+        const summaryTable = analysisType === "generales" 
+          ? "resumen_votos_generales_por_ccaa"
+          : "resumen_votos_autonomicas_por_ccaa";
+        
+        const detailTable = analysisType === "generales"
+          ? "votos_generales_por_ccaa"
+          : "votos_autonomicas_por_ccaa";
+
         // Obtener resumen por CCAA
         const { data: summaryData } = await supabase
-          .from("resumen_votos_generales_por_ccaa")
+          .from(summaryTable)
           .select("*");
 
         if (summaryData) {
@@ -51,7 +56,7 @@ export function CCAAResltsSection() {
 
         // Obtener detalles por CCAA y partido
         const { data: detailData } = await supabase
-          .from("votos_generales_por_ccaa")
+          .from(detailTable)
           .select("*");
 
         if (detailData) {
@@ -65,7 +70,7 @@ export function CCAAResltsSection() {
     };
 
     fetchCCAAReslts();
-  }, []);
+  }, [analysisType]);
 
   if (loading) {
     return (
@@ -85,11 +90,45 @@ export function CCAAResltsSection() {
     porcentaje: r.porcentaje
   }));
 
+  const analysisTitle = analysisType === "generales" 
+    ? "Análisis de Elecciones Generales por CCAA"
+    : "Análisis de Elecciones Autonómicas por CCAA";
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg p-6 text-white">
         <h2 className="text-2xl font-bold mb-4">📊 Resultados por Comunidades Autónomas</h2>
-        <p className="text-slate-300">Análisis detallado de votos generales por CCAA</p>
+        <p className="text-slate-300">{analysisTitle}</p>
+      </div>
+
+      {/* Selector de tipo de análisis */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => {
+            setAnalysisType("generales");
+            setViewMode("summary");
+          }}
+          className={`px-4 py-2 rounded-lg font-medium transition ${
+            analysisType === "generales"
+              ? "bg-red-600 text-white"
+              : "bg-slate-200 text-slate-900 hover:bg-slate-300"
+          }`}
+        >
+          📋 Análisis de Generales
+        </button>
+        <button
+          onClick={() => {
+            setAnalysisType("autonomicas");
+            setViewMode("summary");
+          }}
+          className={`px-4 py-2 rounded-lg font-medium transition ${
+            analysisType === "autonomicas"
+              ? "bg-red-600 text-white"
+              : "bg-slate-200 text-slate-900 hover:bg-slate-300"
+          }`}
+        >
+          🏛️ Análisis Autonómico
+        </button>
       </div>
 
       {/* Selector de vista */}
@@ -98,7 +137,7 @@ export function CCAAResltsSection() {
           onClick={() => setViewMode("summary")}
           className={`px-4 py-2 rounded-lg font-medium transition ${
             viewMode === "summary"
-              ? "bg-red-600 text-white"
+              ? "bg-blue-600 text-white"
               : "bg-slate-200 text-slate-900 hover:bg-slate-300"
           }`}
         >
@@ -108,7 +147,7 @@ export function CCAAResltsSection() {
           onClick={() => setViewMode("detail")}
           className={`px-4 py-2 rounded-lg font-medium transition ${
             viewMode === "detail"
-              ? "bg-red-600 text-white"
+              ? "bg-blue-600 text-white"
               : "bg-slate-200 text-slate-900 hover:bg-slate-300"
           }`}
         >
