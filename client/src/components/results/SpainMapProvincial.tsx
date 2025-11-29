@@ -168,36 +168,6 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
           <Grid3x3 className="w-4 h-4" />
           Esquemática
         </Button>
-        <Button
-          onClick={() => setMapView("realistic")}
-          variant={mapView === "realistic" ? "default" : "outline"}
-          className={`flex items-center gap-2 ${
-            mapView === "realistic"
-              ? "bg-[#C41E3A] hover:bg-[#A01830]"
-              : "border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white"
-          }`}
-        >
-          <Map className="w-4 h-4" />
-          Realista
-        </Button>
-      </div>
-
-      {/* Leyenda de partidos */}
-      <div className="flex flex-wrap gap-3 p-4 bg-gray-900 rounded-lg">
-        {Object.entries(PARTIES_GENERAL).map(([key, party]) => (
-          <div key={key} className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: getPartyColor(key) }}
-            />
-            <span className="text-xs text-gray-300">{party.name}</span>
-          </div>
-        ))}
-        {/* Leyenda para provincias sin datos */}
-        <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-600">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#4B5563' }} />
-          <span className="text-xs text-gray-300">Sin datos</span>
-        </div>
       </div>
 
       {/* Vista esquemática (grid) */}
