@@ -152,3 +152,11 @@
 - [x] Escaños no disponibles ocupan espacio hasta que haya datos
 - [x] Agregar enlace a nano-encuesta en el mapa
 - [x] Verificar funcionamiento correcto
+
+
+## Mejora de Visualización de Provincias sin Datos - COMPLETADO
+- [x] Mostrar todas las provincias en el mapa (incluyendo sin datos)
+- [x] Diferenciar visualmente provincias sin datos en el mapa (gris, opacidad, "?")
+- [x] Mejorar visualización de escaños sin asignar en hemiciclo (gris, pulsante)
+- [x] Agregar leyenda para provincias sin datos
+- [x] Agregar información de escaños asignados vs sin asignar

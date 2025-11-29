@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { getPartyColor } from '@/lib/partyConfig';
 import { PARTIES_GENERAL } from '@/lib/surveyData';
+import { getEscanosPorProvincia } from '@/lib/dhondtByProvince';
 
 interface ProvinceData {
   name: string;
@@ -52,10 +53,14 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
     onProvinceClick?.(province, data);
   };
 
-  // Crear lista de provincias con sus datos
-  const provinciasConDatos = Object.keys(votosPorProvincia).map((province) => ({
+  // Obtener todas las provincias del sistema electoral
+  const todasLasProvincias = Object.keys(getEscanosPorProvincia());
+  
+  // Crear lista de todas las provincias con sus datos (incluyendo las sin datos)
+  const provinciasConDatos = todasLasProvincias.map((province) => ({
     province,
     data: getProvinceData(province),
+    tieneData: Object.keys(votosPorProvincia).includes(province),
   }));
 
   return (
@@ -86,26 +91,33 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
             <span className="text-xs text-gray-300">{party.name}</span>
           </div>
         ))}
+        {/* Leyenda para provincias sin datos */}
+        <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-600">
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#4B5563' }} />
+          <span className="text-xs text-gray-300">Sin datos</span>
+        </div>
       </div>
 
       {/* Mapa de provincias en forma de grid */}
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 p-4 bg-gray-900 rounded-lg">
-        {provinciasConDatos.map(({ province, data }) => (
+        {provinciasConDatos.map(({ province, data, tieneData }) => (
           <button
             key={province}
-            onClick={() => handleProvinceClick(province)}
-            className={`p-3 rounded-lg text-center text-xs font-semibold transition-all transform hover:scale-110 cursor-pointer ${
+            onClick={() => tieneData && handleProvinceClick(province)}
+            className={`p-3 rounded-lg text-center text-xs font-semibold transition-all transform ${
+              tieneData ? 'hover:scale-110 cursor-pointer' : 'cursor-help opacity-40'
+            } ${
               selectedProvince === province ? 'ring-2 ring-white' : ''
             }`}
             style={{
-              backgroundColor: getPartyColor(data.ganador),
-              opacity: selectedProvince === province ? 1 : 0.8,
+              backgroundColor: tieneData ? getPartyColor(data.ganador) : '#4B5563',
+              opacity: selectedProvince === province ? 1 : (tieneData ? 0.8 : 0.4),
             }}
-            title={`${province}: ${data.ganador} (${data.porcentajeGanador.toFixed(1)}%)`}
+            title={tieneData ? `${province}: ${data.ganador} (${data.porcentajeGanador.toFixed(1)}%)` : `${province}: Sin datos - Responde la encuesta`}
           >
             <div className="text-white truncate">{province}</div>
             <div className="text-gray-200 text-xs mt-1">
-              {data.ganador || 'N/A'}
+              {tieneData ? (data.ganador || 'N/A') : '?'}
             </div>
           </button>
         ))}

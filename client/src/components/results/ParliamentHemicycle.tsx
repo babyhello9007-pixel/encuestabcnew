@@ -68,8 +68,11 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
         {/* Datos no disponibles */}
         {unavailableSeats > 0 && (
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#666666' }} />
-            <span className="text-gray-300">Datos no disponibles: {unavailableSeats}</span>
+            <div 
+              className="w-3 h-3 rounded-full animate-pulse" 
+              style={{ backgroundColor: '#999999' }} 
+            />
+            <span className="text-gray-300">Sin asignar: {unavailableSeats}</span>
           </div>
         )}
       </div>
@@ -99,16 +102,17 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
                     onMouseLeave={() => setHoveredParty(null)}
                     className={`w-3 h-3 md:w-4 md:h-4 rounded-full transition-all transform ${
                       hoveredParty === seat.party ? 'scale-150 ring-2 ring-white' : ''
-                    } ${seat.party === 'DATOS_NO_DISPONIBLES' ? 'opacity-30 cursor-help' : 'hover:scale-125 cursor-pointer'}`}
+                    } ${seat.party === 'DATOS_NO_DISPONIBLES' ? 'opacity-60 cursor-help animate-pulse' : 'hover:scale-125 cursor-pointer'}`}
                     style={{
                       backgroundColor:
                         seat.party === 'DATOS_NO_DISPONIBLES'
-                          ? '#666666'
+                          ? '#888888'
                           : getPartyColor(seat.party),
+                      boxShadow: seat.party === 'DATOS_NO_DISPONIBLES' ? '0 0 6px rgba(136, 136, 136, 0.8), inset 0 0 3px rgba(0, 0, 0, 0.3)' : 'none',
                     }}
                     title={
                       seat.party === 'DATOS_NO_DISPONIBLES'
-                        ? 'Datos no disponibles - Responde la encuesta'
+                        ? 'Escaño sin asignar - Responde la encuesta para completar datos'
                         : `${PARTIES_GENERAL[seat.party as keyof typeof PARTIES_GENERAL]?.name || seat.party} (Escaño ${seat.index + 1})`
                     }
                   />
@@ -122,6 +126,11 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
         <div className="mt-6 p-3 bg-gray-800 rounded text-center">
           <p className="text-gray-400 text-sm">
             Total: <span className="text-white font-semibold">{totalEscanos}</span> escaños
+            {unavailableSeats > 0 && (
+              <span className="ml-3 text-gray-500">
+                ({totalAssigned} asignados, {unavailableSeats} sin asignar)
+              </span>
+            )}
           </p>
           {hoveredParty && hoveredParty !== 'DATOS_NO_DISPONIBLES' && (
             <p className="text-white mt-2">
@@ -150,6 +159,15 @@ export const ParliamentHemicycle: React.FC<ParliamentHemicycleProps> = ({
                 <div className="text-white text-lg font-bold">{count}</div>
               </div>
             ))}
+          {unavailableSeats > 0 && (
+            <div
+              className="p-3 rounded bg-gray-800 border-l-4"
+              style={{ borderColor: '#888888' }}
+            >
+              <div className="text-gray-300 text-sm">Sin asignar</div>
+              <div className="text-white text-lg font-bold">{unavailableSeats}</div>
+            </div>
+          )}
         </div>
       </div>
     </div>
