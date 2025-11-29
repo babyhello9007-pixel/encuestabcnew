@@ -7,8 +7,7 @@ import { calcularEscanosProvincia } from '@/lib/dhondtByProvince';
 import { VerifySeatsModal } from '@/components/VerifySeatsModal';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2 } from 'lucide-react';
-import { topoJsonToGeoJson } from '@/lib/topoJsonToGeoJson';
-import { getProvinceNameFromTopoJSON } from '@/lib/provinceMapping';
+import { spanishToGeoJson, geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 
 interface ProvinceData {
   name: string;
@@ -38,29 +37,27 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     escanosPorPartido: Record<string, number>;
   } | null>(null);
 
+  // LAZY LOADING: Cargar GeoJSON solo cuando el componente se monta
   useEffect(() => {
-    // Cargar el archivo TopoJSON y convertirlo a GeoJSON
-    fetch('/data/provinces.json')
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((topoData) => {
-        try {
-          const geoJson = topoJsonToGeoJson(topoData, 'provinces');
-          setGeoJsonData(geoJson);
-          setLoading(false);
-        } catch (err) {
-          console.error('Error convirtiendo TopoJSON:', err);
-          setError('Error al convertir TopoJSON a GeoJSON');
-          setLoading(false);
+    const loadGeoJson = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/data/georef-spain-provincia.geojson');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
-      })
-      .catch((err) => {
-        console.error('Error cargando TopoJSON:', err);
+        const data = await response.json();
+        setGeoJsonData(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error cargando GeoJSON:', err);
         setError('Error al cargar el archivo de provincias');
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    loadGeoJson();
   }, []);
 
   // Calcular el partido ganador por provincia
@@ -95,18 +92,14 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
-    const topoJsonName = feature.properties?.name;
-    if (!topoJsonName) return;
+    // Obtener nombre de provincia del GeoJSON (en valenciano/euskera)
+    const geoJsonProvinceName = feature.properties?.prov_name;
+    if (!geoJsonProvinceName) return;
 
-    // Convertir nombre TopoJSON a nombre de encuesta
-    const surveyProvinceName = getProvinceNameFromTopoJSON(topoJsonName);
+    // MAPEO BIDIRECCIONAL: Convertir nombre GeoJSON al nombre en español (Supabase)
+    const spanishProvinceName = geoJsonToSpanish(geoJsonProvinceName);
     
-    if (!surveyProvinceName) {
-      console.warn(`No mapping found for province: ${topoJsonName}`);
-      return;
-    }
-
-    const hasData = surveyProvinceName in votosPorProvincia;
+    const hasData = spanishProvinceName in votosPorProvincia;
     
     if (!hasData) {
       // Provincia sin datos
@@ -119,7 +112,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
       return;
     }
 
-    const data = getProvinceData(surveyProvinceName);
+    const data = getProvinceData(spanishProvinceName);
     const color = getPartyColor(data.ganador) || '#999999';
 
     (layer as L.Path).setStyle({
@@ -130,7 +123,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     });
 
     layer.on('click', () => {
-      handleProvinceClick(surveyProvinceName);
+      handleProvinceClick(spanishProvinceName);
     });
 
     layer.on('mouseover', () => {
@@ -151,7 +144,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
     const totalVotos = Object.values(data.votos).reduce((a, b) => a + b, 0);
     layer.bindPopup(
-      `<strong>${surveyProvinceName}</strong><br/>${data.ganador}: ${data.porcentajeGanador.toFixed(1)}%<br/>Votos: ${totalVotos}`
+      `<strong>${spanishProvinceName}</strong><br/>${data.ganador}: ${data.porcentajeGanador.toFixed(1)}%<br/>Votos: ${totalVotos}`
     );
   };
 
@@ -180,7 +173,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
         </p>
       </div>
 
-      {/* Mapa con Leaflet */}
+      {/* Mapa con Leaflet - LAZY LOADED */}
       <div className="w-full h-96 bg-gray-900 rounded-lg overflow-hidden">
         <MapContainer
           center={[40, -3.5]}
