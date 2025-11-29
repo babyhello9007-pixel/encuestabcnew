@@ -18,6 +18,9 @@ import { LeadersResultsChart } from "@/components/LeadersResultsChart";
 import { CCAAResltsSection } from "@/components/CCAAResltsSection";
 import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
 import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
+import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
+import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
+import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
 
 interface PartyStats {
   id: string;
@@ -57,6 +60,15 @@ export default function Results() {
   const [historialVotos, setHistorialVotos] = useState<Array<{fecha: string, votos: number}>>([]);
   const [notaEjecutivo, setNotaEjecutivo] = useState<number | null>(null);
   const [selectedPartyForStats, setSelectedPartyForStats] = useState<string | null>(null);
+  const [votosPorProvincia, setVotosPorProvincia] = useState<Record<string, Record<string, number>>>({});
+  const [escanosGeneralesPorProvincia, setEscanosGeneralesPorProvincia] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (Object.keys(votosPorProvincia).length > 0) {
+      const escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
+      setEscanosGeneralesPorProvincia(escanos);
+    }
+  }, [votosPorProvincia]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -103,6 +115,31 @@ export default function Results() {
 
             const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos);
             setGeneralStats(stats);
+            
+            // Cargar votos por provincia para el mapa
+            try {
+              const { data: provinciaData } = await supabase
+                .from("respuestas")
+                .select("provincia, voto_generales");
+              
+              if (provinciaData) {
+                const votosProv: Record<string, Record<string, number>> = {};
+                
+                provinciaData.forEach((row: any) => {
+                  if (row.provincia && row.voto_generales) {
+                    if (!votosProv[row.provincia]) {
+                      votosProv[row.provincia] = {};
+                    }
+                    votosProv[row.provincia][row.voto_generales] = 
+                      (votosProv[row.provincia][row.voto_generales] || 0) + 1;
+                  }
+                });
+                
+                setVotosPorProvincia(votosProv);
+              }
+            } catch (err) {
+              console.error("Error fetching votos por provincia:", err);
+            }
           } else {
             // Datos de ejemplo si no hay datos
             const exampleVotos: Record<string, number> = {
@@ -602,6 +639,29 @@ export default function Results() {
                 />
               </div>
             </div>
+
+            {/* Mostrar mapa y hemiciclo solo en tab de Elecciones Generales */}
+            {activeTab === "general" && Object.keys(votosPorProvincia).length > 0 && (
+              <div className="space-y-8">
+                <div className="liquid-glass p-8 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Mapa de Provincias</h2>
+                  <SpainMapProvincial 
+                    votosPorProvincia={votosPorProvincia}
+                    onProvinceClick={(province, data) => {
+                      console.log(`Provincia: ${province}`, data);
+                    }}
+                  />
+                </div>
+                
+                <div className="liquid-glass p-8 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo Parlamentario (350 Escaños)</h2>
+                  <ParliamentHemicycle 
+                    escanos={escanosGeneralesPorProvincia}
+                    totalEscanos={350}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4">
               {stats.length > 0 && (

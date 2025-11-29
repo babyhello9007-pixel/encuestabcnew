@@ -139,3 +139,13 @@
 - [x] Agregar botón de navegación
 - [x] Verificar funcionamiento
 - [x] Guardar checkpoint con comparación de CCAA
+
+## Mapa Interactivo y Hemiciclo - NUEVO
+- [x] Implementar cálculo de Ley d'Hondt por provincia (no nacional)
+- [x] Crear mapa interactivo de provincias coloreado por partido ganador
+- [x] Crear visualización de hemiciclo con 350 escaños distribuidos
+- [x] Integrar mapa y hemiciclo en sección de Elecciones Generales
+- [x] Agregar interactividad: click en provincia para detalles
+- [x] Agregar hover en escaños del hemiciclo para ver partido
+- [x] Verificar funcionamiento correcto
+- [x] Guardar checkpoint con mapa y hemiciclo
