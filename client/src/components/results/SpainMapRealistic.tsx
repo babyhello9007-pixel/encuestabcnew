@@ -3,10 +3,6 @@ import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getPartyColor } from '@/lib/partyConfig';
-import { calcularEscanosProvincia } from '@/lib/dhondtByProvince';
-import { VerifySeatsModal } from '@/components/VerifySeatsModal';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2 } from 'lucide-react';
 import { spanishToGeoJson, geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 
 interface ProvinceData {
@@ -26,16 +22,8 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   onProvinceClick,
 }) => {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
-  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showVerifyModal, setShowVerifyModal] = useState(false);
-  const [verifyData, setVerifyData] = useState<{
-    provincia: string;
-    votos: Record<string, number>;
-    escanos: Record<string, number>;
-    escanosPorPartido: Record<string, number>;
-  } | null>(null);
 
   // LAZY LOADING: Cargar GeoJSON solo cuando el componente se monta
   useEffect(() => {
@@ -86,9 +74,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   const handleProvinceClick = (provinceName: string) => {
     const data = getProvinceData(provinceName);
     const votos = votosPorProvincia[provinceName] || {};
-    const escanos = calcularEscanosProvincia(provinceName, votos);
-    setSelectedProvince(provinceName);
-    onProvinceClick?.(provinceName, data, votos, escanos);
+    onProvinceClick?.(provinceName, data, votos, {});
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
@@ -166,10 +152,10 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
   return (
     <div className="w-full space-y-4">
-      {/* Cartel de advertencia beta */}
-      <div className="w-full p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
-        <p className="text-yellow-800 font-semibold text-center">
-          ⚠️ Versión muy beta, todavía (como podéis ver) tiene demasiados fallos. Disculpad por ello.
+      {/* Cartel de versión funcional */}
+      <div className="w-full p-4 bg-green-50 border-2 border-green-400 rounded-lg">
+        <p className="text-green-800 font-semibold text-center">
+          ✓ Versión Funcional. El mapa realista muestra los resultados de la encuesta por provincia.
         </p>
       </div>
 
@@ -187,41 +173,6 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
           <GeoJSON data={geoJsonData} onEachFeature={onEachFeature} />
         </MapContainer>
       </div>
-
-      {/* Botón de verificación de escaños */}
-      {selectedProvince && Object.keys(votosPorProvincia[selectedProvince] || {}).length > 0 && (
-        <div className="p-4 bg-blue-100 rounded-lg border border-blue-300 flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-blue-900">Verificar Escaños</h3>
-            <p className="text-sm text-blue-700">Comprueba si la distribución de escaños es correcta según la Ley d'Hondt</p>
-          </div>
-          <Button
-            onClick={() => {
-              const votos = votosPorProvincia[selectedProvince] || {};
-              const escanos = calcularEscanosProvincia(selectedProvince, votos);
-              const escanosPorPartido = calcularEscanosProvincia(selectedProvince, votos);
-              setVerifyData({
-                provincia: selectedProvince,
-                votos,
-                escanos,
-                escanosPorPartido,
-              });
-              setShowVerifyModal(true);
-            }}
-          >
-            <CheckCircle2 className="mr-2 h-4 w-4" />
-            Verificar
-          </Button>
-        </div>
-      )}
-
-      {/* Modal de verificación */}
-      {showVerifyModal && verifyData && (
-        <VerifySeatsModal
-          data={verifyData}
-          onClose={() => setShowVerifyModal(false)}
-        />
-      )}
     </div>
   );
 };

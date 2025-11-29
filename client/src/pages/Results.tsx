@@ -69,7 +69,7 @@ export default function Results() {
   const [votosPorPartidoProvincia, setVotosPorPartidoProvincia] = useState<Record<string, number>>({});
   const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
   const [sortBy, setSortBy] = useState<'votos' | 'escanos'>('votos');
-  const [mapView, setMapView] = useState<'schematic' | 'realistic'>('schematic');
+  const [mapView, setMapView] = useState<'schematic' | 'realistic'>('realistic');
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
