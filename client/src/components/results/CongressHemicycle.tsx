@@ -38,8 +38,8 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
     }
   }
 
-  // Distribución en 15 filas semicirculares
-  const rows = 15;
+  // Distribución en 12 filas semicirculares (más compacto)
+  const rows = 12;
   const seatsPerRow = Math.ceil(totalEscanos / rows);
 
   const hemicycleRows: Array<Array<{ party: string; index: number }>> = [];
@@ -49,25 +49,27 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
     hemicycleRows.push(seatArray.slice(start, end));
   }
 
-  // Calcular posiciones de escaños en semicírculo
+  // Calcular posiciones de escaños en semicírculo REAL
   const getSeatPositions = () => {
     const positions: Array<{ x: number; y: number; party: string; index: number }> = [];
-    const centerX = 250;
-    const centerY = 250;
-    const startRadius = 50;
-    const radiusStep = 20;
+    const centerX = 400;
+    const centerY = 450;
+    const startRadius = 80;
+    const radiusStep = 28;
+    const seatRadius = 8;
 
     hemicycleRows.forEach((row, rowIndex) => {
       const radius = startRadius + rowIndex * radiusStep;
       const seatsInRow = row.length;
 
       row.forEach((seat, seatIdx) => {
-        // Distribuir en semicírculo (0 a π radianes)
+        // Distribuir en SEMICÍRCULO (0 a π radianes, solo la mitad superior)
         const angle = (Math.PI * seatIdx) / (seatsInRow - 1 || 1);
         
         // Convertir a coordenadas cartesianas
-        const x = centerX + radius * Math.cos(angle - Math.PI / 2);
-        const y = centerY + radius * Math.sin(angle - Math.PI / 2);
+        // El ángulo 0 está a la derecha, π/2 arriba
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY - radius * Math.sin(angle);
 
         positions.push({
           x,
@@ -130,32 +132,27 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
       </div>
 
       {/* Hemiciclo SVG */}
-      <div className="p-4 bg-gray-900 rounded-lg flex justify-center items-center">
+      <div className="p-4 bg-gray-900 rounded-lg flex justify-center items-center overflow-x-auto">
         <svg
-          width="100%"
-          height="600"
-          viewBox="0 0 500 350"
-          className="max-w-4xl"
+          width="900"
+          height="500"
+          viewBox="0 0 800 500"
+          className="min-w-full"
           style={{ backgroundColor: '#1a1a1a' }}
         >
-          {/* Fondo del hemiciclo */}
-          <ellipse
-            cx="250"
-            cy="250"
-            rx="230"
-            ry="230"
+          {/* Fondo del hemiciclo - semicírculo */}
+          <path
+            d="M 50 450 A 350 350 0 0 1 750 450"
             fill="#0a0a0a"
             stroke="#444"
             strokeWidth="2"
           />
 
-          {/* Líneas de referencia (arcos) */}
+          {/* Líneas de referencia (arcos semicirculares) */}
           {[1, 2, 3, 4, 5].map((i) => (
-            <circle
+            <path
               key={`arc-${i}`}
-              cx="250"
-              cy="250"
-              r={50 + i * 20}
+              d={`M ${400 - (80 + i * 28)} 450 A ${80 + i * 28} ${80 + i * 28} 0 0 1 ${400 + (80 + i * 28)} 450`}
               fill="none"
               stroke="#333"
               strokeWidth="0.5"
@@ -166,7 +163,7 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
           {/* Escaños */}
           {seatPositions.map((seat, idx) => {
             const isHovered = hoveredParty === seat.party;
-            const seatSize = 6;
+            const seatSize = 8;
 
             return (
               <g
@@ -180,17 +177,17 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
                   cy={seat.y}
                   r={seatSize}
                   fill={getPartyColor(seat.party)}
-                  opacity={isHovered ? 1 : 0.8}
+                  opacity={isHovered ? 1 : 0.85}
                   className="transition-all"
                 />
                 {isHovered && (
                   <circle
                     cx={seat.x}
                     cy={seat.y}
-                    r={seatSize + 3}
+                    r={seatSize + 4}
                     fill="none"
                     stroke="#fff"
-                    strokeWidth="1.5"
+                    strokeWidth="2"
                   />
                 )}
               </g>
@@ -199,20 +196,20 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
 
           {/* Texto central */}
           <text
-            x="250"
-            y="280"
+            x="400"
+            y="440"
             textAnchor="middle"
-            fontSize="16"
+            fontSize="18"
             fontWeight="bold"
             fill="#999"
           >
             Congreso de los Diputados
           </text>
           <text
-            x="250"
-            y="300"
+            x="400"
+            y="465"
             textAnchor="middle"
-            fontSize="12"
+            fontSize="14"
             fill="#666"
           >
             {totalEscanos} escaños
