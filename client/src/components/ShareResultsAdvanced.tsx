@@ -26,15 +26,36 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
   const [selectedParty, setSelectedParty] = useState<PartyStats | null>(stats.length > 0 ? stats[0] : null);
   const infographyRef = useRef<HTMLDivElement>(null);
 
-  // Obtener logos directamente de los datos
-  const getLogoForParty = (partyId: string) => {
+  // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
+  const getLogoForParty = (partyId: string, partyName?: string) => {
+    // Primero intentar búsqueda por ID
     if (activeTab === "general") {
-      const party = Object.entries(PARTIES_GENERAL).find(([key]) => key === partyId);
-      return party ? party[1].logo : '';
+      const party = PARTIES_GENERAL[partyId as keyof typeof PARTIES_GENERAL];
+      if (party?.logo) return party.logo;
     } else {
-      const party = Object.entries(YOUTH_ASSOCIATIONS).find(([key]) => key === partyId);
-      return party ? party[1].logo : '';
+      const party = YOUTH_ASSOCIATIONS[partyId as keyof typeof YOUTH_ASSOCIATIONS];
+      if (party?.logo) return party.logo;
     }
+    
+    // Si no hay logo por ID, buscar por nombre en PARTIES_GENERAL
+    if (partyName) {
+      for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
+        if (partyData.name === partyName) {
+          return partyData.logo;
+        }
+      }
+    }
+    
+    // Si no hay logo aún, buscar por nombre en YOUTH_ASSOCIATIONS
+    if (partyName) {
+      for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
+        if (assocData.name === partyName) {
+          return assocData.logo;
+        }
+      }
+    }
+    
+    return '';
   };
 
   const generateShareText = (party: PartyStats) => {
@@ -120,7 +141,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
               <label className="text-sm text-[#999999] mb-3 block">Selecciona un resultado para compartir:</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                 {stats.map((party) => {
-                  const logo = getLogoForParty(party.id);
+                  const logo = getLogoForParty(party.id, party.nombre);
                   return (
                     <button
                       key={party.id}
@@ -171,7 +192,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
                   <div className="text-center space-y-6 w-full relative z-10">
                     <p className="text-[#CCCCCC] text-lg font-semibold tracking-widest opacity-90">ENCUESTA DE BATALLA CULTURAL</p>
                     
-                    {getLogoForParty(selectedParty.id) && (
+                    {getLogoForParty(selectedParty.id, selectedParty.nombre) && (
                       <div className="flex justify-center">
                         <div
                           className="relative"
@@ -185,7 +206,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
                           }}
                         >
                           <img 
-                            src={getLogoForParty(selectedParty.id)} 
+                            src={getLogoForParty(selectedParty.id, selectedParty.nombre)} 
                             alt={selectedParty.nombre} 
                             className="h-24 w-24 object-contain drop-shadow-lg"
                             crossOrigin="anonymous"
