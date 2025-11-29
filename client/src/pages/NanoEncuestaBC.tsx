@@ -6,7 +6,7 @@ import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS, PROVINCES, CCAA } from "@
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { normalizeProvinceName } from "@/lib/provinceNormalizer";
-import { getCCAAFromProvince, isProvinceInCCAA } from "@/lib/provinceToCAA";
+import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
 import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 
 interface NanoSurveyResponse {
@@ -73,7 +73,6 @@ export default function NanoEncuestaBC() {
   // Obtener provincias filtradas por CCAA seleccionada
   const getFilteredProvinces = () => {
     if (currentStepData.key === 'provincia' && responses.comunidad_autonoma) {
-      const { getProvincesInCCAA } = require('@/lib/provinceToCAA');
       const filtered = getProvincesInCCAA(responses.comunidad_autonoma as string);
       return filtered.length > 0 ? filtered : PROVINCES;
     }

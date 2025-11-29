@@ -6,7 +6,7 @@ import { surveyQuestions, PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from "@
 import { SurveyResponse } from "@/lib/types";
 import { toast } from "sonner";
 import { normalizeProvinceInResponse } from "@/lib/provinceNormalizer";
-import { getCCAAFromProvince, isProvinceInCCAA } from "@/lib/provinceToCAA";
+import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
 import ReviewSurvey from "@/components/ReviewSurvey";
 
 export default function Survey() {
@@ -24,7 +24,6 @@ export default function Survey() {
   // Obtener provincias filtradas por CCAA seleccionada
   const getFilteredProvinces = () => {
     if (currentQuestion.fieldName === 'provincia' && responses.ccaa) {
-      const { getProvincesInCCAA } = require('@/lib/provinceToCAA');
       const filtered = getProvincesInCCAA(responses.ccaa as string);
       return filtered.length > 0 ? filtered : (currentQuestion.options || []);
     }
