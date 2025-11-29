@@ -100,3 +100,13 @@
 - [x] Actualizar lista de provincias en surveyData.ts (52 provincias completas)
 - [x] Verificar que Encuesta y NanoEncuesta muestren todas las provincias
 - [x] Guardar checkpoint con provincias actualizadas
+
+## Nuevas Secciones de Resultados por CCAA y Provincias - NUEVO
+- [x] Crear vista SQL para resultados de voto_generales por CCAA
+- [x] Crear vista SQL para resultados de voto_autonomicas por CCAA
+- [x] Crear vista SQL para resultados de voto_municipales por Provincia
+- [x] Crear componentes de visualización para CCAA (gráficos y tablas)
+- [x] Crear componentes de visualización para Provincias (gráficos y tablas)
+- [x] Integrar secciones en página de Resultados (debajo de generales)
+- [x] Verificar que los datos se carguen correctamente en vivo
+- [x] Guardar checkpoint con nuevas secciones

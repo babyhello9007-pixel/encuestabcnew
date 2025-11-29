@@ -15,6 +15,8 @@ import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
 import { PartyStatsModal } from "@/components/PartyStatsModal";
 import { LeadersResultsChart } from "@/components/LeadersResultsChart";
+import { CCAAResltsSection } from "@/components/CCAAResltsSection";
+import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
 
 interface PartyStats {
   id: string;
@@ -45,7 +47,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -550,7 +552,27 @@ export default function Results() {
                     : "text-[#666666] hover:text-[#2D2D2D]"
                 }`}
               >
-                ¿Quién quieres que sea el líder de tu partido?
+                Líderes de Partidos
+              </button>
+              <button
+                onClick={() => setActiveTab("ccaa")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "ccaa"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                CCAA
+              </button>
+              <button
+                onClick={() => setActiveTab("provincias")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "provincias"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Provincias
               </button>
               <div className="ml-auto flex gap-2">
                 <Button
@@ -660,6 +682,12 @@ export default function Results() {
             )}
             {activeTab === "lideres-preferidos" && (
               <LeadersResultsChart />
+            )}
+            {activeTab === "ccaa" && (
+              <CCAAResltsSection />
+            )}
+            {activeTab === "provincias" && (
+              <ProvincesResultsSection />
             )}
             {activeTab === "leaders" && (
             <div className="space-y-6">
