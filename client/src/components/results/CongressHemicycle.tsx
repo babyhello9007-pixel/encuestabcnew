@@ -12,7 +12,7 @@ interface CongressHemicycleProps {
 
 /**
  * Hemiciclo del Congreso de los Diputados Español
- * Forma semicircular real con distribución de escaños en arcos concéntricos
+ * Distribución política real: Izquierda (PSOE), Centro (VOX), Derecha (PP)
  */
 export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
   escanos,
@@ -23,26 +23,66 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
 }) => {
   const [hoveredParty, setHoveredParty] = useState<string | null>(null);
 
-  // Crear array de escaños ordenados por partido (mayor a menor)
-  const seatArray: Array<{ party: string; index: number }> = [];
+  // Clasificación política de partidos: izquierda, centro, derecha
+  const getPartyPosition = (party: string): 'left' | 'center' | 'right' => {
+    const leftParties = ['PSOE', 'PODEMOS', 'SUMAR', 'Izquierda Española', 'ERC', 'BILDU', 'Bloque Nacionalista Galego'];
+    const rightParties = ['PP', 'Ciudadanos', 'UPN'];
+    const centerParties = ['VOX', 'Se Acabó La Fiesta', 'P-Lib'];
+    const catalanParties = ['Aliança Catalana', 'JUNTS'];
+    const otherParties = ['PNV', 'Coalición Canaria', 'Escaños en Blanco', 'Frente Obrero', 'Caminando Juntos', 'Falange Española de las JONS', 'Soberanía y Trabajo.', 'Otros'];
+
+    if (leftParties.includes(party)) return 'left';
+    if (rightParties.includes(party)) return 'right';
+    if (centerParties.includes(party)) return 'center';
+    if (catalanParties.includes(party)) return 'right'; // Nacionalistas a la derecha
+    if (otherParties.includes(party)) return 'center'; // Otros al centro
+
+    return 'center'; // Default
+  };
+
+  // Crear array de escaños ordenados por posición política y votos
+  const seatArray: Array<{ party: string; index: number; position: 'left' | 'center' | 'right' }> = [];
   let seatIndex = 0;
 
-  const sortedParties = Object.entries(escanos)
-    .sort((a, b) => b[1] - a[1])
-    .map(([party]) => party);
+  // Agrupar por posición política
+  const leftParties: Array<[string, number]> = [];
+  const centerParties: Array<[string, number]> = [];
+  const rightParties: Array<[string, number]> = [];
 
-  for (const party of sortedParties) {
-    const count = escanos[party] || 0;
+  Object.entries(escanos).forEach(([party, count]) => {
+    const pos = getPartyPosition(party);
+    if (pos === 'left') leftParties.push([party, count]);
+    else if (pos === 'center') centerParties.push([party, count]);
+    else rightParties.push([party, count]);
+  });
+
+  // Ordenar cada grupo por votos (descendente)
+  leftParties.sort((a, b) => b[1] - a[1]);
+  centerParties.sort((a, b) => b[1] - a[1]);
+  rightParties.sort((a, b) => b[1] - a[1]);
+
+  // Crear array de escaños: izquierda, centro, derecha
+  for (const [party, count] of leftParties) {
     for (let i = 0; i < count; i++) {
-      seatArray.push({ party, index: seatIndex++ });
+      seatArray.push({ party, index: seatIndex++, position: 'left' });
+    }
+  }
+  for (const [party, count] of centerParties) {
+    for (let i = 0; i < count; i++) {
+      seatArray.push({ party, index: seatIndex++, position: 'center' });
+    }
+  }
+  for (const [party, count] of rightParties) {
+    for (let i = 0; i < count; i++) {
+      seatArray.push({ party, index: seatIndex++, position: 'right' });
     }
   }
 
-  // Distribución en 12 filas semicirculares (más compacto)
+  // Distribución en 12 filas semicirculares
   const rows = 12;
   const seatsPerRow = Math.ceil(totalEscanos / rows);
 
-  const hemicycleRows: Array<Array<{ party: string; index: number }>> = [];
+  const hemicycleRows: Array<Array<{ party: string; index: number; position: 'left' | 'center' | 'right' }>> = [];
   for (let i = 0; i < rows; i++) {
     const start = i * seatsPerRow;
     const end = Math.min(start + seatsPerRow, seatArray.length);
@@ -56,18 +96,28 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
     const centerY = 450;
     const startRadius = 80;
     const radiusStep = 28;
-    const seatRadius = 8;
 
     hemicycleRows.forEach((row, rowIndex) => {
       const radius = startRadius + rowIndex * radiusStep;
       const seatsInRow = row.length;
 
       row.forEach((seat, seatIdx) => {
-        // Distribuir en SEMICÍRCULO (0 a π radianes, solo la mitad superior)
-        const angle = (Math.PI * seatIdx) / (seatsInRow - 1 || 1);
-        
+        // Distribuir en SEMICÍRCULO (0 a π radianes)
+        // Izquierda: π a π/2, Centro: π/2 a 0, Derecha: 0 a -π/2
+        let angle: number;
+
+        if (seat.position === 'left') {
+          // Lado izquierdo: π a π/2
+          angle = Math.PI - (Math.PI / 2) * (seatIdx / (seatsInRow - 1 || 1));
+        } else if (seat.position === 'right') {
+          // Lado derecho: 0 a -π/2
+          angle = -(Math.PI / 2) * (seatIdx / (seatsInRow - 1 || 1));
+        } else {
+          // Centro: π/2 a 0
+          angle = (Math.PI / 2) - (Math.PI / 2) * (seatIdx / (seatsInRow - 1 || 1));
+        }
+
         // Convertir a coordenadas cartesianas
-        // El ángulo 0 está a la derecha, π/2 arriba
         const x = centerX + radius * Math.cos(angle);
         const y = centerY - radius * Math.sin(angle);
 
@@ -194,10 +244,42 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
             );
           })}
 
+          {/* Etiquetas de posición política */}
+          <text
+            x="100"
+            y="430"
+            textAnchor="middle"
+            fontSize="12"
+            fill="#999"
+            fontWeight="bold"
+          >
+            IZQUIERDA
+          </text>
+          <text
+            x="400"
+            y="430"
+            textAnchor="middle"
+            fontSize="12"
+            fill="#999"
+            fontWeight="bold"
+          >
+            CENTRO
+          </text>
+          <text
+            x="700"
+            y="430"
+            textAnchor="middle"
+            fontSize="12"
+            fill="#999"
+            fontWeight="bold"
+          >
+            DERECHA
+          </text>
+
           {/* Texto central */}
           <text
             x="400"
-            y="440"
+            y="470"
             textAnchor="middle"
             fontSize="18"
             fontWeight="bold"
@@ -207,7 +289,7 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
           </text>
           <text
             x="400"
-            y="465"
+            y="490"
             textAnchor="middle"
             fontSize="14"
             fill="#666"
