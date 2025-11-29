@@ -145,38 +145,6 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
   return (
     <div className="w-full space-y-4">
-      {/* Llamada a la acción */}
-      <div className="p-4 bg-gradient-to-r from-red-900 to-red-800 rounded-lg border border-red-600">
-        <p className="text-white text-sm mb-2">
-          <strong>Tu provincia no aparece?</strong> Ayúdanos respondiendo la encuesta.
-        </p>
-        <a
-          href="https://encuestabc-6q57y6uz.manus.space/nano-encuesta"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block px-4 py-2 bg-white text-red-900 font-semibold rounded hover:bg-gray-100 transition-colors text-sm"
-        >
-          Responder Encuesta
-        </a>
-      </div>
-
-      {/* Leyenda de partidos */}
-      <div className="flex flex-wrap gap-3 p-4 bg-gray-900 rounded-lg">
-        {Object.entries(PARTIES_GENERAL).map(([key, party]) => (
-          <div key={key} className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: getPartyColor(key) }}
-            />
-            <span className="text-xs text-gray-300">{party.name}</span>
-          </div>
-        ))}
-        {/* Leyenda para provincias sin datos */}
-        <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-600">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#CCCCCC' }} />
-          <span className="text-xs text-gray-300">Sin datos</span>
-        </div>
-      </div>
 
       {/* Mapa con Leaflet */}
       <div className="w-full h-96 bg-gray-900 rounded-lg overflow-hidden">
