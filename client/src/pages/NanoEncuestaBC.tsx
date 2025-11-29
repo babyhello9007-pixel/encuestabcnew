@@ -6,6 +6,7 @@ import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS, PROVINCES, CCAA } from "@
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { normalizeProvinceName } from "@/lib/provinceNormalizer";
+import { getCCAAFromProvince, isProvinceInCCAA } from "@/lib/provinceToCAA";
 
 interface NanoSurveyResponse {
   edad?: string;
@@ -41,6 +42,7 @@ export default function NanoEncuestaBC() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [showOtroInput, setShowOtroInput] = useState(false);
+  const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
 
   const steps = [
     { title: "Edad", key: "edad", type: "text" },
@@ -69,6 +71,34 @@ export default function NanoEncuestaBC() {
   const handleAnswer = (value: any) => {
     setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
     setShowOtroInput(value === "OTRO");
+    
+    // Autocompletado de CCAA cuando se selecciona provincia
+    if (currentStepData.key === 'provincia') {
+      const ccaa = getCCAAFromProvince(value);
+      if (ccaa) {
+        setResponses(prev => ({ ...prev, comunidad_autonoma: ccaa }));
+        setCCAAWarning(null);
+      }
+    }
+    
+    // Validacion de consistencia CCAA-Provincia
+    if (currentStepData.key === 'comunidad_autonoma') {
+      const provincia = responses.provincia as string;
+      if (provincia && !isProvinceInCCAA(provincia, value)) {
+        setCCAAWarning(`Advertencia: ${provincia} no pertenece a ${value}. Por favor, selecciona una provincia valida.`);
+      } else {
+        setCCAAWarning(null);
+      }
+    }
+    
+    if (currentStepData.key === 'provincia') {
+      const ccaa = responses.comunidad_autonoma as string;
+      if (ccaa && !isProvinceInCCAA(value, ccaa)) {
+        setCCAAWarning(`Advertencia: ${value} no pertenece a ${ccaa}. Por favor, selecciona una CCAA valida.`);
+      } else {
+        setCCAAWarning(null);
+      }
+    }
   };
 
   const handleOtroAnswer = (value: string) => {
@@ -260,6 +290,13 @@ export default function NanoEncuestaBC() {
         <div className="max-w-2xl mx-auto">
           <div className="liquid-glass p-8 rounded-2xl border border-[#2D2D2D]">
             <h2 className="text-2xl font-bold text-white mb-6">{currentStepData.title}</h2>
+
+            {/* Advertencia de CCAA */}
+            {ccaaWarning && (
+              <div className="p-4 rounded-lg bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 mb-6">
+                <p className="font-semibold">{ccaaWarning}</p>
+              </div>
+            )}
 
             {/* Input Fields */}
             <div className="space-y-4">

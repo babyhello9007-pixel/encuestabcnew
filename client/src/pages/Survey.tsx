@@ -6,6 +6,7 @@ import { surveyQuestions, PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from "@
 import { SurveyResponse } from "@/lib/types";
 import { toast } from "sonner";
 import { normalizeProvinceInResponse } from "@/lib/provinceNormalizer";
+import { getCCAAFromProvince, isProvinceInCCAA } from "@/lib/provinceToCAA";
 
 export default function Survey() {
   const [, setLocation] = useLocation();
@@ -13,6 +14,7 @@ export default function Survey() {
   const [responses, setResponses] = useState<SurveyResponse>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
 
   const currentQuestion = surveyQuestions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / surveyQuestions.length) * 100;
@@ -28,6 +30,34 @@ export default function Survey() {
       setResponses(prev => ({ ...prev, [fieldName]: newValues }));
     } else {
       setResponses(prev => ({ ...prev, [fieldName]: value }));
+      
+      // Autocompletado de CCAA cuando se selecciona provincia
+      if (fieldName === 'provincia') {
+        const ccaa = getCCAAFromProvince(value);
+        if (ccaa) {
+          setResponses(prev => ({ ...prev, ccaa: ccaa }));
+          setCCAAWarning(null);
+        }
+      }
+      
+      // Validación de consistencia CCAA-Provincia
+      if (fieldName === 'ccaa') {
+        const provincia = responses.provincia as string;
+        if (provincia && !isProvinceInCCAA(provincia, value)) {
+          setCCAAWarning(`⚠️ Advertencia: ${provincia} no pertenece a ${value}. Por favor, selecciona una provincia válida.`);
+        } else {
+          setCCAAWarning(null);
+        }
+      }
+      
+      if (fieldName === 'provincia') {
+        const ccaa = responses.ccaa as string;
+        if (ccaa && !isProvinceInCCAA(value, ccaa)) {
+          setCCAAWarning(`⚠️ Advertencia: ${value} no pertenece a ${ccaa}. Por favor, selecciona una CCAA válida.`);
+        } else {
+          setCCAAWarning(null);
+        }
+      }
     }
   };
 
@@ -129,6 +159,13 @@ export default function Survey() {
               {currentQuestion.question}
             </h2>
           </div>
+
+          {/* Advertencia de CCAA */}
+          {ccaaWarning && (
+            <div className="p-4 rounded-lg bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800">
+              <p className="font-semibold">{ccaaWarning}</p>
+            </div>
+          )}
 
           {/* Answer Options */}
           <div className="space-y-3">
