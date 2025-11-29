@@ -126,10 +126,8 @@ export default function NanoEncuestaBC() {
   };
 
   const handleOtroAnswer = (value: string) => {
-    // Cuando el usuario selecciona "Otro", guarda el texto en el campo principal
-    // Ejemplo: voto_generales = "Otros: [texto]"
-    const mainValue = `Otros: ${value}`;
-    setResponses(prev => ({ ...prev, [currentStepData.key]: mainValue }));
+    // Cuando el usuario selecciona "Otro", guarda solo el texto personalizado
+    setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
   };
 
   const handleNext = () => {
@@ -192,26 +190,8 @@ export default function NanoEncuestaBC() {
     }
 
     // Validar que si se selecciona "Otro", haya texto en el campo
-    if (responses.voto_generales?.startsWith('Otros:') && responses.voto_generales === 'Otros:') {
-      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Generales.');
-      return;
-    }
-    if (responses.voto_autonomicas?.startsWith('Otros:') && responses.voto_autonomicas === 'Otros:') {
-      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Autonómicas.');
-      return;
-    }
-    if (responses.voto_municipales?.startsWith('Otros:') && responses.voto_municipales === 'Otros:') {
-      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Municipales.');
-      return;
-    }
-    if (responses.voto_europeas?.startsWith('Otros:') && responses.voto_europeas === 'Otros:') {
-      toast.error('Por favor, especifica tu opción en "Otro" para Elecciones Europeas.');
-      return;
-    }
-    if (responses.asociacion_juvenil?.startsWith('Otros:') && responses.asociacion_juvenil === 'Otros:') {
-      toast.error('Por favor, especifica tu opción en "Otro" para Asociación Juvenil.');
-      return;
-    }
+    // Nota: Los campos de voto solo contienen el texto personalizado sin prefijo
+    // No hay validación adicional necesaria ya que el campo debe tener contenido para pasar la validación general
 
     setIsSubmitting(true);
     try {
@@ -416,7 +396,7 @@ export default function NanoEncuestaBC() {
                   {showOtroInput && (
                     <input
                       type="text"
-                      value={responses[currentStepData.key as keyof NanoSurveyResponse]?.toString().replace('Otros: ', '') || ""}
+                      value={responses[currentStepData.key as keyof NanoSurveyResponse]?.toString() || ""}
                       onChange={(e) => handleOtroAnswer(e.target.value)}
                       placeholder="Especifica tu opcion..."
                       className="input-modern w-full border-primary"
