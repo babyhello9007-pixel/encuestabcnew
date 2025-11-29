@@ -20,7 +20,7 @@ import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
 import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
 import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
-import { ParliamentHemicycleReal } from "@/components/results/ParliamentHemicycleReal";
+import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
 import { Map, Grid3x3 } from "lucide-react";
 
@@ -811,8 +811,8 @@ export default function Results() {
                     </div>
                     
                     <div className="liquid-glass p-8 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo Parlamentario (350 Escaños)</h2>
-                      <ParliamentHemicycleReal 
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-6">Hemiciclo del Congreso de los Diputados</h2>
+                      <CongressHemicycle 
                         escanos={escanosGeneralesPorProvincia}
                         totalEscanos={350}
                         provinciaSeleccionada={provinciaSeleccionada}
