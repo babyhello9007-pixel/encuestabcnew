@@ -36,37 +36,37 @@
 - [x] Verificar que todos los logotipos de partidos se muestren en resultados
 - [x] Agregar fotos de políticos en sección de valoración
 - [x] Verificar que asociaciones juveniles muestren sus logotipos correctamente
-- [ ] Mejorar paleta de colores para mejor contraste y visibilidad
-- [ ] Optimizar responsividad en diferentes dispositivos
+- [x] Mejorar paleta de colores para mejor contraste y visibilidad
+- [x] Optimizar responsividad en diferentes dispositivos
 - [x] Agregar documentación de uso en página "Acerca de"
 
 ## Conversión a Full-Stack - NUEVO
 - [x] Convertir proyecto a full-stack con servidor backend
 - [x] Integrar base de datos Supabase con tablas de partidos y asociaciones
 - [x] Agregar logo_path a tablas de partidos_generales y asociaciones_juveniles
-- [ ] Mostrar logotipos correctamente en página de resultados desde BD (PRIORITARIO)
-- [ ] Adaptar tarjetas de líderes políticos a las imágenes y mostrar todas (PRIORITARIO)
+- [x] Mostrar logotipos correctamente en página de resultados desde BD (PRIORITARIO)
+- [x] Adaptar tarjetas de líderes políticos a las imágenes y mostrar todas (PRIORITARIO)
 - [x] Crear panel de administrador para gestión de archivos
 - [x] Implementar función de carga de archivos a S3
 - [x] Crear interfaz de explorador de archivos para admin
 - [x] Editor de código con Monaco Editor
 - [x] Permitir editar archivos del proyecto desde admin (main.tsx, etc.)
-- [ ] Crear editor de código que acceda a archivos reales del proyecto
-- [ ] Implementar lectura de archivos del proyecto (client/src, server, drizzle, etc.)
-- [ ] Implementar edición y guardado de archivos reales
-- [ ] Agregar previsualización de cambios antes de guardar
+- [x] Crear editor de código que acceda a archivos reales del proyecto
+- [x] Implementar lectura de archivos del proyecto (client/src, server, drizzle, etc.)
+- [x] Implementar edición y guardado de archivos reales
+- [x] Agregar previsualización de cambios antes de guardar
 
 ## Pruebas y Optimización
-- [ ] Pruebas funcionales de la encuesta
-- [ ] Pruebas de envío de datos a Supabase
-- [ ] Pruebas de visualización de resultados
-- [ ] Optimización de rendimiento
-- [ ] Pruebas de responsividad en diferentes dispositivos
+- [x] Pruebas funcionales de la encuesta
+- [x] Pruebas de envío de datos a Supabase
+- [x] Pruebas de visualización de resultados
+- [x] Optimización de rendimiento
+- [x] Pruebas de responsividad en diferentes dispositivos
 
 ## Despliegue
-- [ ] Preparar para publicación
-- [ ] Crear checkpoint final
-- [ ] Documentación de uso
+- [x] Preparar para publicación
+- [x] Crear checkpoint final
+- [x] Documentación de uso
 
 
 
