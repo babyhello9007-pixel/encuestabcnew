@@ -64,9 +64,17 @@ export default function Results() {
   const [escanosGeneralesPorProvincia, setEscanosGeneralesPorProvincia] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    if (Object.keys(votosPorProvincia).length > 0) {
+    if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
       const escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
       setEscanosGeneralesPorProvincia(escanos);
+      
+      // Actualizar generalStats con los escaños calculados por provincia
+      // Esto asegura que Elecciones Generales y Hemiciclo muestren los mismos números
+      const statsActualizados = generalStats.map(stat => ({
+        ...stat,
+        escanos: escanos[stat.id] || 0
+      }));
+      setGeneralStats(statsActualizados);
     }
   }, [votosPorProvincia]);
 
@@ -121,11 +129,8 @@ export default function Results() {
 
             const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos);
             setGeneralStats(stats);
-            
-            // Actualizar escaños generales por provincia si se usan
-            if (Object.keys(votosPorProvincia).length > 0) {
-              setEscanosGeneralesPorProvincia(escanos);
-            }
+            // Los escaños se actualizarán en el useEffect cuando votosPorProvincia esté disponible
+            // (este useEffect se ejecutará después de que votosPorProvincia se haya cargado)
             
             // Cargar votos por provincia para el mapa
             try {

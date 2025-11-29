@@ -174,3 +174,10 @@
 - [x] Verificar que los escaños se distribuyan correctamente
 - [x] Actualizar gráficas y tablas con nuevos datos
 - [x] Guardar checkpoint con Ley d'Hondt por provincias
+
+## Corrección de Diferencias Hemiciclo vs Elecciones Generales - COMPLETADO
+- [x] Investigar diferencias entre hemiciclo y Elecciones Generales
+- [x] Identificar fuente del problema en los cálculos
+- [x] Sincronizar lógica de cálculo entre ambos
+- [x] Verificar que muestren los mismos números (ahora ambos muestran: VOX 152, PP 70, Ciudadanos 36, PSOE 27, etc.)
+- [x] Guardar checkpoint con correcciones
