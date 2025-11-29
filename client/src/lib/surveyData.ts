@@ -17,7 +17,7 @@ export const PARTIES_GENERAL = {
   CIUDADANOS: { name: 'Ciudadanos', logo: '/assets/icons/ciudadanos.png', color: '#FF9900' },
   PLIB: { name: 'P-Lib', logo: '/assets/icons/P-Lib.jpg', color: '#FFD700' },
   EB: { name: 'Escaños en Blanco', logo: '/assets/icons/EscañosEnBlancoNEW.png', color: '#999999' },
-  BNG: { name: 'Bloque Nacionalista Galego', logo: '/assets/icons/bng.png', color: '#003D99' },
+  BNG: { name: 'BNG', logo: '/assets/icons/bng.png', color: '#003D99' },
   FO: { name: 'Frente Obrero', logo: '/assets/icons/FrenteObrero.png', color: '#CC0000' },
   CJ: { name: 'Caminando Juntos', logo: '/assets/icons/CaminandoJuntos.png', color: '#0066CC' },
   FALANGE: { name: 'Falange', logo: '/assets/icons/FALANGENEW.webp', color: '#FF0000' },
