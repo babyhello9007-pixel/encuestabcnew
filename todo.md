@@ -270,3 +270,12 @@
 - [x] Integrar FollowUsMenu en header de Results.tsx
 - [x] Implementar fallbacks robustos para carga de logos
 - [x] Forzar carga de logos con loading="eager" y decoding="sync"
+
+## Mejora de Sección de Compartir - NUEVO
+- [x] Mejorar visualmente el menú "Síguenos" con diseño premium
+- [x] Rediseñar infografía con liquid glass para Elecciones Generales
+- [x] Rediseñar infografía con liquid glass para Asociaciones Juveniles
+- [x] Agregar funcionalidad de compartir en Líderes Preferidos
+- [x] Actualizar textos y elementos de compartir
+- [x] Usar logos de partidos desde código existente (sin tocar)
+- [x] Usar logos de asociaciones desde código existente (sin tocar)

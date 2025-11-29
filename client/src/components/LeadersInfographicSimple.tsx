@@ -102,49 +102,68 @@ export function LeadersInfographicSimple({ selectedParty, leaders }: LeadersInfo
         </Button>
       </div>
 
-      {/* Ranking List - Infographic Container */}
+      {/* Ranking List - Infographic Container con Liquid Glass */}
       <div
         ref={infographicRef}
-        className="bg-white p-6 rounded-xl shadow-sm space-y-4"
+        className="relative p-8 rounded-2xl border overflow-hidden space-y-4"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 245, 0.95))',
+          backdropFilter: 'blur(20px)',
+          borderColor: 'rgba(196, 30, 58, 0.2)',
+          boxShadow: '0 8px 32px 0 rgba(196, 30, 58, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
+        }}
       >
-        <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-[#C41E3A] mb-2">
-            Ranking de Líderes - {selectedParty}
-          </h3>
-          <p className="text-sm text-[#666666]">Preferencia de líderes por partido</p>
+        {/* Fondo decorativo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#C41E3A] rounded-full mix-blend-multiply filter blur-3xl opacity-5"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-3"></div>
         </div>
 
-        <div className="space-y-4">
-          {leaders.slice(0, 10).map((leader, index) => (
-            <div key={`${leader.lider_preferido}-${index}`} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-8 h-8 rounded-full bg-[#C41E3A] text-white flex items-center justify-center font-bold text-sm">
-                    {index + 1}
+        {/* Contenido */}
+        <div className="relative z-10">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold text-[#C41E3A] mb-2 drop-shadow-sm">
+              Ranking de Líderes - {selectedParty}
+            </h3>
+            <p className="text-sm text-[#666666]">Preferencia de líderes por partido</p>
+          </div>
+
+          <div className="space-y-4">
+            {leaders.slice(0, 10).map((leader, index) => (
+              <div key={`${leader.lider_preferido}-${index}`} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C41E3A] to-[#A01830] text-white flex items-center justify-center font-bold text-sm shadow-md">
+                      {index + 1}
+                    </div>
+                    <p className="font-semibold text-[#2D2D2D]">{leader.lider_preferido}</p>
                   </div>
-                  <p className="font-semibold text-[#2D2D2D]">{leader.lider_preferido}</p>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-[#C41E3A]">{leader.porcentaje}%</p>
+                    <p className="text-xs text-[#999999]">{leader.total_votos} votos</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-[#C41E3A]">{leader.porcentaje}%</p>
-                  <p className="text-xs text-[#999999]">{leader.total_votos} votos</p>
+                <div className="w-full bg-[#E0D5CC] rounded-full h-2 overflow-hidden shadow-sm">
+                  <div
+                    className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] h-full rounded-full transition-all duration-500"
+                    style={{ width: `${leader.porcentaje}%` }}
+                  />
                 </div>
               </div>
-              <div className="w-full bg-[#E0D5CC] rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-[#C41E3A] h-full rounded-full transition-all duration-500"
-                  style={{ width: `${leader.porcentaje}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="pt-4 border-t border-[#E0D5CC] text-center text-xs text-[#999999]">
-          <p>Encuesta en tiempo real • Todos los datos son anónimos y públicos</p>
-          <p className="mt-2">https://encuestabc-6q57y6uz.manus.space/</p>
+          <div className="pt-4" style={{
+            borderTop: '1px solid rgba(196, 30, 58, 0.15)',
+          }}>
+            <div className="text-center text-xs text-[#666666]">
+              <p className="font-semibold mb-1">Encuesta de Batalla Cultural</p>
+              <p>Encuesta en tiempo real • Todos los datos son anónimos y públicos</p>
+              <p className="mt-2 text-[#C41E3A] font-semibold">https://encuestabc-6q57y6uz.manus.space/</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

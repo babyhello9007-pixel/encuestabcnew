@@ -40,7 +40,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
   const generateShareText = (party: PartyStats) => {
     const percentage = party.porcentaje.toFixed(1);
     const type = activeTab === "general" ? "Elecciones Generales" : "Asociaciones Juveniles";
-    return `🗳️ Según la La Encuesta de Batalla Cultural, ${party.nombre} lidera con ${percentage}% de los votos en ${type}. ¡Participa en la encuesta! #BatallasCultural`;
+    return `🗳️ Según la Encuesta de Batalla Cultural, ${party.nombre} lidera con ${percentage}% de los votos en ${type}. ¡Participa y haz oír tu voz! #BatallaaCultural`;
   };
 
   const downloadInfography = async () => {
@@ -103,7 +103,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
     <>
       <Button
         onClick={() => setShowShareModal(true)}
-        className="bg-[#C41E3A] hover:bg-[#A01830] text-white px-6 py-2 rounded-lg flex items-center gap-2"
+        className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white px-6 py-2 rounded-lg flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
       >
         <Share2 className="h-4 w-4" />
         Compartir Resultados
@@ -112,7 +112,8 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
       {showShareModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-[#1A1A1A] rounded-xl p-8 max-w-2xl w-full border border-[#2D2D2D] max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-6">Compartir Resultados</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">Compartir Resultados</h3>
+            <p className="text-sm text-[#999999] mb-6">Difunde los resultados en tus redes sociales</p>
 
             {/* Selector de resultado */}
             <div className="mb-6">
@@ -146,46 +147,75 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
               </div>
             </div>
 
-            {/* Infografía */}
+            {/* Infografía con Liquid Glass */}
             {selectedParty && (
               <div className="mb-6">
                 <label className="text-sm text-[#999999] mb-3 block">Vista previa (16:9):</label>
                 <div
                   ref={infographyRef}
-                  className="bg-gradient-to-br from-[#0F1419] to-[#1A1A1A] rounded-lg p-12 border border-[#2D2D2D] aspect-video flex flex-col items-center justify-center"
+                  className="relative rounded-2xl p-12 border aspect-video flex flex-col items-center justify-center overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(20, 20, 30, 0.8), rgba(15, 20, 30, 0.9))',
+                    backdropFilter: 'blur(20px)',
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    boxShadow: '0 8px 32px 0 rgba(196, 30, 58, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+                  }}
                 >
-                  <div className="text-center space-y-6 w-full">
-                    <p className="text-[#999999] text-lg font-semibold tracking-widest">ENCUESTA DE BATALLA CULTURAL</p>
+                  {/* Fondo con gradiente decorativo */}
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#C41E3A] rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-5"></div>
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="text-center space-y-6 w-full relative z-10">
+                    <p className="text-[#CCCCCC] text-lg font-semibold tracking-widest opacity-90">ENCUESTA DE BATALLA CULTURAL</p>
                     
                     {getLogoForParty(selectedParty.id) && (
                       <div className="flex justify-center">
-                        <img 
-                          src={getLogoForParty(selectedParty.id)} 
-                          alt={selectedParty.nombre} 
-                          className="h-24 w-24 object-contain drop-shadow-lg"
-                          crossOrigin="anonymous"
-                        />
+                        <div
+                          className="relative"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            backdropFilter: 'blur(10px)',
+                            borderRadius: '16px',
+                            padding: '16px',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            boxShadow: '0 8px 32px 0 rgba(196, 30, 58, 0.2)',
+                          }}
+                        >
+                          <img 
+                            src={getLogoForParty(selectedParty.id)} 
+                            alt={selectedParty.nombre} 
+                            className="h-24 w-24 object-contain drop-shadow-lg"
+                            crossOrigin="anonymous"
+                          />
+                        </div>
                       </div>
                     )}
                     
-                    <p className="text-4xl font-bold text-white">{selectedParty.nombre}</p>
+                    <p className="text-4xl font-bold text-white drop-shadow-lg">{selectedParty.nombre}</p>
                     
                     <div className="space-y-3">
-                      <p className="text-7xl font-bold text-[#C41E3A] drop-shadow-lg">
+                      <p className="text-7xl font-bold text-[#C41E3A] drop-shadow-lg" style={{
+                        textShadow: '0 0 20px rgba(196, 30, 58, 0.4)',
+                      }}>
                         {selectedParty.porcentaje.toFixed(1)}%
                       </p>
-                      <p className="text-[#999999] text-lg">
+                      <p className="text-[#CCCCCC] text-lg opacity-90">
                         {selectedParty.votos.toLocaleString()} votos de {totalVotes.toLocaleString()}
                       </p>
                     </div>
 
-                    <div className="pt-6 border-t border-[#2D2D2D]">
-                      <p className="text-[#999999] text-sm mb-3">
+                    <div className="pt-6" style={{
+                      borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+                    }}>
+                      <p className="text-[#CCCCCC] text-sm mb-3 opacity-80">
                         {activeTab === "general" ? "Elecciones Generales" : "Asociaciones Juveniles"}
                       </p>
                       <div className="flex items-center justify-center gap-3">
-                        <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
-                        <span className="text-[#C41E3A] font-bold text-lg">Batalla Cultural</span>
+                        <img src="/favicon.png" alt="BC Logo" className="h-8 w-8 drop-shadow-lg" />
+                        <span className="text-[#C41E3A] font-bold text-lg drop-shadow-lg">Batalla Cultural</span>
                       </div>
                     </div>
                   </div>
@@ -197,28 +227,28 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
             <div className="space-y-3 mb-6">
               <button
                 onClick={downloadInfography}
-                className="w-full bg-[#2D2D2D] hover:bg-[#3D3D3D] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
+                className="w-full bg-[#2D2D2D] hover:bg-[#3D3D3D] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
               >
                 <Download className="h-5 w-5" />
                 Descargar Resultado Individual
               </button>
               <button
                 onClick={() => generateAdvancedInfographic(stats, activeTab, totalVotes, edadPromedio)}
-                className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
+                className="w-full bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
               >
                 <Image className="h-5 w-5" />
                 Descargar Infografía Completa (PNG)
               </button>
               <button
                 onClick={shareOnX}
-                className="w-full bg-black hover:bg-[#1a1a1a] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
+                className="w-full bg-black hover:bg-[#1a1a1a] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
               >
                 <X className="h-5 w-5" />
                 Compartir en X
               </button>
               <button
                 onClick={shareOnFacebook}
-                className="w-full bg-[#1877F2] hover:bg-[#0a66c2] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition"
+                className="w-full bg-[#1877F2] hover:bg-[#0a66c2] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
               >
                 <Facebook className="h-5 w-5" />
                 Compartir en Facebook
@@ -227,15 +257,19 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
 
             {/* Texto para copiar */}
             {selectedParty && (
-              <div className="bg-[#0F1419] rounded-lg p-4 mb-6 border border-[#2D2D2D]">
-                <p className="text-[#999999] text-xs mb-2">Texto para compartir:</p>
-                <p className="text-white text-sm break-words mb-3">{generateShareText(selectedParty)}</p>
+              <div className="rounded-lg p-4 mb-6 border" style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(10px)',
+                borderColor: 'rgba(196, 30, 58, 0.2)',
+              }}>
+                <p className="text-[#999999] text-xs mb-2 font-semibold uppercase tracking-wide">Texto para compartir:</p>
+                <p className="text-white text-sm break-words mb-3 leading-relaxed">{generateShareText(selectedParty)}</p>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(generateShareText(selectedParty));
                     alert("Texto copiado al portapapeles");
                   }}
-                  className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white py-2 rounded text-sm transition"
+                  className="w-full bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white py-2 rounded text-sm transition-all duration-200 hover:shadow-lg font-semibold"
                 >
                   Copiar Texto
                 </button>
@@ -245,7 +279,7 @@ export function ShareResultsAdvanced({ activeTab, stats, totalVotes, edadPromedi
             {/* Botón cerrar */}
             <button
               onClick={() => setShowShareModal(false)}
-              className="w-full bg-[#2D2D2D] hover:bg-[#3D3D3D] text-white py-2 rounded-lg transition"
+              className="w-full bg-[#2D2D2D] hover:bg-[#3D3D3D] text-white py-2 rounded-lg transition-all duration-200 hover:shadow-lg font-semibold"
             >
               Cerrar
             </button>
