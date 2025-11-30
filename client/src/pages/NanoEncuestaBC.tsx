@@ -28,6 +28,7 @@ interface NanoSurveyResponse {
   valoracion_irene?: number;
   valoracion_ayuso?: number;
   valoracion_buxade?: number;
+  posicion_ideologica?: number;
   asociacion_juvenil?: string;
   created_at?: string;
 }
@@ -61,6 +62,7 @@ export default function NanoEncuestaBC() {
     { title: "Valoración: Irene Montero", key: "valoracion_irene", type: "slider" },
     { title: "Valoración: Isabel Díaz Ayuso", key: "valoracion_ayuso", type: "slider" },
     { title: "Valoración: Jorge Buxadé", key: "valoracion_buxade", type: "slider" },
+    { title: "Tu Posición Ideológica", key: "posicion_ideologica", type: "buttons" },
     { title: "Asociación Juvenil", key: "asociacion_juvenil", type: "select" },
   ];
 
@@ -86,7 +88,7 @@ export default function NanoEncuestaBC() {
     if (currentStepData.type === 'select') {
       return currentValue && String(currentValue).length > 0;
     }
-    if (currentStepData.type === 'slider') {
+    if (currentStepData.type === 'slider' || currentStepData.type === 'buttons') {
       return currentValue !== undefined && currentValue !== null && currentValue !== '';
     }
     return false;
@@ -190,6 +192,7 @@ export default function NanoEncuestaBC() {
       'valoracion_irene',
       'valoracion_ayuso',
       'valoracion_buxade',
+      'posicion_ideologica',
       'asociacion_juvenil'
     ];
 
@@ -229,6 +232,7 @@ export default function NanoEncuestaBC() {
         val_irene_montero: responses.valoracion_irene || 0,
         val_ayuso: responses.valoracion_ayuso || 0,
         val_buxade: responses.valoracion_buxade || 0,
+        posicion_ideologica: responses.posicion_ideologica || null,
         voto_asociacion_juvenil: responses.asociacion_juvenil || null,
       };
       
@@ -443,6 +447,34 @@ export default function NanoEncuestaBC() {
                   </div>
                 </div>
               )}
+
+              {currentStepData.type === "buttons" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-5 gap-2">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => {
+                      const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === num;
+                      return (
+                        <button
+                          key={num}
+                          onClick={() => handleAnswer(num)}
+                          className={`py-3 px-2 rounded-lg font-semibold transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-primary text-white shadow-lg scale-105'
+                              : 'bg-border text-foreground hover:bg-border/80 hover:scale-105'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between items-center text-sm text-muted-foreground mt-4">
+                    <span>Izquierda</span>
+                    <span className="text-lg font-bold text-primary">{responses[currentStepData.key as keyof NanoSurveyResponse] || '-'}</span>
+                    <span>Derecha</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -482,4 +514,3 @@ export default function NanoEncuestaBC() {
     </div>
   );
 }
-
