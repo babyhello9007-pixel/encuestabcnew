@@ -121,7 +121,7 @@ function drawTable(
 
 export async function exportPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null
@@ -132,7 +132,10 @@ export async function exportPDFWithMetrics(
   let yPosition = 20;
 
   // Obtener métricas por partido desde las vistas
-  const metricsPerParty = await getMetricsFromViews(activeTab);
+  let metricsPerParty: Record<string, PartyMetricsView> = {};
+  if (activeTab === "general" || activeTab === "youth" || activeTab === "asoc-juv-mapa-hemiciclo") {
+    metricsPerParty = await getMetricsFromViews(activeTab as any);
+  }
 
   // Header
   doc.setFillColor(196, 30, 58);
@@ -225,11 +228,13 @@ export async function exportPDFWithMetrics(
   return doc;
 }
 
-async function getMetricsFromViews(activeTab: "general" | "youth"): Promise<Record<string, PartyMetricsView>> {
+async function getMetricsFromViews(activeTab: "general" | "youth" | "asoc-juv-mapa-hemiciclo"): Promise<Record<string, PartyMetricsView>> {
   try {
     const viewName = activeTab === "general" 
       ? "edad_ideologia_por_partido" 
-      : "edad_ideologia_por_asociacion";
+      : activeTab === "youth" || activeTab === "asoc-juv-mapa-hemiciclo"
+      ? "edad_ideologia_por_asociacion"
+      : "edad_ideologia_por_partido";
 
     const { data, error } = await supabase
       .from(viewName)

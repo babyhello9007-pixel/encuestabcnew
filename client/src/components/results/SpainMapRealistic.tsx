@@ -260,9 +260,10 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; OpenStreetMap contributors'
+            attribution="&copy; OpenStreetMap contributors"
+            {...({} as any)}
           />
-          <GeoJSON data={geoJsonData} onEachFeature={onEachFeature} />
+          <GeoJSON data={geoJsonData} {...({ onEachFeature } as any)} />
         </MapContainer>
       </div>
 

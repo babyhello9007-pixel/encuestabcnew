@@ -104,8 +104,7 @@ export default function AdminBlogLogin() {
       setEditingId(null);
       setShowForm(false);
 
-      const updated = await trpc.blog.getAll.fetch();
-      setPosts(updated);
+      // Los datos se actualizarán automáticamente a través del hook useQuery
     } catch (error) {
       toast.error("Error al guardar la entrada");
       console.error(error);
@@ -133,8 +132,7 @@ export default function AdminBlogLogin() {
     try {
       await deleteMutation.mutateAsync({ id });
       toast.success("Entrada eliminada");
-      const updated = await trpc.blog.getAll.fetch();
-      setPosts(updated);
+      // Los datos se actualizarán automáticamente a través del hook useQuery
     } catch (error) {
       toast.error("Error al eliminar la entrada");
       console.error(error);

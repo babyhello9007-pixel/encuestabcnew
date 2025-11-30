@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas';
-import { PARTIES_GENERAL, ASSOCIATIONS_YOUTH } from './surveyData';
+import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from './surveyData';
 
 export interface InfographicData {
   title: string;

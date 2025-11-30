@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'respuestas' AND column_name = 'posicion_ideologica';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'respuestas' AND column_name = 'posicion_ideologica';",
+  "rows": [
+    {
+      "COUNT(*)": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "COUNT(*)\n0\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

@@ -116,7 +116,7 @@ function convertGeometry(geometry: any, decodedArcs: number[][][]): any {
     case 'MultiPolygon':
       return {
         type: 'MultiPolygon',
-        coordinates: geometry.arcs.map((arcs: number[][]) =>
+        coordinates: geometry.arcs.map((arcs: number[]) =>
           arcToCoordinates([arcs], decodedArcs)
         ),
       };
@@ -143,7 +143,7 @@ function convertGeometry(geometry: any, decodedArcs: number[][][]): any {
       return {
         type: 'MultiLineString',
         coordinates: geometry.arcs
-          .map((arcs: number[][]) => arcToCoordinates([arcs], decodedArcs)[0])
+          .map((arcs: number[]) => arcToCoordinates([arcs], decodedArcs)[0])
           .filter((coords: any) => coords && coords.length > 0),
       };
 

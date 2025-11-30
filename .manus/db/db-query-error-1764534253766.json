@@ -1,0 +1,11 @@
+{
+  "query": "\nCREATE OR REPLACE VIEW public.votos_por_provincia_juveniles_view AS\nSELECT \n  provincia,\n  voto_asociacion_juvenil as asociacion,\n  COUNT(*) as votos,\n  ROUND((COUNT(*)::numeric / (SELECT COUNT(*) FROM public.respuestas WHERE provincia IS NOT NULL AND provincia != '' AND voto_asociacion_juvenil IS NOT NULL AND voto_asociacion_juvenil != '')) * 100, 2) as porcentaje,\n  ROUND(AVG(COALESCE(edad, 18))::numeric, 1) as edad_promedio,\n  ROUND(AVG(COALESCE(posicion_ideologica, 5))::numeric, 1) as ideologia_promedio\nFROM public.respuestas\nWHERE provincia IS NOT NULL AND provincia != '' AND voto_asociacion_juvenil IS NOT NULL AND voto_asociacion_juvenil != ''\nGROUP BY provincia, voto_asociacion_juvenil\nORDER BY provincia, votos DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute \nCREATE OR REPLACE VIEW public.votos_por_provincia_juveniles_view AS\nSELECT \n  provincia,\n  voto_asociacion_juvenil as asociacion,\n  COUNT(*) as votos,\n  ROUND((COUNT(*)::numeric / (SELECT COUNT(*) FROM public.respuestas WHERE provincia IS NOT NULL AND provincia != '' AND voto_asociacion_juvenil IS NOT NULL AND voto_asociacion_juvenil != '')) * 100, 2) as porcentaje,\n  ROUND(AVG(COALESCE(edad, 18))::numeric, 1) as edad_promedio,\n  ROUND(AVG(COALESCE(posicion_ideologica, 5))::numeric, 1) as ideologia_promedio\nFROM public.respuestas\nWHERE provincia IS NOT NULL AND provincia != '' AND voto_asociacion_juvenil IS NOT NULL AND voto_asociacion_juvenil != ''\nGROUP BY provincia, voto_asociacion_juvenil\nORDER BY provincia, votos DESC;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 2: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 6 column 19 near \"::numeric / (SELECT COUNT(*) FROM public.respuestas WHERE provincia IS NOT NULL AND provincia != '' AND voto_asociacion_juvenil IS NOT NULL AND voto_asociacion_juvenil != '')) * 100, 2) as porcentaje,",
+    "  ROUND(AVG(COALESCE(edad, 18))::numeric, 1) as edad_promedio,",
+    "  ROUND(AVG(COALESCE(posicion_ideologica, 5))::numeric, 1) as ideologia_promedio",
+    "FROM public.respuestas"
+  ]
+}

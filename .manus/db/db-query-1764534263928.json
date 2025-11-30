@@ -1,0 +1,9 @@
+{
+  "query": "CREATE OR REPLACE VIEW votos_por_provincia_juveniles_view AS\nSELECT \n  provincia,\n  voto_asociacion_juvenil as asociacion,\n  COUNT(*) as votos\nFROM respuestas\nWHERE provincia IS NOT NULL AND provincia != '' AND voto_asociacion_juvenil IS NOT NULL AND voto_asociacion_juvenil != ''\nGROUP BY provincia, voto_asociacion_juvenil\nORDER BY provincia, votos DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute CREATE OR REPLACE VIEW votos_por_provincia_juveniles_view AS\nSELECT \n  provincia,\n  voto_asociacion_juvenil as asociacion,\n  COUNT(*) as votos\nFROM respuestas\nWHERE provincia IS NOT NULL AND provincia != '' AND voto_asociacion_juvenil IS NOT NULL AND voto_asociacion_juvenil != ''\nGROUP BY provincia, voto_asociacion_juvenil\nORDER BY provincia, votos DESC;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 196
+}
