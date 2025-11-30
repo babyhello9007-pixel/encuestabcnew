@@ -65,10 +65,10 @@ export function calcularEscanosGenerales(votos: Record<string, number>): Record<
 }
 
 /**
- * Calcula escaños para asociaciones juveniles (50 escaños, umbral 7%)
+ * Calcula escaños para asociaciones juveniles (100 escaños, umbral 4%)
  */
 export function calcularEscanosJuveniles(votos: Record<string, number>): Record<string, number> {
-  return calcularEscanosDHondt(votos, 50, 7);
+  return calcularEscanosDHondt(votos, 100, 4);
 }
 
 /**

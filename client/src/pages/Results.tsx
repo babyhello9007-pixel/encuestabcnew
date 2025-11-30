@@ -509,7 +509,7 @@ export default function Results() {
   }, []);
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
-  const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 50 : 0;
+  const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
 
   const exportToCSV = () => {
     const headers = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Porcentaje de Escaños'];
@@ -1027,7 +1027,7 @@ export default function Results() {
                 </p>
                 <p>
                   <span className="font-semibold text-[#2D2D2D]">Umbral Mínimo:</span> En elecciones generales se
-                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 7%.
+                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 4%.
                 </p>
                 <p>
                   <span className="font-semibold text-[#2D2D2D]">Actualización:</span> Los resultados se actualizan
