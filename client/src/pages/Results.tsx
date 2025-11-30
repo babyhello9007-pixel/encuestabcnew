@@ -22,6 +22,8 @@ import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
+import YouthAssociationsMap from "@/components/results/YouthAssociationsMap";
+import YouthAssociationsHemicycle from "@/components/results/YouthAssociationsHemicycle";
 import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
 import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
@@ -58,6 +60,7 @@ export default function Results() {
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo">("general");
+  const [youthSubTab, setYouthSubTab] = useState<"resumen" | "mapa">("resumen");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -509,7 +512,7 @@ export default function Results() {
   }, []);
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
-  const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 50 : 0;
+  const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
 
   const exportToCSV = () => {
     const headers = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Porcentaje de Escaños'];
@@ -745,8 +748,34 @@ export default function Results() {
               </div>
             )}
 
-            <div className="space-y-4">
-              {stats.length > 0 && (
+            {activeTab === "youth" && (
+              <div className="flex gap-2 mb-4 border-b border-[#E0D5CC]">
+                <button
+                  onClick={() => setYouthSubTab("resumen")}
+                  className={`pb-4 px-4 font-semibold transition-colors ${
+                    youthSubTab === "resumen"
+                      ? "text-[#C41E3A] border-b-2 border-[#C41E3A] -mb-[2px]"
+                      : "text-[#666666] hover:text-[#2D2D2D]"
+                  }`}
+                >
+                  Resumen
+                </button>
+                <button
+                  onClick={() => setYouthSubTab("mapa")}
+                  className={`pb-4 px-4 font-semibold transition-colors ${
+                    youthSubTab === "mapa"
+                      ? "text-[#C41E3A] border-b-2 border-[#C41E3A] -mb-[2px]"
+                      : "text-[#666666] hover:text-[#2D2D2D]"
+                  }`}
+                >
+                  Mapa y Hemiciclo
+                </button>
+              </div>
+            )}
+
+            {activeTab === "youth" && youthSubTab === "resumen" && (
+              <div className="space-y-4">
+                {stats.length > 0 && (
                 (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
                   // Buscar el logo en PARTIES_GENERAL o YOUTH_ASSOCIATIONS basándose en el nombre
                   let logoUrl = party.logo;
@@ -827,7 +856,15 @@ export default function Results() {
                 );
                 })
               )}
-            </div>
+              </div>
+            )}
+
+            {activeTab === "youth" && youthSubTab === "mapa" && (
+              <div className="space-y-6">
+                <YouthAssociationsMap activeTab={activeTab} />
+                <YouthAssociationsHemicycle activeTab={activeTab} />
+              </div>
+            )}
 
             <>
             {activeTab === "tendencias" && (
@@ -845,6 +882,7 @@ export default function Results() {
             {activeTab === "comparacion-ccaa" && (
               <CCAAComparisonSection />
             )}
+
             {activeTab === "mapa-hemiciclo" && (
               <div className="space-y-4">
                 {Object.keys(votosPorProvincia).length > 0 ? (
@@ -1027,7 +1065,7 @@ export default function Results() {
                 </p>
                 <p>
                   <span className="font-semibold text-[#2D2D2D]">Umbral Mínimo:</span> En elecciones generales se
-                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 7%.
+                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 4%.
                 </p>
                 <p>
                   <span className="font-semibold text-[#2D2D2D]">Actualización:</span> Los resultados se actualizan
