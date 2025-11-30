@@ -383,4 +383,8 @@
 - [x] Modificar handleProvinceClick para usar función correcta según tipo
 - [x] Actualizar Results.tsx para pasar isYouthAssociations={true} al mapa juvenil
 - [x] Verificar que Asociaciones Juveniles distribuya 100 escaños correctamente
-- [x] Guardar checkpoint con corrección de escaños juveniles
+- [x] Actualizar distribución de circunscripciones: Salamanca 7, todas las provincias mínimo 1 escaño
+- [x] Agregar prop isYouthAssociations a SpainMapProvincial.tsx
+- [x] Actualizar Results.tsx para pasar isYouthAssociations={true} al mapa esquemático
+- [x] Verificar que ambos mapas (esquemático y realista) distribuyan 100 escaños
+- [x] Guardar checkpoint con corrección de escaños juveniles y circunscripciones

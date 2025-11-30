@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getPartyColor } from '@/lib/partyConfig';
 import { PARTIES_GENERAL } from '@/lib/surveyData';
-import { getEscanosPorProvincia, calcularEscanosProvincia } from '@/lib/dhondtByProvince';
+import { getEscanosPorProvincia, calcularEscanosProvincia, calcularEscanosJuvenilesProvincia } from '@/lib/dhondtByProvince';
 import { VerifySeatsModal } from '@/components/VerifySeatsModal';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Grid3x3, Map } from 'lucide-react';
@@ -16,6 +16,7 @@ interface ProvinceData {
 interface SpainMapProvincialProps {
   votosPorProvincia: Record<string, Record<string, number>>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
+  isYouthAssociations?: boolean;  // true para Asociaciones Juveniles, false para Elecciones Generales
 }
 
 // Coordenadas aproximadas del centroide de cada provincia para el mapa realista
@@ -79,6 +80,7 @@ const provinceCoordinates: { [key: string]: { x: number; y: number } } = {
 export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
   votosPorProvincia,
   onProvinceClick,
+  isYouthAssociations = false,
 }) => {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -116,7 +118,10 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
 
   // Función para calcular escaños por provincia usando Ley d'Hondt correcta
   const calcularEscanosPorProvinciaCorrecta = (provincia: string, votos: Record<string, number>): Record<string, number> => {
-    return calcularEscanosProvincia(provincia, votos);
+    // Usar la función correcta según el tipo de elección
+    return isYouthAssociations
+      ? calcularEscanosJuvenilesProvincia(provincia, votos)
+      : calcularEscanosProvincia(provincia, votos);
   };
 
   const handleProvinceClick = (province: string) => {

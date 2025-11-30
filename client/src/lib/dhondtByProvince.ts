@@ -127,8 +127,8 @@ export function calcularEscanosJuvenilesPorProvincia(
 
   // Distribución de 100 escaños entre provincias
   // Total: 100 escaños
-  // Salamanca: 5 escaños (especial)
-  // Resto distribuido proporcionalmente
+  // Salamanca: 7 escaños (especial)
+  // Todas las provincias tienen mínimo 1 escaño
   const ESCANOS_JUVENILES_POR_PROVINCIA: Record<string, number> = {
     'Madrid': 12,
     'Barcelona': 10,
@@ -171,7 +171,7 @@ export function calcularEscanosJuvenilesPorProvincia(
     'Lugo': 1,
     'Ourense': 1,
     'Palencia': 1,
-    'Salamanca': 5,  // ESPECIAL: 5 escaños para Salamanca
+    'Salamanca': 7,  // ESPECIAL: 7 escaños para Salamanca
     'Segovia': 1,
     'Soria': 1,
     'Teruel': 1,
@@ -249,7 +249,7 @@ export function calcularEscanosJuvenilesProvincia(
     'Lugo': 1,
     'Ourense': 1,
     'Palencia': 1,
-    'Salamanca': 5,
+    'Salamanca': 7,  // ESPECIAL: 7 escaños para Salamanca
     'Segovia': 1,
     'Soria': 1,
     'Teruel': 1,
