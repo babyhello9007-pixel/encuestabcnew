@@ -231,6 +231,113 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     displayName: "Otros"
   },
 
+  // Asociaciones Juveniles
+  "S'ha Acabat!": {
+    color: "#FF6600",
+    logo: "🟠",
+    displayName: "S'ha Acabat!"
+  },
+  "Revuelta": {
+    color: "#6B1B47",
+    logo: "🟣",
+    displayName: "Revuelta"
+  },
+  "Nuevas Generaciones del PP": {
+    color: "#0066CC",
+    logo: "🔵",
+    displayName: "NNGG"
+  },
+  "Jóvenes de VOX": {
+    color: "#24AA3D",
+    logo: "🟢",
+    displayName: "JVOX"
+  },
+  "Voces Libres España (VLE)": {
+    color: "#FFD700",
+    logo: "🟡",
+    displayName: "VLE"
+  },
+  "Juventudes Socialistas de España": {
+    color: "#E81828",
+    logo: "🔴",
+    displayName: "JSE"
+  },
+  "Acción Patriota": {
+    color: "#FF0000",
+    logo: "🔴",
+    displayName: "Patriota"
+  },
+  "Juventudes de Izquierda Unida": {
+    color: "#CC0000",
+    logo: "🔴",
+    displayName: "JIU"
+  },
+  "Juventudes Comunistas": {
+    color: "#CC0000",
+    logo: "🔴",
+    displayName: "JCOMUNISTA"
+  },
+  "Jóvenes de Ciudadanos": {
+    color: "#FF9900",
+    logo: "🟠",
+    displayName: "JCS"
+  },
+  "EGI": {
+    color: "#00AA44",
+    logo: "🟢",
+    displayName: "EGI"
+  },
+  "Ernai": {
+    color: "#00AA44",
+    logo: "🟢",
+    displayName: "Ernai"
+  },
+  "Joventuts d'Esquerra Republicana de Catalunya": {
+    color: "#FFC400",
+    logo: "🟡",
+    displayName: "JERC"
+  },
+  "Joventut Nacionalista de Catalunya": {
+    color: "#003D99",
+    logo: "🔷",
+    displayName: "JNC"
+  },
+  "Galiza Nova": {
+    color: "#003D99",
+    logo: "🔷",
+    displayName: "Galiza Nova"
+  },
+  "Arran": {
+    color: "#00AA44",
+    logo: "🟢",
+    displayName: "Arran"
+  },
+  "Jóvenes Nacionalistas de Canarias": {
+    color: "#FFCC00",
+    logo: "🟡",
+    displayName: "JNCANA"
+  },
+  "Joves del País Valencià – Compromís": {
+    color: "#FF9900",
+    logo: "🟠",
+    displayName: "JPV"
+  },
+  "Acción Castilla y León": {
+    color: "#FFD700",
+    logo: "🟡",
+    displayName: "ACL"
+  },
+  "Juventud Estudiante Católica": {
+    color: "#0066CC",
+    logo: "🔵",
+    displayName: "JEC"
+  },
+  "ÁGORA Canarias": {
+    color: "#FFCC00",
+    logo: "🟡",
+    displayName: "ÁGORA"
+  },
+
 };
 
 /**

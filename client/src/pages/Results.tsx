@@ -712,16 +712,6 @@ export default function Results() {
                 Comparar CCAA
               </button>
               <button
-                onClick={() => setActiveTab("asoc-juv-mapa-hemiciclo")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
-                  activeTab === "asoc-juv-mapa-hemiciclo"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
-                }`}
-              >
-                ASOC. JUV. : MAPA Y HEMICICLO
-              </button>
-              <button
                 onClick={() => setActiveTab("youth")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
                   activeTab === "youth"
@@ -729,7 +719,17 @@ export default function Results() {
                     : "text-[#666666] hover:text-[#2D2D2D]"
                 }`}
               >
-                Asociaciones Juveniles
+                Asociaciones
+              </button>
+              <button
+                onClick={() => setActiveTab("asoc-juv-mapa-hemiciclo")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "asoc-juv-mapa-hemiciclo"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Asoc. Juveniles; Mapa y Hemiciclo
               </button>
               <button
                 onClick={() => setActiveTab("leaders")}
