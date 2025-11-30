@@ -395,3 +395,18 @@
 - [x] Corregir línea 148 para usar isYouthAssociations y seleccionar función correcta
 - [x] Verificar que popup de Salamanca muestre 7 escaños correctamente
 - [x] Verificar que popup de Asociaciones Juveniles distribuya 100 escaños correctamente
+
+
+## Agregar Botones de Ordenamiento en Asociaciones Juveniles - COMPLETADO
+- [x] Agregar estado sortBy en Results.tsx para Asociaciones Juveniles
+- [x] Crear botones "Votos" y "Escaños" en sección de Asociaciones
+- [x] Implementar lógica de ordenamiento por votos y escaños
+- [x] Mantener consistencia visual con botones de Elecciones Generales
+
+## Sugerencias de Mejoras Futuras
+- [ ] Agregar análisis de segmentación demográfica por provincia (edad e ideología)
+- [ ] Implementar sistema de notificaciones para cambios significativos en resultados
+- [ ] Crear página de comparativa histórica si hay datos de encuestas anteriores
+- [ ] Agregar filtros avanzados en página de resultados (por CCAA, provincia, rango de edad)
+- [ ] Implementar exportación de datos en Excel/CSV con análisis detallados
+- [ ] Crear dashboard de administrador con estadísticas de participación

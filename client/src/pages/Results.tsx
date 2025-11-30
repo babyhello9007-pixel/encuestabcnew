@@ -780,7 +780,7 @@ export default function Results() {
 
 
 
-            {activeTab === "general" && (
+            {(activeTab === "general" || activeTab === "youth") && (
               <div className="flex gap-2 mb-4">
                 <Button
                   onClick={() => setSortBy('votos')}
@@ -794,7 +794,7 @@ export default function Results() {
                   variant={sortBy === 'escanos' ? 'default' : 'outline'}
                   className="text-sm"
                 >
-                  Ordenar por Escanos
+                  Ordenar por Escaños
                 </Button>
               </div>
             )}
