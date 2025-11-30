@@ -7,12 +7,24 @@ export function TwitterFeed() {
     script.src = "https://platform.twitter.com/widgets.js";
     script.async = true;
     script.charset = "utf-8";
-    document.body.appendChild(script);
+    script.id = "twitter-widgets-script"; // Agregar ID único
+    
+    // Verificar si el script ya existe para evitar duplicados
+    const existingScript = document.getElementById("twitter-widgets-script");
+    if (!existingScript) {
+      document.body.appendChild(script);
+    }
 
     return () => {
       // Limpiar el script cuando el componente se desmonte
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
+      try {
+        const scriptToRemove = document.getElementById("twitter-widgets-script");
+        if (scriptToRemove && document.body.contains(scriptToRemove)) {
+          document.body.removeChild(scriptToRemove);
+        }
+      } catch (error) {
+        // Silenciar errores de removeChild
+        console.warn("Error al remover script de Twitter:", error);
       }
     };
   }, []);
@@ -51,4 +63,3 @@ export function TwitterFeed() {
     </section>
   );
 }
-

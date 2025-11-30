@@ -121,7 +121,7 @@ function drawTable(
 
 export async function exportPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null
@@ -264,7 +264,7 @@ async function getMetricsFromViews(activeTab: "general" | "youth"): Promise<Reco
 
 export async function downloadPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null

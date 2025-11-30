@@ -236,8 +236,8 @@ function SurveyOld() {
           <div className="space-y-3">
             {currentQuestion.type === "radio" && currentQuestion.options && (
               <div className="space-y-2">
-                {getFilteredProvinces().map((option) => {
-                  const isOtrosSelected = option === 'Otros' && (responses[currentQuestion.fieldName] === 'Otros' || (typeof responses[currentQuestion.fieldName] === 'string' && responses[currentQuestion.fieldName].startsWith('Otros:')));
+                {currentQuestion.options?.map((option) => {
+                  const isOtrosSelected = option === 'Otros' && (responses[currentQuestion.fieldName] === 'Otros' || (typeof responses[currentQuestion.fieldName] === 'string' && (responses[currentQuestion.fieldName] as string).startsWith('Otros:')));
                   return (
                     <div key={option}>
                       <label className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-white hover:bg-opacity-50 transition">
@@ -255,8 +255,14 @@ function SurveyOld() {
                         <input
                           type="text"
                           placeholder="Especifica tu opción..."
-                          value={typeof responses[currentQuestion.fieldName] === 'string' && responses[currentQuestion.fieldName].startsWith('Otros:') ? responses[currentQuestion.fieldName].substring(6) : ''}
-                          onChange={(e) => handleAnswer(e.target.value ? `Otros: ${e.target.value}` : 'Otros')}
+                          value={(() => {
+                            const val = responses[currentQuestion.fieldName];
+                            if (typeof val === 'string' && val.startsWith('Otros:')) {
+                              return val.substring(6);
+                            }
+                            return '';
+                          })()}
+                          onChange={(e) => handleAnswer(e.target.value ? `Otros: ${e.target.value}` : 'Otros:')}
                           className="w-full mt-2 ml-7 p-3 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#C41E3A] box-border overflow-hidden"
                         />
                       )}

@@ -37,7 +37,7 @@ INSERT INTO public.partidos_generales (id, nombre_completo, escanos, logo_path) 
 ('PLIB', 'P-Lib', 0, '/assets/icons/plib.jpg'),
 ('EB', 'Escaños en Blanco', 0, '/assets/icons/EscañosEnBlanco.png'),
 ('BNG', 'Bloque Nacionalista Galego', 0, '/assets/icons/bng.png'),
-('OTROS', 'Otros', 0, '/assets/icons/otro.png')
+
 ON CONFLICT (id) DO NOTHING;
 
 -- Insertar datos de asociaciones juveniles
@@ -64,7 +64,7 @@ INSERT INTO public.asociaciones_juveniles (id, nombre_completo, escanos, logo_pa
 ('JEC', 'Juventud Estudiante Católica', 0, '/assets/icons/JuventudEstudianteCatólica.jpg'),
 ('AGORA', 'ÁGORA Canarias', 0, '/assets/icons/agora.png'),
 ('GENOP', 'Generación Operativa', 0, '/assets/icons/GeneracionOperativa.webp'),
-('OTROS', 'Otros', 0, '/assets/icons/otro.png')
+
 ON CONFLICT (id) DO NOTHING;
 
 -- Crear índices para mejorar rendimiento

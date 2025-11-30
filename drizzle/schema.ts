@@ -80,3 +80,30 @@ export const blogPosts = mysqlTable("blog_posts", {
 
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
+// Tabla de respuestas de encuestas
+export const respuestas = mysqlTable("respuestas", {
+  id: int("id").autoincrement().primaryKey(),
+  edad: int("edad"),
+  provincia: varchar("provincia", { length: 100 }),
+  ccaa: varchar("ccaa", { length: 100 }),
+  nacionalidad: varchar("nacionalidad", { length: 100 }),
+  voto_generales: varchar("voto_generales", { length: 100 }),
+  voto_autonomicas: varchar("voto_autonomicas", { length: 100 }),
+  voto_municipales: varchar("voto_municipales", { length: 100 }),
+  voto_europeas: varchar("voto_europeas", { length: 100 }),
+  nota_ejecutivo: int("nota_ejecutivo"),
+  val_feijoo: int("val_feijoo"),
+  val_sanchez: int("val_sanchez"),
+  val_abascal: int("val_abascal"),
+  val_alvise: int("val_alvise"),
+  val_yolanda_diaz: int("val_yolanda_diaz"),
+  val_irene_montero: int("val_irene_montero"),
+  val_ayuso: int("val_ayuso"),
+  val_buxade: int("val_buxade"),
+  voto_asociacion_juvenil: varchar("voto_asociacion_juvenil", { length: 255 }),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Respuesta = typeof respuestas.$inferSelect;
+export type InsertRespuesta = typeof respuestas.$inferInsert;

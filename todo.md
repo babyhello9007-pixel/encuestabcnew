@@ -349,3 +349,13 @@
 - [x] Cuando se selecciona "Otro": mostrar input de texto y limpiar el campo
 - [x] Cuando se deselecciona "Otro": ocultar input y guardar la nueva opción
 - [x] Probar funcionamiento en navegador
+
+## Actualización de Colores de Partidos Políticos - NUEVO
+- [x] Actualizar colores de todos los partidos en partyConfig.ts
+- [x] Agregar colores para partidos con 0 escaños (PACMA, CUP, Adelante Andalucía, etc.)
+- [x] Mejorar función getPartyConfig para búsqueda por coincidencia parcial
+- [x] Verificar que el mapa muestre los colores correctos de cada partido
+
+
+## BUGS REPORTADOS - URGENTE
+- [x] Error "NotFoundError: removeChild" en versión publicada (UE) - CORREGIDO en TwitterFeed.tsx

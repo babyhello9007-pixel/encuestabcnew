@@ -26,7 +26,7 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     displayName: "PSOE"
   },
   "Ciudadanos": {
-    color: "#FF6600",
+    color: "#FF9900",
     logo: "🟠",
     displayName: "Ciudadanos"
   },
@@ -45,15 +45,20 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "🟣",
     displayName: "UP"
   },
+  "SUMAR": {
+    color: "#EE5A24",
+    logo: "🟠",
+    displayName: "SUMAR"
+  },
 
   // Partidos nacionalistas catalanes
   "ERC": {
-    color: "#FFCC00",
+    color: "#FFD700",
     logo: "🟡",
     displayName: "ERC"
   },
   "Esquerra Republicana de Catalunya": {
-    color: "#FFCC00",
+    color: "#FFD700",
     logo: "🟡",
     displayName: "ERC"
   },
@@ -94,6 +99,11 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "🔴",
     displayName: "EH Bildu"
   },
+  "Ezker Nazionala": {
+    color: "#FF0000",
+    logo: "🔴",
+    displayName: "Ezker Nazionala"
+  },
 
   // Partidos nacionalistas gallegos
   "BNG": {
@@ -107,12 +117,7 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     displayName: "BNG"
   },
 
-  // Otros partidos
-  "SUMAR": {
-    color: "#FF00FF",
-    logo: "🟣",
-    displayName: "SUMAR"
-  },
+  // Partidos canarios
   "Coalición Canaria": {
     color: "#FFCC00",
     logo: "🟡",
@@ -123,23 +128,30 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "🟡",
     displayName: "CC"
   },
+  "UPL": {
+    color: "#FFCC00",
+    logo: "🟡",
+    displayName: "UPL"
+  },
+
+  // Otros partidos
   "Frente Obrero": {
-    color: "#FF0000",
+    color: "#8B0000",
     logo: "🔴",
     displayName: "Frente Obrero"
   },
   "Se Acabó La Fiesta": {
-    color: "#FF6600",
-    logo: "🟠",
+    color: "#FF1493",
+    logo: "🌸",
     displayName: "Se Acabó La Fiesta"
   },
   "SALF": {
-    color: "#FF6600",
-    logo: "🟠",
+    color: "#FF1493",
+    logo: "🌸",
     displayName: "Se Acabó La Fiesta"
   },
   "Escaños en Blanco": {
-    color: "#999999",
+    color: "#808080",
     logo: "⚪",
     displayName: "Escaños en Blanco"
   },
@@ -148,18 +160,33 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "🔴",
     displayName: "Izquierda Española"
   },
+  "Izquierda Unida": {
+    color: "#FF0000",
+    logo: "🔴",
+    displayName: "Izquierda Unida"
+  },
   "Caminando Juntos": {
-    color: "#0099FF",
-    logo: "🔵",
+    color: "#9370DB",
+    logo: "🟣",
     displayName: "Caminando Juntos"
   },
+  "Falange": {
+    color: "#8B0000",
+    logo: "🔴",
+    displayName: "Falange"
+  },
   "Falange Española de las JONS": {
-    color: "#0066CC",
-    logo: "🔵",
+    color: "#8B0000",
+    logo: "🔴",
     displayName: "Falange Española"
   },
   "Soberanía y Trabajo": {
-    color: "#FF0000",
+    color: "#8B0000",
+    logo: "🔴",
+    displayName: "Soberanía y Trabajo"
+  },
+  "Soberanía y Trabajo.": {
+    color: "#8B0000",
     logo: "🔴",
     displayName: "Soberanía y Trabajo"
   },
@@ -168,16 +195,42 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "🟡",
     displayName: "P-Lib"
   },
+  "P-lib": {
+    color: "#FFD700",
+    logo: "🟡",
+    displayName: "P-lib"
+  },
+  "PACMA": {
+    color: "#00AA44",
+    logo: "🟢",
+    displayName: "PACMA"
+  },
+  "Comunión Tradicionalista": {
+    color: "#8B0000",
+    logo: "🔴",
+    displayName: "Comunión Tradicionalista"
+  },
+  "CUP": {
+    color: "#FF6600",
+    logo: "🟠",
+    displayName: "CUP"
+  },
+  "Adelante Andalucía": {
+    color: "#FF0000",
+    logo: "🔴",
+    displayName: "Adelante Andalucía"
+  },
+  "UPN": {
+    color: "#0066CC",
+    logo: "🔵",
+    displayName: "UPN"
+  },
   "Otros": {
     color: "#CCCCCC",
     logo: "⚫",
     displayName: "Otros"
   },
-  "OTROS_VOTOS": {
-    color: "#CCCCCC",
-    logo: "⚫",
-    displayName: "Otros"
-  }
+
 };
 
 /**
@@ -186,7 +239,23 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
  * @returns Configuración del partido o configuración por defecto
  */
 export function getPartyConfig(partyName: string): PartyConfig {
-  return PARTY_CONFIG[partyName] || {
+  // Búsqueda exacta
+  if (PARTY_CONFIG[partyName]) {
+    return PARTY_CONFIG[partyName];
+  }
+
+  // Búsqueda por coincidencia parcial (case-insensitive)
+  const lowerName = partyName.toLowerCase();
+  for (const [key, config] of Object.entries(PARTY_CONFIG)) {
+    if (key.toLowerCase() === lowerName || 
+        key.toLowerCase().includes(lowerName) ||
+        lowerName.includes(key.toLowerCase())) {
+      return config;
+    }
+  }
+
+  // Configuración por defecto
+  return {
     color: "#999999",
     logo: "⚫",
     displayName: partyName

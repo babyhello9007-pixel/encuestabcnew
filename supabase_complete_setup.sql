@@ -38,8 +38,7 @@ INSERT INTO public.partidos_generales (id, nombre_completo, nombre_corto, logo_u
 ('JUNTOS_EXT', 'Juntos por Extremadura', 'JPE', '/assets/icons/juntosporextremadura.png'),
 ('PLIB', 'P-Lib', 'P-Lib', '/assets/icons/plib.jpg'),
 ('EB', 'Escaños en Blanco', 'EB', '/assets/icons/EscañosEnBlanco.png'),
-('BNG', 'Bloque Nacionalista Galego', 'BNG', '/assets/icons/bng.png'),
-('OTROS', 'Otros', 'Otros', '/assets/icons/otro.png')
+('BNG', 'Bloque Nacionalista Galego', 'BNG', '/assets/icons/bng.png')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
@@ -79,8 +78,7 @@ INSERT INTO public.asociaciones_juveniles (id, nombre_completo, nombre_corto, lo
 ('ACL', 'Acción Castilla y León', 'ACL', '/assets/icons/AcciónCastillayLeón.png'),
 ('JEC', 'Juventud Estudiante Católica', 'JEC', '/assets/icons/JuventudEstudianteCatólica.jpg'),
 ('AGORA', 'ÁGORA Canarias', 'AGORA', '/assets/icons/agora.png'),
-('GENOP', 'Generación Operativa', 'GENOP', '/assets/icons/GeneracionOperativa.webp'),
-('OTROS', 'Otros', 'Otros', '/assets/icons/otro.png')
+('GENOP', 'Generación Operativa', 'GENOP', '/assets/icons/GeneracionOperativa.webp')
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================

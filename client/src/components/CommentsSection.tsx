@@ -8,11 +8,11 @@ interface Comment {
   texto: string;
   likes: number;
   created_at: string;
-  tab: "general" | "youth";
+  tab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo";
 }
 
 interface CommentsSectionProps {
-  activeTab: "general" | "youth";
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo";
 }
 
 export function CommentsSection({ activeTab }: CommentsSectionProps) {

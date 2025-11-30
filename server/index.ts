@@ -33,6 +33,32 @@ async function startServer() {
     next();
   });
 
+  // Endpoint para eliminar OTROS_VOTOS
+  app.post("/api/cleanup-otros-votos", async (req, res) => {
+    try {
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = 'https://hlhzxxeqfznwutgkdvdp.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsaHp4eGVxZnpud3V0Z2tkdmRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMzkxMTEsImV4cCI6MjA3NjkxNTExMX0.PQD752L7jIc-XH76BkqI5owpGFW3QA_TIIe7zYCq7HQ';
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      // Eliminar registros de OTROS_VOTOS
+      const { error } = await supabase
+        .from('votos_generales')
+        .delete()
+        .eq('partido_id', 'OTROS_VOTOS');
+      
+      if (error) {
+        console.error('Error eliminando OTROS_VOTOS:', error);
+        res.status(500).json({ error: error.message });
+      } else {
+        res.json({ success: true, message: 'OTROS_VOTOS eliminado correctamente' });
+      }
+    } catch (err) {
+      console.error('Error en cleanup:', err);
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   // Middleware 2: Serve index.html for client-side routing
   // This handles all non-file routes (like /resultados, /encuesta, etc.)
   app.get("*", (_req, res) => {
