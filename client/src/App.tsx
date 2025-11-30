@@ -4,12 +4,38 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { initFavicon } from "./lib/faviconLoader";
 import Home from "./pages/Home";
+import { useEffect } from "react";
+import Survey from "./pages/Survey";
+import NanoEncuestaBC from "./pages/NanoEncuestaBC";
+import Results from "./pages/Results";
+import About from "./pages/About";
+import Admin from "./pages/Admin";
+import CodeEditor from "./pages/CodeEditor";
+import LeaderSurvey from "./pages/LeaderSurvey";
+import Bio from "./pages/Bio";
+import Blog from "./pages/Blog";
+import AdminBlogLogin from "./pages/AdminBlogLogin";
+import DiscordCallback from "./pages/DiscordCallback";
 
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/encuesta"} component={Survey} />
+      <Route path={"/nano-encuesta"} component={NanoEncuestaBC} />
+      <Route path={"/lideres"} component={LeaderSurvey} />
+      <Route path={"/resultados"} component={Results} />
+      <Route path={"/acerca-de"} component={About} />
+      <Route path={"/admin"} component={Admin} />
+      <Route path={"/editor"} component={CodeEditor} />
+      <Route path={"/bio"} component={Bio} />
+      <Route path={"/blog"} component={Blog} />
+      <Route path={"/auth/discord/callback"} component={DiscordCallback} />
+      <Route path={"/admin/blog/login"} component={AdminBlogLogin} />
+      <Route path={"/admin/blog"} component={AdminBlogLogin} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -17,18 +43,15 @@ function Router() {
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
+  useEffect(() => {
+    // Forzar carga del favicon al montar la aplicación
+    initFavicon();
+  }, []);
+
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />
@@ -39,3 +62,4 @@ function App() {
 }
 
 export default App;
+

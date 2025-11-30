@@ -1,0 +1,20 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS nano_encuesta_respuestas (\n  id BIGSERIAL PRIMARY KEY,\n  edad VARCHAR(255),\n  provincia VARCHAR(255),\n  comunidad_autonoma VARCHAR(255),\n  nacionalidad VARCHAR(255),\n  voto_generales VARCHAR(255),\n  voto_autonomicas VARCHAR(255),\n  voto_municipales VARCHAR(255),\n  voto_europeas VARCHAR(255),\n  nota_ejecutivo INTEGER,\n  valoracion_feijoo INTEGER,\n  valoracion_sanchez INTEGER,\n  valoracion_abascal INTEGER,\n  valoracion_alvise INTEGER,\n  valoracion_yolanda INTEGER,\n  valoracion_irene INTEGER,\n  valoracion_ayuso INTEGER,\n  valoracion_buxade INTEGER,\n  asociacion_juvenil VARCHAR(255),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);\n\nALTER TABLE nano_encuesta_respuestas ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Anyone can insert nano survey responses\" ON nano_encuesta_respuestas\n  FOR INSERT WITH CHECK (true);\n\nCREATE POLICY \"Anyone can view nano survey responses\" ON nano_encuesta_respuestas\n  FOR SELECT USING (true);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute \nCREATE TABLE IF NOT EXISTS nano_encuesta_respuestas (\n  id BIGSERIAL PRIMARY KEY,\n  edad VARCHAR(255),\n  provincia VARCHAR(255),\n  comunidad_autonoma VARCHAR(255),\n  nacionalidad VARCHAR(255),\n  voto_generales VARCHAR(255),\n  voto_autonomicas VARCHAR(255),\n  voto_municipales VARCHAR(255),\n  voto_europeas VARCHAR(255),\n  nota_ejecutivo INTEGER,\n  valoracion_feijoo INTEGER,\n  valoracion_sanchez INTEGER,\n  valoracion_abascal INTEGER,\n  valoracion_alvise INTEGER,\n  valoracion_yolanda INTEGER,\n  valoracion_irene INTEGER,\n  valoracion_ayuso INTEGER,\n  valoracion_buxade INTEGER,\n  asociacion_juvenil VARCHAR(255),\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);\n\nALTER TABLE nano_encuesta_respuestas ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Anyone can insert nano survey responses\" ON nano_encuesta_respuestas\n  FOR INSERT WITH CHECK (true);\n\nCREATE POLICY \"Anyone can view nano survey responses\" ON nano_encuesta_respuestas\n  FOR SELECT USING (true);\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 2: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 2 column 15 near \"BIGSERIAL PRIMARY KEY,",
+    "  edad VARCHAR(255),",
+    "  provincia VARCHAR(255),",
+    "  comunidad_autonoma VARCHAR(255),",
+    "  nacionalidad VARCHAR(255),",
+    "  voto_generales VARCHAR(255),",
+    "  voto_autonomicas VARCHAR(255),",
+    "  voto_municipales VARCHAR(255),",
+    "  voto_europeas VARCHAR(255),",
+    "  nota_ejecutivo INTEGER,",
+    "  valoracion_feijoo INTEGER,",
+    "  valoracion_sanchez INTEGER,",
+    "  valoracion_abascal"
+  ]
+}

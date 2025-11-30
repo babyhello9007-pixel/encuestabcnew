@@ -1,0 +1,8 @@
+{
+  "query": "CREATE OR REPLACE VIEW votos_por_provincia AS\nSELECT \n  provincia,\n  voto_generales as partido,\n  COUNT(*) as votos\nFROM respuestas\nWHERE provincia IS NOT NULL \n  AND voto_generales IS NOT NULL\nGROUP BY provincia, voto_generales\nORDER BY provincia, votos DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute CREATE OR REPLACE VIEW votos_por_provincia AS\nSELECT \n  provincia,\n  voto_generales as partido,\n  COUNT(*) as votos\nFROM respuestas\nWHERE provincia IS NOT NULL \n  AND voto_generales IS NOT NULL\nGROUP BY provincia, voto_generales\nORDER BY provincia, votos DESC;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table '6q57y6UztfVwNZmMTCKcdt.respuestas' doesn't exist"
+  ]
+}

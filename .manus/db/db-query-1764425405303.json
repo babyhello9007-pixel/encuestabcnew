@@ -1,0 +1,270 @@
+{
+  "query": "DROP TABLE IF EXISTS escanos_provincias;\n\nCREATE TABLE escanos_provincias (\n  id SERIAL PRIMARY KEY,\n  provincia VARCHAR(100) NOT NULL,\n  escanos SMALLINT NOT NULL\n);\n\nINSERT INTO escanos_provincias (provincia, escanos) VALUES\n('Madrid', 37),\n('Barcelona', 32),\n('Valencia', 16),\n('Sevilla', 12),\n('Alicante', 12),\n('Málaga', 11),\n('Murcia', 10),\n('Cádiz', 9),\n('A Coruña', 8),\n('Las Palmas', 8),\n('Bizkaia', 8),\n('Illes Balears', 8),\n('Zaragoza', 7),\n('Santa Cruz de Tenerife', 7),\n('Asturias', 7),\n('Granada', 7),\n('Pontevedra', 7),\n('Almería', 6),\n('Córdoba', 6),\n('Gipuzkoa', 6),\n('Girona', 6),\n('Tarragona', 6),\n('Toledo', 6),\n('Badajoz', 5),\n('Cantabria', 5),\n('Castellón', 5),\n('Ciudad Real', 5),\n('Huelva', 5),\n('Jaén', 5),\n('Navarra', 5),\n('Valladolid', 5),\n('Álava', 4),\n('Albacete', 4),\n('Burgos', 4),\n('Cáceres', 4),\n('La Rioja', 4),\n('León', 4),\n('Lleida', 4),\n('Lugo', 4),\n('Ourense', 4),\n('Salamanca', 4),\n('Ávila', 3),\n('Cuenca', 3),\n('Guadalajara', 3),\n('Huesca', 3),\n('Palencia', 3),\n('Segovia', 3),\n('Teruel', 3),\n('Zamora', 3),\n('Soria', 2),\n('Ceuta', 1),\n('Melilla', 1);\n\nSELECT * FROM escanos_provincias ORDER BY provincia;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute DROP TABLE IF EXISTS escanos_provincias;\n\nCREATE TABLE escanos_provincias (\n  id SERIAL PRIMARY KEY,\n  provincia VARCHAR(100) NOT NULL,\n  escanos SMALLINT NOT NULL\n);\n\nINSERT INTO escanos_provincias (provincia, escanos) VALUES\n('Madrid', 37),\n('Barcelona', 32),\n('Valencia', 16),\n('Sevilla', 12),\n('Alicante', 12),\n('Málaga', 11),\n('Murcia', 10),\n('Cádiz', 9),\n('A Coruña', 8),\n('Las Palmas', 8),\n('Bizkaia', 8),\n('Illes Balears', 8),\n('Zaragoza', 7),\n('Santa Cruz de Tenerife', 7),\n('Asturias', 7),\n('Granada', 7),\n('Pontevedra', 7),\n('Almería', 6),\n('Córdoba', 6),\n('Gipuzkoa', 6),\n('Girona', 6),\n('Tarragona', 6),\n('Toledo', 6),\n('Badajoz', 5),\n('Cantabria', 5),\n('Castellón', 5),\n('Ciudad Real', 5),\n('Huelva', 5),\n('Jaén', 5),\n('Navarra', 5),\n('Valladolid', 5),\n('Álava', 4),\n('Albacete', 4),\n('Burgos', 4),\n('Cáceres', 4),\n('La Rioja', 4),\n('León', 4),\n('Lleida', 4),\n('Lugo', 4),\n('Ourense', 4),\n('Salamanca', 4),\n('Ávila', 3),\n('Cuenca', 3),\n('Guadalajara', 3),\n('Huesca', 3),\n('Palencia', 3),\n('Segovia', 3),\n('Teruel', 3),\n('Zamora', 3),\n('Soria', 2),\n('Ceuta', 1),\n('Melilla', 1);\n\nSELECT * FROM escanos_provincias ORDER BY provincia;",
+  "rows": [
+    {
+      "id": "9",
+      "provincia": "A Coruña",
+      "escanos": "8"
+    },
+    {
+      "id": "33",
+      "provincia": "Albacete",
+      "escanos": "4"
+    },
+    {
+      "id": "5",
+      "provincia": "Alicante",
+      "escanos": "12"
+    },
+    {
+      "id": "18",
+      "provincia": "Almería",
+      "escanos": "6"
+    },
+    {
+      "id": "15",
+      "provincia": "Asturias",
+      "escanos": "7"
+    },
+    {
+      "id": "24",
+      "provincia": "Badajoz",
+      "escanos": "5"
+    },
+    {
+      "id": "2",
+      "provincia": "Barcelona",
+      "escanos": "32"
+    },
+    {
+      "id": "11",
+      "provincia": "Bizkaia",
+      "escanos": "8"
+    },
+    {
+      "id": "34",
+      "provincia": "Burgos",
+      "escanos": "4"
+    },
+    {
+      "id": "25",
+      "provincia": "Cantabria",
+      "escanos": "5"
+    },
+    {
+      "id": "26",
+      "provincia": "Castellón",
+      "escanos": "5"
+    },
+    {
+      "id": "51",
+      "provincia": "Ceuta",
+      "escanos": "1"
+    },
+    {
+      "id": "27",
+      "provincia": "Ciudad Real",
+      "escanos": "5"
+    },
+    {
+      "id": "43",
+      "provincia": "Cuenca",
+      "escanos": "3"
+    },
+    {
+      "id": "35",
+      "provincia": "Cáceres",
+      "escanos": "4"
+    },
+    {
+      "id": "8",
+      "provincia": "Cádiz",
+      "escanos": "9"
+    },
+    {
+      "id": "19",
+      "provincia": "Córdoba",
+      "escanos": "6"
+    },
+    {
+      "id": "20",
+      "provincia": "Gipuzkoa",
+      "escanos": "6"
+    },
+    {
+      "id": "21",
+      "provincia": "Girona",
+      "escanos": "6"
+    },
+    {
+      "id": "16",
+      "provincia": "Granada",
+      "escanos": "7"
+    },
+    {
+      "id": "44",
+      "provincia": "Guadalajara",
+      "escanos": "3"
+    },
+    {
+      "id": "28",
+      "provincia": "Huelva",
+      "escanos": "5"
+    },
+    {
+      "id": "45",
+      "provincia": "Huesca",
+      "escanos": "3"
+    },
+    {
+      "id": "12",
+      "provincia": "Illes Balears",
+      "escanos": "8"
+    },
+    {
+      "id": "29",
+      "provincia": "Jaén",
+      "escanos": "5"
+    },
+    {
+      "id": "36",
+      "provincia": "La Rioja",
+      "escanos": "4"
+    },
+    {
+      "id": "10",
+      "provincia": "Las Palmas",
+      "escanos": "8"
+    },
+    {
+      "id": "37",
+      "provincia": "León",
+      "escanos": "4"
+    },
+    {
+      "id": "38",
+      "provincia": "Lleida",
+      "escanos": "4"
+    },
+    {
+      "id": "39",
+      "provincia": "Lugo",
+      "escanos": "4"
+    },
+    {
+      "id": "1",
+      "provincia": "Madrid",
+      "escanos": "37"
+    },
+    {
+      "id": "52",
+      "provincia": "Melilla",
+      "escanos": "1"
+    },
+    {
+      "id": "7",
+      "provincia": "Murcia",
+      "escanos": "10"
+    },
+    {
+      "id": "6",
+      "provincia": "Málaga",
+      "escanos": "11"
+    },
+    {
+      "id": "30",
+      "provincia": "Navarra",
+      "escanos": "5"
+    },
+    {
+      "id": "40",
+      "provincia": "Ourense",
+      "escanos": "4"
+    },
+    {
+      "id": "46",
+      "provincia": "Palencia",
+      "escanos": "3"
+    },
+    {
+      "id": "17",
+      "provincia": "Pontevedra",
+      "escanos": "7"
+    },
+    {
+      "id": "41",
+      "provincia": "Salamanca",
+      "escanos": "4"
+    },
+    {
+      "id": "14",
+      "provincia": "Santa Cruz de Tenerife",
+      "escanos": "7"
+    },
+    {
+      "id": "47",
+      "provincia": "Segovia",
+      "escanos": "3"
+    },
+    {
+      "id": "4",
+      "provincia": "Sevilla",
+      "escanos": "12"
+    },
+    {
+      "id": "50",
+      "provincia": "Soria",
+      "escanos": "2"
+    },
+    {
+      "id": "22",
+      "provincia": "Tarragona",
+      "escanos": "6"
+    },
+    {
+      "id": "48",
+      "provincia": "Teruel",
+      "escanos": "3"
+    },
+    {
+      "id": "23",
+      "provincia": "Toledo",
+      "escanos": "6"
+    },
+    {
+      "id": "3",
+      "provincia": "Valencia",
+      "escanos": "16"
+    },
+    {
+      "id": "31",
+      "provincia": "Valladolid",
+      "escanos": "5"
+    },
+    {
+      "id": "49",
+      "provincia": "Zamora",
+      "escanos": "3"
+    },
+    {
+      "id": "13",
+      "provincia": "Zaragoza",
+      "escanos": "7"
+    },
+    {
+      "id": "32",
+      "provincia": "Álava",
+      "escanos": "4"
+    },
+    {
+      "id": "42",
+      "provincia": "Ávila",
+      "escanos": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tprovincia\tescanos\n9\tA Coruña\t8\n33\tAlbacete\t4\n5\tAlicante\t12\n18\tAlmería\t6\n15\tAsturias\t7\n24\tBadajoz\t5\n2\tBarcelona\t32\n11\tBizkaia\t8\n34\tBurgos\t4\n25\tCantabria\t5\n26\tCastellón\t5\n51\tCeuta\t1\n27\tCiudad Real\t5\n43\tCuenca\t3\n35\tCáceres\t4\n8\tCádiz\t9\n19\tCórdoba\t6\n20\tGipuzkoa\t6\n21\tGirona\t6\n16\tGranada\t7\n44\tGuadalajara\t3\n28\tHuelva\t5\n45\tHuesca\t3\n12\tIlles Balears\t8\n29\tJaén\t5\n36\tLa Rioja\t4\n10\tLas Palmas\t8\n37\tLeón\t4\n38\tLleida\t4\n39\tLugo\t4\n1\tMadrid\t37\n52\tMelilla\t1\n7\tMurcia\t10\n6\tMálaga\t11\n30\tNavarra\t5\n40\tOurense\t4\n46\tPalencia\t3\n17\tPontevedra\t7\n41\tSalamanca\t4\n14\tSanta Cruz de Tenerife\t7\n47\tSegovia\t3\n4\tSevilla\t12\n50\tSoria\t2\n22\tTarragona\t6\n48\tTeruel\t3\n23\tToledo\t6\n3\tValencia\t16\n31\tValladolid\t5\n49\tZamora\t3\n13\tZaragoza\t7\n32\tÁlava\t4\n42\tÁvila\t3\n",
+  "stderr": "",
+  "execution_time_ms": 246
+}
