@@ -359,3 +359,4 @@
 
 ## BUGS REPORTADOS - URGENTE
 - [x] Error "NotFoundError: removeChild" en versión publicada (UE) - CORREGIDO en TwitterFeed.tsx
+- [x] Error de verificación de rol en Discord OAuth para admin/blog - CORREGIDO: Configurado DISCORD_BOT_TOKEN
