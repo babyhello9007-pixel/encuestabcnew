@@ -6,6 +6,7 @@ import { getPartyColor } from '@/lib/partyConfig';
 interface ProvincePopupProps {
   provinceName: string;
   votos: Record<string, number>;
+  escanos?: Record<string, number>;
   edadPromedio?: number;
   ideologiaPromedio?: number;
 }
@@ -13,6 +14,7 @@ interface ProvincePopupProps {
 export const ProvincePopup: React.FC<ProvincePopupProps> = ({
   provinceName,
   votos,
+  escanos = {},
   edadPromedio,
   ideologiaPromedio,
 }) => {
@@ -57,6 +59,7 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
           {votosOrdenados.map(([partido, votos]) => {
             const porcentaje = totalVotos > 0 ? ((votos / totalVotos) * 100).toFixed(1) : '0.0';
             const color = getPartyColor(partido) || '#999999';
+            const escanosPartido = escanos[partido] || 0;
 
             return (
               <div key={partido} className="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
@@ -88,9 +91,14 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
                   </div>
                 </div>
 
-                {/* Votos */}
-                <div className="text-right flex-shrink-0">
-                  <p className="text-xs font-bold text-gray-900">{votos}</p>
+                {/* Votos y Escaños */}
+                <div className="text-right flex-shrink-0 flex flex-col items-end gap-0.5">
+                  <p className="text-xs font-bold text-gray-900">{votos} votos</p>
+                  {escanosPartido > 0 && (
+                    <p className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                      {escanosPartido} esc.
+                    </p>
+                  )}
                 </div>
               </div>
             );

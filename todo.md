@@ -367,3 +367,12 @@
 - [x] Implementar Ley d'Hondt con umbral del 4% para Asociaciones Juveniles
 - [x] Verificar que el cálculo de escaños sea correcto
 - [x] Guardar checkpoint con corrección de escaños para Asociaciones Juveniles
+
+
+## URGENTE: Corrección de Visualización de Escaños en Mapas - CRÍTICO
+- [x] Investigar por qué ProvincePopup no muestra escaños (solo votos)
+- [x] Corregir componente ProvincePopup para calcular y mostrar escaños por partido
+- [x] Verificar que SpainMapRealistic/SpainMapProvincial pasen datos de escaños
+- [x] Corregir mapa de Elecciones Generales (mostrar escaños en popup)
+- [x] Corregir mapa de Asociaciones Juveniles (mostrar escaños en popup)
+- [x] Probar ambos mapas: click en provincia debe mostrar votos Y escaños

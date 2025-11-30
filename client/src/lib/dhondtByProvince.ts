@@ -199,3 +199,67 @@ export function calcularEscanosJuvenilesPorProvincia(
 
   return escanosTotal;
 }
+
+/**
+ * Calcula escaños juveniles para una provincia específica
+ */
+export function calcularEscanosJuvenilesProvincia(
+  provincia: string,
+  votos: Record<string, number>
+): Record<string, number> {
+  const ESCANOS_JUVENILES_POR_PROVINCIA: Record<string, number> = {
+    'Madrid': 12,
+    'Barcelona': 10,
+    'Valencia': 6,
+    'Sevilla': 4,
+    'Alicante': 4,
+    'Málaga': 4,
+    'Murcia': 4,
+    'Cádiz': 3,
+    'A Coruña': 3,
+    'Las Palmas': 3,
+    'Bizkaia': 3,
+    'Illes Balears': 3,
+    'Zaragoza': 3,
+    'Santa Cruz de Tenerife': 3,
+    'Asturias': 3,
+    'Granada': 3,
+    'Pontevedra': 3,
+    'Almería': 2,
+    'Córdoba': 2,
+    'Gipuzkoa': 2,
+    'Girona': 2,
+    'Tarragona': 2,
+    'Toledo': 2,
+    'Badajoz': 1,
+    'Cantabria': 1,
+    'Castellón': 1,
+    'Ciudad Real': 1,
+    'Huelva': 1,
+    'Jaén': 1,
+    'Navarra': 1,
+    'Valladolid': 1,
+    'Álava': 1,
+    'Albacete': 1,
+    'Burgos': 1,
+    'Cáceres': 1,
+    'La Rioja': 1,
+    'León': 1,
+    'Lleida': 1,
+    'Lugo': 1,
+    'Ourense': 1,
+    'Palencia': 1,
+    'Salamanca': 5,
+    'Segovia': 1,
+    'Soria': 1,
+    'Teruel': 1,
+    'Ávila': 1,
+    'Cuenca': 1,
+    'Guadalajara': 1,
+    'Huesca': 1,
+    'Zamora': 1,
+  };
+  
+  const escanosEnProvincia = ESCANOS_JUVENILES_POR_PROVINCIA[provincia] || 0;
+  return calcularEscanosDHondt(votos, escanosEnProvincia, 4);
+}

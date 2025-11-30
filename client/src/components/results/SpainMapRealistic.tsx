@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { getPartyColor } from '@/lib/partyConfig';
 import { spanishToGeoJson, geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 import { ProvincePopup } from './ProvincePopup';
+import { calcularEscanosProvincia } from '@/lib/dhondtByProvince';
 
 interface ProvinceData {
   name: string;
@@ -81,8 +82,9 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   const handleProvinceClick = (provinceName: string) => {
     const data = getProvinceData(provinceName);
     const votos = votosPorProvincia[provinceName] || {};
+    const escanos = calcularEscanosProvincia(provinceName, votos);
     setSelectedProvince(provinceName);
-    onProvinceClick?.(provinceName, data, votos, {});
+    onProvinceClick?.(provinceName, data, votos, escanos);
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
@@ -138,12 +140,14 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
     const metrics = provinciaMetricsMap[spanishProvinceName];
     const totalVotos = Object.values(data.votos).reduce((a, b) => a + b, 0);
+    const escanos = calcularEscanosProvincia(spanishProvinceName, data.votos);
 
     // Crear popup con componente mejorado
     const popupContent = (
       <ProvincePopup
         provinceName={spanishProvinceName}
         votos={data.votos}
+        escanos={escanos}
         edadPromedio={metrics?.edad_promedio}
         ideologiaPromedio={metrics?.ideologia_promedio}
       />
@@ -183,6 +187,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
               .slice(0, 10)
               .map(([partido, votos]) => {
                 const porcentaje = totalVotos > 0 ? ((votos / totalVotos) * 100).toFixed(1) : '0.0';
+                const escanosPartido = escanos[partido] || 0;
                 return `
                   <div class="flex items-center gap-2 p-2 bg-gray-50 rounded">
                     <div class="flex-1 min-w-0">
@@ -194,8 +199,9 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
                         <span class="text-xs font-bold text-gray-700 w-10 text-right">${porcentaje}%</span>
                       </div>
                     </div>
-                    <div class="text-right flex-shrink-0">
-                      <p class="text-xs font-bold text-gray-900">${votos}</p>
+                    <div class="text-right flex-shrink-0 flex flex-col items-end gap-0.5">
+                      <p class="text-xs font-bold text-gray-900">${votos} votos</p>
+                      ${escanosPartido > 0 ? `<p class="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">${escanosPartido} esc.</p>` : ''}
                     </div>
                   </div>
                 `;
