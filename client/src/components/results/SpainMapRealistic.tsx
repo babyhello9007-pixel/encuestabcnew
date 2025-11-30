@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { getPartyColor } from '@/lib/partyConfig';
 import { spanishToGeoJson, geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 import { ProvincePopup } from './ProvincePopup';
-import { calcularEscanosProvincia } from '@/lib/dhondtByProvince';
+import { calcularEscanosProvincia, calcularEscanosJuvenilesProvincia } from '@/lib/dhondtByProvince';
 
 interface ProvinceData {
   name: string;
@@ -18,12 +18,14 @@ interface SpainMapRealisticProps {
   votosPorProvincia: Record<string, Record<string, number>>;
   provinciaMetricsMap?: Record<string, { edad_promedio: number; ideologia_promedio: number }>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
+  isYouthAssociations?: boolean;  // true para Asociaciones Juveniles, false para Elecciones Generales
 }
 
 export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   votosPorProvincia,
   provinciaMetricsMap = {},
   onProvinceClick,
+  isYouthAssociations = false,
 }) => {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +84,10 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   const handleProvinceClick = (provinceName: string) => {
     const data = getProvinceData(provinceName);
     const votos = votosPorProvincia[provinceName] || {};
-    const escanos = calcularEscanosProvincia(provinceName, votos);
+    // Usar la función correcta según el tipo de elección
+    const escanos = isYouthAssociations 
+      ? calcularEscanosJuvenilesProvincia(provinceName, votos)
+      : calcularEscanosProvincia(provinceName, votos);
     setSelectedProvince(provinceName);
     onProvinceClick?.(provinceName, data, votos, escanos);
   };

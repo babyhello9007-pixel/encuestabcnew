@@ -376,3 +376,11 @@
 - [x] Corregir mapa de Elecciones Generales (mostrar escaños en popup)
 - [x] Corregir mapa de Asociaciones Juveniles (mostrar escaños en popup)
 - [x] Probar ambos mapas: click en provincia debe mostrar votos Y escaños
+
+## Corrección de Escaños de Asociaciones Juveniles - COMPLETADO
+- [x] Investigar problema de distribución de 350 escaños en lugar de 100
+- [x] Agregar prop isYouthAssociations a SpainMapRealistic.tsx
+- [x] Modificar handleProvinceClick para usar función correcta según tipo
+- [x] Actualizar Results.tsx para pasar isYouthAssociations={true} al mapa juvenil
+- [x] Verificar que Asociaciones Juveniles distribuya 100 escaños correctamente
+- [x] Guardar checkpoint con corrección de escaños juveniles

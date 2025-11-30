@@ -946,6 +946,7 @@ export default function Results() {
                         <SpainMapRealistic 
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           provinciaMetricsMap={provinciaMetricsMapJuveniles}
+                          isYouthAssociations={true}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionadaJuveniles(province);
                             setVotosPorPartidoProvinciaJuveniles(votos);
@@ -1020,6 +1021,7 @@ export default function Results() {
                         <SpainMapRealistic 
                           votosPorProvincia={votosPorProvincia}
                           provinciaMetricsMap={provinciaMetricsMap}
+                          isYouthAssociations={false}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);
