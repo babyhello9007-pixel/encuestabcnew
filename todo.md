@@ -388,3 +388,10 @@
 - [x] Actualizar Results.tsx para pasar isYouthAssociations={true} al mapa esquemático
 - [x] Verificar que ambos mapas (esquemático y realista) distribuyan 100 escaños
 - [x] Guardar checkpoint con corrección de escaños juveniles y circunscripciones
+
+
+## Bug Fix - Escaños Incorrectos en Popup del Mapa de Asociaciones Juveniles - COMPLETADO
+- [x] Identificar que SpainMapRealistic.tsx usaba calcularEscanosProvincia() siempre (línea 148)
+- [x] Corregir línea 148 para usar isYouthAssociations y seleccionar función correcta
+- [x] Verificar que popup de Salamanca muestre 7 escaños correctamente
+- [x] Verificar que popup de Asociaciones Juveniles distribuya 100 escaños correctamente

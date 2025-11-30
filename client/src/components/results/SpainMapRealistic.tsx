@@ -145,7 +145,9 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
     const metrics = provinciaMetricsMap[spanishProvinceName];
     const totalVotos = Object.values(data.votos).reduce((a, b) => a + b, 0);
-    const escanos = calcularEscanosProvincia(spanishProvinceName, data.votos);
+    const escanos = isYouthAssociations
+      ? calcularEscanosJuvenilesProvincia(spanishProvinceName, data.votos)
+      : calcularEscanosProvincia(spanishProvinceName, data.votos);
 
     // Crear popup con componente mejorado
     const popupContent = (
