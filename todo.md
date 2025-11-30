@@ -360,3 +360,10 @@
 ## BUGS REPORTADOS - URGENTE
 - [x] Error "NotFoundError: removeChild" en versión publicada (UE) - CORREGIDO en TwitterFeed.tsx
 - [x] Error de verificación de rol en Discord OAuth para admin/blog - CORREGIDO: Configurado DISCORD_BOT_TOKEN
+
+## Corrección de Distribución de Escaños para Asociaciones Juveniles - NUEVO
+- [x] Actualizar tabla de escaños por provincia para Asociaciones Juveniles (100 escaños totales)
+- [x] Asignar 5 escaños específicamente a Salamanca
+- [x] Implementar Ley d'Hondt con umbral del 4% para Asociaciones Juveniles
+- [x] Verificar que el cálculo de escaños sea correcto
+- [x] Guardar checkpoint con corrección de escaños para Asociaciones Juveniles
