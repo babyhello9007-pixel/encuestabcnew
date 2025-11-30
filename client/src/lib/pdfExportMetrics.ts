@@ -264,7 +264,7 @@ async function getMetricsFromViews(activeTab: "general" | "youth"): Promise<Reco
 
 export async function downloadPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null

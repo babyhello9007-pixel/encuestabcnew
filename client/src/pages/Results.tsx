@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from '@/lib/surveyData';
 import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
+import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
 import { Loader2, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
@@ -22,7 +24,6 @@ import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
-import { calcularEscanosGeneralesPorProvincia } from "@/lib/dhondtByProvince";
 import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
 
@@ -57,7 +58,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -73,6 +74,12 @@ export default function Results() {
   const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
   const [sortBy, setSortBy] = useState<'votos' | 'escanos'>('votos');
   const [mapView, setMapView] = useState<'schematic' | 'realistic'>('realistic');
+  const [votosPorProvinciaJuveniles, setVotosPorProvinciaJuveniles] = useState<Record<string, Record<string, number>>>({});
+  const [escanosJuvenilesPorProvincia, setEscanosJuvenilesPorProvincia] = useState<Record<string, number>>({});
+  const [provinciaSeleccionadaJuveniles, setProvinciaSeleccionadaJuveniles] = useState<string | null>(null);
+  const [votosPorPartidoProvinciaJuveniles, setVotosPorPartidoProvinciaJuveniles] = useState<Record<string, number>>({});
+  const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
+  const [provinciaMetricsMapJuveniles, setProvinciaMetricsMapJuveniles] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
 
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
 
@@ -90,6 +97,20 @@ export default function Results() {
       setGeneralStats(statsActualizados);
     }
   }, [votosPorProvincia]);
+
+  useEffect(() => {
+    if (Object.keys(votosPorProvinciaJuveniles).length > 0 && youthStats.length > 0) {
+      const escanos = calcularEscanosJuvenilesPorProvincia(votosPorProvinciaJuveniles);
+      setEscanosJuvenilesPorProvincia(escanos);
+      
+      // Actualizar youthStats con los escaños calculados por provincia
+      const statsActualizados = youthStats.map(stat => ({
+        ...stat,
+        escanos: escanos[stat.id] || 0
+      }));
+      setYouthStats(statsActualizados);
+    }
+  }, [votosPorProvinciaJuveniles]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -395,6 +416,30 @@ export default function Results() {
           setYouthStats(stats);
         }
 
+        // Cargar votos por provincia para asociaciones juveniles
+        try {
+          const { data: provinciaJuvenilData } = await supabase
+            .from("votos_por_provincia_juveniles_view")
+            .select("provincia, asociacion, votos");
+          
+          if (provinciaJuvenilData && provinciaJuvenilData.length > 0) {
+            const votosProvJuveniles: Record<string, Record<string, number>> = {};
+            
+            provinciaJuvenilData.forEach((row: any) => {
+              if (row.provincia && row.asociacion) {
+                if (!votosProvJuveniles[row.provincia]) {
+                  votosProvJuveniles[row.provincia] = {};
+                }
+                votosProvJuveniles[row.provincia][row.asociacion] = row.votos;
+              }
+            });
+            
+            setVotosPorProvinciaJuveniles(votosProvJuveniles);
+          }
+        } catch (err) {
+          console.error("Error fetching votos por provincia juveniles:", err);
+        }
+
         // Intentar usar el VIEW de valoraciones
         try {
           const { data: viewData } = await supabase
@@ -667,6 +712,16 @@ export default function Results() {
                 Comparar CCAA
               </button>
               <button
+                onClick={() => setActiveTab("asoc-juv-mapa-hemiciclo")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "asoc-juv-mapa-hemiciclo"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                ASOC. JUV. : MAPA Y HEMICICLO
+              </button>
+              <button
                 onClick={() => setActiveTab("youth")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
                   activeTab === "youth"
@@ -844,6 +899,80 @@ export default function Results() {
             )}
             {activeTab === "comparacion-ccaa" && (
               <CCAAComparisonSection />
+            )}
+            {activeTab === "asoc-juv-mapa-hemiciclo" && (
+              <div className="space-y-4">
+                {Object.keys(votosPorProvinciaJuveniles).length > 0 ? (
+                  <>
+                    <div className="liquid-glass p-4 rounded-2xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias - Asociaciones Juveniles</h2>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => setMapView('schematic')}
+                            variant={mapView === 'schematic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'schematic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Grid3x3 className="w-4 h-4" />
+                            Esquemática
+                          </Button>
+                          <Button
+                            onClick={() => setMapView('realistic')}
+                            variant={mapView === 'realistic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'realistic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Map className="w-4 h-4" />
+                            Realista
+                          </Button>
+                        </div>
+                      </div>
+                      {mapView === 'schematic' ? (
+                        <SpainMapProvincial 
+                          votosPorProvincia={votosPorProvinciaJuveniles}
+                          onProvinceClick={(province, data, votos, escanos) => {
+                            setProvinciaSeleccionadaJuveniles(province);
+                            setVotosPorPartidoProvinciaJuveniles(votos);
+                            setEscanosProvinciaJuveniles(escanos);
+                          }}
+                        />
+                      ) : (
+                        <SpainMapRealistic 
+                          votosPorProvincia={votosPorProvinciaJuveniles}
+                          provinciaMetricsMap={provinciaMetricsMapJuveniles}
+                          onProvinceClick={(province, data, votos, escanos) => {
+                            setProvinciaSeleccionadaJuveniles(province);
+                            setVotosPorPartidoProvinciaJuveniles(votos);
+                            setEscanosProvinciaJuveniles(escanos);
+                          }}
+                        />
+                      )}
+                    </div>
+                    
+                    <div className="liquid-glass p-4 rounded-2xl">
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo de Asociaciones Juveniles</h2>
+                      <CongressHemicycle 
+                        escanos={escanosJuvenilesPorProvincia}
+                        totalEscanos={100}
+                        provinciaSeleccionada={provinciaSeleccionadaJuveniles}
+                        votosProvincia={votosPorPartidoProvinciaJuveniles}
+                        escanosProvincia={escanosProvinciaJuveniles}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="liquid-glass p-8 rounded-2xl text-center">
+                    <p className="text-[#666666]">Cargando datos de provincias de Asociaciones Juveniles...</p>
+                  </div>
+                )}
+              </div>
             )}
             {activeTab === "mapa-hemiciclo" && (
               <div className="space-y-4">

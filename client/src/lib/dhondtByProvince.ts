@@ -114,3 +114,84 @@ export function calcularEscanosProvincia(
 export function getTotalEscanos(): number {
   return Object.values(ESCANOS_POR_PROVINCIA).reduce((a, b) => a + b, 0);
 }
+
+/**
+ * Calcula escaños juveniles por provincia
+ * Para asociaciones juveniles con 100 escaños totales
+ */
+export function calcularEscanosJuvenilesPorProvincia(
+  votosPorProvincia: Record<string, Record<string, number>>
+): Record<string, number> {
+  const escanosTotal: Record<string, number> = {};
+
+  // Distribución de 100 escaños entre provincias (proporcional a la población)
+  const ESCANOS_JUVENILES_POR_PROVINCIA: Record<string, number> = {
+    'Madrid': 11,
+    'Barcelona': 9,
+    'Valencia': 5,
+    'Sevilla': 3,
+    'Alicante': 3,
+    'Málaga': 3,
+    'Murcia': 3,
+    'Cádiz': 2,
+    'A Coruña': 2,
+    'Las Palmas': 2,
+    'Bizkaia': 2,
+    'Illes Balears': 2,
+    'Zaragoza': 2,
+    'Santa Cruz de Tenerife': 2,
+    'Asturias': 2,
+    'Granada': 2,
+    'Pontevedra': 2,
+    'Almería': 2,
+    'Córdoba': 2,
+    'Gipuzkoa': 2,
+    'Girona': 2,
+    'Tarragona': 2,
+    'Toledo': 2,
+    'Badajoz': 1,
+    'Cantabria': 1,
+    'Castellón': 1,
+    'Ciudad Real': 1,
+    'Huelva': 1,
+    'Jaén': 1,
+    'Navarra': 1,
+    'Valladolid': 1,
+    'Álava': 1,
+    'Albacete': 1,
+    'Burgos': 1,
+    'Cáceres': 1,
+    'La Rioja': 1,
+    'León': 1,
+    'Lleida': 1,
+    'Lugo': 1,
+    'Ourense': 1,
+    'Palencia': 1,
+    'Salamanca': 1,
+    'Segovia': 1,
+    'Soria': 1,
+    'Teruel': 1,
+    'Ávila': 1,
+    'Cuenca': 1,
+    'Guadalajara': 1,
+    'Huesca': 1,
+    'Zamora': 1,
+  };
+
+  // Procesar cada provincia
+  for (const [provincia, votosPartidos] of Object.entries(votosPorProvincia)) {
+    const escanosEnProvincia = ESCANOS_JUVENILES_POR_PROVINCIA[provincia] || 0;
+    
+    if (escanosEnProvincia === 0) continue;
+
+    // Aplicar Ley d'Hondt sin umbral para asociaciones juveniles
+    const escanosEnEstaProvincia = calcularEscanosDHondt(votosPartidos, escanosEnProvincia, 0);
+
+    // Agregar escaños al total nacional
+    for (const [asociacion, escanos] of Object.entries(escanosEnEstaProvincia)) {
+      escanosTotal[asociacion] = (escanosTotal[asociacion] || 0) + escanos;
+    }
+  }
+
+  return escanosTotal;
+}
