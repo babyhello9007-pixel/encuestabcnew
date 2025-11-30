@@ -130,8 +130,8 @@ export function calcularEscanosJuvenilesPorProvincia(
   // Salamanca: 7 escaños (especial)
   // Todas las provincias tienen mínimo 1 escaño
   const ESCANOS_JUVENILES_POR_PROVINCIA: Record<string, number> = {
-    'Madrid': 12,
-    'Barcelona': 10,
+    'Madrid': 11,
+    'Barcelona': 9,
     'Valencia': 6,
     'Sevilla': 4,
     'Alicante': 4,
@@ -180,6 +180,8 @@ export function calcularEscanosJuvenilesPorProvincia(
     'Guadalajara': 1,
     'Huesca': 1,
     'Zamora': 1,
+    'Ceuta': 1,
+    'Melilla': 1,
   };
 
   // Procesar cada provincia
@@ -208,8 +210,8 @@ export function calcularEscanosJuvenilesProvincia(
   votos: Record<string, number>
 ): Record<string, number> {
   const ESCANOS_JUVENILES_POR_PROVINCIA: Record<string, number> = {
-    'Madrid': 12,
-    'Barcelona': 10,
+    'Madrid': 11,
+    'Barcelona': 9,
     'Valencia': 6,
     'Sevilla': 4,
     'Alicante': 4,
@@ -258,6 +260,8 @@ export function calcularEscanosJuvenilesProvincia(
     'Guadalajara': 1,
     'Huesca': 1,
     'Zamora': 1,
+    'Ceuta': 1,
+    'Melilla': 1,
   };
   
   const escanosEnProvincia = ESCANOS_JUVENILES_POR_PROVINCIA[provincia] || 0;
