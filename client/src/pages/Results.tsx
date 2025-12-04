@@ -1011,12 +1011,12 @@ export default function Results() {
                       </div>
                       {mapView === 'schematic' ? (
                         <SpainMapProvincial 
-                          votosPorProvincia={votosPorProvinciaJuveniles}
-                          isYouthAssociations={true}
+                          votosPorProvincia={votosPorProvincia}
+                          isYouthAssociations={false}
                           onProvinceClick={(province, data, votos, escanos) => {
-                            setProvinciaSeleccionadaJuveniles(province);
-                            setVotosPorPartidoProvinciaJuveniles(votos);
-                            setEscanosProvinciaJuveniles(escanos);
+                            setProvinciaSeleccionada(province);
+                            setVotosPorPartidoProvincia(votos);
+                            setEscanosProvincia(escanos);
                           }}
                         />
                       ) : (

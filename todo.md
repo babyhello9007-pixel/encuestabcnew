@@ -318,10 +318,9 @@
 - [x] Integrar ruta /bio en App.tsx
 - [x] Probar página Bio en navegador
 - [x] Guardar checkpoint con página Bio
-
 ## Blog de BC - NUEVO
 - [x] Crear tabla blog_posts en Supabase
-- [x] Crear procedimientos tRPC para blog (crear, editar, eliminar, obtener)
+- [x] Crear procedimi...tos tRPC para blog (crear, editar, eliminar, obtener)
 - [x] Crear página pública /blog con listado de entradas
 - [x] Crear panel de administración /admin/blog
 - [x] Agregar enlace "El Blog de BC" en página Bio
@@ -410,3 +409,10 @@
 - [ ] Agregar filtros avanzados en página de resultados (por CCAA, provincia, rango de edad)
 - [ ] Implementar exportación de datos en Excel/CSV con análisis detallados
 - [ ] Crear dashboard de administrador con estadísticas de participación
+
+## Integración de Líderes en NanoEncuestaBC - NUEVO
+- [ ] Agregar pregunta 20 de valoración de líderes en NanoEncuestaBC
+- [ ] Filtrar líderes según partido votado en Elecciones Generales
+- [ ] Mostrar solo líderes relevantes del partido seleccionado
+- [ ] Mantener página original de líderes (/lideres) sin cambios
+- [ ] Guardar checkpoint con integración de líderes
