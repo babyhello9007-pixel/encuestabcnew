@@ -82,6 +82,7 @@
 - [x] Agregar enlace desde página principal a NanoEncuestaBC
 - [x] Crear página de agradecimiento post-NanoEncuestaBC
 - [x] Agregar validación obligatoria en NanoEncuestaBC - todas las preguntas requeridas antes de enviar
+- [x] Pregunta 20 de líderes integrada en NanoEncuestaBC (enviando a lideres_preferidos)
 
 ## Reorganización de Líderes - COMPLETADO
 - [x] Mover botón PDF a sección Compartir Resultados

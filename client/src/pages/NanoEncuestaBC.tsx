@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { normalizeProvinceName } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
+import { getLeaderOptions } from "@/lib/leadersData";
 import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 import Footer from "@/components/Footer";
 
@@ -30,6 +31,7 @@ interface NanoSurveyResponse {
   valoracion_buxade?: number;
   posicion_ideologica?: number;
   asociacion_juvenil?: string;
+  lider_partido?: string;
   created_at?: string;
 }
 
@@ -41,6 +43,7 @@ export default function NanoEncuestaBC() {
   const [showThankYou, setShowThankYou] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [showOtroInput, setShowOtroInput] = useState(false);
+  const [showCustomLeaderInput, setShowCustomLeaderInput] = useState(false);
   const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -64,6 +67,7 @@ export default function NanoEncuestaBC() {
     { title: "Valoración: Jorge Buxadé", key: "valoracion_buxade", type: "slider" },
     { title: "Tu Posición Ideológica", key: "posicion_ideologica", type: "buttons" },
     { title: "Asociación Juvenil", key: "asociacion_juvenil", type: "select" },
+    { title: "Líder de tu Partido", key: "lider_partido", type: "leader" },
   ];
 
   const currentStepData = steps[currentStep];
@@ -193,7 +197,8 @@ export default function NanoEncuestaBC() {
       'valoracion_ayuso',
       'valoracion_buxade',
       'posicion_ideologica',
-      'asociacion_juvenil'
+      'asociacion_juvenil',
+      'lider_partido'
     ];
 
     const missingFields = requiredFields.filter(field => {
@@ -212,8 +217,6 @@ export default function NanoEncuestaBC() {
 
     setIsSubmitting(true);
     try {
-      // Enviar datos tal como están, sin procesar
-      // Esto es idéntico a cómo Survey.tsx maneja los datos
       const dataToSubmit = {
         edad: responses.edad ? parseInt(responses.edad) : 18,
         provincia: normalizeProvinceName(responses.provincia) || null,
@@ -241,10 +244,24 @@ export default function NanoEncuestaBC() {
       if (error) {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
         console.error(error);
-      } else {
-        setShowThankYou(true);
-        toast.success("¡Gracias por tu participación!");
+        setIsSubmitting(false);
+        return;
       }
+
+      if (responses.lider_partido) {
+        const { error: leaderError } = await supabase.from("lideres_preferidos").insert({
+          partido: responses.voto_generales || null,
+          lider_preferido: responses.lider_partido,
+          es_personalizado: !getLeaderOptions(responses.voto_generales || "").some(l => l.name === responses.lider_partido),
+        });
+
+        if (leaderError) {
+          console.error("Error al guardar preferencia de lider:", leaderError);
+        }
+      }
+
+      setShowThankYou(true);
+      toast.success("¡Gracias por tu participación!");
     } catch (error) {
       toast.error("Error al enviar la encuesta");
       console.error(error);
@@ -473,6 +490,67 @@ export default function NanoEncuestaBC() {
                     <span className="text-lg font-bold text-primary">{responses[currentStepData.key as keyof NanoSurveyResponse] || '-'}</span>
                     <span>Derecha</span>
                   </div>
+                </div>
+              )}
+
+              {currentStepData.type === "leader" && responses.voto_generales && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Selecciona el lider que prefieres para <strong>{responses.voto_generales}</strong>
+                  </p>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {getLeaderOptions(responses.voto_generales).map((leader) => {
+                      const isSelected = responses.lider_partido === leader.name;
+                      const partyData = Object.values(PARTIES_GENERAL).find(p => p.name === responses.voto_generales);
+                      const partyColor = partyData?.color || '#C41E3A';
+                      
+                      return (
+                        <button
+                          key={leader.name}
+                          onClick={() => {
+                            handleAnswer(leader.name);
+                            setShowCustomLeaderInput(false);
+                          }}
+                          style={{
+                            borderColor: isSelected ? partyColor : '#d1d5db',
+                            backgroundColor: isSelected ? `${partyColor}15` : '#ffffff',
+                            color: isSelected ? partyColor : '#374151',
+                          }}
+                          className="w-full p-4 rounded-lg border-2 transition-all text-left font-medium hover:shadow-md"
+                        >
+                          {leader.name}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => setShowCustomLeaderInput(!showCustomLeaderInput)}
+                      style={{
+                        borderColor: showCustomLeaderInput ? '#9333ea' : '#d1d5db',
+                        backgroundColor: showCustomLeaderInput ? '#9333ea15' : '#ffffff',
+                        color: showCustomLeaderInput ? '#9333ea' : '#374151',
+                      }}
+                      className="w-full p-4 rounded-lg border-2 transition-all text-left font-medium hover:shadow-md"
+                    >
+                      + Otro (especificar)
+                    </button>
+                  </div>
+                  {showCustomLeaderInput && (
+                    <input
+                      type="text"
+                      placeholder="Escribe el nombre del lider..."
+                      value={responses.lider_partido?.toString() || ""}
+                      onChange={(e) => handleAnswer(e.target.value)}
+                      className="input-modern w-full border-primary"
+                    />
+                  )}
+                </div>
+              )}
+
+              {currentStepData.type === "leader" && !responses.voto_generales && (
+                <div className="p-6 bg-yellow-50 border-2 border-yellow-200 rounded-lg text-center">
+                  <p className="text-yellow-800 font-semibold">
+                    Por favor, selecciona primero tu voto en Elecciones Generales para ver los lideres disponibles.
+                  </p>
                 </div>
               )}
             </div>
