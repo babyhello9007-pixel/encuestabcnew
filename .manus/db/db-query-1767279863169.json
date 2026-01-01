@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO encuestas_externas (encuestadora_id, tipo_encuesta, ambito, fecha_publicacion, tamano_muestra, margen_error) \nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 1 DAY), 1000, 3 FROM encuestadoras WHERE nombre = 'Centro de Investigaciones Sociológicas'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 2 DAY), 900, 3 FROM encuestadoras WHERE nombre = 'Metroscopia'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 3 DAY), 1100, 3 FROM encuestadoras WHERE nombre = 'GAD3'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 4 DAY), 950, 3 FROM encuestadoras WHERE nombre = 'Sigma Dos'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 1 DAY), 1050, 3 FROM encuestadoras WHERE nombre = 'DYM';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute INSERT INTO encuestas_externas (encuestadora_id, tipo_encuesta, ambito, fecha_publicacion, tamano_muestra, margen_error) \nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 1 DAY), 1000, 3 FROM encuestadoras WHERE nombre = 'Centro de Investigaciones Sociológicas'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 2 DAY), 900, 3 FROM encuestadoras WHERE nombre = 'Metroscopia'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 3 DAY), 1100, 3 FROM encuestadoras WHERE nombre = 'GAD3'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 4 DAY), 950, 3 FROM encuestadoras WHERE nombre = 'Sigma Dos'\nUNION ALL\nSELECT id, 'Generales', 'Nacional', DATE_SUB(NOW(), INTERVAL 1 DAY), 1050, 3 FROM encuestadoras WHERE nombre = 'DYM';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 70
+}

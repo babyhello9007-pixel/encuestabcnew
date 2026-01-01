@@ -550,13 +550,13 @@
 - [ ] Guardar checkpoint con integración de encuestadoras
 
 
-## Integración de Encuestadoras Externas - EN PROGRESO
+## Integración de Encuestadoras Externas - COMPLETADO
 - [x] Crear botón "Encuestadoras" en página de Resultados
 - [x] Integrar componentes EncuestadorasGrid y EncuestasExternasTable
 - [x] Crear endpoint API para poblar encuestadoras
-- [ ] Poblar tabla encuestadoras con datos reales (CIS, Metroscopia, GAD3, etc.)
-- [ ] Poblar tabla encuestas_externas con encuestas de ejemplo
-- [ ] Agregar #LaEncuestaBC como encuestadora especial con credibilidad 100
-- [ ] Verificar que los componentes muestren datos correctamente
-- [ ] Probar visualización de logos de encuestadoras
-- [ ] Guardar checkpoint con encuestadoras integradas
+- [x] Poblar tabla encuestadoras con datos reales (CIS, Metroscopia, GAD3, etc.)
+- [x] Poblar tabla encuestas_externas con encuestas de ejemplo
+- [x] Agregar #LaEncuestaBC como encuestadora especial con credibilidad 100
+- [x] Verificar que los componentes muestren datos correctamente
+- [x] Probar visualización de logos de encuestadoras
+- [x] Guardar checkpoint con encuestadoras integradas

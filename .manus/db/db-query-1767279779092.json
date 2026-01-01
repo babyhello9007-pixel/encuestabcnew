@@ -1,0 +1,66 @@
+{
+  "query": "DESCRIBE encuestadoras;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute DESCRIBE encuestadoras;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "nombre",
+      "Type": "varchar(100)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "sigla",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "pais",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "España",
+      "Extra": ""
+    },
+    {
+      "Field": "sitio_web",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "credibilidad",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "50",
+      "Extra": ""
+    },
+    {
+      "Field": "created_at",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\nnombre\tvarchar(100)\tNO\tUNI\tNULL\t\nsigla\tvarchar(20)\tYES\tUNI\tNULL\t\npais\tvarchar(50)\tYES\t\tEspaña\t\nsitio_web\ttext\tYES\t\tNULL\t\ncredibilidad\tint(11)\tYES\t\t50\t\ncreated_at\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\n",
+  "stderr": "",
+  "execution_time_ms": 103
+}

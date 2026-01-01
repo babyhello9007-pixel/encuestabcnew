@@ -1,0 +1,109 @@
+{
+  "query": "SELECT * FROM encuestadoras;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT * FROM encuestadoras;",
+  "rows": [
+    {
+      "id": "1",
+      "nombre": "Centro de Investigaciones Sociológicas",
+      "sigla": "CIS",
+      "pais": "España",
+      "sitio_web": "https://www.cis.es",
+      "credibilidad": "95",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "2",
+      "nombre": "Metroscopia",
+      "sigla": "Metroscopia",
+      "pais": "España",
+      "sitio_web": "https://www.metroscopia.org",
+      "credibilidad": "88",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "3",
+      "nombre": "GAD3",
+      "sigla": "GAD3",
+      "pais": "España",
+      "sitio_web": "https://www.gad3.com",
+      "credibilidad": "82",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "4",
+      "nombre": "Sigma Dos",
+      "sigla": "Sigma Dos",
+      "pais": "España",
+      "sitio_web": "https://www.sigmados.es",
+      "credibilidad": "85",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "5",
+      "nombre": "DYM",
+      "sigla": "DYM",
+      "pais": "España",
+      "sitio_web": "https://www.dym.es",
+      "credibilidad": "78",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "6",
+      "nombre": "Celeste-Tel",
+      "sigla": "Celeste-Tel",
+      "pais": "España",
+      "sitio_web": "https://www.celestetel.com",
+      "credibilidad": "75",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "7",
+      "nombre": "Invymark",
+      "sigla": "Invymark",
+      "pais": "España",
+      "sitio_web": "https://www.invymark.com",
+      "credibilidad": "72",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "8",
+      "nombre": "Electomania",
+      "sigla": "Electomania",
+      "pais": "España",
+      "sitio_web": "https://www.electomania.es",
+      "credibilidad": "70",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "9",
+      "nombre": "Sondea",
+      "sigla": "Sondea",
+      "pais": "España",
+      "sitio_web": "https://www.sondea.es",
+      "credibilidad": "68",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "10",
+      "nombre": "Iop Consulting",
+      "sigla": "IOP",
+      "pais": "España",
+      "sitio_web": "https://www.iopconsulting.com",
+      "credibilidad": "65",
+      "created_at": "2026-01-01 15:03:09"
+    },
+    {
+      "id": "11",
+      "nombre": "La Encuesta de Batalla Cultural",
+      "sigla": "BC",
+      "pais": "España",
+      "sitio_web": "https://encuestabc.manus.space",
+      "credibilidad": "100",
+      "created_at": "2026-01-01 15:03:09"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnombre\tsigla\tpais\tsitio_web\tcredibilidad\tcreated_at\n1\tCentro de Investigaciones Sociológicas\tCIS\tEspaña\thttps://www.cis.es\t95\t2026-01-01 15:03:09\n2\tMetroscopia\tMetroscopia\tEspaña\thttps://www.metroscopia.org\t88\t2026-01-01 15:03:09\n3\tGAD3\tGAD3\tEspaña\thttps://www.gad3.com\t82\t2026-01-01 15:03:09\n4\tSigma Dos\tSigma Dos\tEspaña\thttps://www.sigmados.es\t85\t2026-01-01 15:03:09\n5\tDYM\tDYM\tEspaña\thttps://www.dym.es\t78\t2026-01-01 15:03:09\n6\tCeleste-Tel\tCeleste-Tel\tEspaña\thttps://www.celestetel.com\t75\t2026-01-01 15:03:09\n7\tInvymark\tInvymark\tEspaña\thttps://www.invymark.com\t72\t2026-01-01 15:03:09\n8\tElectomania\tElectomania\tEspaña\thttps://www.electomania.es\t70\t2026-01-01 15:03:09\n9\tSondea\tSondea\tEspaña\thttps://www.sondea.es\t68\t2026-01-01 15:03:09\n10\tIop Consulting\tIOP\tEspaña\thttps://www.iopconsulting.com\t65\t2026-01-01 15:03:09\n11\tLa Encuesta de Batalla Cultural\tBC\tEspaña\thttps://encuestabc.manus.space\t100\t2026-01-01 15:03:09\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
