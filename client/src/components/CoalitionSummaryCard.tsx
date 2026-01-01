@@ -18,6 +18,7 @@ interface CoalitionSummaryCardProps {
   onSaveCoalition?: (name: string) => void;
   onShareCoalition?: () => void;
   isVisible?: boolean;
+  fullHeight?: boolean;
 }
 
 // Colores de partidos
@@ -93,13 +94,13 @@ export default function CoalitionSummaryCard({
   };
 
   return (
-    <div className={`fixed bottom-6 right-6 z-40 transition-all duration-300 transform ${
+    <div className={`h-full flex flex-col transition-all duration-300 transform ${
       isAnimating ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
     }`}>
-      <Card className={`w-96 shadow-2xl border-2 ${
+      <Card className={`flex-1 shadow-2xl border-2 flex flex-col overflow-hidden ${
         hasMajority ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50'
       }`}>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 flex-1 overflow-y-auto">
           {/* Encabezado */}
           <div className="flex justify-between items-start">
             <div>

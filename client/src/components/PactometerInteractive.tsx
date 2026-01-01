@@ -243,8 +243,8 @@ export default function PactometerInteractive({
         </Card>
       </div>
 
-      {/* Tarjeta de resumen anclada a la derecha */}
-      <div className="w-96 flex-shrink-0 sticky top-20 h-fit">
+      {/* Tarjeta de resumen anclada a la derecha - ocupa toda la altura */}
+      <div className="w-96 flex-shrink-0 sticky top-0 h-screen flex flex-col">
         <CoalitionSummaryCard
           selectedParties={selectedPartiesData}
           totalSeats={totalSeats}
@@ -252,6 +252,7 @@ export default function PactometerInteractive({
           onSaveCoalition={handleSaveCoalition}
           onShareCoalition={handleShareCoalition}
           isVisible={showSummaryCard && selectedParties.length > 0}
+          fullHeight={true}
         />
       </div>
     </div>

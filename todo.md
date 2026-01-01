@@ -523,3 +523,4 @@
 - [x] Anclar CoalitionSummaryCard a la derecha de PactometerInteractive
 - [x] Reposicionar Pactómetro: Mapa → Pactómetro → Hemiciclo
 - [x] Verificar visualización correcta en todos los dispositivos
+- [x] Hacer que CoalitionSummaryCard ocupe toda la altura disponible
