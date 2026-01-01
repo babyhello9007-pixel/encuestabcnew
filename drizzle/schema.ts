@@ -107,3 +107,33 @@ export const respuestas = mysqlTable("respuestas", {
 
 export type Respuesta = typeof respuestas.$inferSelect;
 export type InsertRespuesta = typeof respuestas.$inferInsert;
+
+// Tabla de encuestas varias
+export const encuestasVarias = mysqlTable("encuestas_varias", {
+  id: int("id").autoincrement().primaryKey(),
+  questionNumber: int("question_number").notNull(),
+  questionText: text("question_text").notNull(),
+  optionO1: varchar("option_o1", { length: 255 }).notNull(),
+  optionO2: varchar("option_o2", { length: 255 }).notNull(),
+  optionOO: varchar("option_oo", { length: 255 }).notNull(),
+  votesO1: int("votes_o1").default(0).notNull(),
+  votesO2: int("votes_o2").default(0).notNull(),
+  votesOO: int("votes_oo").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EncuestaVaria = typeof encuestasVarias.$inferSelect;
+export type InsertEncuestaVaria = typeof encuestasVarias.$inferInsert;
+
+// Tabla de respuestas de encuestas varias
+export const respuestasEncuestasVarias = mysqlTable("respuestas_encuestas_varias", {
+  id: int("id").autoincrement().primaryKey(),
+  encuestaId: int("encuesta_id").notNull(),
+  questionNumber: int("question_number").notNull(),
+  selectedOption: varchar("selected_option", { length: 10 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type RespuestaEncuestaVaria = typeof respuestasEncuestasVarias.$inferSelect;
+export type InsertRespuestaEncuestaVaria = typeof respuestasEncuestasVarias.$inferInsert;

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Share2, X, Download, Image } from "lucide-react";
+import { Share2, X, Download, Image, MessageCircle, Send, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import { generateAdvancedInfographic } from "@/lib/pngExportAdvanced";
@@ -218,6 +218,47 @@ export function ShareResultsAdvanced({
     const text = generateShareText(selectedParty);
     navigator.clipboard.writeText(text);
     alert("Texto copiado al portapapeles. Descarga la infografia y pégala en Discord.");
+  };
+
+  const shareOnWhatsApp = async () => {
+    if (!selectedParty) return;
+    try {
+      const text = generateShareText(selectedParty);
+      const url = `https://wa.me/?text=${encodeURIComponent(
+        text + "\n" + window.location.href
+      )}`;
+      window.open(url, "_blank", "width=550,height=420");
+    } catch (error) {
+      console.error("Error en shareOnWhatsApp:", error);
+      alert("Error al compartir en WhatsApp");
+    }
+  };
+
+  const shareOnTelegram = async () => {
+    if (!selectedParty) return;
+    try {
+      const text = generateShareText(selectedParty);
+      const url = `https://t.me/share/url?url=${encodeURIComponent(
+        window.location.href
+      )}&text=${encodeURIComponent(text)}`;
+      window.open(url, "_blank", "width=550,height=420");
+    } catch (error) {
+      console.error("Error en shareOnTelegram:", error);
+      alert("Error al compartir en Telegram");
+    }
+  };
+
+  const shareOnLinkedIn = async () => {
+    if (!selectedParty) return;
+    try {
+      const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+        window.location.href
+      )}`;
+      window.open(url, "_blank", "width=550,height=420");
+    } catch (error) {
+      console.error("Error en shareOnLinkedIn:", error);
+      alert("Error al compartir en LinkedIn");
+    }
   };
 
   const topParties = stats.slice(0, 10);
@@ -640,6 +681,27 @@ export function ShareResultsAdvanced({
                 className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
               >
                 Compartir en Discord
+              </button>
+              <button
+                onClick={shareOnWhatsApp}
+                className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Compartir en WhatsApp
+              </button>
+              <button
+                onClick={shareOnTelegram}
+                className="w-full bg-[#0088cc] hover:bg-[#0077B5] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+              >
+                <Send className="h-5 w-5" />
+                Compartir en Telegram
+              </button>
+              <button
+                onClick={shareOnLinkedIn}
+                className="w-full bg-[#0A66C2] hover:bg-[#084B94] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+              >
+                <Linkedin className="h-5 w-5" />
+                Compartir en LinkedIn
               </button>
             </div>
 

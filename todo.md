@@ -417,3 +417,14 @@
 - [ ] Mostrar solo líderes relevantes del partido seleccionado
 - [ ] Mantener página original de líderes (/lideres) sin cambios
 - [ ] Guardar checkpoint con integración de líderes
+
+
+## Tareas Nuevas - Enero 2026
+- [x] Eliminar PARTIDO NACIONAL ALONSISTA de la encuesta
+- [ ] Forzar visualización de TODOS los logos de partidos (no emojis)
+- [x] Mejorar opción de compartir resultados (infografía y PDF) - Agregadas opciones WhatsApp, Telegram, LinkedIn
+- [x] Implementar correctamente tablas SQL de Encuestas Varias - Tablas encuestas_varias y respuestas_encuestas_varias creadas
+- [x] Agregar pactómetros en Mapa y Hemiciclo - Componente Pactometer.tsx creado
+- [x] Agregar pactómetros en Asociaciones Juveniles - Componente Pactometer.tsx reutilizable
+- [x] Implementar mejoras visuales generales - Agregadas animaciones, sombras mejoradas y estilos suaves
+- [ ] Implementar IA para análisis de resultados en tiempo real (FUTURO) - Documentado en ROADMAP.md

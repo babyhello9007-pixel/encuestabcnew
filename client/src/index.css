@@ -598,6 +598,86 @@
 
   .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.95);
+  }
+
+  /* Mejoras visuales - Animaciones suaves */
+  .smooth-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Efecto de elevación en hover */
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Gradiente mejorado para tarjetas */
+  .gradient-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 245, 247, 0.9) 100%);
+    border: 1px solid rgba(196, 30, 58, 0.1);
+  }
+
+  /* Sombra suave mejorada */
+  .shadow-soft {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .shadow-medium {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .shadow-lg-soft {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Texto con mejor contraste */
+  .text-emphasis {
+    color: #1D1D1F;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Bordes redondeados mejorados */
+  .rounded-xl-soft {
+    border-radius: 1.25rem;
+  }
+
+  /* Espaciado mejorado */
+  .space-y-relaxed {
+    @apply space-y-6;
+  }
+
+  /* Animación de carga mejorada */
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Efecto de desvanecimiento */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+
+  .btn-secondary:focus {
     border-color: var(--primary);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }

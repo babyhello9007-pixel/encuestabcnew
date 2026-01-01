@@ -29,7 +29,6 @@ export const PARTIES_GENERAL = {
   PACMA: { name: 'PACMA', logo: '/assets/logos/pacma.png', color: '#00AA44' },
   PCTE: { name: 'PCTE', logo: '/assets/logos/pcte.png', color: '#CC0000' },
   UPL: { name: 'UPL', logo: '/assets/logos/upl.png', color: '#0066CC' },
-  PNA: { name: 'PARTIDO NACIONAL ALONSISTA', logo: '/assets/logos/pna.png', color: '#FFD700' },
 };
 
 export const YOUTH_ASSOCIATIONS = {
