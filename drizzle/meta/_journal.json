@@ -36,6 +36,20 @@
       "when": 1767271139137,
       "tag": "0004_blushing_randall_flagg",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1767275499011,
+      "tag": "0005_kind_deathbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1767275934249,
+      "tag": "0006_mysterious_champions",
+      "breakpoints": true
     }
   ]
 }

@@ -23,6 +23,7 @@ import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
+import ElAnalisis from "@/components/results/ElAnalisis";
 import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import Pactometer from "@/components/Pactometer";
@@ -60,7 +61,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -684,6 +685,16 @@ export default function Results() {
                 Mapa y Hemiciclo
               </button>
               <button
+                onClick={() => setActiveTab("el-analisis")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "el-analisis"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                El Análisis
+              </button>
+              <button
                 onClick={() => setActiveTab("ccaa")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
                   activeTab === "ccaa"
@@ -894,6 +905,9 @@ export default function Results() {
             )}
             {activeTab === "lideres-preferidos" && (
               <LeadersResultsChart />
+            )}
+            {activeTab === "el-analisis" && (
+              <ElAnalisis />
             )}
             {activeTab === "ccaa" && (
               <CCAAResltsSection />

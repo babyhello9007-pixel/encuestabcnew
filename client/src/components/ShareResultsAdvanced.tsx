@@ -17,7 +17,7 @@ interface PartyStats {
 }
 
 interface ShareResultsAdvancedProps {
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo";
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis";
   stats: PartyStats[];
   totalVotes: number;
   edadPromedio?: number | null;

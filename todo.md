@@ -524,3 +524,14 @@
 - [x] Reposicionar Pactómetro: Mapa → Pactómetro → Hemiciclo
 - [x] Verificar visualización correcta en todos los dispositivos
 - [x] Hacer que CoalitionSummaryCard ocupe toda la altura disponible
+
+
+## El Análisis - Nueva Sección Central (SESIÓN NUEVA)
+- [ ] Diseñar estructura de base de datos para El Análisis
+- [ ] Crear tablas SQL: encuestas_externas, resultados_encuestas, encuestadoras
+- [ ] Crear vistas SQL para agregación y tendencias
+- [ ] Implementar componente ElAnalisis.tsx con tres capas
+- [ ] Integrar El Análisis en Results.tsx entre Mapa/Hemiciclo y CCAA
+- [ ] Crear procedimientos tRPC para acceder a datos
+- [ ] Implementar visualizaciones (gráficas, tendencias, alertas)
+- [ ] Probar y validar funcionalidad completa
