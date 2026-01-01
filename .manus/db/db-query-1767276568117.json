@@ -1,0 +1,22 @@
+{
+  "query": "SELECT voto_generales FROM respuestas WHERE voto_generales IS NOT NULL GROUP BY voto_generales;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT voto_generales FROM respuestas WHERE voto_generales IS NOT NULL GROUP BY voto_generales;",
+  "rows": [
+    {
+      "voto_generales": "PP"
+    },
+    {
+      "voto_generales": "Compromís"
+    },
+    {
+      "voto_generales": "VOX"
+    },
+    {
+      "voto_generales": "Aliança Catalana"
+    }
+  ],
+  "messages": [],
+  "stdout": "voto_generales\nPP\nCompromís\nVOX\nAliança Catalana\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

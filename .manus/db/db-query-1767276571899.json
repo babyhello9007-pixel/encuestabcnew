@@ -1,0 +1,90 @@
+{
+  "query": "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'respuestas' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'respuestas' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "data_type": "int"
+    },
+    {
+      "column_name": "edad",
+      "data_type": "int"
+    },
+    {
+      "column_name": "provincia",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "ccaa",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "nacionalidad",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "voto_generales",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "voto_autonomicas",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "voto_municipales",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "voto_europeas",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "nota_ejecutivo",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_feijoo",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_sanchez",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_abascal",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_alvise",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_yolanda_diaz",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_irene_montero",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_ayuso",
+      "data_type": "int"
+    },
+    {
+      "column_name": "val_buxade",
+      "data_type": "int"
+    },
+    {
+      "column_name": "voto_asociacion_juvenil",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\nid\tint\nedad\tint\nprovincia\tvarchar\nccaa\tvarchar\nnacionalidad\tvarchar\nvoto_generales\tvarchar\nvoto_autonomicas\tvarchar\nvoto_municipales\tvarchar\nvoto_europeas\tvarchar\nnota_ejecutivo\tint\nval_feijoo\tint\nval_sanchez\tint\nval_abascal\tint\nval_alvise\tint\nval_yolanda_diaz\tint\nval_irene_montero\tint\nval_ayuso\tint\nval_buxade\tint\nvoto_asociacion_juvenil\tvarchar\ncreated_at\ttimestamp\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

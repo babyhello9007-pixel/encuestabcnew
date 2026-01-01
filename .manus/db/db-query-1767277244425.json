@@ -1,0 +1,58 @@
+{
+  "query": "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'encuestas_externas' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'encuestas_externas' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "data_type": "int"
+    },
+    {
+      "column_name": "encuestadora_id",
+      "data_type": "int"
+    },
+    {
+      "column_name": "tipo_encuesta",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "ambito",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "ccaa_o_provincia",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "fecha_publicacion",
+      "data_type": "timestamp"
+    },
+    {
+      "column_name": "fecha_encuesta_inicio",
+      "data_type": "timestamp"
+    },
+    {
+      "column_name": "fecha_encuesta_fin",
+      "data_type": "timestamp"
+    },
+    {
+      "column_name": "tamano_muestra",
+      "data_type": "int"
+    },
+    {
+      "column_name": "margen_error",
+      "data_type": "int"
+    },
+    {
+      "column_name": "metodologia",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\nid\tint\nencuestadora_id\tint\ntipo_encuesta\tvarchar\nambito\tvarchar\nccaa_o_provincia\tvarchar\nfecha_publicacion\ttimestamp\nfecha_encuesta_inicio\ttimestamp\nfecha_encuesta_fin\ttimestamp\ntamano_muestra\tint\nmargen_error\tint\nmetodologia\ttext\ncreated_at\ttimestamp\n",
+  "stderr": "",
+  "execution_time_ms": 137
+}

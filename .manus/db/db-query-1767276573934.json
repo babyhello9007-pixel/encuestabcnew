@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, voto_generales FROM respuestas WHERE voto_generales IS NOT NULL LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT id, voto_generales FROM respuestas WHERE voto_generales IS NOT NULL LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "2",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "3",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "4",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "5",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "6",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "7",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "8",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "9",
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "id": "10",
+      "voto_generales": "Aliança Catalana"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tvoto_generales\n1\tAliança Catalana\n2\tAliança Catalana\n3\tAliança Catalana\n4\tAliança Catalana\n5\tAliança Catalana\n6\tAliança Catalana\n7\tAliança Catalana\n8\tAliança Catalana\n9\tAliança Catalana\n10\tAliança Catalana\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

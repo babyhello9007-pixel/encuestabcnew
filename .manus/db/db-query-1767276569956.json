@@ -1,0 +1,32 @@
+{
+  "query": "SELECT * FROM respuestas LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT * FROM respuestas LIMIT 1;",
+  "rows": [
+    {
+      "id": "1",
+      "edad": "22",
+      "provincia": "Barcelona",
+      "ccaa": "Cataluña",
+      "nacionalidad": "Española",
+      "voto_generales": "Aliança Catalana",
+      "voto_autonomicas": "Aliança Catalana",
+      "voto_municipales": "Aliança Catalana",
+      "voto_europeas": "Aliança Catalana",
+      "nota_ejecutivo": "7",
+      "val_feijoo": "4",
+      "val_sanchez": "5",
+      "val_abascal": "2",
+      "val_alvise": "3",
+      "val_yolanda_diaz": "5",
+      "val_irene_montero": "4",
+      "val_ayuso": "3",
+      "val_buxade": "2",
+      "voto_asociacion_juvenil": "Juventudes Socialistas",
+      "created_at": "2025-11-30 00:04:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tedad\tprovincia\tccaa\tnacionalidad\tvoto_generales\tvoto_autonomicas\tvoto_municipales\tvoto_europeas\tnota_ejecutivo\tval_feijoo\tval_sanchez\tval_abascal\tval_alvise\tval_yolanda_diaz\tval_irene_montero\tval_ayuso\tval_buxade\tvoto_asociacion_juvenil\tcreated_at\n1\t22\tBarcelona\tCataluña\tEspañola\tAliança Catalana\tAliança Catalana\tAliança Catalana\tAliança Catalana\t7\t4\t5\t2\t3\t5\t4\t3\t2\tJuventudes Socialistas\t2025-11-30 00:04:00\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

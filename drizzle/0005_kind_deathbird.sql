@@ -1,0 +1,2 @@
+-- Placeholder migration file
+-- This file was created to maintain migration sequence integrity

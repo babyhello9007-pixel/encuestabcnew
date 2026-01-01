@@ -1,0 +1,9 @@
+{
+  "query": "\nSELECT \n  t.table_name,\n  c.column_name,\n  c.data_type\nFROM information_schema.tables t\nJOIN information_schema.columns c ON t.table_name = c.table_name\nWHERE t.table_schema = 'public' \n  AND c.column_name IN ('id', 'encuesta_id', 'encuestadora_id')\nORDER BY t.table_name, c.ordinal_position;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute \nSELECT \n  t.table_name,\n  c.column_name,\n  c.data_type\nFROM information_schema.tables t\nJOIN information_schema.columns c ON t.table_name = c.table_name\nWHERE t.table_schema = 'public' \n  AND c.column_name IN ('id', 'encuesta_id', 'encuestadora_id')\nORDER BY t.table_name, c.ordinal_position;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 64
+}

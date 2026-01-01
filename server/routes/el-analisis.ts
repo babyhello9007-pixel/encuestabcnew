@@ -201,7 +201,7 @@ export const elAnalisisRouter = router({
           .from("v_comparativa_encuestadoras")
           .select("*")
           .eq("tipo_encuesta", input.tipoEncuesta)
-          .eq("posicion", 1) // Solo la última encuesta de cada encuestadora
+          .eq("posicion", 1)
           .order("nombre_corto", { ascending: true });
 
         if (error) {
@@ -331,15 +331,14 @@ export const elAnalisisRouter = router({
     }),
 
   /**
-   * Obtener lista de encuestadoras activas
+   * Obtener lista de encuestadoras con logos
    */
   obtenerEncuestadoras: publicProcedure.query(async () => {
     try {
       const supabase = await getSupabaseClient();
       const { data, error } = await supabase
         .from("encuestadoras")
-        .select("*")
-        .eq("activa", true)
+        .select("id, nombre, sigla, pais, sitio_web, logo_url, credibilidad")
         .order("nombre", { ascending: true });
 
       if (error) {
@@ -353,4 +352,81 @@ export const elAnalisisRouter = router({
       return [];
     }
   }),
+
+  /**
+   * Obtener encuestas externas de una encuestadora
+   */
+  obtenerEncuestasExternas: publicProcedure
+    .input(
+      z.object({
+        encuestadoraId: z.string().optional(),
+        tipoEncuesta: z
+          .enum(["generales", "autonomicas", "municipales", "europeas"])
+          .optional(),
+        diasAtras: z.number().default(30),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        const supabase = await getSupabaseClient();
+        let query = supabase
+          .from("encuestas_externas")
+          .select(
+            "id, encuestadora_id, tipo_encuesta, ambito, ccaa_o_provincia, fecha_publicacion, tamano_muestra, margen_error, encuestadoras(id, nombre, sigla, logo_url)"
+          )
+          .gte(
+            "fecha_publicacion",
+            new Date(
+              Date.now() - input.diasAtras * 24 * 60 * 60 * 1000
+            ).toISOString()
+          )
+          .order("fecha_publicacion", { ascending: false });
+
+        if (input.encuestadoraId) {
+          query = query.eq("encuestadora_id", input.encuestadoraId);
+        }
+
+        if (input.tipoEncuesta) {
+          query = query.eq("tipo_encuesta", input.tipoEncuesta);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error("Error fetching encuestas externas:", error);
+          return [];
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error("Error en obtenerEncuestasExternas:", error);
+        return [];
+      }
+    }),
+
+  /**
+   * Obtener resultados de una encuesta específica
+   */
+  obtenerResultadosEncuesta: publicProcedure
+    .input(z.object({ encuestaId: z.string() }))
+    .query(async ({ input }) => {
+      try {
+        const supabase = await getSupabaseClient();
+        const { data, error } = await supabase
+          .from("resultados_encuestas")
+          .select("id, encuesta_id, partido_id, votos, porcentaje, escanos")
+          .eq("encuesta_id", input.encuestaId)
+          .order("porcentaje", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching resultados encuesta:", error);
+          return [];
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error("Error en obtenerResultadosEncuesta:", error);
+        return [];
+      }
+    }),
 });

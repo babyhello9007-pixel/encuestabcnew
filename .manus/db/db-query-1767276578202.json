@@ -1,0 +1,70 @@
+{
+  "query": "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'encuestas_externas' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'encuestas_externas' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "encuestadora_id",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "nombre",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "descripcion",
+      "data_type": "text"
+    },
+    {
+      "column_name": "tipo_encuesta",
+      "data_type": "enum"
+    },
+    {
+      "column_name": "ambito",
+      "data_type": "enum"
+    },
+    {
+      "column_name": "ccaa_o_provincia",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "fecha_realizacion",
+      "data_type": "datetime"
+    },
+    {
+      "column_name": "fecha_publicacion",
+      "data_type": "datetime"
+    },
+    {
+      "column_name": "muestra",
+      "data_type": "int"
+    },
+    {
+      "column_name": "margen_error",
+      "data_type": "decimal"
+    },
+    {
+      "column_name": "url_fuente",
+      "data_type": "text"
+    },
+    {
+      "column_name": "notas",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\nid\tvarchar\nencuestadora_id\tvarchar\nnombre\tvarchar\ndescripcion\ttext\ntipo_encuesta\tenum\nambito\tenum\nccaa_o_provincia\tvarchar\nfecha_realizacion\tdatetime\nfecha_publicacion\tdatetime\nmuestra\tint\nmargen_error\tdecimal\nurl_fuente\ttext\nnotas\ttext\ncreated_at\ttimestamp\nupdated_at\ttimestamp\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

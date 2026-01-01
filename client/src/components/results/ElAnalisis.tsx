@@ -12,6 +12,7 @@ import {
 import { TrendingUp, TrendingDown, Minus, AlertCircle, BarChart3, LineChart as LineChartIcon } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from "recharts";
 import { trpc } from "@/lib/trpc";
+import { PARTY_CONFIG, getPartyColor } from "@/lib/partyConfig";
 
 // ============================================================================
 // TIPOS
@@ -454,12 +455,12 @@ function Capa2AgregacionTendencia({ mediaEncuestas, tendencias, loading, tipoEnc
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  {Object.keys(partyConfig).map((party) => (
+                  {Object.keys(PARTY_CONFIG).map((party) => (
                     <Line
                       key={party}
                       type="monotone"
                       dataKey={party}
-                      stroke={partyConfig[party as keyof typeof partyConfig]?.color || "#000"}
+                      stroke={getPartyColor(party)}
                       dot={false}
                     />
                   ))}

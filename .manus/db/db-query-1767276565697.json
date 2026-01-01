@@ -1,0 +1,22 @@
+{
+  "query": "SELECT DISTINCT voto_generales FROM respuestas WHERE voto_generales IS NOT NULL LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT DISTINCT voto_generales FROM respuestas WHERE voto_generales IS NOT NULL LIMIT 20;",
+  "rows": [
+    {
+      "voto_generales": "PP"
+    },
+    {
+      "voto_generales": "VOX"
+    },
+    {
+      "voto_generales": "Aliança Catalana"
+    },
+    {
+      "voto_generales": "Compromís"
+    }
+  ],
+  "messages": [],
+  "stdout": "voto_generales\nPP\nVOX\nAliança Catalana\nCompromís\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

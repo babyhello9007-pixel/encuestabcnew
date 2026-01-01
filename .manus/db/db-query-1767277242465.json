@@ -1,0 +1,38 @@
+{
+  "query": "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'resultados_encuestas' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'resultados_encuestas' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "data_type": "int"
+    },
+    {
+      "column_name": "encuesta_id",
+      "data_type": "int"
+    },
+    {
+      "column_name": "partido_id",
+      "data_type": "varchar"
+    },
+    {
+      "column_name": "votos",
+      "data_type": "int"
+    },
+    {
+      "column_name": "porcentaje",
+      "data_type": "int"
+    },
+    {
+      "column_name": "escanos",
+      "data_type": "int"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\nid\tint\nencuesta_id\tint\npartido_id\tvarchar\nvotos\tint\nporcentaje\tint\nescanos\tint\ncreated_at\ttimestamp\n",
+  "stderr": "",
+  "execution_time_ms": 241
+}
