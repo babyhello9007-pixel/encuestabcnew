@@ -535,3 +535,28 @@
 - [ ] Crear procedimientos tRPC para acceder a datos
 - [ ] Implementar visualizaciones (gráficas, tendencias, alertas)
 - [ ] Probar y validar funcionalidad completa
+
+
+## Integración de Encuestadoras Externas - NUEVO
+- [ ] Poblar tabla encuestadoras con datos reales (CIS, Metroscopia, GAD3, Sigma Dos, etc.)
+- [ ] Agregar URLs de logos para cada encuestadora
+- [ ] Crear endpoints tRPC para obtener encuestadoras
+- [ ] Crear endpoints tRPC para obtener encuestas externas
+- [ ] Crear endpoints tRPC para obtener resultados de encuestas
+- [ ] Integrar EncuestadorasGrid en página de Resultados
+- [ ] Integrar EncuestasExternasTable en página de Resultados
+- [ ] Agregar #LaEncuestaBC como encuestadora especial
+- [ ] Verificar que los componentes muestren datos correctamente
+- [ ] Guardar checkpoint con integración de encuestadoras
+
+
+## Integración de Encuestadoras Externas - EN PROGRESO
+- [x] Crear botón "Encuestadoras" en página de Resultados
+- [x] Integrar componentes EncuestadorasGrid y EncuestasExternasTable
+- [x] Crear endpoint API para poblar encuestadoras
+- [ ] Poblar tabla encuestadoras con datos reales (CIS, Metroscopia, GAD3, etc.)
+- [ ] Poblar tabla encuestas_externas con encuestas de ejemplo
+- [ ] Agregar #LaEncuestaBC como encuestadora especial con credibilidad 100
+- [ ] Verificar que los componentes muestren datos correctamente
+- [ ] Probar visualización de logos de encuestadoras
+- [ ] Guardar checkpoint con encuestadoras integradas
