@@ -163,22 +163,23 @@ export default function PactometerInteractive({
             <button
               key={party.id}
               onClick={() => toggleParty(party.id)}
-              className={`p-3 rounded-lg border-2 transition-all duration-200 text-center cursor-pointer transform hover:scale-105 ${
+              className={`p-3 rounded-lg border-2 transition-all duration-300 ease-out text-center cursor-pointer transform hover:scale-105 active:scale-95 ${
                 isSelected
-                  ? 'border-slate-900 shadow-lg ring-2 ring-offset-2 ring-slate-900'
+                  ? 'border-slate-900 shadow-lg ring-2 ring-offset-2 ring-slate-900 animate-pulse'
                   : 'border-slate-200 hover:border-slate-300'
               }`}
               style={{
                 backgroundColor: isSelected ? partyColor : '#f8f9fa',
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
             >
-              <div className={`font-bold text-sm mb-1 ${isSelected ? 'text-white' : 'text-slate-900'}`}>
+              <div className={`font-bold text-sm mb-1 transition-colors duration-300 ${isSelected ? 'text-white' : 'text-slate-900'}`}>
                 {party.nombre}
               </div>
-              <div className={`text-xs font-semibold ${isSelected ? 'text-white' : 'text-slate-600'}`}>
+              <div className={`text-xs font-semibold transition-colors duration-300 ${isSelected ? 'text-white' : 'text-slate-600'}`}>
                 {party.escanos} escaños
               </div>
-              <div className={`text-xs ${isSelected ? 'text-white' : 'text-slate-500'}`}>
+              <div className={`text-xs transition-colors duration-300 ${isSelected ? 'text-white' : 'text-slate-500'}`}>
                 {party.porcentaje.toFixed(1)}%
               </div>
             </button>

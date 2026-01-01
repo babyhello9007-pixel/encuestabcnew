@@ -1066,8 +1066,9 @@ export default function Results() {
                     </div>
                     
                     <div className="liquid-glass p-6 rounded-2xl">
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro</h2>
                       <PactometerInteractive 
-                        stats={stats.map(s => ({
+                        stats={generalStats.map(s => ({
                           id: s.id,
                           nombre: s.nombre,
                           escanos: s.escanos,

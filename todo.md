@@ -492,3 +492,17 @@
 ## Correcciones del Pactómetro - Tercera Sesión
 - [x] Arreglar funcionalidad del pactómetro de Mapa y Hemiciclo (grid clickeable)
 - [x] Filtrar solo partidos/asociaciones con escaños > 0 en ambos pactómetros
+
+
+## Mejoras Solicitadas - NUEVA FASE
+- [x] Reorganizar Mapa y Hemiciclo: Pactómetro debajo del Mapa
+- [x] Agregar animaciones suaves al seleccionar partidos (transiciones en botones)
+- [x] Crear tarjeta flotante de resumen de coalición en tiempo real (CoalitionSummaryCard.tsx)
+- [x] Mostrar partidos seleccionados y total de escaños acumulados
+- [x] Implementar sistema de guardar coaliciones favoritas (useSavedCoalitions hook)
+- [x] Permitir comparar coaliciones guardadas (SavedCoalitionsPanel.tsx)
+- [x] Optimizar SEO para visibilidad en Google (meta tags, sitemap.xml, robots.txt)
+- [x] Mejorar diseño visual general (animaciones, tipografia, espaciado, profundidad en index.css)
+- [x] Crear blog individual con rutas dinamicas blog/[id] (BlogPost.tsx)
+- [x] Permitir compartir articulos de blog individuales (botones de compartir en redes)
+- [x] Ocultar ruta /lideres (remover acceso publico)

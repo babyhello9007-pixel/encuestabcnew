@@ -58,12 +58,7 @@ export default function Blog() {
                     >
                       Encuesta Completa (20 min)
                     </button>
-                    <button
-                      onClick={() => { setLocation("/lideres"); setShowEncuestaMenu(false); }}
-                      className="w-full text-left px-4 py-3 text-foreground hover:text-primary hover:bg-secondary/50 transition font-medium"
-                    >
-                      Elige a tus Líderes
-                    </button>
+
                   </div>
                 )}
               </div>
@@ -175,12 +170,7 @@ export default function Blog() {
                   >
                     Encuesta Completa (20 min)
                   </button>
-                  <button
-                    onClick={() => { setLocation("/lideres"); setShowEncuestaMenu(false); }}
-                    className="w-full text-left px-4 py-3 text-foreground hover:text-primary hover:bg-secondary/50 transition font-medium"
-                  >
-                    Elige a tus Líderes
-                  </button>
+
                 </div>
               )}
             </div>

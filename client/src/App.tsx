@@ -17,6 +17,7 @@ import LeaderSurvey from "./pages/LeaderSurvey";
 import SurveysVarias from "./pages/SurveysVarias";
 import Bio from "./pages/Bio";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import AdminBlogLogin from "./pages/AdminBlogLogin";
 import DiscordCallback from "./pages/DiscordCallback";
 
@@ -27,7 +28,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/encuesta"} component={Survey} />
       <Route path={"/nano-encuesta"} component={NanoEncuestaBC} />
-      <Route path={"/lideres"} component={LeaderSurvey} />
+
       <Route path={"/encuestas-varias"} component={SurveysVarias} />
       <Route path={"/resultados"} component={Results} />
       <Route path={"/respuestas"} component={Results} />
@@ -36,6 +37,7 @@ function Router() {
       <Route path={"/editor"} component={CodeEditor} />
       <Route path={"/bio"} component={Bio} />
       <Route path={"/blog"} component={Blog} />
+      <Route path={"/blog/:id"} component={BlogPost} />
       <Route path={"/auth/discord/callback"} component={DiscordCallback} />
       <Route path={"/admin/blog/login"} component={AdminBlogLogin} />
       <Route path={"/admin/blog"} component={AdminBlogLogin} />
