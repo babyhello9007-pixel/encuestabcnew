@@ -506,3 +506,14 @@
 - [x] Crear blog individual con rutas dinamicas blog/[id] (BlogPost.tsx)
 - [x] Permitir compartir articulos de blog individuales (botones de compartir en redes)
 - [x] Ocultar ruta /lideres (remover acceso publico)
+
+
+## Mejoras Finales - FASE 2
+- [x] Integrar CoalitionSummaryCard en PactometerInteractive (tarjeta flotante conectada)
+- [x] Agregar filtro de búsqueda en SavedCoalitionsPanel (búsqueda por nombre/fecha)
+- [x] Crear página de comparación de coaliciones (/coaliciones-comparar)
+- [x] Mejorar visualización de Variación de Votaciones por Día (mejor con muchos partidos)
+- [x] Eliminar "61 preguntas" de página Home
+- [x] Cambiar deslizables por botones en NanoEncuestaBC
+- [x] Verificar ruta /lideres oculta
+- [x] Pruebas finales y verificación completa

@@ -449,15 +449,25 @@ export default function NanoEncuestaBC() {
 
               {currentStepData.type === "slider" && (
                 <div className="space-y-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    value={responses[currentStepData.key as keyof NanoSurveyResponse] || 0}
-                    onChange={(e) => handleAnswer(parseInt(e.target.value))}
-                    className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
-                  />
-                  <div className="flex justify-between items-center">
+                  <div className="grid grid-cols-5 gap-2 sm:grid-cols-11">
+                    {Array.from({ length: 11 }, (_, i) => i).map((num) => {
+                      const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === num;
+                      return (
+                        <button
+                          key={num}
+                          onClick={() => handleAnswer(num)}
+                          className={`py-3 px-2 rounded-lg font-semibold transition-all duration-200 text-sm ${
+                            isSelected
+                              ? "bg-primary text-white shadow-lg scale-105"
+                              : "bg-border text-foreground hover:bg-border/80 hover:scale-105"
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between items-center mt-4">
                     <span className="text-sm text-muted-foreground">0 (Muy malo)</span>
                     <span className="text-2xl font-bold text-primary">{responses[currentStepData.key as keyof NanoSurveyResponse] || 0}</span>
                     <span className="text-sm text-muted-foreground">10 (Muy bueno)</span>

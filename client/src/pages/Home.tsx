@@ -69,12 +69,7 @@ export default function Home() {
                   >
                     Encuesta Completa (20 min)
                   </button>
-                  <button
-                    onClick={() => { setLocation("/lideres"); setShowEncuestaMenu(false); }}
-                    className="w-full text-left px-4 py-3 text-foreground hover:text-primary hover:bg-secondary/50 transition font-medium"
-                  >
-                    Elige a tus Líderes
-                  </button>
+
                 </div>
               )}
             </div>
@@ -149,16 +144,7 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="stat-box">
-                    <div className="stat-value">61</div>
-                    <div className="stat-label">Preguntas</div>
-                  </div>
-                  <div className="stat-box">
-                    <div className="stat-value">5 min</div>
-                    <div className="stat-label">Promedio</div>
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>
@@ -219,18 +205,12 @@ export default function Home() {
         {/* Stats Section */}
         <section className="py-20 md:py-32 bg-background">
           <div className="container">
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 gap-8">
               <div className="text-center">
                 <div className="text-5xl md:text-6xl font-bold text-primary mb-3">
                   {responseCount.toLocaleString()}
                 </div>
                 <p className="text-lg text-muted-foreground">Respuestas Registradas</p>
-              </div>
-              <div className="text-center">
-                <div className="text-5xl md:text-6xl font-bold text-primary mb-3">
-                  61
-                </div>
-                <p className="text-lg text-muted-foreground">Preguntas Detalladas</p>
               </div>
               <div className="text-center">
                 <div className="text-5xl md:text-6xl font-bold text-primary mb-3">
@@ -302,12 +282,7 @@ export default function Home() {
               >
                 Ver Resultados
               </button>
-              <button
-                onClick={() => setLocation("/lideres")}
-                className="px-8 py-3.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition"
-              >
-                Elige a tus Líderes
-              </button>
+
             </div>
           </div>
         </section>

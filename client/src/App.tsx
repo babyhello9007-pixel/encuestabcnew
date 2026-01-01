@@ -20,6 +20,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import AdminBlogLogin from "./pages/AdminBlogLogin";
 import DiscordCallback from "./pages/DiscordCallback";
+import CoalitionsComparison from "./pages/CoalitionsComparison";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -38,6 +39,7 @@ function Router() {
       <Route path={"/bio"} component={Bio} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/blog/:id"} component={BlogPost} />
+      <Route path={"/coaliciones-comparar"} component={CoalitionsComparison} />
       <Route path={"/auth/discord/callback"} component={DiscordCallback} />
       <Route path={"/admin/blog/login"} component={AdminBlogLogin} />
       <Route path={"/admin/blog"} component={AdminBlogLogin} />

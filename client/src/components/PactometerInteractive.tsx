@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import CoalitionSummaryCard from './CoalitionSummaryCard';
 
 interface PartyStats {
   id: string;
@@ -60,6 +61,7 @@ export default function PactometerInteractive({
 }: PactometerInteractiveProps) {
   
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
+  const [showSummaryCard, setShowSummaryCard] = useState(true);
 
   // Calcular escaños de la coalición seleccionada
   const selectedCoalitionSeats = useMemo(() => {
@@ -82,6 +84,36 @@ export default function PactometerInteractive({
     setSelectedParties([]);
   };
 
+  const handleSaveCoalition = (name: string) => {
+    // Guardar coalición en localStorage
+    const savedCoalitions = JSON.parse(localStorage.getItem('savedCoalitions') || '[]');
+    const newCoalition = {
+      id: Date.now().toString(),
+      name,
+      parties: selectedParties,
+      seats: selectedCoalitionSeats,
+      timestamp: new Date().toISOString(),
+    };
+    savedCoalitions.push(newCoalition);
+    localStorage.setItem('savedCoalitions', JSON.stringify(savedCoalitions));
+    alert(`Coalición "${name}" guardada exitosamente`);
+  };
+
+  const handleShareCoalition = () => {
+    const partyNames = stats
+      .filter(p => selectedParties.includes(p.id))
+      .map(p => p.nombre)
+      .join(', ');
+    const text = `He formado una coalición con ${partyNames} que suma ${selectedCoalitionSeats} escaños. ¡Prueba el Pactómetro Interactivo en Batalla Cultural!`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  // Obtener partidos seleccionados con sus datos
+  const selectedPartiesData = useMemo(() => {
+    return stats.filter(party => selectedParties.includes(party.id));
+  }, [selectedParties, stats]);
+
   // Filtrar solo partidos con escaños > 0 y ordenar por escaños
   const sortedStats = useMemo(() => {
     return [...stats]
@@ -90,7 +122,17 @@ export default function PactometerInteractive({
   }, [stats]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Tarjeta flotante de resumen de coalición */}
+      <CoalitionSummaryCard
+        selectedParties={selectedPartiesData}
+        totalSeats={totalSeats}
+        requiredForMajority={requiredForMajority}
+        onSaveCoalition={handleSaveCoalition}
+        onShareCoalition={handleShareCoalition}
+        isVisible={showSummaryCard && selectedParties.length > 0}
+      />
+
       {/* Título */}
       <div>
         <h3 className="text-2xl font-bold text-slate-900 mb-2">Pactómetro Interactivo</h3>
@@ -99,7 +141,7 @@ export default function PactometerInteractive({
         </p>
       </div>
 
-      {/* Información de la coalición seleccionada */}
+      {/* Información de la coalición seleccionada - Solo en vista compacta */}
       {selectedParties.length > 0 && (
         <Card className={`p-4 border-2 ${hasMajority ? 'bg-green-50 border-green-300' : 'bg-amber-50 border-amber-300'}`}>
           <div className="flex justify-between items-center">
@@ -120,36 +162,6 @@ export default function PactometerInteractive({
             </Button>
           </div>
         </Card>
-      )}
-
-      {/* Barra de progreso de la coalición */}
-      {selectedParties.length > 0 && (
-        <div className="space-y-2">
-          <div className="relative h-12 bg-slate-200 rounded-lg overflow-hidden border-2 border-slate-300">
-            {/* Línea de mayoría */}
-            <div
-              className="absolute top-0 bottom-0 border-l-4 border-red-600 z-10"
-              style={{ left: `${(requiredForMajority / totalSeats) * 100}%` }}
-            />
-            
-            {/* Barra de progreso */}
-            <div
-              className={`h-full transition-all duration-300 flex items-center justify-center font-bold text-white ${
-                hasMajority ? 'bg-green-500' : 'bg-amber-500'
-              }`}
-              style={{ width: `${(selectedCoalitionSeats / totalSeats) * 100}%` }}
-            >
-              {(selectedCoalitionSeats / totalSeats) * 100 > 10 && (
-                <span>{selectedCoalitionSeats}</span>
-              )}
-            </div>
-          </div>
-          <div className="flex justify-between text-xs text-slate-600">
-            <span>0</span>
-            <span className="font-semibold">Mayoría: {requiredForMajority}</span>
-            <span>{totalSeats}</span>
-          </div>
-        </div>
       )}
 
       {/* Grid de partidos interactivos */}
@@ -231,9 +243,10 @@ export default function PactometerInteractive({
         <h4 className="font-semibold text-slate-900 mb-2">ℹ️ Cómo usar</h4>
         <ul className="text-sm text-slate-700 space-y-1">
           <li>• Haz clic en los partidos para seleccionarlos y formar una coalición</li>
-          <li>• La barra de progreso muestra los escaños totales de tu coalición</li>
+          <li>• La tarjeta flotante muestra el resumen en tiempo real de tu coalición</li>
           <li>• Necesitas {requiredForMajority} escaños para tener mayoría</li>
           <li>• Los colores representan a cada partido político</li>
+          <li>• Puedes guardar y compartir tus coaliciones favoritas</li>
         </ul>
       </Card>
     </div>
