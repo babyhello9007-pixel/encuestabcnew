@@ -488,3 +488,7 @@
 - [x] Eliminar pactómetro de la pestaña "Elecciones Generales"
 - [x] Arreglar pactómetro interactivo de "Mapa y Hemiciclo" para que funcione correctamente
 - [x] Hacer interactivo el pactómetro de "Asociaciones Juveniles"
+
+## Correcciones del Pactómetro - Tercera Sesión
+- [x] Arreglar funcionalidad del pactómetro de Mapa y Hemiciclo (grid clickeable)
+- [x] Filtrar solo partidos/asociaciones con escaños > 0 en ambos pactómetros

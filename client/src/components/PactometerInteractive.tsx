@@ -82,9 +82,11 @@ export default function PactometerInteractive({
     setSelectedParties([]);
   };
 
-  // Ordenar partidos por escaños
+  // Filtrar solo partidos con escaños > 0 y ordenar por escaños
   const sortedStats = useMemo(() => {
-    return [...stats].sort((a, b) => b.escanos - a.escanos);
+    return [...stats]
+      .filter(party => party.escanos > 0)
+      .sort((a, b) => b.escanos - a.escanos);
   }, [stats]);
 
   return (
@@ -151,6 +153,7 @@ export default function PactometerInteractive({
       )}
 
       {/* Grid de partidos interactivos */}
+      {sortedStats.length > 0 ? (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {sortedStats.map(party => {
           const isSelected = selectedParties.includes(party.id);
@@ -182,8 +185,14 @@ export default function PactometerInteractive({
           );
         })}
       </div>
+      ) : (
+        <div className="text-center text-slate-600 py-8">
+          <p>No hay partidos con escaños para mostrar</p>
+        </div>
+      )}
 
       {/* Tabla de partidos con colores */}
+      {sortedStats.length > 0 && (
       <Card className="p-4">
         <h4 className="font-semibold text-slate-900 mb-4">Distribución de Escaños</h4>
         <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -214,6 +223,7 @@ export default function PactometerInteractive({
           ))}
         </div>
       </Card>
+      )}
 
       {/* Información de mayoría */}
       <Card className="p-4 bg-blue-50 border-blue-200">
