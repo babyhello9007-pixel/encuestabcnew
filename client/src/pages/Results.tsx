@@ -1054,17 +1054,6 @@ export default function Results() {
                       )}
                     </div>
                     
-                    <div className="liquid-glass p-4 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo del Congreso de los Diputados</h2>
-                      <CongressHemicycle 
-                        escanos={escanosGeneralesPorProvincia}
-                        totalEscanos={350}
-                        provinciaSeleccionada={provinciaSeleccionada}
-                        votosProvincia={votosPorPartidoProvincia}
-                        escanosProvincia={escanosProvincia}
-                      />
-                    </div>
-                    
                     <div className="liquid-glass p-6 rounded-2xl">
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro</h2>
                       <PactometerInteractive 
@@ -1077,6 +1066,17 @@ export default function Results() {
                         }))}
                         totalSeats={350}
                         requiredForMajority={176}
+                      />
+                    </div>
+                    
+                    <div className="liquid-glass p-4 rounded-2xl">
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo del Congreso de los Diputados</h2>
+                      <CongressHemicycle 
+                        escanos={escanosGeneralesPorProvincia}
+                        totalEscanos={350}
+                        provinciaSeleccionada={provinciaSeleccionada}
+                        votosProvincia={votosPorPartidoProvincia}
+                        escanosProvincia={escanosProvincia}
                       />
                     </div>
                   </>

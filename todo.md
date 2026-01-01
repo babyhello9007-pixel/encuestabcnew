@@ -517,3 +517,9 @@
 - [x] Cambiar deslizables por botones en NanoEncuestaBC
 - [x] Verificar ruta /lideres oculta
 - [x] Pruebas finales y verificación completa
+
+
+## Reorganización del Pactómetro - SESIÓN ACTUAL
+- [x] Anclar CoalitionSummaryCard a la derecha de PactometerInteractive
+- [x] Reposicionar Pactómetro: Mapa → Pactómetro → Hemiciclo
+- [x] Verificar visualización correcta en todos los dispositivos
