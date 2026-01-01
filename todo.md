@@ -569,3 +569,9 @@
 - [x] Incluir resultados de #LaEncuestaBC en Encuestadoras
 - [x] Agregar botón de "Análisis de IA" junto a "Resultados en vivo"
 - [x] Integrar análisis de IA por sección
+
+## Correcciones de Logos y Análisis de IA - COMPLETADO
+- [x] Copiar lógica de carga de logos desde Elecciones Generales a Encuestadoras
+- [x] Agregar botón "Análisis de IA" en Resultados en Vivo
+- [x] Integrar Manus AI para análisis contextual de resultados
+- [x] Mover botones PDF y Compartir resultado a sección de Resultados en Vivo

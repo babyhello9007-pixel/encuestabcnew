@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { AlertCircle, ExternalLink, Star } from "lucide-react";
+import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from '@/lib/surveyData';
+import PartyLogo from "@/components/PartyLogo";
 
 interface Encuestadora {
   id: string;
@@ -91,88 +93,121 @@ export default function EncuestadorasGrid() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {encuestadoras.map((encuestadora) => (
-              <div
-                key={encuestadora.id}
-                className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                {/* Logo */}
-                {encuestadora.logo_url ? (
-                  <div className="mb-3 h-16 flex items-center justify-center bg-gray-50 rounded">
-                    <img
-                      src={encuestadora.logo_url}
-                      alt={encuestadora.nombre}
-                      className="max-h-14 max-w-full object-contain"
-                      onError={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        img.style.display = "none";
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="mb-3 h-16 flex items-center justify-center bg-gray-50 rounded text-gray-400">
-                    <span className="text-sm">Sin logo</span>
-                  </div>
-                )}
+            {encuestadoras.map((encuestadora) => {
+              // Buscar el logo en PARTIES_GENERAL o YOUTH_ASSOCIATIONS basándose en el nombre
+              let logoUrl = encuestadora.logo_url;
+              
+              // Si no hay logo, buscar en PARTIES_GENERAL por nombre
+              if (!logoUrl) {
+                for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
+                  if (partyData.name === encuestadora.nombre) {
+                    logoUrl = partyData.logo;
+                    break;
+                  }
+                }
+              }
+              
+              // Si aún no hay logo, buscar en YOUTH_ASSOCIATIONS por nombre
+              if (!logoUrl) {
+                for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
+                  if (assocData.name === encuestadora.nombre) {
+                    logoUrl = assocData.logo;
+                    break;
+                  }
+                }
+              }
+              
+              // Si aún no hay logo, intentar con el ID en PARTIES_GENERAL
+              if (!logoUrl) {
+                const partyData = PARTIES_GENERAL[encuestadora.id as keyof typeof PARTIES_GENERAL];
+                if (partyData) {
+                  logoUrl = partyData.logo;
+                }
+              }
+              
+              // Si aún no hay logo, intentar con el ID en YOUTH_ASSOCIATIONS
+              if (!logoUrl) {
+                const assocData = YOUTH_ASSOCIATIONS[encuestadora.id as keyof typeof YOUTH_ASSOCIATIONS];
+                if (assocData) {
+                  logoUrl = assocData.logo;
+                }
+              }
 
-                {/* Nombre y Sigla */}
-                <div className="mb-2">
-                  <h3 className="font-semibold text-sm line-clamp-2">
-                    {encuestadora.nombre}
-                  </h3>
-                  {encuestadora.sigla && (
-                    <p className="text-xs text-muted-foreground">
-                      {encuestadora.sigla}
+              return (
+                <div
+                  key={encuestadora.id}
+                  className="border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  {/* Logo */}
+                  {logoUrl ? (
+                    <div className="mb-3 h-16 flex items-center justify-center bg-gray-50 rounded">
+                      <PartyLogo src={logoUrl} alt={encuestadora.nombre} partyName={encuestadora.nombre} size={48} />
+                    </div>
+                  ) : (
+                    <div className="mb-3 h-16 flex items-center justify-center bg-gray-50 rounded text-gray-400">
+                      <span className="text-sm">Sin logo</span>
+                    </div>
+                  )}
+
+                  {/* Nombre y Sigla */}
+                  <div className="mb-2">
+                    <h3 className="font-semibold text-sm line-clamp-2">
+                      {encuestadora.nombre}
+                    </h3>
+                    {encuestadora.sigla && (
+                      <p className="text-xs text-muted-foreground">
+                        {encuestadora.sigla}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Credibilidad */}
+                  {encuestadora.credibilidad !== undefined && (
+                    <div className="mb-3 flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{
+                            width: `${encuestadora.credibilidad}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium">
+                        {encuestadora.credibilidad}%
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Badge de confiabilidad */}
+                  {encuestadora.credibilidad !== undefined && (
+                    <Badge className={`mb-3 ${getCredibilidadColor(encuestadora.credibilidad)}`}>
+                      <Star className="w-3 h-3 mr-1" />
+                      {getCredibilidadLabel(encuestadora.credibilidad)}
+                    </Badge>
+                  )}
+
+                  {/* País */}
+                  {encuestadora.pais && (
+                    <p className="text-xs text-muted-foreground mb-2">
+                      📍 {encuestadora.pais}
                     </p>
                   )}
+
+                  {/* Sitio web */}
+                  {encuestadora.sitio_web && (
+                    <a
+                      href={encuestadora.sitio_web}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-2"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Sitio web
+                    </a>
+                  )}
                 </div>
-
-                {/* Credibilidad */}
-                {encuestadora.credibilidad !== undefined && (
-                  <div className="mb-3 flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{
-                          width: `${encuestadora.credibilidad}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium">
-                      {encuestadora.credibilidad}%
-                    </span>
-                  </div>
-                )}
-
-                {/* Badge de confiabilidad */}
-                {encuestadora.credibilidad !== undefined && (
-                  <Badge className={`mb-3 ${getCredibilidadColor(encuestadora.credibilidad)}`}>
-                    <Star className="w-3 h-3 mr-1" />
-                    {getCredibilidadLabel(encuestadora.credibilidad)}
-                  </Badge>
-                )}
-
-                {/* País */}
-                {encuestadora.pais && (
-                  <p className="text-xs text-muted-foreground mb-2">
-                    📍 {encuestadora.pais}
-                  </p>
-                )}
-
-                {/* Sitio web */}
-                {encuestadora.sitio_web && (
-                  <a
-                    href={encuestadora.sitio_web}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-2"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Sitio web
-                  </a>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>

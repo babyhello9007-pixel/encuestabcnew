@@ -6,7 +6,7 @@ import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from '@/lib/surveyData';
 import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, Sparkles } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { ShareResultsAdvanced } from "@/components/ShareResultsAdvanced";
@@ -33,6 +33,8 @@ import Pactometer from "@/components/Pactometer";
 import PactometerInteractive from "@/components/PactometerInteractive";
 
 import { Map, Grid3x3, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 
 interface PartyStats {
   id: string;
@@ -88,6 +90,7 @@ export default function Results() {
   const [provinciaMetricsMapJuveniles, setProvinciaMetricsMapJuveniles] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
 
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
@@ -663,6 +666,29 @@ export default function Results() {
                     <p className="text-xs text-[#999999]">sobre 10</p>
                   </div>
                 )}
+              </div>
+              <div className="flex gap-3 mt-6 flex-wrap">
+                <Button
+                  onClick={() => setShowAIAnalysis(true)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Análisis de IA
+                </Button>
+                <Button
+                  onClick={exportToPDF}
+                  variant="outline"
+                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  PDF
+                </Button>
+                <ShareResultsAdvanced 
+                  activeTab={activeTab} 
+                  stats={stats}
+                  totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
+                  edadPromedio={edadPromedio}
+                />
               </div>
             </div>
 
@@ -1252,6 +1278,15 @@ export default function Results() {
           </p>
         </div>
       </footer>
+
+      <AIAnalysisModal
+        open={showAIAnalysis}
+        onOpenChange={setShowAIAnalysis}
+        totalResponses={totalResponses}
+        edadPromedio={edadPromedio}
+        ideologiaPromedio={ideologiaPromedio}
+        topParties={[...stats].sort((a, b) => b.votos - a.votos).slice(0, 5)}
+      />
     </div>
   );
 }
