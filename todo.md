@@ -560,3 +560,12 @@
 - [x] Verificar que los componentes muestren datos correctamente
 - [x] Probar visualización de logos de encuestadoras
 - [x] Guardar checkpoint con encuestadoras integradas
+
+## Mejoras en Sección de Encuestadoras - COMPLETADO
+- [x] Eliminar sección "El Análisis" de la navegación
+- [x] Reposicionar Encuestadoras entre Mapa y Hemiciclo y CCAA
+- [x] Mejorar diseño visual de Encuestadoras
+- [x] Agregar comparativa de todos los partidos políticos (escaños y % por encuestadora)
+- [x] Incluir resultados de #LaEncuestaBC en Encuestadoras
+- [x] Agregar botón de "Análisis de IA" junto a "Resultados en vivo"
+- [x] Integrar análisis de IA por sección

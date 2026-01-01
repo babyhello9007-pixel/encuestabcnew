@@ -23,9 +23,10 @@ import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
-import ElAnalisis from "@/components/results/ElAnalisis";
+
 import EncuestadorasGrid from "@/components/results/EncuestadorasGrid";
 import EncuestasExternasTable from "@/components/results/EncuestasExternasTable";
+import EncuestadorasComparativa from "@/components/results/EncuestadorasComparativa";
 import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import Pactometer from "@/components/Pactometer";
@@ -63,7 +64,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "encuestadoras-externas">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -687,14 +688,14 @@ export default function Results() {
                 Mapa y Hemiciclo
               </button>
               <button
-                onClick={() => setActiveTab("el-analisis")}
+                onClick={() => setActiveTab("encuestadoras-externas")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
-                  activeTab === "el-analisis"
+                  activeTab === "encuestadoras-externas"
                     ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
                     : "text-[#666666] hover:text-[#2D2D2D]"
                 }`}
               >
-                El Análisis
+                Encuestadoras
               </button>
               <button
                 onClick={() => setActiveTab("ccaa")}
@@ -775,16 +776,6 @@ export default function Results() {
                 }`}
               >
                 Líderes de Partidos
-              </button>
-              <button
-                onClick={() => setActiveTab("encuestadoras-externas")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
-                  activeTab === "encuestadoras-externas"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
-                }`}
-              >
-                Encuestadoras
               </button>
               <div className="ml-auto flex gap-2">
                 <Button
@@ -917,9 +908,6 @@ export default function Results() {
             )}
             {activeTab === "lideres-preferidos" && (
               <LeadersResultsChart />
-            )}
-            {activeTab === "el-analisis" && (
-              <ElAnalisis />
             )}
             {activeTab === "ccaa" && (
               <CCAAResltsSection />
@@ -1206,24 +1194,12 @@ export default function Results() {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                </>              )}
+                </>
+              )}
             </div>
             )}
-
             {activeTab === "encuestadoras-externas" && (
-              <div className="space-y-6">
-                <div className="liquid-glass p-8 rounded-2xl">
-                  <h2 className="text-3xl font-bold text-[#2D2D2D] mb-6">Encuestadoras Externas y Analisis</h2>
-                  <p className="text-[#666666] mb-6">
-                    Aqui puedes ver las principales encuestadoras espanolas, sus encuestas externas sobre elecciones generales, 
-                    y comparar los resultados de #LaEncuestaBC con otros estudios de opinion.
-                  </p>
-                </div>
-                
-                <EncuestadorasGrid />
-                
-                <EncuestasExternasTable tipoEncuesta="generales" diasAtras={90} />
-              </div>
+              <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />
             )}
 
             {activeTab !== "leaders" && activeTab !== "encuestadoras-externas" && (
