@@ -1,15 +1,51 @@
 import { useState } from 'react';
 import ImageLoader from './ImageLoader';
+import { getPartyLogo, getPartyConfig } from '@/lib/partyConfig';
+import { PARTIES_GENERAL } from '@/lib/surveyData';
 
 interface PartyLogoProps {
-  src: string;
-  alt: string;
-  partyName: string;
+  src?: string;
+  alt?: string;
+  partyName?: string;
+  partyId?: string;
   size?: number;
 }
 
-export default function PartyLogo({ src, alt, partyName, size = 48 }: PartyLogoProps) {
+export default function PartyLogo({ src, alt, partyName, partyId, size = 48 }: PartyLogoProps) {
   const [isHovered, setIsHovered] = useState(false);
+
+  // Determinar el nombre del partido y el logo
+  let finalPartyName = partyName || '';
+  let finalSrc = src;
+  let finalAlt = alt || '';
+
+  // Si se proporciona partyId, buscar el nombre en PARTIES_GENERAL
+  if (partyId && !partyName) {
+    const party = Object.values(PARTIES_GENERAL).find(p => p.id === partyId);
+    if (party) {
+      finalPartyName = party.name;
+      finalSrc = party.logo;
+      finalAlt = party.name;
+    }
+  }
+
+  // Si no hay src, obtener del config de partidos
+  if (!finalSrc && finalPartyName) {
+    finalSrc = getPartyLogo(finalPartyName);
+    if (!finalAlt) {
+      finalAlt = finalPartyName;
+    }
+  }
+
+  // Fallback si no hay información
+  if (!finalSrc) {
+    finalSrc = '/assets/icons/Otros.png';
+    finalAlt = 'Partido desconocido';
+  }
+
+  if (!finalPartyName) {
+    finalPartyName = 'Partido';
+  }
 
   return (
     <div
@@ -22,12 +58,11 @@ export default function PartyLogo({ src, alt, partyName, size = 48 }: PartyLogoP
       }}
     >
       <ImageLoader 
-        src={src} 
-        alt={alt} 
-        fallbackText={partyName.substring(0, 2).toUpperCase()}
+        src={finalSrc} 
+        alt={finalAlt} 
+        fallbackText={finalPartyName.substring(0, 2).toUpperCase()}
         size={size}
       />
     </div>
   );
 }
-
