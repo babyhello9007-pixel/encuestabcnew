@@ -14,6 +14,7 @@ import About from "./pages/About";
 import Admin from "./pages/Admin";
 import CodeEditor from "./pages/CodeEditor";
 import LeaderSurvey from "./pages/LeaderSurvey";
+import SurveysVarias from "./pages/SurveysVarias";
 import Bio from "./pages/Bio";
 import Blog from "./pages/Blog";
 import AdminBlogLogin from "./pages/AdminBlogLogin";
@@ -27,7 +28,9 @@ function Router() {
       <Route path={"/encuesta"} component={Survey} />
       <Route path={"/nano-encuesta"} component={NanoEncuestaBC} />
       <Route path={"/lideres"} component={LeaderSurvey} />
+      <Route path={"/encuestas-varias"} component={SurveysVarias} />
       <Route path={"/resultados"} component={Results} />
+      <Route path={"/respuestas"} component={Results} />
       <Route path={"/acerca-de"} component={About} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/editor"} component={CodeEditor} />

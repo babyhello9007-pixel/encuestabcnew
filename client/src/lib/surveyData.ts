@@ -24,6 +24,12 @@ export const PARTIES_GENERAL = {
   IE: { name: 'Izquierda Española', logo: '/assets/icons/IzquierdaEspañolaNEW.png', color: '#CC0000' },
   COMPROMIS: { name: 'Compromís', logo: '/assets/logos/compromis-logo.png', color: '#FF9900' },
   DO: { name: 'Democracia Ourensana', logo: '/assets/logos/democracia-ourensana-logo.png', color: '#FFD700' },
+  AA: { name: 'Adelante Andalucía', logo: '/assets/logos/adelante-andalucia.png', color: '#FF0000' },
+  CUP: { name: 'CUP', logo: '/assets/logos/cup.png', color: '#FFC400' },
+  PACMA: { name: 'PACMA', logo: '/assets/logos/pacma.png', color: '#00AA44' },
+  PCTE: { name: 'PCTE', logo: '/assets/logos/pcte.png', color: '#CC0000' },
+  UPL: { name: 'UPL', logo: '/assets/logos/upl.png', color: '#0066CC' },
+  PNA: { name: 'PARTIDO NACIONAL ALONSISTA', logo: '/assets/logos/pna.png', color: '#FFD700' },
 };
 
 export const YOUTH_ASSOCIATIONS = {

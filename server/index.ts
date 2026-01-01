@@ -3,6 +3,7 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import { registerSurveysRoutes } from "./routes/surveys.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,6 +11,9 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // Middleware: Parse JSON
+  app.use(express.json());
 
   // Resolve the static path
   const staticPath = path.resolve(__dirname, "..", "dist", "public");
@@ -32,6 +36,9 @@ async function startServer() {
     
     next();
   });
+
+  // Register surveys routes
+  await registerSurveysRoutes(app);
 
   // Endpoint para eliminar OTROS_VOTOS
   app.post("/api/cleanup-otros-votos", async (req, res) => {
