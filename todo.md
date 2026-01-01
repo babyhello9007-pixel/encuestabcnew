@@ -317,9 +317,12 @@
 - [x] Agregar enlace a Resultados En Vivo
 - [x] Agregar enlaces a Redes Sociales (X, Discord, Bluesky, Instagram)
 - [x] Integrar ruta /bio en App.tsx
-- [x] Probar página Bio en navegador
-- [x] Guardar checkpoint con página Bio
-## Blog de BC - NUEVO
+- [x] Probar página Bio en navegado- [x] Guardar checkpoint final con página Bio
+
+## Mejoras del Pactómetro - Nueva Sesión
+- [x] Mover Pactometer de Generales a Mapa y Hemiciclo
+- [x] Hacer Pactometer interactivo con nombres de partidos y clics para pactos
+- [x] Mejorar paleta de colores de partidos políticosBlog de BC - NUEVO
 - [x] Crear tabla blog_posts en Supabase
 - [x] Crear procedimi...tos tRPC para blog (crear, editar, eliminar, obtener)
 - [x] Crear página pública /blog con listado de entradas

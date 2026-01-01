@@ -26,6 +26,7 @@ import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import Pactometer from "@/components/Pactometer";
+import PactometerInteractive from "@/components/PactometerInteractive";
 
 import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 
@@ -1080,6 +1081,20 @@ export default function Results() {
                         provinciaSeleccionada={provinciaSeleccionada}
                         votosProvincia={votosPorPartidoProvincia}
                         escanosProvincia={escanosProvincia}
+                      />
+                    </div>
+                    
+                    <div className="liquid-glass p-6 rounded-2xl">
+                      <PactometerInteractive 
+                        stats={stats.map(s => ({
+                          id: s.id,
+                          nombre: s.nombre,
+                          escanos: s.escanos,
+                          porcentaje: s.porcentaje,
+                          color: s.color
+                        }))}
+                        totalSeats={350}
+                        requiredForMajority={176}
                       />
                     </div>
                   </>

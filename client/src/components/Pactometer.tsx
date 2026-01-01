@@ -62,9 +62,9 @@ export default function Pactometer({
 
   const getCoalitionColor = (coalitionName: string): string => {
     const colors: Record<string, string> = {
-      'Derecha': '#0066CC',
-      'Centro-Derecha': '#0066CC',
-      'Izquierda': '#E81828',
+      'Derecha': '#0066FF',
+      'Centro-Derecha': '#0066FF',
+      'Izquierda': '#E81B23',
       'Nacionalistas': '#FFD700',
       'Otros': '#999999'
     };
