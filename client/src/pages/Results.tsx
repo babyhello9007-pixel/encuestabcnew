@@ -801,23 +801,6 @@ export default function Results() {
                     Ordenar por Escaños
                   </Button>
                 </div>
-                
-                {activeTab === "general" && stats.length > 0 && (
-                  <div className="liquid-glass p-6 rounded-2xl">
-                    <Pactometer 
-                      stats={stats.map(s => ({
-                        id: s.id,
-                        nombre: s.nombre,
-                        escanos: s.escanos,
-                        porcentaje: s.porcentaje,
-                        color: s.color
-                      }))}
-                      totalSeats={350}
-                      requiredForMajority={176}
-                      showCoalitions={true}
-                    />
-                  </div>
-                )}
               </div>
             )}
 
@@ -980,9 +963,8 @@ export default function Results() {
                     </div>
                     
                     <div className="liquid-glass p-6 rounded-2xl">
-                      <h3 className="text-xl font-bold text-[#2D2D2D] mb-4">Pactómetro - Asociaciones Juveniles</h3>
                       {youthStats.length > 0 && (
-                        <Pactometer 
+                        <PactometerInteractive 
                           stats={youthStats.map(s => ({
                             id: s.id,
                             nombre: s.nombre,
@@ -992,7 +974,6 @@ export default function Results() {
                           }))}
                           totalSeats={100}
                           requiredForMajority={51}
-                          showCoalitions={true}
                         />
                       )}
                     </div>

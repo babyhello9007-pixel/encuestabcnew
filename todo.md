@@ -482,3 +482,9 @@
 - Tabla: encuestas_varias
 - Tabla: respuestas_encuestas_varias
 - Campos: id, questionNumber, questionText, optionO1, optionO2, optionOO, votesO1, votesO2, votesOO
+
+
+## Correcciones del Pactómetro - Segunda Sesión
+- [x] Eliminar pactómetro de la pestaña "Elecciones Generales"
+- [x] Arreglar pactómetro interactivo de "Mapa y Hemiciclo" para que funcione correctamente
+- [x] Hacer interactivo el pactómetro de "Asociaciones Juveniles"
