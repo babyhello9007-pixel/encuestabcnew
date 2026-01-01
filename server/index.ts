@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import { registerSurveysRoutes } from "./routes/surveys.js";
+import { registerMiscSurveysRoutes } from "./routes/misc-surveys.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +40,9 @@ async function startServer() {
 
   // Register surveys routes
   await registerSurveysRoutes(app);
+  
+  // Register misc surveys routes
+  await registerMiscSurveysRoutes(app);
 
   // Endpoint para eliminar OTROS_VOTOS
   app.post("/api/cleanup-otros-votos", async (req, res) => {

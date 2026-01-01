@@ -428,3 +428,54 @@
 - [x] Agregar pactómetros en Asociaciones Juveniles - Componente Pactometer.tsx reutilizable
 - [x] Implementar mejoras visuales generales - Agregadas animaciones, sombras mejoradas y estilos suaves
 - [ ] Implementar IA para análisis de resultados en tiempo real (FUTURO) - Documentado en ROADMAP.md
+
+## Tareas de Mejora - Sesión Actual
+
+- [x] Forzar logos de partidos - Modificar partyConfig.ts para usar logos reales en lugar de emojis
+- [x] Integrar Pactometer en resultados - Agregar componente a secciones generales y asociaciones
+- [x] Implementar API de encuestas varias - Crear endpoints /api/surveys/results y /api/surveys/submit
+
+
+## API Endpoints de Encuestas Varias - COMPLETADO
+
+### Endpoints Implementados:
+
+#### GET /api/surveys/misc
+- Obtiene todas las encuestas varias disponibles
+- Respuesta: Array de encuestas ordenadas por número de pregunta
+
+#### GET /api/surveys/misc/:questionNumber
+- Obtiene una encuesta varia específica
+- Parámetro: questionNumber (número de pregunta)
+- Respuesta: Objeto de encuesta
+
+#### GET /api/surveys/misc/results/:questionNumber
+- Obtiene resultados de una encuesta varia específica
+- Incluye: votos totales, porcentajes por opción
+- Respuesta: Objeto con resultados y opciones
+
+#### GET /api/surveys/misc/results
+- Obtiene resultados de TODAS las encuestas varias
+- Respuesta: Array de resultados con votos y porcentajes
+
+#### POST /api/surveys/misc/submit
+- Envía una respuesta a una encuesta varia
+- Body: { questionNumber, selectedOption }
+- Opciones válidas: O1, O2, OO
+- Actualiza automáticamente contadores
+
+#### POST /api/surveys/misc (Admin)
+- Crea una nueva encuesta varia
+- Body: { questionNumber, questionText, optionO1, optionO2, optionOO }
+
+#### PUT /api/surveys/misc/:questionNumber (Admin)
+- Actualiza una encuesta varia existente
+- Body: { questionText?, optionO1?, optionO2?, optionOO? }
+
+#### DELETE /api/surveys/misc/:questionNumber (Admin)
+- Elimina una encuesta varia
+
+### Base de Datos:
+- Tabla: encuestas_varias
+- Tabla: respuestas_encuestas_varias
+- Campos: id, questionNumber, questionText, optionO1, optionO2, optionOO, votesO1, votesO2, votesOO

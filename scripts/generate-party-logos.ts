@@ -1,6 +1,100 @@
 /**
+ * Script para generar configuración de partidos con logos reales
+ * Mapea automáticamente los logos disponibles en assets/icons/
+ */
+
+import fs from "fs";
+import path from "path";
+
+interface PartyLogoMap {
+  [key: string]: string;
+}
+
+// Mapeo manual de partidos a archivos de logo
+const PARTY_LOGO_MAP: PartyLogoMap = {
+  // Partidos principales
+  "VOX": "/assets/icons/VOX.png",
+  "PP": "/assets/icons/PP.png",
+  "PSOE": "/assets/icons/PSOE.png",
+  "Ciudadanos": "/assets/icons/Ciudadanos.png",
+  "PODEMOS": "/assets/icons/PODEMOS.png",
+  "Unidas Podemos": "/assets/icons/PODEMOS.png",
+  "UP": "/assets/icons/PODEMOS.png",
+  "SUMAR": "/assets/icons/SUMAR.png",
+
+  // Partidos nacionalistas catalanes
+  "ERC": "/assets/icons/ERC.png",
+  "Esquerra Republicana de Catalunya": "/assets/icons/ERC.png",
+  "JUNTS": "/assets/icons/JUNTS.png",
+  "Junts per Catalunya": "/assets/icons/JUNTS.png",
+  "Aliança Catalana": "/assets/icons/JUNTS.png",
+
+  // Partidos nacionalistas vascos
+  "PNV": "/assets/icons/PNV.png",
+  "Partido Nacionalista Vasco": "/assets/icons/PNV.png",
+  "BILDU": "/assets/icons/BILDU.png",
+  "EH Bildu": "/assets/icons/BILDU.png",
+  "Ezker Nazionala": "/assets/icons/BILDU.png",
+
+  // Partidos nacionalistas gallegos
+  "BNG": "/assets/icons/BNGNEW.jpg",
+  "Bloque Nacionalista Galego": "/assets/icons/BNGNEW.jpg",
+
+  // Partidos canarios
+  "Coalición Canaria": "/assets/icons/CoalicionCanaria.png",
+  "CC": "/assets/icons/CoalicionCanaria.png",
+  "UPL": "/assets/icons/UPN.png",
+
+  // Otros partidos
+  "Frente Obrero": "/assets/icons/FrenteObrero.png",
+  "Se Acabó La Fiesta": "/assets/icons/SeAcabóLaFiesta.png",
+  "SALF": "/assets/icons/SeAcabóLaFiesta.png",
+  "Escaños en Blanco": "/assets/icons/EscañosEnBlanco.png",
+  "Izquierda Española": "/assets/icons/IzquierdaEspañolaNEW.png",
+  "Izquierda Unida": "/assets/icons/IzquierdaEspañolaNEW.png",
+  "Caminando Juntos": "/assets/icons/CaminandoJuntos.png",
+  "Falange": "/assets/icons/FALANGENEW.webp",
+  "Falange Española de las JONS": "/assets/icons/FALANGENEW.webp",
+  "Soberanía y Trabajo": "/assets/icons/SoberaniaYTrabajo.png",
+  "Soberanía y Trabajo.": "/assets/icons/SoberaniaYTrabajo.png",
+  "P-Lib": "/assets/icons/P-Lib.jpg",
+  "P-lib": "/assets/icons/P-Lib.jpg",
+  "PACMA": "/assets/icons/PACMA.png",
+  "Comunión Tradicionalista": "/assets/icons/ComunionTradicionalist.png",
+  "CUP": "/assets/icons/CUP.png",
+  "Adelante Andalucía": "/assets/icons/AdelanteAndalucia.png",
+  "UPN": "/assets/icons/UPNNew.png",
+  "Otros": "/assets/icons/Otros.png",
+
+  // Asociaciones Juveniles
+  "S'ha Acabat!": "/assets/icons/SHaAcabat.jpg",
+  "Revuelta": "/assets/icons/RevueltaNEW.jpg",
+  "Nuevas Generaciones del PP": "/assets/icons/NuevasGeneracionesdelPP.png",
+  "Jóvenes de VOX": "/assets/icons/JóvenesDeVOXNEW.png",
+  "Voces Libres España (VLE)": "/assets/icons/VocesLibresEspanaNEW.jpg",
+  "Juventudes Socialistas de España": "/assets/icons/JuventudesSocialistasdeEspañaNEW.png",
+  "Acción Patriota": "/assets/icons/Patriota.png",
+  "Juventudes de Izquierda Unida": "/assets/icons/JuventudesDeIzquierdaUnida.jpg",
+  "Juventudes Comunistas": "/assets/icons/JuventudesDeIzquierdaUnida.jpg",
+  "Jóvenes de Ciudadanos": "/assets/icons/JovenesDeVoxNEW.png",
+  "EGI": "/assets/icons/PNV.png",
+  "Ernai": "/assets/icons/PNV.png",
+  "Joventuts d'Esquerra Republicana de Catalunya": "/assets/icons/ERC.png",
+  "Joventut Nacionalista de Catalunya": "/assets/icons/JoventutNacionalistadeCatalunyaNEW.png",
+  "Galiza Nova": "/assets/icons/GalizanovaNEW.png",
+  "Arran": "/assets/icons/GeneracionOperativa.webp",
+  "Jóvenes Nacionalistas de Canarias": "/assets/icons/Patriota.png",
+  "Joves del País Valencià – Compromís": "/assets/icons/Patriota.png",
+  "Acción Castilla y León": "/assets/icons/AcciónCastillayLeónNEW.png",
+  "Juventud Estudiante Católica": "/assets/icons/JuventudEstudianteCatólicaNEW.jpg",
+  "ÁGORA Canarias": "/assets/icons/Patriota.png",
+};
+
+// Generar el archivo partyConfig.ts con logos
+function generatePartyConfig() {
+  const configContent = `/**
  * Configuración de colores oficiales y logos de partidos políticos españoles
- * Logos reales en lugar de emojis para mejor visualización
+ * Generado automáticamente - NO EDITAR MANUALMENTE
  */
 
 export interface PartyConfig {
@@ -387,3 +481,12 @@ export function getPartyColor(partyName: string): string {
 export function getPartyLogo(partyName: string): string {
   return getPartyConfig(partyName).logo;
 }
+`;
+
+  return configContent;
+}
+
+// Ejecutar generación
+const content = generatePartyConfig();
+console.log("Configuración de partidos generada exitosamente");
+console.log(content.substring(0, 500) + "...");

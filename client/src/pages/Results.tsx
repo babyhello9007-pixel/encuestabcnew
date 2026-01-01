@@ -25,6 +25,7 @@ import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
+import Pactometer from "@/components/Pactometer";
 
 import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 
@@ -35,6 +36,7 @@ interface PartyStats {
   porcentaje: number;
   escanos: number;
   logo: string;
+  color?: string;
 }
 
 interface LeaderRating {
@@ -781,21 +783,40 @@ export default function Results() {
 
 
             {(activeTab === "general" || activeTab === "youth") && (
-              <div className="flex gap-2 mb-4">
-                <Button
-                  onClick={() => setSortBy('votos')}
-                  variant={sortBy === 'votos' ? 'default' : 'outline'}
-                  className="text-sm"
-                >
-                  Ordenar por Votos
-                </Button>
-                <Button
-                  onClick={() => setSortBy('escanos')}
-                  variant={sortBy === 'escanos' ? 'default' : 'outline'}
-                  className="text-sm"
-                >
-                  Ordenar por Escaños
-                </Button>
+              <div className="space-y-6">
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    onClick={() => setSortBy('votos')}
+                    variant={sortBy === 'votos' ? 'default' : 'outline'}
+                    className="text-sm"
+                  >
+                    Ordenar por Votos
+                  </Button>
+                  <Button
+                    onClick={() => setSortBy('escanos')}
+                    variant={sortBy === 'escanos' ? 'default' : 'outline'}
+                    className="text-sm"
+                  >
+                    Ordenar por Escaños
+                  </Button>
+                </div>
+                
+                {activeTab === "general" && stats.length > 0 && (
+                  <div className="liquid-glass p-6 rounded-2xl">
+                    <Pactometer 
+                      stats={stats.map(s => ({
+                        id: s.id,
+                        nombre: s.nombre,
+                        escanos: s.escanos,
+                        porcentaje: s.porcentaje,
+                        color: s.color
+                      }))}
+                      totalSeats={350}
+                      requiredForMajority={176}
+                      showCoalitions={true}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -953,6 +974,24 @@ export default function Results() {
                             setVotosPorPartidoProvinciaJuveniles(votos);
                             setEscanosProvinciaJuveniles(escanos);
                           }}
+                        />
+                      )}
+                    </div>
+                    
+                    <div className="liquid-glass p-6 rounded-2xl">
+                      <h3 className="text-xl font-bold text-[#2D2D2D] mb-4">Pactómetro - Asociaciones Juveniles</h3>
+                      {youthStats.length > 0 && (
+                        <Pactometer 
+                          stats={youthStats.map(s => ({
+                            id: s.id,
+                            nombre: s.nombre,
+                            escanos: s.escanos,
+                            porcentaje: s.porcentaje,
+                            color: s.color
+                          }))}
+                          totalSeats={100}
+                          requiredForMajority={51}
+                          showCoalitions={true}
                         />
                       )}
                     </div>
