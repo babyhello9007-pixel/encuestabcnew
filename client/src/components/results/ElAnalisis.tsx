@@ -364,10 +364,9 @@ function Capa1ResultadosBrutos({ resultados, loading, tipoEncuesta, ambito }: Ca
                   </div>
 
                   {/* Metadatos */}
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    {resultados[0]?.muestra && <p>Muestra: {resultados[0].muestra} encuestados</p>}
-                    {resultados[0]?.margen_error && <p>Margen de error: ±{resultados[0].margen_error}%</p>}
-                  </div>
+                   <div className="text-xs text-muted-foreground space-y-1">
+                     {resultados[0]?.muestra && <p>Muestra: {resultados[0].muestra} encuestados</p>}
+                   </div>
                 </div>
               ))}
             </div>

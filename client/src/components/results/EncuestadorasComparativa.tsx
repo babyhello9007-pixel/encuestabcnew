@@ -265,12 +265,7 @@ export default function EncuestadorasComparativa({ tipoEncuesta, diasAtras = 30,
                         </p>
                       </div>
                     )}
-                    {encuesta.margen_error && (
-                      <div className="p-3 bg-[#F5F0EB] rounded-lg">
-                        <p className="text-[#999999] text-xs font-semibold">Margen error</p>
-                        <p className="font-bold text-[#2D2D2D] mt-1">±{encuesta.margen_error}%</p>
-                      </div>
-                    )}
+
                     {encuesta.ccaa_o_provincia && (
                       <div className="p-3 bg-[#F5F0EB] rounded-lg">
                         <p className="text-[#999999] text-xs font-semibold">Territorio</p>

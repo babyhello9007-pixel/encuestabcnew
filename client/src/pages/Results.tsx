@@ -626,25 +626,25 @@ export default function Results() {
           <LoadingAnimation />
         ) : (
           <div className="space-y-8">
-            <div className="liquid-glass p-8 space-y-4">
-              <h2 className="text-3xl font-bold text-foreground">Resultados en Vivo</h2>
-              <div className="grid md:grid-cols-3 gap-4">
+            <div className="liquid-glass p-4 sm:p-6 md:p-8 space-y-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Resultados en Vivo</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <div className="stat-box">
-                  <p className="text-sm text-muted-foreground">Total de Respuestas</p>
-                  <p className="stat-value">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Total de Respuestas</p>
+                  <p className="stat-value text-lg sm:text-2xl md:text-3xl">
                     {totalResponses.toLocaleString()}
                   </p>
                 </div>
                 <div className="stat-box">
-                  <p className="text-sm text-muted-foreground">Escaños en Juego</p>
-                  <p className="stat-value">{totalEscanos}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Escaños en Juego</p>
+                  <p className="stat-value text-lg sm:text-2xl md:text-3xl">{totalEscanos}</p>
                 </div>
                 <div className="stat-box">
-                  <p className="text-sm text-muted-foreground">Última Actualización</p>
-                  <p className="text-lg font-semibold text-foreground">Tiempo Real</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Última Actualización</p>
+                  <p className="text-base sm:text-lg font-semibold text-foreground">Tiempo Real</p>
                 </div>
               </div>
-              <div className="grid md:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mt-4">
                 {edadPromedio !== null && (
                   <div className="stat-box">
                     <p className="text-sm text-muted-foreground">Edad Media</p>
@@ -667,20 +667,21 @@ export default function Results() {
                   </div>
                 )}
               </div>
-              <div className="flex gap-3 mt-6 flex-wrap">
+              <div className="flex gap-2 sm:gap-3 mt-6 flex-wrap">
                 <Button
                   onClick={() => setShowAIAnalysis(true)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-2"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Análisis de IA
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Análisis de IA</span>
+                  <span className="sm:hidden">IA</span>
                 </Button>
                 <Button
                   onClick={exportToPDF}
                   variant="outline"
-                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white flex items-center gap-2"
+                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                   PDF
                 </Button>
                 <ShareResultsAdvanced 
@@ -692,7 +693,8 @@ export default function Results() {
               </div>
             </div>
 
-            <div className="flex gap-4 border-b border-[#E0D5CC]">
+            <div className="overflow-x-auto border-b border-[#E0D5CC] -mx-4 sm:mx-0 px-4 sm:px-0">
+              <div className="flex gap-2 sm:gap-4 min-w-max">
               <button
                 onClick={() => setActiveTab("general")}
                 className={`pb-4 px-4 font-semibold transition-colors ${
@@ -819,9 +821,8 @@ export default function Results() {
                   edadPromedio={edadPromedio}
                 />
               </div>
+              </div>
             </div>
-
-
 
             {(activeTab === "general" || activeTab === "youth") && (
               <div className="space-y-6">

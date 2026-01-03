@@ -575,3 +575,10 @@
 - [x] Agregar botón "Análisis de IA" en Resultados en Vivo
 - [x] Integrar Manus AI para análisis contextual de resultados
 - [x] Mover botones PDF y Compartir resultado a sección de Resultados en Vivo
+
+
+## Mejoras Solicitadas - NUEVA ITERACIÓN
+- [x] Quitar margen de error ±1.4% de la sección de encuestadoras
+- [x] Configurar VITE_MANUS_API_KEY en Settings → Secrets para análisis de IA real (solicitado al usuario)
+- [x] Expandir Análisis de IA con botones independientes por sección (CCAA, Provincias, Líderes)
+- [x] Mejorar responsividad de Results.tsx para dispositivos móviles

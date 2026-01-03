@@ -200,12 +200,7 @@ export default function EncuestasExternasTable({ tipoEncuesta, diasAtras = 30 }:
                           </p>
                         </div>
                       )}
-                      {encuesta.margen_error && (
-                        <div>
-                          <p className="text-muted-foreground text-xs">Margen error</p>
-                          <p className="font-semibold">±{encuesta.margen_error}%</p>
-                        </div>
-                      )}
+
                       {encuesta.ccaa_o_provincia && (
                         <div>
                           <p className="text-muted-foreground text-xs">Territorio</p>
