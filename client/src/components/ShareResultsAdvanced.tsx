@@ -309,29 +309,30 @@ export function ShareResultsAdvanced({
 
             {/* Selector de Tema de Colores */}
             <div className="mb-6">
-              <label className="text-sm text-[#666666] mb-3 block font-medium">
+              <label className="text-xs sm:text-sm text-[#666666] mb-3 block font-medium">
                 Selecciona el esquema de colores:
               </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {getThemeList().map((themeOption) => (
                   <button
                     key={themeOption.id}
                     onClick={() => setSelectedTheme(themeOption.id)}
-                    className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                    className={`p-2 sm:p-4 rounded-lg border-2 transition-all duration-200 ${
                       selectedTheme === themeOption.id
                         ? "border-[#C41E3A] bg-[#FFF5F7]"
                         : "border-[#E0E0E0] bg-white hover:border-[#C41E3A]"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3">
                       <div
-                        className="w-8 h-8 rounded-full border-2 border-gray-300"
+                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-gray-300 flex-shrink-0"
                         style={{ backgroundColor: getThemeColors(themeOption.id).background }}
                       />
-                      <div className="text-left">
-                        <p className="font-semibold text-[#1D1D1F]">{themeOption.name}</p>
+                      <div className="text-left hidden sm:block">
+                        <p className="font-semibold text-xs sm:text-base text-[#1D1D1F]">{themeOption.name}</p>
                         <p className="text-xs text-[#999999]">{themeOption.description}</p>
                       </div>
+                      <p className="font-semibold text-xs sm:hidden text-[#1D1D1F] text-center">{themeOption.name}</p>
                     </div>
                   </button>
                 ))}
@@ -341,32 +342,32 @@ export function ShareResultsAdvanced({
             {/* Selector de resultado (solo en modo individual) */}
             {infographyMode === "individual" && (
               <div className="mb-6">
-                <label className="text-sm text-[#666666] mb-3 block font-medium">
+                <label className="text-xs sm:text-sm text-[#666666] mb-3 block font-medium">
                   Selecciona un resultado para compartir:
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                   {stats.map((party) => {
                     const logo = getLogoForParty(party.id, party.nombre);
                     return (
                       <button
                         key={party.id}
                         onClick={() => setSelectedParty(party)}
-                        className={`p-3 rounded-lg border-2 transition text-sm font-semibold ${
+                        className={`p-2 sm:p-3 rounded-lg border-2 transition text-xs sm:text-sm font-semibold ${
                           selectedParty?.id === party.id
                             ? "border-[#C41E3A] bg-[#FFF5F7] text-[#C41E3A]"
                             : "border-[#E0E0E0] bg-white text-[#666666] hover:border-[#C41E3A]"
                         }`}
                       >
-                        <div className="flex items-center gap-2 justify-center">
+                        <div className="flex items-center gap-1 sm:gap-2 justify-center">
                           {logo && (
                             <ImageLoader
                               src={logo}
                               alt={party.nombre}
-                              size={20}
-                              className="h-5 w-5 object-contain flex-shrink-0"
+                              size={16}
+                              className="h-4 w-4 sm:h-5 sm:w-5 object-contain flex-shrink-0"
                             />
                           )}
-                          <span className="truncate">{party.nombre}</span>
+                          <span className="truncate text-xs">{party.nombre}</span>
                         </div>
                       </button>
                     );
@@ -639,13 +640,14 @@ export function ShareResultsAdvanced({
             )}
 
             {/* Botones de acción */}
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2 sm:space-y-3 mb-6">
               <button
                 onClick={downloadInfography}
-                className="w-full bg-[#F5F5F5] hover:bg-[#EEEEEE] text-[#1D1D1F] py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold border border-[#E0E0E0]"
+                className="w-full bg-[#F5F5F5] hover:bg-[#EEEEEE] text-[#1D1D1F] py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base border border-[#E0E0E0]"
               >
-                <Download className="h-5 w-5" />
-                Descargar Infografía
+                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Descargar Infografía</span>
+                <span className="sm:hidden">Descargar</span>
               </button>
               {infographyMode === "individual" && (
                 <button
@@ -657,58 +659,65 @@ export function ShareResultsAdvanced({
                       edadPromedio
                     )
                   }
-                  className="w-full bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                  className="w-full bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
                 >
-                  <Image className="h-5 w-5" />
-                  Descargar Completa
+                  <Image className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Descargar Completa</span>
+                  <span className="sm:hidden">Completa</span>
                 </button>
               )}
               <button
                 onClick={shareOnX}
-                className="w-full bg-black hover:bg-[#1D1D1F] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                className="w-full bg-black hover:bg-[#1D1D1F] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
               >
-                <X className="h-5 w-5" />
-                Compartir en X
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Compartir en X</span>
+                <span className="sm:hidden">X</span>
               </button>
               <button
                 onClick={shareOnBluesky}
-                className="w-full bg-[#1185FE] hover:bg-[#0A66DC] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                className="w-full bg-[#1185FE] hover:bg-[#0A66DC] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
               >
-                Compartir en Bluesky
+                <span className="hidden sm:inline">Compartir en Bluesky</span>
+                <span className="sm:hidden">Bluesky</span>
               </button>
               <button
                 onClick={shareOnDiscord}
-                className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
               >
-                Compartir en Discord
+                <span className="hidden sm:inline">Compartir en Discord</span>
+                <span className="sm:hidden">Discord</span>
               </button>
               <button
                 onClick={shareOnWhatsApp}
-                className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
               >
-                <MessageCircle className="h-5 w-5" />
-                Compartir en WhatsApp
+                <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Compartir en WhatsApp</span>
+                <span className="sm:hidden">WhatsApp</span>
               </button>
               <button
                 onClick={shareOnTelegram}
-                className="w-full bg-[#0088cc] hover:bg-[#0077B5] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                className="w-full bg-[#0088cc] hover:bg-[#0077B5] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
               >
-                <Send className="h-5 w-5" />
-                Compartir en Telegram
+                <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Compartir en Telegram</span>
+                <span className="sm:hidden">Telegram</span>
               </button>
               <button
                 onClick={shareOnLinkedIn}
-                className="w-full bg-[#0A66C2] hover:bg-[#084B94] text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold"
+                className="w-full bg-[#0A66C2] hover:bg-[#084B94] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
               >
-                <Linkedin className="h-5 w-5" />
-                Compartir en LinkedIn
+                <Linkedin className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Compartir en LinkedIn</span>
+                <span className="sm:hidden">LinkedIn</span>
               </button>
             </div>
 
             {/* Botón cerrar */}
             <button
               onClick={() => setShowShareModal(false)}
-              className="w-full text-[#666666] hover:text-[#1D1D1F] py-2 font-medium transition-all duration-200"
+              className="w-full text-[#666666] hover:text-[#1D1D1F] py-2 font-medium text-xs sm:text-base transition-all duration-200"
             >
               Cerrar
             </button>

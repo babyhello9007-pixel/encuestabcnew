@@ -330,7 +330,7 @@ export default function EncuestadorasComparativa({ tipoEncuesta, diasAtras = 30,
       {/* Sección de #LaEncuestaBC */}
       <div className="liquid-glass p-6 rounded-2xl">
         <h3 className="text-xl font-bold text-[#2D2D2D] mb-4">Resultados de #LaEncuestaBC</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="p-4 bg-[#F5F0EB] rounded-lg">
             <p className="text-[#999999] text-sm font-semibold">Total de respuestas</p>
             <p className="text-3xl font-bold text-[#C41E3A] mt-2">{totalResponses.toLocaleString()}</p>
@@ -338,10 +338,6 @@ export default function EncuestadorasComparativa({ tipoEncuesta, diasAtras = 30,
           <div className="p-4 bg-[#F5F0EB] rounded-lg">
             <p className="text-[#999999] text-sm font-semibold">Período de encuesta</p>
             <p className="text-lg font-bold text-[#2D2D2D] mt-2">En tiempo real</p>
-          </div>
-          <div className="p-4 bg-[#F5F0EB] rounded-lg">
-            <p className="text-[#999999] text-sm font-semibold">Margen de error</p>
-            <p className="text-lg font-bold text-[#2D2D2D] mt-2">±{calcularMargenError(totalResponses)}%</p>
           </div>
         </div>
 
