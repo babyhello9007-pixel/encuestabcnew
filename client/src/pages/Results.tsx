@@ -27,6 +27,7 @@ import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import EncuestadorasGrid from "@/components/results/EncuestadorasGrid";
 import EncuestasExternasTable from "@/components/results/EncuestasExternasTable";
 import EncuestadorasComparativa from "@/components/results/EncuestadorasComparativa";
+import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
 import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import Pactometer from "@/components/Pactometer";
@@ -66,7 +67,7 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "encuestadoras-externas">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "encuestadoras-externas" | "preguntas-varias">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -805,6 +806,16 @@ export default function Results() {
               >
                 Líderes de Partidos
               </button>
+              <button
+                onClick={() => setActiveTab("preguntas-varias")}
+                className={`pb-4 px-4 font-semibold transition-colors ${
+                  activeTab === "preguntas-varias"
+                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
+                    : "text-[#666666] hover:text-[#2D2D2D]"
+                }`}
+              >
+                Preguntas Varias
+              </button>
               <div className="ml-auto flex gap-2">
                 <Button
                   onClick={exportToPDF}
@@ -935,6 +946,9 @@ export default function Results() {
             )}
             {activeTab === "lideres-preferidos" && (
               <LeadersResultsChart />
+            )}
+            {activeTab === "preguntas-varias" && (
+              <PreguntasVariasSection />
             )}
             {activeTab === "ccaa" && (
               <CCAAResltsSection />

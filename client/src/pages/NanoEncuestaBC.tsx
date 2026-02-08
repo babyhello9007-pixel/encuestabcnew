@@ -32,6 +32,9 @@ interface NanoSurveyResponse {
   posicion_ideologica?: number;
   asociacion_juvenil?: string;
   lider_partido?: string;
+  monarquia_republica?: string;
+  division_territorial?: string;
+  sistema_pensiones?: string;
   created_at?: string;
 }
 
@@ -68,6 +71,9 @@ export default function NanoEncuestaBC() {
     { title: "Tu Posición Ideológica", key: "posicion_ideologica", type: "buttons" },
     { title: "Asociación Juvenil", key: "asociacion_juvenil", type: "select" },
     { title: "Líder de tu Partido", key: "lider_partido", type: "leader" },
+    { title: "Forma de Gobierno", key: "monarquia_republica", type: "select" },
+    { title: "División Territorial", key: "division_territorial", type: "select" },
+    { title: "Sistema de Pensiones", key: "sistema_pensiones", type: "select" },
   ];
 
   const currentStepData = steps[currentStep];
@@ -198,7 +204,10 @@ export default function NanoEncuestaBC() {
       'valoracion_buxade',
       'posicion_ideologica',
       'asociacion_juvenil',
-      'lider_partido'
+      'lider_partido',
+      'monarquia_republica',
+      'division_territorial',
+      'sistema_pensiones'
     ];
 
     const missingFields = requiredFields.filter(field => {
@@ -237,6 +246,9 @@ export default function NanoEncuestaBC() {
         val_buxade: responses.valoracion_buxade || 0,
         posicion_ideologica: responses.posicion_ideologica || null,
         voto_asociacion_juvenil: responses.asociacion_juvenil || null,
+        monarquia_republica: responses.monarquia_republica || null,
+        division_territorial: responses.division_territorial || null,
+        sistema_pensiones: responses.sistema_pensiones || null,
       };
       
       const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
@@ -402,8 +414,8 @@ export default function NanoEncuestaBC() {
                   <select
                     value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
                     onChange={(e) => {
-                      // Si es un campo de voto o asociacion juvenil, usar handleSelectChange para manejar "Otro"
-                      if ((currentStepData.key.includes("voto_") || currentStepData.key === "asociacion_juvenil")) {
+                      // Si es un campo de voto, asociacion juvenil, o preguntas varias, usar handleSelectChange para manejar "Otro"
+                      if ((currentStepData.key.includes("voto_") || currentStepData.key === "asociacion_juvenil" || currentStepData.key === "monarquia_republica" || currentStepData.key === "division_territorial" || currentStepData.key === "sistema_pensiones")) {
                         handleSelectChange(e.target.value);
                       } else {
                         handleAnswer(e.target.value);
@@ -431,6 +443,29 @@ export default function NanoEncuestaBC() {
                         {Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => (
                           <option key={key} value={assoc.name}>{assoc.name}</option>
                         ))}
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                    {currentStepData.key === "monarquia_republica" && (
+                      <>
+                        <option value="Monarquía Parlamentaria">Monarquía Parlamentaria</option>
+                        <option value="República">República</option>
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                    {currentStepData.key === "division_territorial" && (
+                      <>
+                        <option value="Sistema actual de Autonomías">Sistema actual de Autonomías</option>
+                        <option value="Sistema Federal">Sistema Federal</option>
+                        <option value="Sistema Provincial (Sin Autonomías)">Sistema Provincial (Sin Autonomías)</option>
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                    {currentStepData.key === "sistema_pensiones" && (
+                      <>
+                        <option value="Público (Actual)">Público (Actual)</option>
+                        <option value="Privado">Privado</option>
+                        <option value="Mixto">Mixto</option>
                         <option value="OTRO">Otro (especificar)</option>
                       </>
                     )}

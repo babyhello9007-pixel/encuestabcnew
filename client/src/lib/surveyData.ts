@@ -687,6 +687,34 @@ export const surveyQuestions: SurveyQuestion[] = [
     fieldName: 'jovenes_representados',
   },
 
+  // Preguntas Varias - Forma de Gobierno, División Territorial y Pensiones
+  {
+    id: 'monarquia_republica',
+    section: 'Preguntas Varias',
+    question: '¿Qué forma de gobierno del Estado Español prefieres?',
+    type: 'radio',
+    options: ['Monarquía Parlamentaria', 'República', 'Otro'],
+    fieldName: 'monarquia_republica',
+  },
+
+  {
+    id: 'division_territorial',
+    section: 'Preguntas Varias',
+    question: '¿Qué división territorial del Estado Español prefieres?',
+    type: 'radio',
+    options: ['Sistema actual de Autonomías', 'Sistema Federal', 'Sistema Provincial (Sin Autonomías)', 'Otro'],
+    fieldName: 'division_territorial',
+  },
+
+  {
+    id: 'sistema_pensiones',
+    section: 'Preguntas Varias',
+    question: '¿Qué sistema de pensiones prefieres?',
+    type: 'radio',
+    options: ['Público (Actual)', 'Privado', 'Mixto', 'Otro'],
+    fieldName: 'sistema_pensiones',
+  },
+
   // Comentarios finales
   {
     id: 'tema_no_cubierto',

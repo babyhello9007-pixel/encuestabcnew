@@ -222,3 +222,18 @@ export const respuestasEncuestasVarias = pgTable("respuestas_encuestas_varias", 
 
 export type RespuestaEncuestaVaria = typeof respuestasEncuestasVarias.$inferSelect;
 export type InsertRespuestaEncuestaVaria = typeof respuestasEncuestasVarias.$inferInsert;
+
+// Tabla de cooldown de votación por IP (30 minutos entre votos)
+export const votingCooldown = pgTable("voting_cooldown", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull().unique(), // Soporta IPv4 e IPv6
+  lastVoteTime: timestamp("last_vote_time", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  idxIpAddress: index("idx_voting_cooldown_ip").on(table.ipAddress),
+  idxLastVoteTime: index("idx_voting_cooldown_last_vote").on(table.lastVoteTime),
+}));
+
+export type VotingCooldown = typeof votingCooldown.$inferSelect;
+export type InsertVotingCooldown = typeof votingCooldown.$inferInsert;

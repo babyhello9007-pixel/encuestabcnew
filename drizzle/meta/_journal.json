@@ -15,6 +15,13 @@
       "when": 1767278293784,
       "tag": "0001_pink_felicia_hardy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770566413343,
+      "tag": "0002_fearless_the_twelve",
+      "breakpoints": true
     }
   ]
 }

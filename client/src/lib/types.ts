@@ -59,6 +59,10 @@ export interface SurveyResponse {
   reforma_estructural?: string;
   sistema_pensiones?: string;
   voto_menores_18?: string;
+  
+  // Preguntas Varias (21, 22, 23)
+  monarquia_republica?: string;
+  division_territorial?: string;
   politica_inmigracion_dura?: string;
   aranceles_eeuu?: string;
   tc_suspender_amnistia?: string;
