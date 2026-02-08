@@ -101,6 +101,9 @@ export default function NanoEncuestaBC() {
     if (currentStepData.type === 'slider' || currentStepData.type === 'buttons') {
       return currentValue !== undefined && currentValue !== null && currentValue !== '';
     }
+    if (currentStepData.type === 'leader') {
+      return currentValue && String(currentValue).length > 0 && responses.voto_generales;
+    }
     return false;
   };
 

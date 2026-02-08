@@ -597,3 +597,7 @@
 - [x] Agregar pregunta 22: División territorial (Sistema actual, Federal, Provincial, Otro)
 - [x] Agregar pregunta 23: Sistema de pensiones (Público, Privado, Mixto, Otro)
 - [x] Crear sección "Preguntas Varias" en Resultados para mostrar respuestas de preguntas 21-23
+
+
+## Bug Fixes - Lote 1
+- [x] Corregir error en NanoEncuestaBC que bloqueaba avance desde pregunta 20 (tipo "leader" no validaba correctamente)
