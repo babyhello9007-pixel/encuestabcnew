@@ -27,9 +27,6 @@ export default function PreguntasVariasSection() {
           .select('monarquia_republica, division_territorial, sistema_pensiones');
 
         if (queryError) throw queryError;
-
-        console.log('Datos recibidos de Supabase:', data);
-        console.log('Total de registros:', data?.length);
         
         if (!data || data.length === 0) {
           setResults([]);
