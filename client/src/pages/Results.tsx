@@ -210,7 +210,7 @@ export default function Results() {
                 try {
                   const { data: metricsData } = await supabase
                     .from("respuestas")
-                    .select("provincia, edad, ideologia");
+                    .select("provincia, edad, posicion_ideologica");
                   
                   if (metricsData && metricsData.length > 0) {
                     const metricsMap: Record<string, { edad_promedio: number; ideologia_promedio: number }> = {};
@@ -224,8 +224,8 @@ export default function Results() {
                         if (row.edad !== null && row.edad !== undefined) {
                           provinciaCounts[row.provincia].edad_sum += row.edad;
                         }
-                        if (row.ideologia !== null && row.ideologia !== undefined) {
-                          provinciaCounts[row.provincia].ideologia_sum += row.ideologia;
+                        if (row.posicion_ideologica !== null && row.posicion_ideologica !== undefined) {
+                          provinciaCounts[row.provincia].ideologia_sum += row.posicion_ideologica;
                         }
                         provinciaCounts[row.provincia].count += 1;
                       }

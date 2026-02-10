@@ -17,7 +17,7 @@ export const calculateMetricsByParty = async (
     // Obtener todas las respuestas
     const { data: responses, error } = await supabase
       .from("respuestas")
-      .select("partido_general, partido_juvenil, edad, ideologia");
+      .select("partido_general, partido_juvenil, edad, posicion_ideologica");
 
     if (error) throw error;
     if (!responses || responses.length === 0) return [];
@@ -44,8 +44,8 @@ export const calculateMetricsByParty = async (
         partyData[partyId].ages.push(response.edad);
       }
       
-      if (response.ideologia) {
-        partyData[partyId].ideologies.push(response.ideologia);
+      if (response.posicion_ideologica) {
+        partyData[partyId].ideologies.push(response.posicion_ideologica);
       }
     });
 
