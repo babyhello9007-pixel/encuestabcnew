@@ -589,14 +589,15 @@
 - [x] Optimizar ShareResultsAdvanced para móviles (responsive, textos adaptables, iconos escalables)
 
 ## Nuevas Funcionalidades - Lote 2 (Cosasquehace.zip)
-- [ ] Agregar nuevos partidos políticos (RecortesCero, Frente de Izquierdas, Por España, Núcleo Nacional, Aragón Existe, Chunta Aragonesista, Por Andalucía)
-- [ ] Subir logos de partidos políticos faltantes a S3 (Adelante Andalucía, CUP, PACMA, PCTE, UPL, AliçaCatalana, Se Acabó La Fiesta)
+- [x] Agregar nuevos partidos políticos (RecortesCero, Frente de Izquierdas, Por España, Núcleo Nacional, Aragón Existe, Chunta Aragonesista, Por Andalucía)
+- [ ] Subir logos de partidos políticos faltantes a S3 (Adelante Andalucía, CUP, PACMA, PCTE, UPL, AliançaCatalana, Se Acabó La Fiesta)
 - [ ] Hacer que los nuevos logos se vean SÍ O SÍ en la encuesta
 - [ ] Implementar cooldown de votación de 30 minutos por IP
 - [x] Agregar pregunta 21: Forma de gobierno (Monarquía Parlamentaria, República, Otro)
 - [x] Agregar pregunta 22: División territorial (Sistema actual, Federal, Provincial, Otro)
 - [x] Agregar pregunta 23: Sistema de pensiones (Público, Privado, Mixto, Otro)
 - [x] Crear sección "Preguntas Varias" en Resultados para mostrar respuestas de preguntas 21-23
+- [x] Verificar que PreguntasVariasSection consulta correctamente las columnas de Supabase
 
 
 ## Bug Fixes - Lote 1

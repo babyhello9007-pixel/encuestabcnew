@@ -29,6 +29,13 @@ export const PARTIES_GENERAL = {
   PACMA: { name: 'PACMA', logo: '/assets/logos/pacma.png', color: '#00AA44' },
   PCTE: { name: 'PCTE', logo: '/assets/logos/pcte.png', color: '#CC0000' },
   UPL: { name: 'UPL', logo: '/assets/logos/upl.png', color: '#0066FF' },
+  RECORTESCERO: { name: 'RecortesCero', logo: '/assets/logos/recortescero.png', color: '#FF0000' },
+  FI: { name: 'Frente de Izquierdas', logo: '/assets/logos/frente-izquierdas.png', color: '#CC0000' },
+  PE: { name: 'Por España', logo: '/assets/logos/por-españa.png', color: '#0066FF' },
+  NN: { name: 'Núcleo Nacional', logo: '/assets/logos/nucleo-nacional.png', color: '#FF0000' },
+  AE: { name: 'Aragón Existe', logo: '/assets/logos/aragon-existe.png', color: '#FFD700' },
+  CHA: { name: 'Chunta Aragonesista', logo: '/assets/logos/chunta-aragonesista.png', color: '#003D99' },
+  PA: { name: 'Por Andalucía', logo: '/assets/logos/por-andalucia.png', color: '#FF0000' },
 };
 
 export const YOUTH_ASSOCIATIONS = {

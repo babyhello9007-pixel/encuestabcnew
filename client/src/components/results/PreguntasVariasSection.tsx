@@ -28,6 +28,9 @@ export default function PreguntasVariasSection() {
 
         if (queryError) throw queryError;
 
+        console.log('Datos recibidos de Supabase:', data);
+        console.log('Total de registros:', data?.length);
+        
         if (!data || data.length === 0) {
           setResults([]);
           setError(null);
@@ -115,13 +118,16 @@ export default function PreguntasVariasSection() {
     });
 
     respuestas.forEach(respuesta => {
-      if (conteo.hasOwnProperty(respuesta)) {
-        conteo[respuesta]++;
-      } else {
-        // Si no está en las opciones esperadas, contar como "Otro"
-        if (conteo['Otro'] !== undefined) {
-          conteo['Otro']++;
-        }
+      if (!respuesta || respuesta.trim() === '') return;
+      
+      const coincidencia = opcionesEsperadas.find(opcion => 
+        opcion.toLowerCase() === respuesta.toLowerCase()
+      );
+      
+      if (coincidencia) {
+        conteo[coincidencia]++;
+      } else if (conteo['Otro'] !== undefined) {
+        conteo['Otro']++;
       }
     });
 

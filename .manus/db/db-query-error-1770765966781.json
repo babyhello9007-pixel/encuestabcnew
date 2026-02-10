@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO partidos_generales (name, logo_url, color) VALUES \n('RecortesCero', '/assets/logos/recortescero.png', '#FF0000'),\n('Frente de Izquierdas', '/assets/logos/frente-izquierdas.png', '#CC0000'),\n('Por España', '/assets/logos/por-españa.png', '#0066FF'),\n('Núcleo Nacional', '/assets/logos/nucleo-nacional.png', '#FF0000'),\n('Aragón Existe', '/assets/logos/aragon-existe.png', '#FFD700'),\n('Chunta Aragonesista', '/assets/logos/chunta-aragonesista.png', '#003D99'),\n('Por Andalucía', '/assets/logos/por-andalucia.png', '#FF0000')\nON CONFLICT (name) DO NOTHING;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute INSERT INTO partidos_generales (name, logo_url, color) VALUES \n('RecortesCero', '/assets/logos/recortescero.png', '#FF0000'),\n('Frente de Izquierdas', '/assets/logos/frente-izquierdas.png', '#CC0000'),\n('Por España', '/assets/logos/por-españa.png', '#0066FF'),\n('Núcleo Nacional', '/assets/logos/nucleo-nacional.png', '#FF0000'),\n('Aragón Existe', '/assets/logos/aragon-existe.png', '#FFD700'),\n('Chunta Aragonesista', '/assets/logos/chunta-aragonesista.png', '#003D99'),\n('Por Andalucía', '/assets/logos/por-andalucia.png', '#FF0000')\nON CONFLICT (name) DO NOTHING;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 9 column 12 near \"CONFLICT (name) DO NOTHING\""
+  ]
+}
