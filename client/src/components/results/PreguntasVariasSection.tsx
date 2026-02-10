@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Loader2, HelpCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface PreguntaResult {
   question: string;
@@ -9,22 +10,27 @@ interface PreguntaResult {
   options: { label: string; color: string }[];
   data: { label: string; votes: number; percentage: number }[];
   totalVotes: number;
+  byProvince?: Record<string, { label: string; votes: number; percentage: number }[]>;
+  byAge?: Record<string, { label: string; votes: number; percentage: number }[]>;
+  avgIdeology?: number;
 }
 
 export default function PreguntasVariasSection() {
   const [results, setResults] = useState<PreguntaResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchResults = async () => {
       try {
         setLoading(true);
         
-        // Obtener datos de las tres preguntas
+        // Obtener datos de las tres preguntas CON provincia, edad e ideología
         const { data, error: queryError } = await supabase
           .from('respuestas')
-          .select('monarquia_republica, division_territorial, sistema_pensiones');
+          .select('monarquia_republica, division_territorial, sistema_pensiones, provincia, edad, posicion_ideologica');
 
         if (queryError) throw queryError;
         
@@ -53,6 +59,22 @@ export default function PreguntasVariasSection() {
           ['Público (Actual)', 'Privado', 'Mixto', 'Otro']
         );
 
+        // Calcular promedios de ideología
+        const ideologiaPromedio = data
+          .filter(r => r.posicion_ideologica)
+          .reduce((sum, r) => sum + (r.posicion_ideologica || 0), 0) / 
+          data.filter(r => r.posicion_ideologica).length || 0;
+
+        // Desglosar por provincia
+        const monarquiaByProvince = desglosarPorProvincia(data, 'monarquia_republica');
+        const divisionByProvince = desglosarPorProvincia(data, 'division_territorial');
+        const pensioniesByProvince = desglosarPorProvincia(data, 'sistema_pensiones');
+
+        // Desglosar por grupo de edad
+        const monarquiaByAge = desglosarPorEdad(data, 'monarquia_republica');
+        const divisionByAge = desglosarPorEdad(data, 'division_territorial');
+        const pensioniesByAge = desglosarPorEdad(data, 'sistema_pensiones');
+
         const preguntasResults: PreguntaResult[] = [
           {
             question: '¿Qué forma de gobierno del Estado Español prefieres?',
@@ -63,7 +85,10 @@ export default function PreguntasVariasSection() {
               { label: 'Otro', color: '#999999' }
             ],
             data: monarquiaData,
-            totalVotes: data.filter(r => r.monarquia_republica).length
+            totalVotes: data.filter(r => r.monarquia_republica).length,
+            byProvince: monarquiaByProvince,
+            byAge: monarquiaByAge,
+            avgIdeology: ideologiaPromedio
           },
           {
             question: '¿Qué división territorial del Estado Español prefieres?',
@@ -75,7 +100,10 @@ export default function PreguntasVariasSection() {
               { label: 'Otro', color: '#999999' }
             ],
             data: divisionData,
-            totalVotes: data.filter(r => r.division_territorial).length
+            totalVotes: data.filter(r => r.division_territorial).length,
+            byProvince: divisionByProvince,
+            byAge: divisionByAge,
+            avgIdeology: ideologiaPromedio
           },
           {
             question: '¿Qué sistema de pensiones prefieres?',
@@ -87,7 +115,10 @@ export default function PreguntasVariasSection() {
               { label: 'Otro', color: '#999999' }
             ],
             data: pensionesData,
-            totalVotes: data.filter(r => r.sistema_pensiones).length
+            totalVotes: data.filter(r => r.sistema_pensiones).length,
+            byProvince: pensioniesByProvince,
+            byAge: pensioniesByAge,
+            avgIdeology: ideologiaPromedio
           }
         ];
 
@@ -136,6 +167,66 @@ export default function PreguntasVariasSection() {
     }));
   };
 
+  const desglosarPorProvincia = (data: any[], fieldName: string) => {
+    const byProvince: Record<string, Record<string, number>> = {};
+    
+    data.forEach(row => {
+      if (row[fieldName] && row.provincia) {
+        if (!byProvince[row.provincia]) {
+          byProvince[row.provincia] = {};
+        }
+        byProvince[row.provincia][row[fieldName]] = (byProvince[row.provincia][row[fieldName]] || 0) + 1;
+      }
+    });
+
+    const result: Record<string, any[]> = {};
+    Object.entries(byProvince).forEach(([province, votes]) => {
+      const total = Object.values(votes).reduce((a, b) => a + b, 0);
+      result[province] = Object.entries(votes).map(([label, count]) => ({
+        label,
+        votes: count as number,
+        percentage: Math.round(((count as number) / total) * 100)
+      }));
+    });
+
+    return result;
+  };
+
+  const desglosarPorEdad = (data: any[], fieldName: string) => {
+    const getAgeGroup = (edad: number) => {
+      if (edad < 25) return '18-24';
+      if (edad < 35) return '25-34';
+      if (edad < 45) return '35-44';
+      if (edad < 55) return '45-54';
+      if (edad < 65) return '55-64';
+      return '65+';
+    };
+
+    const byAge: Record<string, Record<string, number>> = {};
+    
+    data.forEach(row => {
+      if (row[fieldName] && row.edad) {
+        const ageGroup = getAgeGroup(row.edad);
+        if (!byAge[ageGroup]) {
+          byAge[ageGroup] = {};
+        }
+        byAge[ageGroup][row[fieldName]] = (byAge[ageGroup][row[fieldName]] || 0) + 1;
+      }
+    });
+
+    const result: Record<string, any[]> = {};
+    Object.entries(byAge).forEach(([ageGroup, votes]) => {
+      const total = Object.values(votes).reduce((a, b) => a + b, 0);
+      result[ageGroup] = Object.entries(votes).map(([label, count]) => ({
+        label,
+        votes: count as number,
+        percentage: Math.round(((count as number) / total) * 100)
+      }));
+    });
+
+    return result;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -182,54 +273,98 @@ export default function PreguntasVariasSection() {
       </div>
 
       {results.map((pregunta, index) => (
-        <Card key={index} className="p-6 border-0 shadow-lg liquid-glass">
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-foreground mb-2">
-              Pregunta {21 + index}
-            </h3>
-            <p className="text-base text-foreground mb-2">
-              {pregunta.question}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Total de respuestas: {pregunta.totalVotes}
-            </p>
-          </div>
+        <div key={index} className="space-y-4">
+          <Card className="p-6 border-0 shadow-lg liquid-glass">
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-foreground mb-2">
+                Pregunta {21 + index}
+              </h3>
+              <p className="text-base text-foreground mb-2">
+                {pregunta.question}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Total de respuestas: {pregunta.totalVotes} | Ideología promedio: {pregunta.avgIdeology?.toFixed(2)}
+              </p>
+            </div>
 
-          <div className="space-y-4">
-            {pregunta.data.map((opcion, optionIndex) => (
-              <div key={optionIndex} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-foreground text-sm md:text-base">
-                    {opcion.label}
-                  </span>
-                  <span className="text-sm font-bold text-primary">
-                    {opcion.percentage}%
-                  </span>
-                </div>
-                <div className="h-8 bg-border rounded-lg overflow-hidden">
-                  <div
-                    className="h-full transition-all duration-500 flex items-center justify-center"
-                    style={{
-                      width: `${opcion.percentage}%`,
-                      backgroundColor: colorMap[opcion.label] || '#999999'
-                    }}
-                  >
-                    {opcion.percentage > 15 && (
-                      <span className="text-xs font-bold text-white">
-                        {opcion.votes}
-                      </span>
-                    )}
+            <div className="space-y-4">
+              {pregunta.data.map((opcion, optionIndex) => (
+                <div key={optionIndex} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-foreground text-sm md:text-base">
+                      {opcion.label}
+                    </span>
+                    <span className="text-sm font-bold text-primary">
+                      {opcion.percentage}%
+                    </span>
                   </div>
+                  <div className="h-8 bg-border rounded-lg overflow-hidden">
+                    <div
+                      className="h-full transition-all duration-500 flex items-center justify-center"
+                      style={{
+                        width: `${opcion.percentage}%`,
+                        backgroundColor: colorMap[opcion.label] || '#999999'
+                      }}
+                    >
+                      {opcion.percentage > 15 && (
+                        <span className="text-xs font-bold text-white">
+                          {opcion.votes}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {opcion.percentage <= 15 && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      {opcion.votes} {opcion.votes === 1 ? 'voto' : 'votos'}
+                    </p>
+                  )}
                 </div>
-                {opcion.percentage <= 15 && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    {opcion.votes} {opcion.votes === 1 ? 'voto' : 'votos'}
-                  </p>
-                )}
+              ))}
+            </div>
+          </Card>
+
+          {/* Desglose por Provincia */}
+          {pregunta.byProvince && Object.keys(pregunta.byProvince).length > 0 && (
+            <Card className="p-6 border-0 shadow-lg liquid-glass">
+              <h4 className="text-base font-bold text-foreground mb-4">Desglose por Provincia</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(pregunta.byProvince).slice(0, 10).map(([province, data]) => (
+                  <div key={province} className="p-3 bg-background rounded-lg">
+                    <p className="font-semibold text-sm text-foreground mb-2">{province}</p>
+                    <div className="space-y-1">
+                      {data.map((item, idx) => (
+                        <div key={idx} className="text-xs text-muted-foreground">
+                          {item.label}: {item.percentage}% ({item.votes})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </Card>
+            </Card>
+          )}
+
+          {/* Desglose por Edad */}
+          {pregunta.byAge && Object.keys(pregunta.byAge).length > 0 && (
+            <Card className="p-6 border-0 shadow-lg liquid-glass">
+              <h4 className="text-base font-bold text-foreground mb-4">Desglose por Grupo de Edad</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(pregunta.byAge).map(([ageGroup, data]) => (
+                  <div key={ageGroup} className="p-3 bg-background rounded-lg">
+                    <p className="font-semibold text-sm text-foreground mb-2">{ageGroup} años</p>
+                    <div className="space-y-1">
+                      {data.map((item, idx) => (
+                        <div key={idx} className="text-xs text-muted-foreground">
+                          {item.label}: {item.percentage}% ({item.votes})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
       ))}
 
       <p className="text-xs text-muted-foreground text-center">
