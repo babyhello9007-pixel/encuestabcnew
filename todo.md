@@ -601,3 +601,4 @@
 
 ## Bug Fixes - Lote 1
 - [x] Corregir error en NanoEncuestaBC que bloqueaba avance desde pregunta 20 (tipo "leader" no validaba correctamente)
+- [x] Agregar columnas monarquia_republica, division_territorial, sistema_pensiones a public.respuestas en Supabase

@@ -1,0 +1,9 @@
+{
+  "query": "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'respuestas' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4DqfqVfG2Ezbk68.root --database 6q57y6UztfVwNZmMTCKcdt --execute SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'respuestas' ORDER BY ordinal_position;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2480
+}
