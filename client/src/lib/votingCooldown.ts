@@ -2,20 +2,33 @@ import { supabase } from './supabase';
 
 const COOLDOWN_MINUTES = 30;
 
+export async function getUserIP(): Promise<string> {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    return data.ip || 'unknown';
+  } catch (error) {
+    console.error('Error getting user IP:', error);
+    return 'unknown';
+  }
+}
+
 export async function checkVotingCooldown(userIP: string): Promise<{ canVote: boolean; remainingMinutes: number }> {
   try {
+    // Consultar el último voto del usuario
     const { data, error } = await supabase
       .from('voting_cooldown')
       .select('last_vote')
       .eq('ip_address', userIP)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error checking cooldown:', error);
       return { canVote: true, remainingMinutes: 0 };
     }
 
     if (!data) {
+      // No hay registro previo, puede votar
       return { canVote: true, remainingMinutes: 0 };
     }
 
@@ -31,18 +44,23 @@ export async function checkVotingCooldown(userIP: string): Promise<{ canVote: bo
     return { canVote: true, remainingMinutes: 0 };
   } catch (error) {
     console.error('Error in checkVotingCooldown:', error);
+    // En caso de error, permitir votar (no bloquear)
     return { canVote: true, remainingMinutes: 0 };
   }
 }
 
 export async function recordVote(userIP: string): Promise<boolean> {
   try {
+    const now = new Date().toISOString();
+
+    // Usar upsert para actualizar si existe o crear si no existe
     const { error } = await supabase
       .from('voting_cooldown')
       .upsert(
         {
           ip_address: userIP,
-          last_vote: new Date().toISOString(),
+          last_vote: now,
+          updated_at: now,
         },
         {
           onConflict: 'ip_address',
@@ -58,16 +76,5 @@ export async function recordVote(userIP: string): Promise<boolean> {
   } catch (error) {
     console.error('Error in recordVote:', error);
     return false;
-  }
-}
-
-export async function getUserIP(): Promise<string> {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    return data.ip || 'unknown';
-  } catch (error) {
-    console.error('Error getting user IP:', error);
-    return 'unknown';
   }
 }

@@ -27,7 +27,7 @@ const loadData = async (
   try {
     const { data, error } = await supabase
       .from('preguntas_varias_view')
-      .select('monarquia_republica, division_territorial, sistema_pensiones');
+      .select('monarquia_republica, division_territorial, sistema_pensiones, edad_media, ideologia_media');
 
     if (error) {
       console.error('Error loading data:', error);

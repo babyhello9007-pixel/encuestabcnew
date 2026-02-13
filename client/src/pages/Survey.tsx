@@ -9,6 +9,7 @@ import { normalizeProvinceInResponse } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
 import ReviewSurvey from "@/components/ReviewSurvey";
 import Footer from "@/components/Footer";
+import { checkVotingCooldown, recordVote, getUserIP } from "@/lib/votingCooldown";
 
 export default function Survey() {
   const [, setLocation] = useLocation();
@@ -126,6 +127,20 @@ function SurveyOld() {
   };
 
   const handleSubmit = async () => {
+    // Verificar cooldown por IP
+    try {
+      const userIP = await getUserIP();
+      const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+      
+      if (!canVote) {
+        toast.error(`Debes esperar ${remainingMinutes} minutos antes de votar de nuevo.`);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking cooldown:', error);
+      // Continuar aunque falle la verificación del cooldown
+    }
+
     setIsSubmitting(true);
     try {
       const normalizedResponses = normalizeProvinceInResponse(responses);
@@ -135,6 +150,14 @@ function SurveyOld() {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
         console.error(error);
       } else {
+        // Registrar el voto en el cooldown
+        try {
+          const userIP = await getUserIP();
+          await recordVote(userIP);
+        } catch (error) {
+          console.error('Error recording vote cooldown:', error);
+        }
+        
         setShowThankYou(true);
         toast.success("¡Gracias por tu participación!");
       }
