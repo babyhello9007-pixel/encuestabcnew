@@ -10,6 +10,7 @@ import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib
 import { getLeaderOptions } from "@/lib/leadersData";
 import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 import Footer from "@/components/Footer";
+import { checkVotingCooldown, recordVote, getUserIP } from "@/lib/votingCooldown";
 
 interface NanoSurveyResponse {
   edad?: string;
@@ -186,6 +187,20 @@ export default function NanoEncuestaBC() {
   };
 
   const handleSubmit = async () => {
+    // Verificar cooldown por IP
+    try {
+      const userIP = await getUserIP();
+      const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+      
+      if (!canVote) {
+        toast.error(`Debes esperar ${remainingMinutes} minutos antes de votar de nuevo.`);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking cooldown:', error);
+      // Continuar aunque falle la verificación del cooldown
+    }
+
     // Validar que todas las preguntas sean respondidas
     const requiredFields = [
       'edad',
@@ -261,6 +276,14 @@ export default function NanoEncuestaBC() {
         console.error(error);
         setIsSubmitting(false);
         return;
+      }
+
+      // Registrar el voto en el cooldown
+      try {
+        const userIP = await getUserIP();
+        await recordVote(userIP);
+      } catch (error) {
+        console.error('Error recording vote cooldown:', error);
       }
 
       if (responses.lider_partido) {
