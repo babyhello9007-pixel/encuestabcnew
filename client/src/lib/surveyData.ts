@@ -694,11 +694,11 @@ export const surveyQuestions: SurveyQuestion[] = [
     fieldName: 'jovenes_representados',
   },
 
-  // Preguntas Varias - Forma de Gobierno, División Territorial y Pensiones
+  // Preguntas Varias - Forma del Estado, División Territorial y Pensiones
   {
     id: 'monarquia_republica',
     section: 'Preguntas Varias',
-    question: '¿Qué forma de gobierno del Estado Español prefieres?',
+    question: '¿Qué forma del Estado Español prefieres?',
     type: 'radio',
     options: ['Monarquía Parlamentaria', 'República', 'Otro'],
     fieldName: 'monarquia_republica',

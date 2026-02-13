@@ -624,3 +624,50 @@
 - [x] Integrar CooldownModal en NanoEncuestaBC.tsx
 - [x] Crear pruebas unitarias para votingCooldown (8 tests ✓)
 - [x] Crear pruebas unitarias para CooldownModal.tsx
+
+## Cambios y Mejoras - Nueva Iteración (Sesión Actual)
+
+### 1. Cambio de Terminología: "Forma de gobierno" → "Forma del Estado"
+- [ ] Cambiar pregunta 21 en surveyData.ts: "Forma de gobierno" → "Forma del Estado"
+- [ ] Actualizar opciones de respuesta si es necesario
+- [ ] Cambiar nombre de columna en BD: monarquia_republica → forma_del_estado
+- [ ] Actualizar migraciones de Supabase
+- [ ] Actualizar PreguntasVariasSection.tsx para usar nueva columna
+- [ ] Actualizar tipos en types.ts
+- [ ] Actualizar NanoEncuestaBC.tsx con nueva terminología
+- [ ] Actualizar documentación interna
+
+### 2. Mejora del Sistema de Cooldown
+- [ ] Crear endpoint tRPC para obtener tiempo de servidor
+- [ ] Reemplazar CooldownModal con reloj digital basado en servidor
+- [ ] Implementar sincronización de tiempo cliente-servidor
+- [ ] Agregar validación de cooldown en servidor (no solo cliente)
+- [ ] Mostrar "Disponible" cuando termine el cooldown
+- [ ] Habilitar automáticamente acciones cuando termine el cooldown
+- [ ] Pruebas de cooldown con cambios de pestaña y refrescos
+- [ ] Pruebas de manipulación de tiempo del cliente
+
+### 3. API Externa BCApi
+- [ ] Crear tabla en Supabase: bcapi_keys (id, api_key, website_name, rate_limit, created_at)
+- [ ] Crear tabla en Supabase: bcapi_responses (id, api_key, question_id, response, ip_address, created_at)
+- [ ] Crear endpoint POST /api/bcapi/submit para recibir respuestas
+- [ ] Implementar validación de API key
+- [ ] Implementar rate limiting por API key
+- [ ] Implementar validación de origen (CORS)
+- [ ] Integrar respuestas de BCApi en estadísticas globales
+- [ ] Crear documentación de API (request/response)
+- [ ] Crear panel admin para gestionar claves API
+- [ ] Crear endpoint para generar nuevas claves API
+- [ ] Crear endpoint para ver estadísticas por API key
+- [ ] Pruebas de integración con BCApi
+
+## Actualización de Tareas - Completadas
+- [x] Cambio de terminología "Forma de gobierno" → "Forma del Estado" (visual)
+- [x] Crear endpoint tRPC time.getCurrentTime para sincronización de servidor
+- [x] Crear componente ServerCooldownClock con reloj digital basado en servidor
+- [x] Reemplazar CooldownModal por ServerCooldownClock en NanoEncuestaBC
+- [x] Crear pruebas unitarias para ServerCooldownClock (8 tests ✓)
+- [x] Crear router BCApi con endpoints: submitResponse, validateKey, getStats
+- [x] Crear documentación completa de BCApi (docs/BCAPI.md)
+- [x] Crear esquema de validación con Zod para BCApi
+- [x] Crear pruebas unitarias para BCApi (server/tests/bcapi.test.ts)

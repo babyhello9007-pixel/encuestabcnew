@@ -5,6 +5,8 @@ import { publicProcedure, router } from "./_core/trpc";
 import { fileRouter } from "./_core/fileRouter";
 import { blogRouter } from "./blogRouter";
 import { elAnalisisRouter } from "./routes/el-analisis";
+import { timeRouter } from "./routers/time";
+import { bcapiRouter } from "./routers/bcapi";
 
 export const appRouter = router({
   system: systemRouter,
@@ -23,6 +25,8 @@ export const appRouter = router({
   files: fileRouter,
   blog: blogRouter,
   elAnalisis: elAnalisisRouter,
+  time: timeRouter,
+  bcapi: bcapiRouter,
 });
 
 export type AppRouter = typeof appRouter;

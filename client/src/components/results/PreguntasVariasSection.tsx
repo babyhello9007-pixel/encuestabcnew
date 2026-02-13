@@ -128,7 +128,7 @@ export default function PreguntasVariasSection() {
       {/* Pregunta 21 */}
       {monarquia.length > 0 && (
         <Card className="p-6">
-          <h3 className="text-lg font-bold mb-6">Pregunta 21: Forma de Gobierno</h3>
+          <h3 className="text-lg font-bold mb-6">Pregunta 21: Forma del Estado</h3>
           <div className="space-y-4">
             {monarquia.map((item) => (
               <div key={`monarquia-${item.label}`}>
