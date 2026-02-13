@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +11,7 @@ import { getLeaderOptions } from "@/lib/leadersData";
 import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 import Footer from "@/components/Footer";
 import { checkVotingCooldown, recordVote, getUserIP } from "@/lib/votingCooldown";
+import CooldownModal from "@/components/CooldownModal";
 
 interface NanoSurveyResponse {
   edad?: string;
@@ -50,6 +51,25 @@ export default function NanoEncuestaBC() {
   const [showCustomLeaderInput, setShowCustomLeaderInput] = useState(false);
   const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showCooldownModal, setShowCooldownModal] = useState(false);
+  const [cooldownMinutes, setCooldownMinutes] = useState(0);
+
+  // Verificar cooldown al cargar
+  useEffect(() => {
+    const checkCooldown = async () => {
+      try {
+        const userIP = await getUserIP();
+        const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+        if (!canVote) {
+          setShowCooldownModal(true);
+          setCooldownMinutes(remainingMinutes);
+        }
+      } catch (error) {
+        console.error('Error checking cooldown:', error);
+      }
+    };
+    checkCooldown();
+  }, []);
 
   const steps = [
     { title: "Edad", key: "edad", type: "text" },
@@ -320,6 +340,25 @@ export default function NanoEncuestaBC() {
         onConfirm={handleSubmit}
         isSubmitting={isSubmitting}
       />
+    );
+  }
+
+  if (showCooldownModal) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
+        <CooldownModal isOpen={showCooldownModal} remainingMinutes={cooldownMinutes} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-white text-lg">Vuelve cuando termine el cooldown para participar nuevamente</p>
+            <Button
+              onClick={() => setLocation('/')}
+              className="bg-[#C41E3A] hover:bg-[#A01830] text-white"
+            >
+              Volver al Inicio
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 

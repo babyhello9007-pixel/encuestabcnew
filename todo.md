@@ -609,8 +609,8 @@
 
 ## Nuevas Funcionalidades - Lote 2 (Cosasquehace.zip)
 - [x] Agregar nuevos partidos políticos (RecortesCero, Frente de Izquierdas, Por España, Núcleo Nacional, Aragón Existe, Chunta Aragonesista, Por Andalucía)
-- [ ] Subir logos de partidos políticos faltantes a S3 (Adelante Andalucía, CUP, PACMA, PCTE, UPL, AliançaCatalana, Se Acabó La Fiesta)
-- [ ] Hacer que los nuevos logos se vean SÍ O SÍ en la encuesta
+- [x] Subir logos de partidos políticos faltantes a S3 (Adelante Andalucía, CUP, PACMA, PCTE, UPL, AliançaCatalana, Se Acabó La Fiesta)
+- [x] Hacer que los nuevos logos se vean SÍ O SÍ en la encuesta
 - [x] Implementar cooldown de votación de 30 minutos por IP (NanoEncuestaBC y Survey.tsx)
 - [x] Agregar pregunta 21: Forma de gobierno (Monarquía Parlamentaria, República, Otro)
 - [x] Agregar pregunta 22: División territorial (Sistema actual, Federal, Provincial, Otro)
@@ -619,4 +619,8 @@
 - [x] Verificar que PreguntasVariasSection consulta correctamente las columnas de Supabase
 - [x] Modificar VIEW preguntas_varias_view para incluir edad media e ideología media
 - [x] Mostrar edad media e ideología media en PreguntasVariasSection
-- [ ] Crear pantalla de error en NanoEncuestaBC si está en cooldown
+- [x] Crear pantalla de error en NanoEncuestaBC si está en cooldown
+- [x] Crear componente CooldownModal.tsx con reloj interactivo
+- [x] Integrar CooldownModal en NanoEncuestaBC.tsx
+- [x] Crear pruebas unitarias para votingCooldown (8 tests ✓)
+- [x] Crear pruebas unitarias para CooldownModal.tsx
