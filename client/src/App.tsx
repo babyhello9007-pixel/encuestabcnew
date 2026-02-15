@@ -21,6 +21,8 @@ import BlogPost from "./pages/BlogPost";
 import AdminBlogLogin from "./pages/AdminBlogLogin";
 import DiscordCallback from "./pages/DiscordCallback";
 import CoalitionsComparison from "./pages/CoalitionsComparison";
+import PartiesDocumentation from "./pages/PartiesDocumentation";
+import AdminParties from "./pages/AdminParties";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -40,6 +42,8 @@ function Router() {
       <Route path={"/blog"} component={Blog} />
       <Route path={"/blog/:id"} component={BlogPost} />
       <Route path={"/coaliciones-comparar"} component={CoalitionsComparison} />
+      <Route path={"/documentacion/partidos"} component={PartiesDocumentation} />
+      <Route path={"/admin/partidos"} component={AdminParties} />
       <Route path={"/auth/discord/callback"} component={DiscordCallback} />
       <Route path={"/admin/blog/login"} component={AdminBlogLogin} />
       <Route path={"/admin/blog"} component={AdminBlogLogin} />

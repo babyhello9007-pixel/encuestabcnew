@@ -150,20 +150,33 @@ export default function ImageLoader({
   };
 
   if (hasError) {
+    // Generar iniciales del texto de fallback
+    const initials = fallbackText
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+    
+    // Generar color basado en el texto
+    const hash = fallbackText.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+    const bgColor = colors[hash % colors.length];
+    
     return (
       <div
         style={{
           width: `${size}px`,
           height: `${size}px`,
-          backgroundColor: '#f0f0f0',
+          backgroundColor: bgColor,
           borderRadius: '12px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '14px',
+          fontSize: `${size * 0.35}px`,
           fontWeight: 'bold',
-          color: '#999',
-          border: '1px solid #ddd',
+          color: '#ffffff',
+          border: `2px solid ${bgColor}`,
           flexShrink: 0,
           minWidth: `${size}px`,
           minHeight: `${size}px`,
@@ -171,7 +184,7 @@ export default function ImageLoader({
         }}
         title={alt}
       >
-        {fallbackText}
+        {initials}
       </div>
     );
   }
