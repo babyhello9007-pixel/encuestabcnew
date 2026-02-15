@@ -75,7 +75,7 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
   },
   "Aliança Catalana": {
     color: "#003D99",
-    logo: "/assets/icons/JUNTS.png",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/LSGJuMLqKLfIuSBC.png",
     displayName: "Aliança Catalana"
   },
 
@@ -143,7 +143,7 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
   },
   "Se Acabó La Fiesta": {
     color: "#FF1493",
-    logo: "/assets/icons/SeAcabóLaFiesta.png",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/pVOVNQaSxYeSVYyR.png",
     displayName: "Se Acabó La Fiesta"
   },
   "SALF": {
@@ -203,7 +203,7 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
   },
   "PACMA": {
     color: "#00AA44",
-    logo: "/assets/icons/PACMA.png",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/hDwYeFmKiKHHhgZI.png",
     displayName: "PACMA"
   },
   "Comunión Tradicionalista": {
@@ -213,13 +213,108 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
   },
   "CUP": {
     color: "#FF6600",
-    logo: "/assets/icons/CUP.png",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/qlFqJHJrlRttAYmH.png",
     displayName: "CUP"
   },
   "Adelante Andalucía": {
     color: "#FF0000",
-    logo: "/assets/icons/AdelanteAndalucia.png",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/tTkePaUFEpyBEbYg.png",
     displayName: "Adelante Andalucía"
+  },
+  "AA": {
+    color: "#FF0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/tTkePaUFEpyBEbYg.png",
+    displayName: "Adelante Andalucía"
+  },
+  "PCTE": {
+    color: "#CC0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/OxYlERpqIvuYLNIC.png",
+    displayName: "PCTE"
+  },
+  "Partido Comunista de los Trabajadores de España": {
+    color: "#CC0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/OxYlERpqIvuYLNIC.png",
+    displayName: "PCTE"
+  },
+  "UPL": {
+    color: "#0066FF",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/mwmmLxCMDbZacPQT.png",
+    displayName: "UPL"
+  },
+  "Unión del Pueblo Leonés": {
+    color: "#0066FF",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/mwmmLxCMDbZacPQT.png",
+    displayName: "UPL"
+  },
+  "Por España": {
+    color: "#0066FF",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/LfhcjcOgngqwFaRh.png",
+    displayName: "Por España"
+  },
+  "PE": {
+    color: "#0066FF",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/LfhcjcOgngqwFaRh.png",
+    displayName: "Por España"
+  },
+  "Núcleo Nacional": {
+    color: "#FF0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/cxzxAKrYdmopDhFQ.png",
+    displayName: "Núcleo Nacional"
+  },
+  "NN": {
+    color: "#FF0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/cxzxAKrYdmopDhFQ.png",
+    displayName: "Núcleo Nacional"
+  },
+  "Aragón Existe": {
+    color: "#FFD700",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/WYyKtKyxSmCkVtuk.png",
+    displayName: "Aragón Existe"
+  },
+  "AE": {
+    color: "#FFD700",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/WYyKtKyxSmCkVtuk.png",
+    displayName: "Aragón Existe"
+  },
+  "Chunta Aragonesista": {
+    color: "#003D99",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/YgTqCeiHToEqDmlL.png",
+    displayName: "Chunta Aragonesista"
+  },
+  "CHA": {
+    color: "#003D99",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/YgTqCeiHToEqDmlL.png",
+    displayName: "Chunta Aragonesista"
+  },
+  "Por Andalucía": {
+    color: "#FF0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/CeQBGvSmlrncUwYs.png",
+    displayName: "Por Andalucía"
+  },
+  "PA": {
+    color: "#FF0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/CeQBGvSmlrncUwYs.png",
+    displayName: "Por Andalucía"
+  },
+  "Frente de Izquierdas": {
+    color: "#CC0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/flLSuaHeOIjYDIve.jpg",
+    displayName: "Frente de Izquierdas"
+  },
+  "FI": {
+    color: "#CC0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/flLSuaHeOIjYDIve.jpg",
+    displayName: "Frente de Izquierdas"
+  },
+  "RecortesCero": {
+    color: "#FF0000",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/flLSuaHeOIjYDIve.jpg",
+    displayName: "RecortesCero"
+  },
+  "SALF": {
+    color: "#FF1493",
+    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/pVOVNQaSxYeSVYyR.png",
+    displayName: "Se Acabó La Fiesta"
   },
   "UPN": {
     color: "#0066CC",
