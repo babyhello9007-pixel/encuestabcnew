@@ -671,3 +671,10 @@
 - [x] Crear documentación completa de BCApi (docs/BCAPI.md)
 - [x] Crear esquema de validación con Zod para BCApi
 - [x] Crear pruebas unitarias para BCApi (server/tests/bcapi.test.ts)
+
+
+## Correcciones Urgentes - Edición de Partidos
+
+- [ ] Arreglar error al editar partidos en AdminParties.tsx
+- [ ] Revisar endpoint tRPC parties.update
+- [ ] Validar que los datos se guarden correctamente en BD

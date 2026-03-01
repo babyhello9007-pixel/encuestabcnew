@@ -81,8 +81,8 @@ export const partiesRouter = router({
       }
     }),
 
-  // Actualizar configuración de un partido (solo admin)
-  update: adminProcedure
+  // Actualizar configuración de un partido
+  update: protectedProcedure
     .input(partyUpdateSchema)
     .mutation(async ({ input }) => {
       try {
@@ -109,8 +109,8 @@ export const partiesRouter = router({
       }
     }),
 
-  // Agregar nuevo partido (solo admin)
-  create: adminProcedure
+  // Agregar nuevo partido
+  create: protectedProcedure
     .input(
       z.object({
         partyKey: z.string().min(1),
@@ -144,8 +144,8 @@ export const partiesRouter = router({
       }
     }),
 
-  // Eliminar partido (solo admin)
-  delete: adminProcedure
+  // Eliminar partido
+  delete: protectedProcedure
     .input(z.object({ partyKey: z.string() }))
     .mutation(async ({ input }) => {
       try {
