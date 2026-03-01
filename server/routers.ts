@@ -7,6 +7,7 @@ import { blogRouter } from "./blogRouter";
 import { elAnalisisRouter } from "./routes/el-analisis";
 import { timeRouter } from "./routers/time";
 import { bcapiRouter } from "./routers/bcapi";
+import { partiesRouter } from "./routers/parties";
 
 export const appRouter = router({
   system: systemRouter,
@@ -27,6 +28,7 @@ export const appRouter = router({
   elAnalisis: elAnalisisRouter,
   time: timeRouter,
   bcapi: bcapiRouter,
+  parties: partiesRouter,
 });
 
 export type AppRouter = typeof appRouter;

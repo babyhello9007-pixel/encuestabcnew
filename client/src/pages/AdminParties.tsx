@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from '@/lib/surveyData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit2, Save, X, Plus, Trash2 } from 'lucide-react';
 import PartyLogo from '@/components/PartyLogo';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 
 interface PartyEdit {
   id: string;
@@ -17,41 +19,71 @@ export default function AdminParties() {
   const [activeTab, setActiveTab] = useState<'parties' | 'youth'>('parties');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<PartyEdit | null>(null);
-  const [parties, setParties] = useState(
-    Object.entries(PARTIES_GENERAL).map(([key, party]) => ({
-      id: key,
-      name: party.name,
-      displayName: party.name,
-      color: party.color,
-      logo: party.logo,
-    }))
-  );
-  const [youth, setYouth] = useState(
-    Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => ({
-      id: key,
-      name: assoc.name,
-      displayName: assoc.name,
-      color: assoc.color,
-      logo: assoc.logo,
-    }))
-  );
+  const [parties, setParties] = useState<PartyEdit[]>([]);
+  const [youth, setYouth] = useState<PartyEdit[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Obtener datos de partidos desde tRPC
+  const { data: partiesData, isLoading: isLoadingParties } = trpc.parties.getAll.useQuery();
+  const updatePartyMutation = trpc.parties.update.useMutation();
+  const createPartyMutation = trpc.parties.create.useMutation();
+  const deletePartyMutation = trpc.parties.delete.useMutation();
+
+  // Cargar datos cuando estén disponibles
+  useEffect(() => {
+    if (partiesData) {
+      setParties(
+        partiesData.parties.map((p) => ({
+          id: p.partyKey,
+          name: p.partyKey,
+          displayName: p.displayName,
+          color: p.color,
+          logo: p.logoUrl,
+        }))
+      );
+      setYouth(
+        partiesData.youth.map((y) => ({
+          id: y.partyKey,
+          name: y.partyKey,
+          displayName: y.displayName,
+          color: y.color,
+          logo: y.logoUrl,
+        }))
+      );
+      setLoading(false);
+    }
+  }, [partiesData]);
 
   const handleEdit = (item: PartyEdit) => {
     setEditingId(item.id);
     setEditData({ ...item });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editData) return;
 
-    if (activeTab === 'parties') {
-      setParties(parties.map(p => p.id === editData.id ? editData : p));
-    } else {
-      setYouth(youth.map(y => y.id === editData.id ? editData : y));
-    }
+    try {
+      await updatePartyMutation.mutateAsync({
+        partyKey: editData.id,
+        displayName: editData.displayName,
+        color: editData.color,
+        logoUrl: editData.logo,
+        isActive: true,
+      });
 
-    setEditingId(null);
-    setEditData(null);
+      if (activeTab === 'parties') {
+        setParties(parties.map(p => p.id === editData.id ? editData : p));
+      } else {
+        setYouth(youth.map(y => y.id === editData.id ? editData : y));
+      }
+
+      toast.success(`${editData.displayName} actualizado correctamente`);
+      setEditingId(null);
+      setEditData(null);
+    } catch (error) {
+      console.error('Error saving party:', error);
+      toast.error('Error al guardar los cambios');
+    }
   };
 
   const handleCancel = () => {
@@ -59,17 +91,26 @@ export default function AdminParties() {
     setEditData(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('¿Está seguro de que desea eliminar este elemento?')) {
-      if (activeTab === 'parties') {
-        setParties(parties.filter(p => p.id !== id));
-      } else {
-        setYouth(youth.filter(y => y.id !== id));
+      try {
+        await deletePartyMutation.mutateAsync({ partyKey: id });
+
+        if (activeTab === 'parties') {
+          setParties(parties.filter(p => p.id !== id));
+        } else {
+          setYouth(youth.filter(y => y.id !== id));
+        }
+
+        toast.success('Elemento eliminado correctamente');
+      } catch (error) {
+        console.error('Error deleting party:', error);
+        toast.error('Error al eliminar el elemento');
       }
     }
   };
 
-  const handleAddNew = () => {
+  const handleAddNew = async () => {
     const newId = `NEW_${Date.now()}`;
     const newItem: PartyEdit = {
       id: newId,
@@ -79,16 +120,41 @@ export default function AdminParties() {
       logo: 'https://files.manuscdn.com/placeholder.png',
     };
 
-    if (activeTab === 'parties') {
-      setParties([...parties, newItem]);
-    } else {
-      setYouth([...youth, newItem]);
-    }
+    try {
+      await createPartyMutation.mutateAsync({
+        partyKey: newId,
+        displayName: newItem.displayName,
+        color: newItem.color,
+        logoUrl: newItem.logo,
+        type: activeTab === 'parties' ? 'general' : 'youth',
+      });
 
-    handleEdit(newItem);
+      if (activeTab === 'parties') {
+        setParties([...parties, newItem]);
+      } else {
+        setYouth([...youth, newItem]);
+      }
+
+      handleEdit(newItem);
+      toast.success('Nuevo elemento creado');
+    } catch (error) {
+      console.error('Error creating party:', error);
+      toast.error('Error al crear el nuevo elemento');
+    }
   };
 
   const currentData = activeTab === 'parties' ? parties : youth;
+
+  if (loading || isLoadingParties) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Cargando partidos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
