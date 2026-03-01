@@ -237,3 +237,22 @@ export const votingCooldown = pgTable("voting_cooldown", {
 
 export type VotingCooldown = typeof votingCooldown.$inferSelect;
 export type InsertVotingCooldown = typeof votingCooldown.$inferInsert;
+
+// Tabla de historial de cambios de logos de partidos
+export const partyLogoHistory = pgTable("party_logo_history", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  partyKey: varchar("party_key", { length: 100 }).notNull(),
+  oldLogoUrl: text("old_logo_url"),
+  newLogoUrl: text("new_logo_url").notNull(),
+  changedBy: integer("changed_by"), // user id
+  changeType: varchar("change_type", { length: 20 }).notNull(), // 'upload', 'edit', 'delete'
+  changeReason: text("change_reason"),
+  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  idxPartyKey: index("idx_party_logo_history_party").on(table.partyKey),
+  idxTimestamp: index("idx_party_logo_history_timestamp").on(table.timestamp),
+  idxChangedBy: index("idx_party_logo_history_changed_by").on(table.changedBy),
+}));
+
+export type PartyLogoHistory = typeof partyLogoHistory.$inferSelect;
+export type InsertPartyLogoHistory = typeof partyLogoHistory.$inferInsert;
