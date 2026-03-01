@@ -90,8 +90,7 @@ export function CCAAResltsSection() {
     name: r.partido,
     votos: r.votos,
     porcentaje: r.porcentaje,
-    color: getPartyColor(r.partido),
-    logo: getPartyLogo(r.partido)
+    color: getPartyColor(r.partido)
   }));
 
   const analysisTitle = analysisType === "generales" 

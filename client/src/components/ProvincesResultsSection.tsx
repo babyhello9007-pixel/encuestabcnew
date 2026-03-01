@@ -84,8 +84,7 @@ export function ProvincesResultsSection() {
     name: r.partido,
     votos: r.votos,
     porcentaje: r.porcentaje,
-    color: getPartyColor(r.partido),
-    logo: getPartyLogo(r.partido)
+    color: getPartyColor(r.partido)
   }));
 
   return (
