@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from '@/lib/surveyData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit2, Save, X, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, Upload } from 'lucide-react';
 import PartyLogo from '@/components/PartyLogo';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ export default function AdminParties() {
   const updatePartyMutation = trpc.parties.update.useMutation();
   const createPartyMutation = trpc.parties.create.useMutation();
   const deletePartyMutation = trpc.parties.delete.useMutation();
+  const utils = trpc.useUtils();
 
   // Cargar datos cuando estén disponibles
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function AdminParties() {
       setUploading(true);
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('partyKey', editData.id);
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -101,11 +103,16 @@ export default function AdminParties() {
         isActive: true,
       });
 
+      // Actualizar estado local
       if (activeTab === 'parties') {
         setParties(parties.map(p => p.id === editData.id ? editData : p));
       } else {
         setYouth(youth.map(y => y.id === editData.id ? editData : y));
       }
+
+      // Invalidar queries para sincronizar Results.tsx automáticamente
+      await utils.parties.getAll.invalidate();
+      await utils.parties.getByKey.invalidate();
 
       toast.success(`${editData.displayName} actualizado correctamente`);
       setEditingId(null);
@@ -131,6 +138,9 @@ export default function AdminParties() {
         } else {
           setYouth(youth.filter(y => y.id !== id));
         }
+
+        // Invalidar queries
+        await utils.parties.getAll.invalidate();
 
         toast.success('Elemento eliminado correctamente');
       } catch (error) {
@@ -165,6 +175,9 @@ export default function AdminParties() {
         setYouth([...youth, newItem]);
       }
 
+      // Invalidar queries
+      await utils.parties.getAll.invalidate();
+
       handleEdit(newItem);
       toast.success('Nuevo elemento creado');
     } catch (error) {
@@ -195,7 +208,7 @@ export default function AdminParties() {
             Administración de Partidos
           </h1>
           <p className="text-lg text-slate-600">
-            Gestiona nombres, siglas, colores y URLs de logos
+            Gestiona nombres, siglas, colores y URLs de logos. Los cambios se reflejan automáticamente en Resultados.
           </p>
         </div>
 
