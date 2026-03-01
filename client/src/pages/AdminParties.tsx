@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from '@/lib/surveyData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit2, Save, X, Plus, Trash2 } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
 import PartyLogo from '@/components/PartyLogo';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -22,6 +22,8 @@ export default function AdminParties() {
   const [parties, setParties] = useState<PartyEdit[]>([]);
   const [youth, setYouth] = useState<PartyEdit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Obtener datos de partidos desde tRPC
   const { data: partiesData, isLoading: isLoadingParties } = trpc.parties.getAll.useQuery();
@@ -57,6 +59,34 @@ export default function AdminParties() {
   const handleEdit = (item: PartyEdit) => {
     setEditingId(item.id);
     setEditData({ ...item });
+  };
+
+  const handleUploadLogo = async (file: File) => {
+    if (!editData) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+      const logoUrl = data.url;
+
+      setEditData({ ...editData, logo: logoUrl });
+      toast.success('Logo subido correctamente');
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -204,6 +234,19 @@ export default function AdminParties() {
           </Button>
         </div>
 
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files?.[0]) {
+              handleUploadLogo(e.target.files[0]);
+            }
+          }}
+        />
+
         {/* Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <table className="w-full">
@@ -223,7 +266,18 @@ export default function AdminParties() {
                   {editingId === item.id && editData ? (
                     <>
                       <td className="px-6 py-4">
-                        <PartyLogo partyName={editData.displayName} size={48} />
+                        <div className="flex flex-col gap-2">
+                          <PartyLogo partyName={editData.displayName} size={48} />
+                          <Button
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Upload size={14} />
+                            {uploading ? 'Subiendo...' : 'Subir'}
+                          </Button>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <Input

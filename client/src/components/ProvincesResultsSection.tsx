@@ -3,7 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Loader2, Search } from "lucide-react";
 import { PROVINCES } from "@/lib/surveyData";
-import { getPartyColor, getPartyLogo } from "@/lib/partyConfig";
+import { getPartyColor } from "@/lib/partyConfig";
+import PartyLogo from "@/components/PartyLogo";
 
 interface ProvinceResults {
   provincia: string;
@@ -225,9 +226,7 @@ export function ProvincesResultsSection() {
                       <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm font-medium text-slate-900">
                           <span className="inline-flex items-center gap-2">
-                            <span style={{ color: getPartyColor(result.partido) }} className="text-lg">
-                              {getPartyLogo(result.partido)}
-                            </span>
+                            <PartyLogo partyName={result.partido} size={32} />
                             {result.partido}
                           </span>
                         </td>
