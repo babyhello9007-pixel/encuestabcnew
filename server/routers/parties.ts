@@ -2,6 +2,8 @@ import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "../../client/src/lib/surveyData";
 import { getDb } from "../db";
+import { partyConfiguration, partyStatistics, partyLogoHistoryUpdated } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 // Schema para validar actualizaciones de partidos
 const partyUpdateSchema = z.object({
@@ -12,33 +14,37 @@ const partyUpdateSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-// Cache en memoria para cambios de partidos
-const partyConfigCache = new Map<string, any>();
-
 export const partiesRouter = router({
-  // Obtener todas las configuraciones de partidos
+  // Obtener todas las configuraciones de partidos desde BD
   getAll: protectedProcedure.query(async () => {
     try {
+      const db = await getDb();
+      
+      // Obtener configuraciones de BD
+      const dbConfigs = db ? await db.select().from(partyConfiguration) : [];
+      const configMap = new Map(dbConfigs.map(c => [c.partyKey, c]));
+
+      // Combinar con datos por defecto
       const parties = Object.entries(PARTIES_GENERAL).map(([key, party]) => {
-        const cached = partyConfigCache.get(key);
+        const dbConfig = configMap.get(key);
         return {
           partyKey: key,
-          displayName: cached?.displayName || party.name,
-          color: cached?.color || party.color,
-          logoUrl: cached?.logoUrl || party.logo,
-          isActive: cached?.isActive !== false,
+          displayName: dbConfig?.displayName || party.name,
+          color: dbConfig?.color || party.color,
+          logoUrl: dbConfig?.logoUrl || party.logo,
+          isActive: dbConfig?.isActive !== false,
           type: "general",
         };
       });
 
       const youth = Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => {
-        const cached = partyConfigCache.get(key);
+        const dbConfig = configMap.get(key);
         return {
           partyKey: key,
-          displayName: cached?.displayName || assoc.name,
-          color: cached?.color || assoc.color,
-          logoUrl: cached?.logoUrl || assoc.logo,
-          isActive: cached?.isActive !== false,
+          displayName: dbConfig?.displayName || assoc.name,
+          color: dbConfig?.color || assoc.color,
+          logoUrl: dbConfig?.logoUrl || assoc.logo,
+          isActive: dbConfig?.isActive !== false,
           type: "youth",
         };
       });
@@ -59,16 +65,31 @@ export const partiesRouter = router({
     .input(z.object({ partyKey: z.string() }))
     .query(async ({ input }) => {
       try {
-        const cached = partyConfigCache.get(input.partyKey);
-        const party = PARTIES_GENERAL[input.partyKey as keyof typeof PARTIES_GENERAL];
+        const db = await getDb();
         
+        // Buscar en BD
+        const dbConfig = db ? (await db.select().from(partyConfiguration).where(eq(partyConfiguration.partyKey, input.partyKey)).limit(1))[0] : null;
+        
+        if (dbConfig) {
+          return {
+            partyKey: dbConfig.partyKey,
+            displayName: dbConfig.displayName,
+            color: dbConfig.color,
+            logoUrl: dbConfig.logoUrl,
+            isActive: dbConfig.isActive,
+            type: dbConfig.partyType,
+          };
+        }
+
+        // Fallback a datos por defecto
+        const party = PARTIES_GENERAL[input.partyKey as keyof typeof PARTIES_GENERAL];
         if (party) {
           return {
             partyKey: input.partyKey,
-            displayName: cached?.displayName || party.name,
-            color: cached?.color || party.color,
-            logoUrl: cached?.logoUrl || party.logo,
-            isActive: cached?.isActive !== false,
+            displayName: party.name,
+            color: party.color,
+            logoUrl: party.logo,
+            isActive: true,
             type: "general",
           };
         }
@@ -77,10 +98,10 @@ export const partiesRouter = router({
         if (youth) {
           return {
             partyKey: input.partyKey,
-            displayName: cached?.displayName || youth.name,
-            color: cached?.color || youth.color,
-            logoUrl: cached?.logoUrl || youth.logo,
-            isActive: cached?.isActive !== false,
+            displayName: youth.name,
+            color: youth.color,
+            logoUrl: youth.logo,
+            isActive: true,
             type: "youth",
           };
         }
@@ -92,55 +113,62 @@ export const partiesRouter = router({
       }
     }),
 
-  // Actualizar configuración de un partido
+  // Actualizar configuración de un partido en BD
   update: protectedProcedure
     .input(partyUpdateSchema)
     .mutation(async ({ input, ctx }) => {
       try {
-        // Validar que el partido existe
-        const party = PARTIES_GENERAL[input.partyKey as keyof typeof PARTIES_GENERAL];
-        const youth = YOUTH_ASSOCIATIONS[input.partyKey as keyof typeof YOUTH_ASSOCIATIONS];
-
-        if (!party && !youth) {
-          throw new Error("Party not found");
-        }
-
-        // Obtener valor anterior para historial
-        const cached = partyConfigCache.get(input.partyKey);
-        const oldLogoUrl = cached?.logoUrl || party?.logo || youth?.logo;
-
-        // Guardar en cache en memoria
-        partyConfigCache.set(input.partyKey, {
-          displayName: input.displayName,
-          color: input.color,
-          logoUrl: input.logoUrl,
-          isActive: input.isActive,
-          updatedAt: new Date(),
-          updatedBy: ctx.user?.id,
-        });
-
-        // Registrar en historial (cuando BD esté disponible)
         const db = await getDb();
-        if (db) {
-          try {
-            console.log(`[Parties Router] Recorded history for party: ${input.partyKey}`, {
-              oldLogoUrl,
-              newLogoUrl: input.logoUrl,
-              changedBy: ctx.user?.id,
-              timestamp: new Date(),
-            });
-            // TODO: Guardar en party_logo_history cuando tabla esté disponible
-          } catch (dbError) {
-            console.warn("[Parties Router] Could not record history:", dbError);
-          }
-        }
+        if (!db) throw new Error("Database not available");
 
-        console.log(`[Parties Router] Updated party: ${input.partyKey}`, input);
+        // Obtener configuración actual
+        const existing = (await db.select().from(partyConfiguration).where(eq(partyConfiguration.partyKey, input.partyKey)).limit(1))[0];
+
+        // Registrar cambio en historial
+        if (existing) {
+          await db.insert(partyLogoHistoryUpdated).values({
+            partyKey: input.partyKey,
+            changeType: "edit",
+            oldDisplayName: existing.displayName,
+            newDisplayName: input.displayName,
+            oldColor: existing.color,
+            newColor: input.color,
+            oldLogoUrl: existing.logoUrl,
+            newLogoUrl: input.logoUrl,
+            changedBy: ctx.user?.id,
+            changedByName: ctx.user?.name,
+            timestamp: new Date(),
+          });
+
+          // Actualizar configuración
+          await db.update(partyConfiguration)
+            .set({
+              displayName: input.displayName,
+              color: input.color,
+              logoUrl: input.logoUrl,
+              isActive: input.isActive,
+              updatedAt: new Date(),
+              updatedBy: ctx.user?.id,
+            })
+            .where(eq(partyConfiguration.partyKey, input.partyKey));
+        } else {
+          // Crear nueva configuración
+          await db.insert(partyConfiguration).values({
+            partyKey: input.partyKey,
+            displayName: input.displayName,
+            color: input.color,
+            logoUrl: input.logoUrl,
+            isActive: input.isActive,
+            partyType: "general",
+            createdBy: ctx.user?.id,
+            updatedBy: ctx.user?.id,
+          });
+        }
 
         return {
           success: true,
-          message: `Party ${input.displayName} updated successfully`,
-          data: input,
+          partyKey: input.partyKey,
+          displayName: input.displayName,
         };
       } catch (error) {
         console.error("[Parties Router] Error updating party:", error);
@@ -148,43 +176,28 @@ export const partiesRouter = router({
       }
     }),
 
-  // Agregar nuevo partido
+  // Crear nuevo partido
   create: protectedProcedure
-    .input(
-      z.object({
-        partyKey: z.string().min(1),
-        displayName: z.string().min(1),
-        color: z.string().regex(/^#[0-9A-F]{6}$/i),
-        logoUrl: z.string().url(),
-        type: z.enum(["general", "youth"]),
-      })
-    )
+    .input(partyUpdateSchema.extend({ partyType: z.enum(["general", "youth"]) }))
     .mutation(async ({ input, ctx }) => {
       try {
-        // Validar que no existe ya
-        const existing = PARTIES_GENERAL[input.partyKey as keyof typeof PARTIES_GENERAL];
-        const existingYouth = YOUTH_ASSOCIATIONS[input.partyKey as keyof typeof YOUTH_ASSOCIATIONS];
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
 
-        if (existing || existingYouth) {
-          throw new Error("Party key already exists");
-        }
-
-        // Guardar en cache
-        partyConfigCache.set(input.partyKey, {
+        await db.insert(partyConfiguration).values({
+          partyKey: input.partyKey,
           displayName: input.displayName,
           color: input.color,
           logoUrl: input.logoUrl,
-          isActive: true,
-          createdAt: new Date(),
+          isActive: input.isActive,
+          partyType: input.partyType,
           createdBy: ctx.user?.id,
+          updatedBy: ctx.user?.id,
         });
-
-        console.log(`[Parties Router] Created new party: ${input.partyKey}`, input);
 
         return {
           success: true,
-          message: `Party ${input.displayName} created successfully`,
-          data: input,
+          partyKey: input.partyKey,
         };
       } catch (error) {
         console.error("[Parties Router] Error creating party:", error);
@@ -197,34 +210,67 @@ export const partiesRouter = router({
     .input(z.object({ partyKey: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
-        // Validar que existe
-        const party = PARTIES_GENERAL[input.partyKey as keyof typeof PARTIES_GENERAL];
-        const youth = YOUTH_ASSOCIATIONS[input.partyKey as keyof typeof YOUTH_ASSOCIATIONS];
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
 
-        if (!party && !youth) {
-          throw new Error("Party not found");
+        // Registrar eliminación en historial
+        const existing = (await db.select().from(partyConfiguration).where(eq(partyConfiguration.partyKey, input.partyKey)).limit(1))[0];
+        
+        if (existing) {
+          await db.insert(partyLogoHistoryUpdated).values({
+            partyKey: input.partyKey,
+            changeType: "delete",
+            oldDisplayName: existing.displayName,
+            oldColor: existing.color,
+            oldLogoUrl: existing.logoUrl,
+            changedBy: ctx.user?.id,
+            changedByName: ctx.user?.name,
+            timestamp: new Date(),
+          });
+
+          await db.delete(partyConfiguration).where(eq(partyConfiguration.partyKey, input.partyKey));
         }
 
-        // Marcar como inactivo en cache
-        const cached = partyConfigCache.get(input.partyKey) || {};
-        partyConfigCache.set(input.partyKey, {
-          ...cached,
-          isActive: false,
-          deletedAt: new Date(),
-          deletedBy: ctx.user?.id,
-        });
-
-        console.log(`[Parties Router] Deleted party: ${input.partyKey}`);
-
-        return {
-          success: true,
-          message: `Party deleted successfully`,
-        };
+        return { success: true };
       } catch (error) {
         console.error("[Parties Router] Error deleting party:", error);
         throw error;
       }
     }),
-});
 
-export type PartiesRouter = typeof partiesRouter;
+  // Obtener estadísticas de partidos
+  getStatistics: protectedProcedure.query(async () => {
+    try {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const stats = await db.select().from(partyStatistics);
+      return stats;
+    } catch (error) {
+      console.error("[Parties Router] Error fetching statistics:", error);
+      throw error;
+    }
+  }),
+
+  // Obtener historial de cambios
+  getHistory: protectedProcedure
+    .input(z.object({ partyKey: z.string().optional(), limit: z.number().default(50) }))
+    .query(async ({ input }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        let query = db.select().from(partyLogoHistoryUpdated);
+        
+        if (input.partyKey) {
+          query = query.where(eq(partyLogoHistoryUpdated.partyKey, input.partyKey));
+        }
+
+        const history = await query.limit(input.limit);
+        return history;
+      } catch (error) {
+        console.error("[Parties Router] Error fetching history:", error);
+        throw error;
+      }
+    }),
+});

@@ -5,8 +5,8 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { initFavicon } from "./lib/faviconLoader";
-import Home from "./pages/Home";
 import { useEffect } from "react";
+import Home from "./pages/Home";
 import Survey from "./pages/Survey";
 import NanoEncuestaBC from "./pages/NanoEncuestaBC";
 import Results from "./pages/Results";
@@ -23,6 +23,7 @@ import DiscordCallback from "./pages/DiscordCallback";
 import CoalitionsComparison from "./pages/CoalitionsComparison";
 import PartiesDocumentation from "./pages/PartiesDocumentation";
 import AdminParties from "./pages/AdminParties";
+import AdminStatistics from "./pages/AdminStatistics";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -44,6 +45,7 @@ function Router() {
       <Route path={"/coaliciones-comparar"} component={CoalitionsComparison} />
       <Route path={"/documentacion/partidos"} component={PartiesDocumentation} />
       <Route path={"/admin/partidos"} component={AdminParties} />
+      <Route path={"/admin/estadisticas"} component={AdminStatistics} />
       <Route path={"/auth/discord/callback"} component={DiscordCallback} />
       <Route path={"/admin/blog/login"} component={AdminBlogLogin} />
       <Route path={"/admin/blog"} component={AdminBlogLogin} />
