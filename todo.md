@@ -678,3 +678,17 @@
 - [ ] Arreglar error al editar partidos en AdminParties.tsx
 - [ ] Revisar endpoint tRPC parties.update
 - [ ] Validar que los datos se guarden correctamente en BD
+
+
+## Persistencia en BD y Auditoría - Nueva Sesión
+
+- [ ] Crear tabla party_configuration en Drizzle ORM
+- [ ] Crear tabla party_logo_history en Drizzle ORM  
+- [ ] Crear tabla party_statistics en Drizzle ORM
+- [ ] Implementar persistencia en BD (parties.ts)
+- [ ] Implementar auditoría de cambios (parties.ts)
+- [ ] Crear panel de estadísticas en AdminParties.tsx
+- [ ] Agregar gráficos de uso de partidos
+- [ ] Integrar estadísticas en Results.tsx
+- [ ] Crear endpoint para obtener estadísticas
+- [ ] Pruebas unitarias para nuevos endpoints

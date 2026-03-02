@@ -1,4 +1,4 @@
-import { 
+import {
   pgTable, 
   uuid, 
   text, 
@@ -9,6 +9,8 @@ import {
   index,
   foreignKey,
   unique,
+  boolean,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -256,3 +258,131 @@ export const partyLogoHistory = pgTable("party_logo_history", {
 
 export type PartyLogoHistory = typeof partyLogoHistory.$inferSelect;
 export type InsertPartyLogoHistory = typeof partyLogoHistory.$inferInsert;
+
+
+// ============================================================================
+// TABLA: party_configuration
+// ============================================================================
+// Almacena la configuración personalizada de cada partido
+export const partyConfiguration = pgTable("party_configuration", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  partyKey: varchar("party_key", { length: 100 }).notNull().unique(),
+  displayName: varchar("display_name", { length: 255 }).notNull(),
+  color: varchar("color", { length: 7 }).notNull(), // Formato hex: #RRGGBB
+  logoUrl: text("logo_url").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  partyType: varchar("party_type", { length: 20 }).notNull(), // 'general' o 'youth'
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdBy: integer("created_by"), // user id
+  updatedBy: integer("updated_by"), // user id
+}, (table) => ({
+  idxPartyKey: index("idx_party_config_key").on(table.partyKey),
+  idxPartyType: index("idx_party_config_type").on(table.partyType),
+  idxIsActive: index("idx_party_config_active").on(table.isActive),
+  idxUpdatedAt: index("idx_party_config_updated").on(table.updatedAt),
+}));
+
+export type PartyConfiguration = typeof partyConfiguration.$inferSelect;
+export type InsertPartyConfiguration = typeof partyConfiguration.$inferInsert;
+
+// ============================================================================
+// TABLA: party_statistics
+// ============================================================================
+// Almacena estadísticas de uso de cada partido
+export const partyStatistics = pgTable("party_statistics", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  partyKey: varchar("party_key", { length: 100 }).notNull().unique(),
+  totalVotes: integer("total_votes").default(0).notNull(),
+  totalMentions: integer("total_mentions").default(0).notNull(), // Menciones en encuestas varias
+  generalElectionsVotes: integer("general_elections_votes").default(0).notNull(),
+  autonomousElectionsVotes: integer("autonomous_elections_votes").default(0).notNull(),
+  municipalElectionsVotes: integer("municipal_elections_votes").default(0).notNull(),
+  europeanElectionsVotes: integer("european_elections_votes").default(0).notNull(),
+  youthAssociationVotes: integer("youth_association_votes").default(0).notNull(),
+  averageRating: numeric("average_rating", { precision: 3, scale: 2 }).default("0.00").notNull(),
+  totalRatings: integer("total_ratings").default(0).notNull(),
+  lastUpdated: timestamp("last_updated", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  idxPartyKey: index("idx_party_stats_key").on(table.partyKey),
+  idxTotalVotes: index("idx_party_stats_total_votes").on(table.totalVotes),
+  idxLastUpdated: index("idx_party_stats_last_updated").on(table.lastUpdated),
+}));
+
+export type PartyStatistics = typeof partyStatistics.$inferSelect;
+export type InsertPartyStatistics = typeof partyStatistics.$inferInsert;
+
+// ============================================================================
+// TABLA: party_changes_log
+// ============================================================================
+// Log detallado de todos los cambios para auditoría avanzada
+export const partyChangesLog = pgTable("party_changes_log", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  partyKey: varchar("party_key", { length: 100 }).notNull(),
+  changeTimestamp: timestamp("change_timestamp", { withTimezone: true }).defaultNow().notNull(),
+  changedBy: integer("changed_by"), // user id
+  userName: varchar("user_name", { length: 255 }),
+  changeDetails: text("change_details"), // JSON stringified
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+}, (table) => ({
+  idxPartyKey: index("idx_changes_log_party").on(table.partyKey),
+  idxTimestamp: index("idx_changes_log_timestamp").on(table.changeTimestamp),
+  idxChangedBy: index("idx_changes_log_user").on(table.changedBy),
+}));
+
+export type PartyChangesLog = typeof partyChangesLog.$inferSelect;
+export type InsertPartyChangesLog = typeof partyChangesLog.$inferInsert;
+
+// ============================================================================
+// TABLA: party_comparison_snapshots
+// ============================================================================
+// Snapshots de configuración de partidos para comparación en el tiempo
+export const partyComparisonSnapshots = pgTable("party_comparison_snapshots", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  snapshotDate: timestamp("snapshot_date", { withTimezone: true }).defaultNow().notNull(),
+  partyKey: varchar("party_key", { length: 100 }).notNull(),
+  displayName: varchar("display_name", { length: 255 }).notNull(),
+  color: varchar("color", { length: 7 }).notNull(),
+  logoUrl: text("logo_url").notNull(),
+  totalVotes: integer("total_votes"),
+  averageRating: numeric("average_rating", { precision: 3, scale: 2 }),
+}, (table) => ({
+  idxSnapshotDate: index("idx_snapshots_date").on(table.snapshotDate),
+  idxPartyKey: index("idx_snapshots_party").on(table.partyKey),
+}));
+
+export type PartyComparisonSnapshot = typeof partyComparisonSnapshots.$inferSelect;
+export type InsertPartyComparisonSnapshot = typeof partyComparisonSnapshots.$inferInsert;
+
+// ============================================================================
+// TABLA: party_logo_history (ACTUALIZADA)
+// ============================================================================
+// Actualizar tabla existente con nuevos campos
+export const partyLogoHistoryUpdated = pgTable("party_logo_history_v2", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  partyKey: varchar("party_key", { length: 100 }).notNull(),
+  changeType: varchar("change_type", { length: 20 }).notNull(), // 'upload', 'edit', 'delete', 'revert'
+  oldDisplayName: varchar("old_display_name", { length: 255 }),
+  newDisplayName: varchar("new_display_name", { length: 255 }),
+  oldColor: varchar("old_color", { length: 7 }),
+  newColor: varchar("new_color", { length: 7 }),
+  oldLogoUrl: text("old_logo_url"),
+  newLogoUrl: text("new_logo_url"),
+  changedBy: integer("changed_by"), // user id
+  changedByName: varchar("changed_by_name", { length: 255 }),
+  changeReason: text("change_reason"),
+  timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow().notNull(),
+  isReverted: boolean("is_reverted").default(false).notNull(),
+  revertedBy: integer("reverted_by"),
+  revertedAt: timestamp("reverted_at", { withTimezone: true }),
+}, (table) => ({
+  idxPartyKey: index("idx_party_history_v2_key").on(table.partyKey),
+  idxTimestamp: index("idx_party_history_v2_timestamp").on(table.timestamp),
+  idxChangedBy: index("idx_party_history_v2_changed_by").on(table.changedBy),
+  idxChangeType: index("idx_party_history_v2_type").on(table.changeType),
+}));
+
+export type PartyLogoHistoryV2 = typeof partyLogoHistoryUpdated.$inferSelect;
+export type InsertPartyLogoHistoryV2 = typeof partyLogoHistoryUpdated.$inferInsert;

@@ -8,6 +8,7 @@ import { registerDiscordOAuthRoutes } from "./discordOAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import uploadRouter from "../routes/upload";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Discord OAuth callback under /api/auth/discord/callback
   registerDiscordOAuthRoutes(app);
+  // Upload router
+  app.use('/api', uploadRouter);
   // Endpoint para poblar encuestadoras
   app.post("/api/populate-encuestadoras", async (req, res) => {
     try {
