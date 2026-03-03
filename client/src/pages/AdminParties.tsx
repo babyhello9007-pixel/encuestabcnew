@@ -6,6 +6,7 @@ import { Edit2, Save, X, Plus, Trash2, Upload } from 'lucide-react';
 import PartyLogo from '@/components/PartyLogo';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import { usePartySync } from '@/hooks/usePartySync';
 
 interface PartyEdit {
   id: string;
@@ -24,6 +25,9 @@ export default function AdminParties() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sincronizacion en tiempo real con WebSocket
+  usePartySync();
 
   // Obtener datos de partidos desde tRPC
   const { data: partiesData, isLoading: isLoadingParties } = trpc.parties.getAll.useQuery();

@@ -4,6 +4,7 @@ import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "../../client/src/lib/survey
 import { getDb } from "../db";
 import { partyConfiguration, partyStatistics, partyLogoHistoryUpdated } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { emitPartyUpdate, emitPartyCreate, emitPartyDelete } from "../websocket";
 
 // Schema para validar actualizaciones de partidos
 const partyUpdateSchema = z.object({
@@ -124,8 +125,8 @@ export const partiesRouter = router({
         // Obtener configuración actual
         const existing = (await db.select().from(partyConfiguration).where(eq(partyConfiguration.partyKey, input.partyKey)).limit(1))[0];
 
-        // Registrar cambio en historial
         if (existing) {
+          // Registrar cambio en historial
           await db.insert(partyLogoHistoryUpdated).values({
             partyKey: input.partyKey,
             changeType: "edit",
@@ -165,6 +166,17 @@ export const partiesRouter = router({
           });
         }
 
+        // Emitir evento WebSocket
+        emitPartyUpdate({
+          partyKey: input.partyKey,
+          displayName: input.displayName,
+          color: input.color,
+          logoUrl: input.logoUrl,
+          isActive: input.isActive,
+          updatedBy: ctx.user?.name,
+          timestamp: new Date(),
+        });
+
         return {
           success: true,
           partyKey: input.partyKey,
@@ -193,6 +205,18 @@ export const partiesRouter = router({
           partyType: input.partyType,
           createdBy: ctx.user?.id,
           updatedBy: ctx.user?.id,
+        });
+
+        // Emitir evento WebSocket
+        emitPartyCreate({
+          partyKey: input.partyKey,
+          displayName: input.displayName,
+          color: input.color,
+          logoUrl: input.logoUrl,
+          isActive: input.isActive,
+          partyType: input.partyType,
+          createdBy: ctx.user?.name,
+          timestamp: new Date(),
         });
 
         return {
@@ -231,6 +255,13 @@ export const partiesRouter = router({
           await db.delete(partyConfiguration).where(eq(partyConfiguration.partyKey, input.partyKey));
         }
 
+        // Emitir evento WebSocket
+        emitPartyDelete({
+          partyKey: input.partyKey,
+          deletedBy: ctx.user?.name,
+          timestamp: new Date(),
+        });
+
         return { success: true };
       } catch (error) {
         console.error("[Parties Router] Error deleting party:", error);
@@ -248,7 +279,7 @@ export const partiesRouter = router({
       return stats;
     } catch (error) {
       console.error("[Parties Router] Error fetching statistics:", error);
-      throw error;
+      return [];
     }
   }),
 
@@ -270,7 +301,7 @@ export const partiesRouter = router({
         return history;
       } catch (error) {
         console.error("[Parties Router] Error fetching history:", error);
-        throw error;
+        return [];
       }
     }),
 });

@@ -36,6 +36,8 @@ import PactometerInteractive from "@/components/PactometerInteractive";
 import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
+import { usePartySync } from "@/hooks/usePartySync";
+import { useState, useEffect } from "react";
 
 interface PartyStats {
   id: string;
@@ -62,6 +64,9 @@ interface PartyMetrics {
 }
 
 export default function Results() {
+  // Sincronizacion en tiempo real con WebSocket
+  usePartySync();
+  
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
