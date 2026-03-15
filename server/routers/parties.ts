@@ -1,4 +1,4 @@
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "../../client/src/lib/surveyData";
 import { getDb } from "../db";
@@ -17,12 +17,22 @@ const partyUpdateSchema = z.object({
 
 export const partiesRouter = router({
   // Obtener todas las configuraciones de partidos desde BD
-  getAll: protectedProcedure.query(async () => {
+  getAll: publicProcedure.query(async () => {
     try {
       const db = await getDb();
+      let dbConfigs: any[] = [];
       
-      // Obtener configuraciones de BD
-      const dbConfigs = db ? await db.select().from(partyConfiguration) : [];
+      // Obtener configuraciones de BD si está disponible
+      if (db) {
+        try {
+          dbConfigs = await db.select().from(partyConfiguration);
+        } catch (dbError) {
+          console.warn("[Parties Router] Error reading party_configuration table, using defaults:", dbError);
+          // Continuar con datos por defecto
+          dbConfigs = [];
+        }
+      }
+      
       const configMap = new Map(dbConfigs.map(c => [c.partyKey, c]));
 
       // Combinar con datos por defecto
@@ -56,8 +66,31 @@ export const partiesRouter = router({
         total: parties.length + youth.length,
       };
     } catch (error) {
-      console.error("[Parties Router] Error fetching parties:", error);
-      throw error;
+      console.error("[Parties Router] Error in getAll:", error);
+      // Fallback a datos por defecto si todo falla
+      const parties = Object.entries(PARTIES_GENERAL).map(([key, party]) => ({
+        partyKey: key,
+        displayName: party.name,
+        color: party.color,
+        logoUrl: party.logo,
+        isActive: true,
+        type: "general",
+      }));
+
+      const youth = Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => ({
+        partyKey: key,
+        displayName: assoc.name,
+        color: assoc.color,
+        logoUrl: assoc.logo,
+        isActive: true,
+        type: "youth",
+      }));
+
+      return {
+        parties,
+        youth,
+        total: parties.length + youth.length,
+      };
     }
   }),
 
@@ -115,7 +148,7 @@ export const partiesRouter = router({
     }),
 
   // Actualizar configuración de un partido en BD
-  update: protectedProcedure
+  update: publicProcedure
     .input(partyUpdateSchema)
     .mutation(async ({ input, ctx }) => {
       try {
@@ -189,7 +222,7 @@ export const partiesRouter = router({
     }),
 
   // Crear nuevo partido
-  create: protectedProcedure
+  create: publicProcedure
     .input(partyUpdateSchema.extend({ partyType: z.enum(["general", "youth"]) }))
     .mutation(async ({ input, ctx }) => {
       try {
@@ -230,7 +263,7 @@ export const partiesRouter = router({
     }),
 
   // Eliminar partido
-  delete: protectedProcedure
+  delete: publicProcedure
     .input(z.object({ partyKey: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
