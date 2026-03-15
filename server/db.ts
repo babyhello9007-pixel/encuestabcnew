@@ -11,9 +11,20 @@ let _client: postgres.Sql | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _client = postgres(process.env.DATABASE_URL);
+      // Configurar SSL para Supabase
+      const options = {
+        ssl: {
+          rejectUnauthorized: false,
+        },
+        // Agregar timeout para conexiones lentas
+        connection: {
+          timeout: 10000,
+        },
+      };
+
+      _client = postgres(process.env.DATABASE_URL, options);
       _db = drizzle(_client);
-      console.log("[Database] Connected to PostgreSQL successfully");
+      console.log("[Database] Connected to PostgreSQL successfully with SSL");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
