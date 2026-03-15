@@ -37,7 +37,6 @@ import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { usePartySync } from "@/hooks/usePartySync";
-import { useState, useEffect } from "react";
 
 interface PartyStats {
   id: string;
