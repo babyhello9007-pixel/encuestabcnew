@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { getPartyColor } from '@/lib/partyConfig';
 import { PARTIES_GENERAL } from '@/lib/surveyData';
 import { getEscanosPorProvincia, calcularEscanosProvincia, calcularEscanosJuvenilesProvincia } from '@/lib/dhondtByProvince';
 import { VerifySeatsModal } from '@/components/VerifySeatsModal';
@@ -17,6 +16,7 @@ interface SpainMapProvincialProps {
   votosPorProvincia: Record<string, Record<string, number>>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
   isYouthAssociations?: boolean;  // true para Asociaciones Juveniles, false para Elecciones Generales
+  partyMeta?: Record<string, { color?: string }>;
 }
 
 // Coordenadas aproximadas del centroide de cada provincia para el mapa realista
@@ -81,6 +81,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
   votosPorProvincia,
   onProvinceClick,
   isYouthAssociations = false,
+  partyMeta = {},
 }) => {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -142,6 +143,8 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
     tieneData: Object.keys(votosPorProvincia).includes(province),
   }));
 
+  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || "#9CA3AF";
+
   return (
     <div className="w-full space-y-4">
       {/* Llamada a la accion */}
@@ -196,7 +199,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
                 selectedProvince === province ? 'ring-2 ring-white' : ''
               }`}
               style={{
-                backgroundColor: tieneData ? getPartyColor(data.ganador) : '#4B5563',
+                backgroundColor: tieneData ? getColorForParty(data.ganador) : '#4B5563',
                 opacity: selectedProvince === province ? 1 : (tieneData ? 0.8 : 0.4),
               }}
               title={tieneData ? `${province}: ${data.ganador} (${data.porcentajeGanador.toFixed(1)}%)` : `${province}: Sin datos - Responde la encuesta`}
@@ -227,7 +230,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
               const coords = provinceCoordinates[province];
               if (!coords) return null;
 
-              const winnerColor = tieneData ? getPartyColor(data.ganador) : '#CCCCCC';
+              const winnerColor = tieneData ? getColorForParty(data.ganador) : '#CCCCCC';
               const isSelected = selectedProvince === province;
               const isHovered = hoveredProvince === province;
 
@@ -357,7 +360,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
                     <div className="flex items-center gap-2">
                       <div
                         className="w-3 h-3 rounded"
-                        style={{ backgroundColor: getPartyColor(partido) }}
+                        style={{ backgroundColor: getColorForParty(partido) }}
                       />
                       <span className="text-gray-300">{partyName}</span>
                     </div>
