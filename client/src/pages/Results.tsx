@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from '@/lib/surveyData';
+import { LEADERS } from '@/lib/surveyData';
 import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
@@ -93,12 +93,7 @@ export default function Results() {
   }, []);
 
   const generalPartyMap = useMemo(() => {
-    const defaults = Object.fromEntries(
-      Object.entries(PARTIES_GENERAL).map(([key, party]) => [
-        key,
-        { key, name: party.name, color: "#9CA3AF", logo: "" },
-      ])
-    );
+    const defaults: Record<string, { key: string; name: string; color: string; logo: string }> = {};
     if (!partyConfigData?.parties?.length) return defaults;
     partyConfigData.parties.forEach((party) => {
       defaults[party.partyKey] = {
@@ -112,12 +107,7 @@ export default function Results() {
   }, [partyConfigData]);
 
   const youthPartyMap = useMemo(() => {
-    const defaults = Object.fromEntries(
-      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [
-        key,
-        { key, name: party.name, color: "#9CA3AF", logo: "" },
-      ])
-    );
+    const defaults: Record<string, { key: string; name: string; color: string; logo: string }> = {};
     if (!partyConfigData?.youth?.length) return defaults;
     partyConfigData.youth.forEach((party) => {
       defaults[party.partyKey] = {
