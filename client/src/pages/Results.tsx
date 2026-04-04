@@ -37,6 +37,7 @@ import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { usePartySync } from "@/hooks/usePartySync";
+import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 
 interface PartyStats {
   id: string;
@@ -65,7 +66,6 @@ interface PartyMetrics {
 export default function Results() {
   // Sincronizacion en tiempo real con WebSocket
   usePartySync();
-  
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
@@ -786,6 +786,7 @@ export default function Results() {
                   stats={stats}
                   totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
                   edadPromedio={edadPromedio}
+                  partyMeta={activeTab === "youth" ? youthPartyMap : generalPartyMap}
                 />
               </div>
             </div>
@@ -926,6 +927,7 @@ export default function Results() {
                   stats={stats}
                   totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
                   edadPromedio={edadPromedio}
+                  partyMeta={activeTab === "youth" ? youthPartyMap : generalPartyMap}
                 />
               </div>
               </div>
@@ -991,6 +993,7 @@ export default function Results() {
                       <div className="text-right">
                         <p className="text-2xl font-bold" style={{ color: partyColor }}>{party.escanos}</p>
                         <p className="text-xs text-[#666666]">escaños</p>
+                        <p className="text-[11px] font-mono mt-1" style={{ color: partyColor }}>{partyColor}</p>
                       </div>
                     </div>
 
@@ -1023,13 +1026,13 @@ export default function Results() {
               <PreguntasVariasSection />
             )}
             {activeTab === "ccaa" && (
-              <CCAAResltsSection />
+              <CCAAResltsSection partyMeta={generalPartyMap} />
             )}
             {activeTab === "provincias" && (
-              <ProvincesResultsSection />
+              <ProvincesResultsSection partyMeta={generalPartyMap} />
             )}
             {activeTab === "comparacion-ccaa" && (
-              <CCAAComparisonSection />
+              <CCAAComparisonSection partyMeta={generalPartyMap} />
             )}
             {activeTab === "asoc-juv-mapa-hemiciclo" && (
               <div className="space-y-4">
@@ -1069,6 +1072,7 @@ export default function Results() {
                         <SpainMapProvincial 
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           isYouthAssociations={true}
+                          partyMeta={youthPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionadaJuveniles(province);
                             setVotosPorPartidoProvinciaJuveniles(votos);
@@ -1080,6 +1084,7 @@ export default function Results() {
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           provinciaMetricsMap={provinciaMetricsMapJuveniles}
                           isYouthAssociations={true}
+                          partyMeta={youthPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionadaJuveniles(province);
                             setVotosPorPartidoProvinciaJuveniles(votos);
@@ -1162,6 +1167,7 @@ export default function Results() {
                         <SpainMapProvincial 
                           votosPorProvincia={votosPorProvincia}
                           isYouthAssociations={false}
+                          partyMeta={generalPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);
@@ -1173,6 +1179,7 @@ export default function Results() {
                           votosPorProvincia={votosPorProvincia}
                           provinciaMetricsMap={provinciaMetricsMap}
                           isYouthAssociations={false}
+                          partyMeta={generalPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);

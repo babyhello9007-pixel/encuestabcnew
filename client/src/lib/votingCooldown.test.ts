@@ -53,12 +53,12 @@ describe('votingCooldown', () => {
       
       expect(result.canVote).toBe(false);
       expect(result.remainingMinutes).toBeGreaterThan(0);
-      expect(result.remainingMinutes).toBeLessThanOrEqual(20);
+      expect(result.remainingMinutes).toBeLessThanOrEqual(5);
     });
 
     it('debe permitir votar después del período de cooldown', async () => {
       const now = new Date();
-      const lastVoteTime = new Date(now.getTime() - 31 * 60 * 1000); // 31 minutos atrás
+      const lastVoteTime = new Date(now.getTime() - 16 * 60 * 1000); // 16 minutos atrás
 
       const mockFrom = vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({

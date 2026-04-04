@@ -3,7 +3,6 @@ import { Share2, X, Download, Image, MessageCircle, Send, Linkedin } from "lucid
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import { generateAdvancedInfographic } from "@/lib/pngExportAdvanced";
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
 import ImageLoader from "./ImageLoader";
 import { ColorTheme, getThemeColors, getThemeList } from "@/lib/colorThemes";
 
@@ -22,6 +21,7 @@ interface ShareResultsAdvancedProps {
   stats: PartyStats[];
   totalVotes: number;
   edadPromedio?: number | null;
+  partyMeta?: Record<string, { logo?: string; color?: string }>;
 }
 
 export function ShareResultsAdvanced({
@@ -29,6 +29,7 @@ export function ShareResultsAdvanced({
   stats,
   totalVotes,
   edadPromedio,
+  partyMeta = {},
 }: ShareResultsAdvancedProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<PartyStats | null>(

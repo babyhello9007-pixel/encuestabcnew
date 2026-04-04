@@ -1,5 +1,4 @@
 import html2canvas from 'html2canvas';
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from './surveyData';
 
 interface PartyStats {
   id?: string;
@@ -46,6 +45,22 @@ export const generateAdvancedInfographic = async (
   edadPromedio?: number | null,
   ideologiaPromedio?: number | null
 ) => {
+  const toDataUrl = async (url: string): Promise<string> => {
+    if (!url) return '';
+    if (url.startsWith('data:')) return url;
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) return url;
+      const blob = await response.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(String(reader.result || url));
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return url;
+    }
+  };
   // Crear contenedor temporal
   const container = document.createElement('div');
   container.style.position = 'absolute';
@@ -142,7 +157,7 @@ export const generateAdvancedInfographic = async (
   content.style.marginBottom = '50px';
 
   // Agregar tarjetas para cada partido
-  stats.slice(0, 6).forEach((party) => {
+  for (const party of stats.slice(0, 6)) {
     const card = document.createElement('div');
     card.style.backgroundColor = '#FFFFFF';
     card.style.border = `2px solid ${party.color || '#C41E3A'}`;
@@ -212,7 +227,7 @@ export const generateAdvancedInfographic = async (
     card.appendChild(logoSection);
     card.appendChild(info);
     content.appendChild(card);
-  });
+  }
 
   // Footer
   const footer = document.createElement('div');
