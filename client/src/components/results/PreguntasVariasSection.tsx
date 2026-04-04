@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
+import PartyLogo from '@/components/PartyLogo';
 
 interface QuestionData {
   label: string;
@@ -8,6 +9,13 @@ interface QuestionData {
   percentage: number;
   edad_media?: number;
   ideologia_media?: number;
+}
+
+interface OptionPartyBreakdown {
+  question_key: string;
+  option_value: string;
+  party_vote: string;
+  votes_count: number;
 }
 
 interface ResponseRow {
@@ -113,11 +121,65 @@ export default function PreguntasVariasSection() {
   const [monarquia, setMonarquia] = useState<QuestionData[]>([]);
   const [division, setDivision] = useState<QuestionData[]>([]);
   const [pensiones, setPensiones] = useState<QuestionData[]>([]);
+  const [partyBreakdownMap, setPartyBreakdownMap] = useState<Record<string, OptionPartyBreakdown[]>>({});
+  const [partyBranding, setPartyBranding] = useState<Record<string, { color: string; logo: string }>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData(setMonarquia, setDivision, setPensiones, setLoading);
   }, []);
+
+  useEffect(() => {
+    const loadBreakdown = async () => {
+      const { data, error } = await supabase
+        .from('preguntas_varias_party_breakdown')
+        .select('question_key, option_value, party_vote, votes_count')
+        .order('votes_count', { ascending: false });
+
+      if (error) {
+        console.error('Error loading preguntas varias party breakdown:', error);
+        return;
+      }
+
+      const grouped: Record<string, OptionPartyBreakdown[]> = {};
+      (data || []).forEach((row: any) => {
+        const key = `${row.question_key}::${row.option_value}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(row as OptionPartyBreakdown);
+      });
+
+      setPartyBreakdownMap(grouped);
+    };
+
+    const loadBranding = async () => {
+      const { data, error } = await supabase
+        .from('party_configuration')
+        .select('party_key, display_name, color, logo_url')
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('Error loading branding for preguntas varias:', error);
+        return;
+      }
+
+      const map: Record<string, { color: string; logo: string }> = {};
+      (data || []).forEach((row: any) => {
+        const color = typeof row.color === 'string' ? row.color.trim() : '#9CA3AF';
+        const logo = typeof row.logo_url === 'string' ? row.logo_url : '';
+        const key = typeof row.party_key === 'string' ? row.party_key.trim().toUpperCase() : '';
+        const display = typeof row.display_name === 'string' ? row.display_name.trim().toUpperCase() : '';
+        if (key) map[key] = { color, logo };
+        if (display) map[display] = { color, logo };
+      });
+      setPartyBranding(map);
+    };
+
+    loadBreakdown();
+    loadBranding();
+  }, []);
+
+  const getBreakdownKey = (questionKey: string, label: string) => `${questionKey}::${label}`;
+  const getPartyStyle = (party: string) => partyBranding[party.trim().toUpperCase()] || { color: '#9CA3AF', logo: '' };
 
   if (loading) {
     return <div className="text-center py-8">Cargando...</div>;
@@ -144,6 +206,26 @@ export default function PreguntasVariasSection() {
                     {item.percentage > 10 && `${item.percentage.toFixed(1)}%`}
                   </div>
                 </div>
+                {partyBreakdownMap[getBreakdownKey('monarquia_republica', item.label)]?.length > 0 && (
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {partyBreakdownMap[getBreakdownKey('monarquia_republica', item.label)].slice(0, 6).map((entry) => {
+                      const style = getPartyStyle(entry.party_vote);
+                      return (
+                        <div
+                          key={`monarquia-party-${item.label}-${entry.party_vote}`}
+                          className="flex items-center justify-between rounded-lg px-3 py-2 border"
+                          style={{ borderColor: style.color }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <PartyLogo src={style.logo} partyName={entry.party_vote} size={18} strictExternal />
+                            <span className="text-xs font-semibold">{entry.party_vote}</span>
+                          </div>
+                          <span className="text-xs text-gray-600">{entry.votes_count} votos</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -169,6 +251,26 @@ export default function PreguntasVariasSection() {
                     {item.percentage > 10 && `${item.percentage.toFixed(1)}%`}
                   </div>
                 </div>
+                {partyBreakdownMap[getBreakdownKey('division_territorial', item.label)]?.length > 0 && (
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {partyBreakdownMap[getBreakdownKey('division_territorial', item.label)].slice(0, 6).map((entry) => {
+                      const style = getPartyStyle(entry.party_vote);
+                      return (
+                        <div
+                          key={`division-party-${item.label}-${entry.party_vote}`}
+                          className="flex items-center justify-between rounded-lg px-3 py-2 border"
+                          style={{ borderColor: style.color }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <PartyLogo src={style.logo} partyName={entry.party_vote} size={18} strictExternal />
+                            <span className="text-xs font-semibold">{entry.party_vote}</span>
+                          </div>
+                          <span className="text-xs text-gray-600">{entry.votes_count} votos</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -194,6 +296,26 @@ export default function PreguntasVariasSection() {
                     {item.percentage > 10 && `${item.percentage.toFixed(1)}%`}
                   </div>
                 </div>
+                {partyBreakdownMap[getBreakdownKey('sistema_pensiones', item.label)]?.length > 0 && (
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {partyBreakdownMap[getBreakdownKey('sistema_pensiones', item.label)].slice(0, 6).map((entry) => {
+                      const style = getPartyStyle(entry.party_vote);
+                      return (
+                        <div
+                          key={`pensiones-party-${item.label}-${entry.party_vote}`}
+                          className="flex items-center justify-between rounded-lg px-3 py-2 border"
+                          style={{ borderColor: style.color }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <PartyLogo src={style.logo} partyName={entry.party_vote} size={18} strictExternal />
+                            <span className="text-xs font-semibold">{entry.party_vote}</span>
+                          </div>
+                          <span className="text-xs text-gray-600">{entry.votes_count} votos</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
