@@ -183,6 +183,11 @@ export default function AdminParties() {
     setEditData(null);
   };
 
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditData(null);
+  };
+
   const currentData = activeTab === 'parties' ? parties : youth;
   const filteredData = useMemo(
     () =>
