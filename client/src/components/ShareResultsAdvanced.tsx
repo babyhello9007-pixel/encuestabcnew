@@ -17,7 +17,7 @@ interface PartyStats {
 }
 
 interface ShareResultsAdvancedProps {
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis";
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias";
   stats: PartyStats[];
   totalVotes: number;
   edadPromedio?: number | null;
@@ -654,7 +654,7 @@ export function ShareResultsAdvanced({
                   onClick={() =>
                     generateAdvancedInfographic(
                       stats,
-                      activeTab,
+                      activeTab === "youth" ? "youth" : "general",
                       totalVotes,
                       edadPromedio
                     )
