@@ -1,124 +1,306 @@
-import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 interface CooldownModalProps {
   isOpen: boolean;
   remainingMinutes: number;
+  onClose?: () => void;
 }
 
-export default function CooldownModal({ isOpen, remainingMinutes }: CooldownModalProps) {
-  const [timeLeft, setTimeLeft] = useState(remainingMinutes);
-  const [rotation, setRotation] = useState(0);
+export default function CooldownModal({ isOpen, remainingMinutes, onClose }: CooldownModalProps) {
+  const [totalSecondsLeft, setTotalSecondsLeft] = useState(remainingMinutes * 60);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const initialTotal = useRef(remainingMinutes * 60);
+
+  const clearTimer = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      clearTimer();
+      return;
+    }
 
-    setTimeLeft(remainingMinutes);
-    setRotation(0);
+    const total = remainingMinutes * 60;
+    initialTotal.current = total;
+    setTotalSecondsLeft(total);
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
+    intervalRef.current = setInterval(() => {
+      setTotalSecondsLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(interval);
+          clearTimer();
+          onClose?.();
           return 0;
         }
         return prev - 1;
       });
-
-      // Rotar el reloj 6 grados por segundo (360 / 60 = 6)
-      setRotation((prev) => (prev + 6) % 360);
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isOpen, remainingMinutes]);
+    return () => clearTimer();
+  }, [isOpen, remainingMinutes, clearTimer, onClose]);
 
-  const totalSeconds = timeLeft * 60;
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
+  if (!isOpen) return null;
+
+  const minutes = Math.floor(totalSecondsLeft / 60);
+  const seconds = totalSecondsLeft % 60;
+  const progress = 1 - totalSecondsLeft / initialTotal.current;
+
+  // SVG clock calculations
+  const clockSize = 180;
+  const cx = clockSize / 2;
+  const cy = clockSize / 2;
+  const radius = 75;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - progress);
+
+  const minuteAngle = ((minutes % 60) / 60) * 360 - 90;
+  const secondAngle = (seconds / 60) * 360 - 90;
+
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const minuteX = cx + 48 * Math.cos(toRad(minuteAngle));
+  const minuteY = cy + 48 * Math.sin(toRad(minuteAngle));
+  const secondX = cx + 60 * Math.cos(toRad(secondAngle));
+  const secondY = cy + 60 * Math.sin(toRad(secondAngle));
 
   return (
-    <Dialog open={isOpen}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center text-xl">⏳ Cooldown Activo</DialogTitle>
-        </DialogHeader>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        animation: 'fadeIn 0.25s ease',
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
-        <div className="flex flex-col items-center justify-center space-y-6 py-8">
-          {/* Reloj Interactivo */}
-          <div className="relative w-48 h-48">
-            {/* Círculo de fondo */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg"></div>
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes pulse-ring {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.15; transform: scale(1.06); }
+        }
+        @keyframes tick {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+        }
 
-            {/* Marcas del reloj */}
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-              {[...Array(12)].map((_, i) => {
-                const angle = (i * 30 * Math.PI) / 180;
-                const x1 = 100 + 85 * Math.cos(angle);
-                const y1 = 100 + 85 * Math.sin(angle);
-                const x2 = 100 + 95 * Math.cos(angle);
-                const y2 = 100 + 95 * Math.sin(angle);
-                return (
-                  <line
-                    key={i}
-                    x1={x1}
-                    y1={y1}
-                    x2={x2}
-                    y2={y2}
-                    stroke="white"
-                    strokeWidth="2"
-                  />
-                );
-              })}
-            </svg>
+        .cooldown-card {
+          font-family: 'Sora', sans-serif;
+          background: linear-gradient(160deg, #0f1117 0%, #161b27 50%, #0f1117 100%);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 24px;
+          padding: 40px 36px;
+          width: 100%;
+          max-width: 400px;
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.04),
+            0 32px 80px rgba(0,0,0,0.6),
+            0 0 60px rgba(99,102,241,0.08);
+          animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+          position: relative;
+          overflow: hidden;
+        }
+        .cooldown-card::before {
+          content: '';
+          position: absolute;
+          top: -60px; left: 50%; transform: translateX(-50%);
+          width: 200px; height: 200px;
+          background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+          pointer-events: none;
+        }
 
-            {/* Manecilla de minutos */}
-            <div
-              className="absolute w-1 h-20 bg-white rounded-full left-1/2 top-1/4 origin-bottom transform -translate-x-1/2 transition-transform"
-              style={{
-                transform: `translateX(-50%) rotate(${(minutes * 6) % 360}deg)`,
-              }}
-            ></div>
+        .mono {
+          font-family: 'JetBrains Mono', monospace;
+        }
 
-            {/* Manecilla de segundos */}
-            <div
-              className="absolute w-0.5 h-24 bg-red-400 rounded-full left-1/2 top-1/3 origin-bottom transform -translate-x-1/2 transition-transform"
-              style={{
-                transform: `translateX(-50%) rotate(${(seconds * 6) % 360}deg)`,
-              }}
-            ></div>
+        .clock-pulse {
+          animation: pulse-ring 2s ease-in-out infinite;
+        }
+        .digits {
+          animation: tick 1s ease-in-out infinite;
+        }
+      `}</style>
 
-            {/* Centro del reloj */}
-            <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="cooldown-card">
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(99,102,241,0.12)',
+            border: '1px solid rgba(99,102,241,0.25)',
+            borderRadius: 999,
+            padding: '6px 14px',
+            marginBottom: 16,
+          }}>
+            <span style={{ fontSize: 13, color: '#a5b4fc', fontWeight: 600, letterSpacing: '0.04em' }}>
+              ⏱ COOLDOWN ACTIVO
+            </span>
           </div>
-
-          {/* Texto de tiempo */}
-          <div className="text-center space-y-2">
-            <p className="text-4xl font-bold text-white">
-              {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-            </p>
-            <p className="text-gray-300 text-sm">
-              Debes esperar antes de votar nuevamente
-            </p>
-          </div>
-
-          {/* Barra de progreso */}
-          <div className="w-full max-w-xs">
-            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-1000"
-                style={{
-                  width: `${((remainingMinutes * 60 - totalSeconds) / (remainingMinutes * 60)) * 100}%`,
-                }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Mensaje */}
-          <p className="text-center text-gray-400 text-sm max-w-xs">
-            Vuelve en {minutes} minuto{minutes !== 1 ? 's' : ''} y {seconds} segundo{seconds !== 1 ? 's' : ''} para participar nuevamente
+          <h2 style={{
+            margin: 0,
+            fontSize: 22,
+            fontWeight: 700,
+            color: '#f1f5f9',
+            letterSpacing: '-0.01em',
+          }}>
+            Vuelve en un momento
+          </h2>
+          <p style={{ margin: '6px 0 0', fontSize: 13.5, color: '#64748b', lineHeight: 1.5 }}>
+            Debes esperar antes de participar de nuevo
           </p>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* Clock SVG */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24, position: 'relative' }}>
+          {/* Pulse ring */}
+          <div className="clock-pulse" style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%,-50%)',
+            width: 180, height: 180,
+            borderRadius: '50%',
+            border: '2px solid rgba(99,102,241,0.3)',
+            pointerEvents: 'none',
+          }} />
+
+          <svg width={clockSize} height={clockSize} viewBox={`0 0 ${clockSize} ${clockSize}`}>
+            {/* Background circle */}
+            <circle cx={cx} cy={cy} r={radius} fill="rgba(15,17,23,0.8)" stroke="rgba(255,255,255,0.06)" strokeWidth="1.5" />
+
+            {/* Progress arc */}
+            <circle
+              cx={cx} cy={cy} r={radius}
+              fill="none"
+              stroke="url(#arcGrad)"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              transform={`rotate(-90 ${cx} ${cy})`}
+              style={{ transition: 'stroke-dashoffset 0.9s linear' }}
+            />
+
+            {/* Tick marks */}
+            {Array.from({ length: 60 }).map((_, i) => {
+              const angle = (i / 60) * 360 - 90;
+              const isMajor = i % 5 === 0;
+              const r1 = isMajor ? 68 : 71;
+              const r2 = 74;
+              const x1 = cx + r1 * Math.cos(toRad(angle));
+              const y1 = cy + r1 * Math.sin(toRad(angle));
+              const x2 = cx + r2 * Math.cos(toRad(angle));
+              const y2 = cy + r2 * Math.sin(toRad(angle));
+              return (
+                <line
+                  key={i}
+                  x1={x1} y1={y1} x2={x2} y2={y2}
+                  stroke={isMajor ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.12)'}
+                  strokeWidth={isMajor ? 1.5 : 1}
+                />
+              );
+            })}
+
+            {/* Minute hand */}
+            <line
+              x1={cx} y1={cy}
+              x2={minuteX} y2={minuteY}
+              stroke="#c7d2fe"
+              strokeWidth="3"
+              strokeLinecap="round"
+              style={{ transition: 'all 0.5s ease' }}
+            />
+
+            {/* Second hand */}
+            <line
+              x1={cx} y1={cy}
+              x2={secondX} y2={secondY}
+              stroke="#6366f1"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              style={{ transition: 'all 0.9s linear' }}
+            />
+
+            {/* Center dot */}
+            <circle cx={cx} cy={cy} r={4} fill="#6366f1" />
+            <circle cx={cx} cy={cy} r={2} fill="#e0e7ff" />
+
+            <defs>
+              <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#6366f1" />
+                <stop offset="100%" stopColor="#a78bfa" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        {/* Digital countdown */}
+        <div className="digits" style={{ textAlign: 'center', marginBottom: 24 }}>
+          <span className="mono" style={{
+            fontSize: 52,
+            fontWeight: 700,
+            color: '#f1f5f9',
+            letterSpacing: '-0.02em',
+            lineHeight: 1,
+          }}>
+            {String(minutes).padStart(2, '0')}
+            <span style={{ color: '#6366f1', margin: '0 2px', opacity: totalSecondsLeft % 2 === 0 ? 1 : 0.4, transition: 'opacity 0.4s' }}>:</span>
+            {String(seconds).padStart(2, '0')}
+          </span>
+          <p style={{ margin: '8px 0 0', fontSize: 12, color: '#475569', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            minutos &nbsp;·&nbsp; segundos
+          </p>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: 999,
+          height: 5,
+          overflow: 'hidden',
+          marginBottom: 20,
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${progress * 100}%`,
+            background: 'linear-gradient(90deg, #6366f1, #a78bfa)',
+            borderRadius: 999,
+            transition: 'width 0.9s linear',
+            boxShadow: '0 0 8px rgba(99,102,241,0.6)',
+          }} />
+        </div>
+
+        {/* Footer message */}
+        <p style={{
+          textAlign: 'center',
+          fontSize: 13,
+          color: '#475569',
+          margin: 0,
+          lineHeight: 1.6,
+        }}>
+          {minutes > 0
+            ? `Podrás votar en ${minutes} min${minutes !== 1 ? 's' : ''} y ${seconds} seg`
+            : `Podrás votar en ${seconds} segundo${seconds !== 1 ? 's' : ''}`
+          }
+        </p>
+      </div>
+    </div>
   );
 }
