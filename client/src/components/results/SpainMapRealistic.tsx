@@ -273,3 +273,4 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     </div>
   );
 };
+  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || '#9CA3AF';
