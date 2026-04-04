@@ -22,12 +22,13 @@ export function LeadersResultsChart() {
   const [leadersByParty, setLeadersByParty] = useState<PartyLeaders>({});
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [runtimePartyColors, setRuntimePartyColors] = useState<Record<string, string>>({});
   
   // Función para obtener el color del partido, forzando naranja para CIUDADANOS
   const getPartyColor = (party: string | null) => {
     if (!party) return '#FF9900';
-    if (party === 'CIUDADANOS') return '#FF9900';
-    return PARTY_COLORS[party] || '#FF9900';
+    const normalized = party.trim().toUpperCase();
+    return runtimePartyColors[normalized] || PARTY_COLORS[normalized] || '#FF9900';
   };
 
   useEffect(() => {
@@ -67,6 +68,35 @@ export function LeadersResultsChart() {
     // Actualizar cada 5 segundos
     const interval = setInterval(fetchLeadersResults, 5000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const loadPartyColors = async () => {
+      const { data, error } = await supabase
+        .from("party_configuration")
+        .select("party_key, display_name, color")
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error loading party colors for leaders:", error);
+        return;
+      }
+
+      const map: Record<string, string> = {};
+      (data || []).forEach((row: any) => {
+        const hex = typeof row.color === "string" ? row.color.trim() : "";
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
+
+        const key = typeof row.party_key === "string" ? row.party_key.trim().toUpperCase() : "";
+        const display = typeof row.display_name === "string" ? row.display_name.trim().toUpperCase() : "";
+        if (key) map[key] = hex;
+        if (display) map[display] = hex;
+      });
+
+      setRuntimePartyColors(map);
+    };
+
+    loadPartyColors();
   }, []);
 
   if (loading) {
@@ -229,4 +259,3 @@ export function LeadersResultsChart() {
     </div>
   );
 }
-
