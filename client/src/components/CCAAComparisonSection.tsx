@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
 import { Loader2, X } from "lucide-react";
 import { CCAA } from "@/lib/surveyData";
-import { getPartyColor } from "@/lib/partyConfig";
 import PartyLogo from "@/components/PartyLogo";
 
 interface CCAAReslts {
@@ -23,7 +22,11 @@ interface CCAASummary {
   ideologia_promedio: number;
 }
 
-export function CCAAComparisonSection() {
+interface CCAAComparisonSectionProps {
+  partyMeta?: Record<string, { color?: string; logo?: string }>;
+}
+
+export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionProps) {
   const [ccaaResults, setCCAAReslts] = useState<CCAAReslts[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
   const [selectedCCAAs, setSelectedCCAAs] = useState<string[]>([]);
@@ -92,7 +95,7 @@ export function CCAAComparisonSection() {
 
   // Obtener todos los partidos únicos de las CCAA seleccionadas
   const selectedCCAAResults = ccaaResults.filter(r => selectedCCAAs.includes(r.ccaa));
-  const uniquePartidos = [...new Set(selectedCCAAResults.map(r => r.partido))];
+  const uniquePartidos = Array.from(new Set(selectedCCAAResults.map(r => r.partido)));
 
   // Preparar datos para gráfica de comparación de votos por partido
   const comparisonChartData = uniquePartidos.map(partido => {
@@ -251,7 +254,7 @@ export function CCAAComparisonSection() {
                             <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
                               <td className="px-3 py-2 text-slate-900">
                                 <span className="inline-flex items-center gap-2">
-                                  <PartyLogo partyName={result.partido} size={32} />
+                                  <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} strictExternal />
                                   {result.partido}
                                 </span>
                               </td>

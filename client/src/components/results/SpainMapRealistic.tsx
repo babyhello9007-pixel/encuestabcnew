@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { getPartyColor } from '@/lib/partyConfig';
 import { spanishToGeoJson, geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 import { ProvincePopup } from './ProvincePopup';
 import { calcularEscanosProvincia, calcularEscanosJuvenilesProvincia } from '@/lib/dhondtByProvince';
@@ -19,6 +18,7 @@ interface SpainMapRealisticProps {
   provinciaMetricsMap?: Record<string, { edad_promedio: number; ideologia_promedio: number }>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
   isYouthAssociations?: boolean;  // true para Asociaciones Juveniles, false para Elecciones Generales
+  partyMeta?: Record<string, { color?: string }>;
 }
 
 export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
@@ -26,6 +26,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   provinciaMetricsMap = {},
   onProvinceClick,
   isYouthAssociations = false,
+  partyMeta = {},
 }) => {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -114,7 +115,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     }
 
     const data = getProvinceData(spanishProvinceName);
-    const color = getPartyColor(data.ganador) || '#999999';
+    const color = getColorForParty(data.ganador);
 
     (layer as L.Path).setStyle({
       fillColor: color,
@@ -201,7 +202,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
                       <p class="text-xs font-semibold text-gray-900 truncate">${partido}</p>
                       <div class="flex items-center gap-1">
                         <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div class="h-full rounded-full" style="width: ${porcentaje}%; background-color: ${getPartyColor(partido) || '#999999'};"></div>
+                          <div class="h-full rounded-full" style="width: ${porcentaje}%; background-color: ${getColorForParty(partido)};"></div>
                         </div>
                         <span class="text-xs font-bold text-gray-700 w-10 text-right">${porcentaje}%</span>
                       </div>
@@ -271,3 +272,4 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     </div>
   );
 };
+  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || '#9CA3AF';
