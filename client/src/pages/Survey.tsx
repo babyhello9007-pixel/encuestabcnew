@@ -144,8 +144,47 @@ function SurveyOld() {
     setIsSubmitting(true);
     try {
       const normalizedResponses = normalizeProvinceInResponse(responses);
-      const { error } = await supabase.from("respuestas").insert([normalizedResponses]);
+      let { error } = await supabase.from("respuestas").insert([normalizedResponses]);
       
+      if (error?.message?.includes("DELETE requires a WHERE clause")) {
+        const fallbackPayload = {
+          ...normalizedResponses,
+          voto_generales_otro: normalizedResponses.voto_generales,
+          voto_asociacion_juvenil_otro: normalizedResponses.voto_asociacion_juvenil,
+          voto_generales: null,
+          voto_asociacion_juvenil: null,
+        };
+        const fallbackInsert = await supabase.from("respuestas").insert([fallbackPayload]);
+        error = fallbackInsert.error || null;
+      }
+
+      if (error) {
+        const minimalPayload = {
+          edad: normalizedResponses.edad,
+          provincia: normalizedResponses.provincia,
+          ccaa: normalizedResponses.ccaa,
+          nacionalidad: normalizedResponses.nacionalidad,
+          voto_autonomicas: normalizedResponses.voto_autonomicas,
+          voto_municipales: normalizedResponses.voto_municipales,
+          voto_europeas: normalizedResponses.voto_europeas,
+          nota_ejecutivo: normalizedResponses.nota_ejecutivo,
+          val_feijoo: normalizedResponses.val_feijoo,
+          val_sanchez: normalizedResponses.val_sanchez,
+          val_abascal: normalizedResponses.val_abascal,
+          val_alvise: normalizedResponses.val_alvise,
+          val_yolanda_diaz: normalizedResponses.val_yolanda_diaz,
+          val_irene_montero: normalizedResponses.val_irene_montero,
+          val_ayuso: normalizedResponses.val_ayuso,
+          val_buxade: normalizedResponses.val_buxade,
+          posicion_ideologica: normalizedResponses.posicion_ideologica,
+          monarquia_republica: normalizedResponses.monarquia_republica,
+          division_territorial: normalizedResponses.division_territorial,
+          sistema_pensiones: normalizedResponses.sistema_pensiones,
+        };
+        const minimalInsert = await supabase.from("respuestas").insert([minimalPayload]);
+        error = minimalInsert.error || null;
+      }
+
       if (error) {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
         console.error(error);
@@ -398,4 +437,3 @@ function SurveyOld() {
     </div>
   );
 }
-

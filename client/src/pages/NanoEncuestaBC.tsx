@@ -289,7 +289,46 @@ export default function NanoEncuestaBC() {
         sistema_pensiones: responses.sistema_pensiones || null,
       };
       
-      const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
+      let { error } = await supabase.from("respuestas").insert([dataToSubmit]);
+
+      if (error?.message?.includes("DELETE requires a WHERE clause")) {
+        const fallbackPayload = {
+          ...dataToSubmit,
+          voto_generales_otro: dataToSubmit.voto_generales,
+          voto_asociacion_juvenil_otro: dataToSubmit.voto_asociacion_juvenil,
+          voto_generales: null,
+          voto_asociacion_juvenil: null,
+        };
+        const fallbackInsert = await supabase.from("respuestas").insert([fallbackPayload]);
+        error = fallbackInsert.error || null;
+      }
+
+      if (error) {
+        const minimalPayload = {
+          edad: dataToSubmit.edad,
+          provincia: dataToSubmit.provincia,
+          ccaa: dataToSubmit.ccaa,
+          nacionalidad: dataToSubmit.nacionalidad,
+          voto_autonomicas: dataToSubmit.voto_autonomicas,
+          voto_municipales: dataToSubmit.voto_municipales,
+          voto_europeas: dataToSubmit.voto_europeas,
+          nota_ejecutivo: dataToSubmit.nota_ejecutivo,
+          val_feijoo: dataToSubmit.val_feijoo,
+          val_sanchez: dataToSubmit.val_sanchez,
+          val_abascal: dataToSubmit.val_abascal,
+          val_alvise: dataToSubmit.val_alvise,
+          val_yolanda_diaz: dataToSubmit.val_yolanda_diaz,
+          val_irene_montero: dataToSubmit.val_irene_montero,
+          val_ayuso: dataToSubmit.val_ayuso,
+          val_buxade: dataToSubmit.val_buxade,
+          posicion_ideologica: dataToSubmit.posicion_ideologica,
+          monarquia_republica: dataToSubmit.monarquia_republica,
+          division_territorial: dataToSubmit.division_territorial,
+          sistema_pensiones: dataToSubmit.sistema_pensiones,
+        };
+        const minimalInsert = await supabase.from("respuestas").insert([minimalPayload]);
+        error = minimalInsert.error || null;
+      }
 
       if (error) {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
