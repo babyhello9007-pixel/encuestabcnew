@@ -3,7 +3,6 @@ import { Share2, X, Download, Image, MessageCircle, Send, Linkedin } from "lucid
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import { generateAdvancedInfographic } from "@/lib/pngExportAdvanced";
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
 import ImageLoader from "./ImageLoader";
 import { ColorTheme, getThemeColors, getThemeList } from "@/lib/colorThemes";
 
@@ -14,13 +13,15 @@ interface PartyStats {
   porcentaje: number;
   escanos: number;
   logo: string;
+  color?: string;
 }
 
 interface ShareResultsAdvancedProps {
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis";
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias";
   stats: PartyStats[];
   totalVotes: number;
   edadPromedio?: number | null;
+  partyMeta?: Record<string, { logo?: string; color?: string }>;
 }
 
 export function ShareResultsAdvanced({
@@ -28,6 +29,7 @@ export function ShareResultsAdvanced({
   stats,
   totalVotes,
   edadPromedio,
+  partyMeta = {},
 }: ShareResultsAdvancedProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<PartyStats | null>(
@@ -39,36 +41,24 @@ export function ShareResultsAdvanced({
 
   const theme = getThemeColors(selectedTheme);
 
+  const waitForImages = async (container: HTMLElement) => {
+    const images = Array.from(container.querySelectorAll("img"));
+    await Promise.all(
+      images.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete) return resolve();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          })
+      )
+    );
+  };
+
   // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
   const getLogoForParty = (partyId: string, partyName?: string) => {
-    // Primero intentar búsqueda por ID
-    if (activeTab === "general") {
-      const party = PARTIES_GENERAL[partyId as keyof typeof PARTIES_GENERAL];
-      if (party?.logo) return party.logo;
-    } else {
-      const party = YOUTH_ASSOCIATIONS[partyId as keyof typeof YOUTH_ASSOCIATIONS];
-      if (party?.logo) return party.logo;
-    }
-
-    // Si no hay logo por ID, buscar por nombre en PARTIES_GENERAL
-    if (partyName) {
-      for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
-        if (partyData.name === partyName) {
-          return partyData.logo;
-        }
-      }
-    }
-
-    // Si no hay logo aún, buscar por nombre en YOUTH_ASSOCIATIONS
-    if (partyName) {
-      for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
-        if (assocData.name === partyName) {
-          return assocData.logo;
-        }
-      }
-    }
-
-    return "";
+    const fromStats = stats.find((s) => s.id === partyId || s.nombre === partyName);
+    return fromStats?.logo || partyMeta[partyId]?.logo || "";
   };
 
   const generateShareText = (party: PartyStats) => {
@@ -83,6 +73,7 @@ export function ShareResultsAdvanced({
     try {
       // Clonar el elemento para obtener sus dimensiones reales
       const element = infographyRef.current;
+      await waitForImages(element);
       const rect = element.getBoundingClientRect();
       const scrollHeight = element.scrollHeight;
       const scrollWidth = element.scrollWidth;
@@ -121,6 +112,7 @@ export function ShareResultsAdvanced({
     if (!selectedParty || !infographyRef.current) return;
     try {
       const element = infographyRef.current;
+      await waitForImages(element);
       const scrollHeight = element.scrollHeight;
       const scrollWidth = element.scrollWidth;
       
@@ -169,6 +161,7 @@ export function ShareResultsAdvanced({
     if (!selectedParty || !infographyRef.current) return;
     try {
       const element = infographyRef.current;
+      await waitForImages(element);
       const scrollHeight = element.scrollHeight;
       const scrollWidth = element.scrollWidth;
       
@@ -653,8 +646,12 @@ export function ShareResultsAdvanced({
                 <button
                   onClick={() =>
                     generateAdvancedInfographic(
-                      stats,
-                      activeTab,
+                      stats.map((party) => ({
+                        ...party,
+                        logo: party.logo || partyMeta[party.id]?.logo || "",
+                        color: party.color || partyMeta[party.id]?.color,
+                      })),
+                      activeTab === "youth" ? "youth" : "general",
                       totalVotes,
                       edadPromedio
                     )

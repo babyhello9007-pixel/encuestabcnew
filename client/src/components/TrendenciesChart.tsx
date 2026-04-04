@@ -12,7 +12,11 @@ interface VotoData {
   votos_diarios: number;
 }
 
-export function TrendenciesChart() {
+interface TrendenciesChartProps {
+  partyColors?: Record<string, string>;
+}
+
+export function TrendenciesChart({ partyColors = {} }: TrendenciesChartProps) {
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
   const [trendData, setTrendData] = useState<any[]>([]);
   const [parties, setParties] = useState<string[]>([]);
@@ -21,6 +25,7 @@ export function TrendenciesChart() {
   const [chartType, setChartType] = useState<"bar" | "line">("bar");
   const [showAllParties, setShowAllParties] = useState(false);
   const [expandedParties, setExpandedParties] = useState(false);
+  const [runtimePartyColors, setRuntimePartyColors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,6 +88,35 @@ export function TrendenciesChart() {
     fetchData();
   }, [voteType]);
 
+  useEffect(() => {
+    const loadPartyColors = async () => {
+      const { data, error } = await supabase
+        .from("party_configuration")
+        .select("party_key, display_name, color")
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error loading party colors for trends:", error);
+        return;
+      }
+
+      const map: Record<string, string> = {};
+      (data || []).forEach((row: any) => {
+        const hex = typeof row.color === "string" ? row.color.trim() : "";
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
+
+        const key = typeof row.party_key === "string" ? row.party_key.trim().toUpperCase() : "";
+        const display = typeof row.display_name === "string" ? row.display_name.trim().toUpperCase() : "";
+        if (key) map[key] = hex;
+        if (display) map[display] = hex;
+      });
+
+      setRuntimePartyColors(map);
+    };
+
+    loadPartyColors();
+  }, []);
+
   const fallbackColors = [
     "#C41E3A", "#0066CC", "#FFC400", "#00AA00", 
     "#FF6600", "#9933FF", "#00CCCC", "#FF0099",
@@ -91,7 +125,8 @@ export function TrendenciesChart() {
   ];
 
   const getColorWithFallback = (party: string, index: number): string => {
-    const color = PARTY_COLORS[party];
+    const normalized = party.trim().toUpperCase();
+    const color = partyColors[normalized] || runtimePartyColors[normalized] || PARTY_COLORS[normalized];
     return color || fallbackColors[index % fallbackColors.length];
   };
 
