@@ -3,16 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Edit2, Save, X, Plus, Trash2, Upload, Search } from 'lucide-react';
 import PartyLogo from '@/components/PartyLogo';
-import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { usePartySync } from '@/hooks/usePartySync';
+import { supabase } from '@/lib/supabase';
 
 interface PartyEdit {
   id: string;
-  name: string;
   displayName: string;
   color: string;
   logo: string;
+  type: 'general' | 'youth';
+  isActive: boolean;
 }
 
 export default function AdminParties() {
@@ -26,37 +26,50 @@ export default function AdminParties() {
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  usePartySync();
+  const loadPartyConfiguration = async () => {
+    const { data, error } = await supabase
+      .from('party_configuration')
+      .select('party_key, display_name, color, logo_url, party_type, is_active')
+      .order('party_type', { ascending: true })
+      .order('display_name', { ascending: true });
 
-  const { data: partiesData, isLoading: isLoadingParties } = trpc.parties.getAll.useQuery();
-  const updatePartyMutation = trpc.parties.update.useMutation();
-  const createPartyMutation = trpc.parties.create.useMutation();
-  const deletePartyMutation = trpc.parties.delete.useMutation();
-  const utils = trpc.useUtils();
+    if (error) {
+      console.error('Error loading party configuration:', error);
+      toast.error('No se pudo cargar la configuración de partidos');
+      return;
+    }
+
+    const mapped = (data || []).map((row) => ({
+      id: row.party_key,
+      displayName: row.display_name,
+      color: row.color,
+      logo: row.logo_url,
+      type: row.party_type as 'general' | 'youth',
+      isActive: row.is_active ?? true,
+    }));
+
+    setParties(mapped.filter((item) => item.type === 'general'));
+    setYouth(mapped.filter((item) => item.type === 'youth'));
+  };
 
   useEffect(() => {
-    if (!partiesData) return;
+    (async () => {
+      setLoading(true);
+      await loadPartyConfiguration();
+      setLoading(false);
+    })();
 
-    setParties(
-      partiesData.parties.map((p) => ({
-        id: p.partyKey,
-        name: p.partyKey,
-        displayName: p.displayName,
-        color: p.color,
-        logo: p.logoUrl,
-      }))
-    );
-    setYouth(
-      partiesData.youth.map((y) => ({
-        id: y.partyKey,
-        name: y.partyKey,
-        displayName: y.displayName,
-        color: y.color,
-        logo: y.logoUrl,
-      }))
-    );
-    setLoading(false);
-  }, [partiesData]);
+    const channel = supabase
+      .channel('party-configuration-admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'party_configuration' }, () => {
+        loadPartyConfiguration();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleEdit = (item: PartyEdit) => {
     setEditingId(item.id);
@@ -93,84 +106,81 @@ export default function AdminParties() {
   const handleSave = async () => {
     if (!editData) return;
 
-    try {
-      await updatePartyMutation.mutateAsync({
-        partyKey: editData.id,
-        displayName: editData.displayName.trim(),
+    const { error } = await supabase
+      .from('party_configuration')
+      .upsert({
+        party_key: editData.id,
+        display_name: editData.displayName.trim(),
         color: editData.color,
-        logoUrl: editData.logo,
-        isActive: true,
-      });
+        logo_url: editData.logo,
+        party_type: editData.type,
+        is_active: editData.isActive,
+      }, { onConflict: 'party_key' });
 
-      if (activeTab === 'parties') {
-        setParties(parties.map((p) => (p.id === editData.id ? editData : p)));
-      } else {
-        setYouth(youth.map((y) => (y.id === editData.id ? editData : y)));
-      }
-
-      await utils.parties.getAll.invalidate();
-      await utils.parties.getByKey.invalidate();
-
-      toast.success(`${editData.displayName} actualizado correctamente`);
-      setEditingId(null);
-      setEditData(null);
-    } catch (error) {
+    if (error) {
       console.error('Error saving party:', error);
-      toast.error('Error al guardar los cambios');
+      toast.error(`Error al guardar los cambios: ${error.message}`);
+      return;
     }
+
+    toast.success(`${editData.displayName} actualizado correctamente`);
+    setEditingId(null);
+    setEditData(null);
+    await loadPartyConfiguration();
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Está seguro de que desea eliminar este elemento?')) return;
 
-    try {
-      await deletePartyMutation.mutateAsync({ partyKey: id });
-      if (activeTab === 'parties') {
-        setParties(parties.filter((p) => p.id !== id));
-      } else {
-        setYouth(youth.filter((y) => y.id !== id));
-      }
-      await utils.parties.getAll.invalidate();
-      toast.success('Elemento eliminado correctamente');
-    } catch (error) {
+    const { error } = await supabase
+      .from('party_configuration')
+      .delete()
+      .eq('party_key', id);
+
+    if (error) {
       console.error('Error deleting party:', error);
       toast.error('Error al eliminar el elemento');
+      return;
     }
+
+    toast.success('Elemento eliminado correctamente');
+    await loadPartyConfiguration();
   };
 
   const handleAddNew = async () => {
     const newId = `NEW_${Date.now()}`;
     const newItem: PartyEdit = {
       id: newId,
-      name: newId,
       displayName: 'Nuevo Partido',
       color: '#0066FF',
       logo: 'https://files.manuscdn.com/placeholder.png',
+      type: activeTab === 'parties' ? 'general' : 'youth',
+      isActive: true,
     };
 
-    try {
-      await createPartyMutation.mutateAsync({
-        partyKey: newId,
-        displayName: newItem.displayName,
-        color: newItem.color,
-        logoUrl: newItem.logo,
-        partyType: activeTab === 'parties' ? 'general' : 'youth',
-        isActive: true,
-      });
+    const { error } = await supabase.from('party_configuration').insert({
+      party_key: newItem.id,
+      display_name: newItem.displayName,
+      color: newItem.color,
+      logo_url: newItem.logo,
+      party_type: newItem.type,
+      is_active: true,
+    });
 
-      if (activeTab === 'parties') {
-        setParties([...parties, newItem]);
-      } else {
-        setYouth([...youth, newItem]);
-      }
-
-      await utils.parties.getAll.invalidate();
-      handleEdit(newItem);
-      toast.success('Nuevo elemento creado');
-    } catch (error) {
+    if (error) {
       console.error('Error creating party:', error);
-      toast.error('Error al crear el nuevo elemento');
+      toast.error(`Error al crear el nuevo elemento: ${error.message}`);
+      return;
     }
+
+    toast.success('Nuevo elemento creado');
+    await loadPartyConfiguration();
+    handleEdit(newItem);
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditData(null);
   };
 
   const handleCancel = () => {
@@ -189,7 +199,7 @@ export default function AdminParties() {
     [currentData, searchTerm]
   );
 
-  if (loading || isLoadingParties) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 flex items-center justify-center">
         <div className="text-center">
@@ -206,7 +216,7 @@ export default function AdminParties() {
         <div className="rounded-2xl bg-white/85 backdrop-blur border border-slate-200 p-6 shadow-sm">
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Administración de Partidos</h1>
           <p className="text-slate-600">
-            Gestiona nombres, colores y logos. Cada cambio se refleja automáticamente en la pantalla de Resultados.
+            Gestión directa con Supabase: cualquier cambio de nombre, color o logo se reflejará automáticamente en Resultados.
           </p>
         </div>
 
