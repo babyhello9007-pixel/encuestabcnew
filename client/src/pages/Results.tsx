@@ -66,7 +66,6 @@ interface PartyMetrics {
 export default function Results() {
   // Sincronizacion en tiempo real con WebSocket
   usePartySync();
-  
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
