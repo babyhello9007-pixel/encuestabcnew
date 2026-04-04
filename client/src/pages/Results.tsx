@@ -540,7 +540,7 @@ export default function Results() {
           </button>
         </div>
 
-      <main className="flex-1 container py-10">
+        <main className="flex-1 container py-10">
         {loading ? (
           <LoadingAnimation />
         ) : (
@@ -753,10 +753,6 @@ export default function Results() {
               </div>
             </div>
 
-        {loading ? (
-          <div className="rounded-2xl bg-white p-10 text-center text-slate-500 shadow-sm">Cargando resultados…</div>
-        ) : (
-          <>
             {(activeTab === "general" || activeTab === "youth") && (
               <div className="space-y-6">
                 <div className="flex gap-2 mb-4">
@@ -1115,8 +1111,9 @@ export default function Results() {
                 cooldownMinutes={15}
               />
             )}
-          </>
+          </div>
         )}
+        </main>
       </div>
     </div>
   );
