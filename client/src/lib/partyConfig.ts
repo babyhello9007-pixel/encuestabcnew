@@ -2,6 +2,7 @@
  * Configuración de colores oficiales y logos de partidos políticos españoles
  * Logos reales en lugar de emojis para mejor visualización
  */
+import { findRuntimePartyConfigByNameOrKey } from './partyRuntimeConfig';
 
 export interface PartyConfig {
   color: string;
@@ -442,6 +443,15 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
  * @returns Configuración del partido o configuración por defecto
  */
 export function getPartyConfig(partyName: string): PartyConfig {
+  const runtimeConfig = findRuntimePartyConfigByNameOrKey(partyName);
+  if (runtimeConfig) {
+    return {
+      color: runtimeConfig.color,
+      logo: runtimeConfig.logoUrl,
+      displayName: runtimeConfig.displayName,
+    };
+  }
+
   // Búsqueda exacta
   if (PARTY_CONFIG[partyName]) {
     return PARTY_CONFIG[partyName];
