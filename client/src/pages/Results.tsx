@@ -801,6 +801,7 @@ export default function Results() {
                   stats={stats}
                   totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
                   edadPromedio={edadPromedio}
+                  partyMeta={activeTab === "youth" ? youthPartyMap : generalPartyMap}
                 />
               </div>
             </div>
@@ -941,6 +942,7 @@ export default function Results() {
                   stats={stats}
                   totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
                   edadPromedio={edadPromedio}
+                  partyMeta={activeTab === "youth" ? youthPartyMap : generalPartyMap}
                 />
               </div>
               </div>
@@ -1029,13 +1031,13 @@ export default function Results() {
               <PreguntasVariasSection />
             )}
             {activeTab === "ccaa" && (
-              <CCAAResltsSection />
+              <CCAAResltsSection partyMeta={generalPartyMap} />
             )}
             {activeTab === "provincias" && (
-              <ProvincesResultsSection />
+              <ProvincesResultsSection partyMeta={generalPartyMap} />
             )}
             {activeTab === "comparacion-ccaa" && (
-              <CCAAComparisonSection />
+              <CCAAComparisonSection partyMeta={generalPartyMap} />
             )}
             {activeTab === "asoc-juv-mapa-hemiciclo" && (
               <div className="space-y-4">
@@ -1075,6 +1077,7 @@ export default function Results() {
                         <SpainMapProvincial 
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           isYouthAssociations={true}
+                          partyMeta={youthPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionadaJuveniles(province);
                             setVotosPorPartidoProvinciaJuveniles(votos);
@@ -1086,6 +1089,7 @@ export default function Results() {
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           provinciaMetricsMap={provinciaMetricsMapJuveniles}
                           isYouthAssociations={true}
+                          partyMeta={youthPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionadaJuveniles(province);
                             setVotosPorPartidoProvinciaJuveniles(votos);
@@ -1168,6 +1172,7 @@ export default function Results() {
                         <SpainMapProvincial 
                           votosPorProvincia={votosPorProvincia}
                           isYouthAssociations={false}
+                          partyMeta={generalPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);
@@ -1179,6 +1184,7 @@ export default function Results() {
                           votosPorProvincia={votosPorProvincia}
                           provinciaMetricsMap={provinciaMetricsMap}
                           isYouthAssociations={false}
+                          partyMeta={generalPartyMap}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);

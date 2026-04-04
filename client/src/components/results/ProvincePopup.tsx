@@ -1,7 +1,5 @@
 import React from 'react';
 import PartyLogo from '@/components/PartyLogo';
-import { PARTIES_GENERAL } from '@/lib/surveyData';
-import { getPartyColor } from '@/lib/partyConfig';
 
 interface ProvincePopupProps {
   provinceName: string;
@@ -9,6 +7,7 @@ interface ProvincePopupProps {
   escanos?: Record<string, number>;
   edadPromedio?: number;
   ideologiaPromedio?: number;
+  partyMeta?: Record<string, { color?: string }>;
 }
 
 export const ProvincePopup: React.FC<ProvincePopupProps> = ({
@@ -17,8 +16,10 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
   escanos = {},
   edadPromedio,
   ideologiaPromedio,
+  partyMeta = {},
 }) => {
   const totalVotos = Object.values(votos).reduce((a, b) => a + b, 0);
+  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || '#9CA3AF';
 
   // Ordenar partidos por votos (descendente)
   const votosOrdenados = Object.entries(votos)
@@ -58,7 +59,7 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
         <div className="max-h-64 overflow-y-auto space-y-2">
           {votosOrdenados.map(([partido, votos]) => {
             const porcentaje = totalVotos > 0 ? ((votos / totalVotos) * 100).toFixed(1) : '0.0';
-            const color = getPartyColor(partido) || '#999999';
+            const color = getColorForParty(partido);
             const escanosPartido = escanos[partido] || 0;
 
             return (
@@ -67,8 +68,7 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
                 <div className="flex-shrink-0 w-8 h-8">
                   <PartyLogo
                     partyName={partido}
-                    size="sm"
-                    className="w-full h-full"
+                    size={32}
                   />
                 </div>
 

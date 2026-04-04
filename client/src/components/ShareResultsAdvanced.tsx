@@ -21,6 +21,7 @@ interface ShareResultsAdvancedProps {
   stats: PartyStats[];
   totalVotes: number;
   edadPromedio?: number | null;
+  partyMeta?: Record<string, { logo?: string; color?: string }>;
 }
 
 export function ShareResultsAdvanced({
@@ -28,6 +29,7 @@ export function ShareResultsAdvanced({
   stats,
   totalVotes,
   edadPromedio,
+  partyMeta = {},
 }: ShareResultsAdvancedProps) {
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<PartyStats | null>(
@@ -42,7 +44,7 @@ export function ShareResultsAdvanced({
   // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
   const getLogoForParty = (partyId: string, partyName?: string) => {
     const fromStats = stats.find((s) => s.id === partyId || s.nombre === partyName);
-    return fromStats?.logo || "";
+    return fromStats?.logo || partyMeta[partyId]?.logo || "";
   };
 
   const generateShareText = (party: PartyStats) => {
@@ -627,7 +629,11 @@ export function ShareResultsAdvanced({
                 <button
                   onClick={() =>
                     generateAdvancedInfographic(
-                      stats,
+                      stats.map((party) => ({
+                        ...party,
+                        logo: party.logo || partyMeta[party.id]?.logo || "",
+                        color: party.color || partyMeta[party.id]?.color,
+                      })),
                       activeTab === "youth" ? "youth" : "general",
                       totalVotes,
                       edadPromedio
