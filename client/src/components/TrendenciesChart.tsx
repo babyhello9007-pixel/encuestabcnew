@@ -12,7 +12,11 @@ interface VotoData {
   votos_diarios: number;
 }
 
-export function TrendenciesChart() {
+interface TrendenciesChartProps {
+  partyColors?: Record<string, string>;
+}
+
+export function TrendenciesChart({ partyColors = {} }: TrendenciesChartProps) {
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
   const [trendData, setTrendData] = useState<any[]>([]);
   const [parties, setParties] = useState<string[]>([]);
@@ -122,7 +126,7 @@ export function TrendenciesChart() {
 
   const getColorWithFallback = (party: string, index: number): string => {
     const normalized = party.trim().toUpperCase();
-    const color = runtimePartyColors[normalized] || PARTY_COLORS[normalized];
+    const color = partyColors[normalized] || runtimePartyColors[normalized] || PARTY_COLORS[normalized];
     return color || fallbackColors[index % fallbackColors.length];
   };
 

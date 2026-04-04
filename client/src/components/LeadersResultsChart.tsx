@@ -18,7 +18,11 @@ interface PartyLeaders {
   [key: string]: LeaderResult[];
 }
 
-export function LeadersResultsChart() {
+interface LeadersResultsChartProps {
+  partyColors?: Record<string, string>;
+}
+
+export function LeadersResultsChart({ partyColors = {} }: LeadersResultsChartProps) {
   const [leadersByParty, setLeadersByParty] = useState<PartyLeaders>({});
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +32,7 @@ export function LeadersResultsChart() {
   const getPartyColor = (party: string | null) => {
     if (!party) return '#FF9900';
     const normalized = party.trim().toUpperCase();
-    return runtimePartyColors[normalized] || PARTY_COLORS[normalized] || '#FF9900';
+    return partyColors[normalized] || runtimePartyColors[normalized] || PARTY_COLORS[normalized] || '#FF9900';
   };
 
   useEffect(() => {
