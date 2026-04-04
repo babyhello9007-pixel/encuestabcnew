@@ -14,10 +14,11 @@ interface PartyStats {
   porcentaje: number;
   escanos: number;
   logo: string;
+  color?: string;
 }
 
 interface ShareResultsAdvancedProps {
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis";
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias";
   stats: PartyStats[];
   totalVotes: number;
   edadPromedio?: number | null;
@@ -41,6 +42,9 @@ export function ShareResultsAdvanced({
 
   // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
   const getLogoForParty = (partyId: string, partyName?: string) => {
+    const fromStats = stats.find((s) => s.id === partyId || s.nombre === partyName);
+    if (fromStats?.logo) return fromStats.logo;
+
     // Primero intentar búsqueda por ID
     if (activeTab === "general") {
       const party = PARTIES_GENERAL[partyId as keyof typeof PARTIES_GENERAL];
@@ -654,7 +658,7 @@ export function ShareResultsAdvanced({
                   onClick={() =>
                     generateAdvancedInfographic(
                       stats,
-                      activeTab,
+                      activeTab === "youth" ? "youth" : "general",
                       totalVotes,
                       edadPromedio
                     )
