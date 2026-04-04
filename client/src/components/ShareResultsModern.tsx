@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PartyLogo from '@/components/PartyLogo';
 import { Copy, Download, FileText, Share2 } from 'lucide-react';
 
@@ -39,6 +40,7 @@ export function ShareResultsModern({
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [busy, setBusy] = useState<null | 'png' | 'pdf'>(null);
   const [message, setMessage] = useState('');
+  const [open, setOpen] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
 
   const topGeneral = useMemo(() => [...stats].sort((a, b) => b.votos - a.votos).slice(0, 5), [stats]);
@@ -133,73 +135,85 @@ export function ShareResultsModern({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2"><Share2 className="h-4 w-4" /> Generar Infografía para Compartir</h3>
-            <p className="text-xs text-slate-500">PNG / PDF / Link · Cooldown 15 minutos</p>
-          </div>
-          <p className="text-sm font-medium text-slate-600">
-            {canShare ? 'Disponible ahora' : `Puedes volver a compartir en ${formatTime(secondsLeft)}`}
-          </p>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button onClick={exportPNG} disabled={!canShare || busy !== null} className="gap-2">
-            <Download className="h-4 w-4" /> {busy === 'png' ? 'Generando…' : 'PNG'}
-          </Button>
-          <Button onClick={exportPDF} disabled={!canShare || busy !== null} variant="outline" className="gap-2">
-            <FileText className="h-4 w-4" /> {busy === 'pdf' ? 'Generando…' : 'PDF'}
-          </Button>
-          <Button onClick={copyLink} variant="secondary" className="gap-2">
-            <Copy className="h-4 w-4" /> Copiar link
-          </Button>
-        </div>
-
-        {message && <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div>}
-      </div>
-
-      <div ref={captureRef} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">La Encuesta de BC</p>
-            <h4 className="text-2xl font-extrabold text-slate-900">Resumen de resultados</h4>
-          </div>
-          <div className="text-right text-xs text-slate-500">
-            <div>{new Date().toLocaleDateString('es-ES')}</div>
-            <div>{totalResponses} respuestas</div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl bg-slate-50 p-4">
-            <h5 className="mb-2 font-semibold">Top Generales</h5>
-            {topGeneral.map((p) => (
-              <div key={`g-${p.id}`} className="mb-2 flex items-center justify-between rounded-lg bg-white p-2" style={{ borderLeft: `4px solid ${p.color || '#9CA3AF'}` }}>
-                <div className="flex items-center gap-2">
-                  <PartyLogo src={p.logo} partyName={p.nombre} size={18} strictExternal />
-                  <span className="text-sm font-semibold">{p.nombre}</span>
-                </div>
-                <span className="text-xs text-slate-600">{p.porcentaje.toFixed(1)}%</span>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2 bg-[#0f172a] hover:bg-[#1e293b] text-white">
+          <Share2 className="h-4 w-4" /> Generar Infografía para Compartir
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Compartir resultados</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">PNG / PDF / Link</h3>
+                <p className="text-xs text-slate-500">Cooldown 15 minutos · diseño para redes</p>
               </div>
-            ))}
+              <p className="text-sm font-medium text-slate-600">
+                {canShare ? 'Disponible ahora' : `Puedes volver a compartir en ${formatTime(secondsLeft)}`}
+              </p>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button onClick={exportPNG} disabled={!canShare || busy !== null} className="gap-2">
+                <Download className="h-4 w-4" /> {busy === 'png' ? 'Generando…' : 'PNG'}
+              </Button>
+              <Button onClick={exportPDF} disabled={!canShare || busy !== null} variant="outline" className="gap-2">
+                <FileText className="h-4 w-4" /> {busy === 'pdf' ? 'Generando…' : 'PDF'}
+              </Button>
+              <Button onClick={copyLink} variant="secondary" className="gap-2">
+                <Copy className="h-4 w-4" /> Copiar link
+              </Button>
+            </div>
+
+            {message && <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</div>}
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-4">
-            <h5 className="mb-2 font-semibold">Top Asociaciones Juveniles</h5>
-            {topYouth.map((p) => (
-              <div key={`y-${p.id}`} className="mb-2 flex items-center justify-between rounded-lg bg-white p-2" style={{ borderLeft: `4px solid ${p.color || '#9CA3AF'}` }}>
-                <div className="flex items-center gap-2">
-                  <PartyLogo src={p.logo} partyName={p.nombre} size={18} strictExternal />
-                  <span className="text-sm font-semibold">{p.nombre}</span>
-                </div>
-                <span className="text-xs text-slate-600">{p.porcentaje.toFixed(1)}%</span>
+          <div ref={captureRef} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500">La Encuesta de BC</p>
+                <h4 className="text-2xl font-extrabold text-slate-900">Resumen de resultados</h4>
               </div>
-            ))}
+              <div className="text-right text-xs text-slate-500">
+                <div>{new Date().toLocaleDateString('es-ES')}</div>
+                <div>{totalResponses} respuestas</div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl bg-slate-50 p-4">
+                <h5 className="mb-2 font-semibold">Top Generales</h5>
+                {topGeneral.map((p) => (
+                  <div key={`g-${p.id}`} className="mb-2 flex items-center justify-between rounded-lg bg-white p-2" style={{ borderLeft: `4px solid ${p.color || '#9CA3AF'}` }}>
+                    <div className="flex items-center gap-2">
+                      <PartyLogo src={p.logo} partyName={p.nombre} size={18} strictExternal />
+                      <span className="text-sm font-semibold">{p.nombre}</span>
+                    </div>
+                    <span className="text-xs text-slate-600">{p.porcentaje.toFixed(1)}%</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl bg-slate-50 p-4">
+                <h5 className="mb-2 font-semibold">Top Asociaciones Juveniles</h5>
+                {topYouth.map((p) => (
+                  <div key={`y-${p.id}`} className="mb-2 flex items-center justify-between rounded-lg bg-white p-2" style={{ borderLeft: `4px solid ${p.color || '#9CA3AF'}` }}>
+                    <div className="flex items-center gap-2">
+                      <PartyLogo src={p.logo} partyName={p.nombre} size={18} strictExternal />
+                      <span className="text-sm font-semibold">{p.nombre}</span>
+                    </div>
+                    <span className="text-xs text-slate-600">{p.porcentaje.toFixed(1)}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
