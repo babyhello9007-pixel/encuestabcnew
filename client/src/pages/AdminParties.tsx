@@ -5,7 +5,6 @@ import { Edit2, Save, X, Plus, Trash2, Upload, Search } from 'lucide-react';
 import PartyLogo from '@/components/PartyLogo';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { setRuntimePartyConfig } from '@/lib/partyRuntimeConfig';
 
 interface PartyEdit {
   id: string;
@@ -50,16 +49,6 @@ export default function AdminParties() {
       type: row.party_type as 'general' | 'youth',
       isActive: row.is_active ?? true,
     }));
-
-    setRuntimePartyConfig(
-      mapped.map((row) => ({
-        key: row.id,
-        displayName: row.displayName,
-        color: row.color,
-        logoUrl: row.logo,
-        partyType: row.type,
-      }))
-    );
 
     setParties(mapped.filter((item) => item.type === 'general'));
     setYouth(mapped.filter((item) => item.type === 'youth'));

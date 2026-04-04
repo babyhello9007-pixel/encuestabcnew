@@ -187,7 +187,6 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
               <div className="text-slate-300 text-sm font-medium">{resolvePartyName(party)}</div>
               <div className="text-white text-2xl font-bold">{count}</div>
               <div className="text-xs" style={{ color: resolvePartyColor(party) }}>{((count / totalEscanos) * 100).toFixed(1)}%</div>
-              <div className="text-[10px] font-mono text-slate-400 mt-1">{resolvePartyColor(party)}</div>
               {reachedMajority && <div className="text-[11px] text-emerald-400 mt-1">Mayoría absoluta</div>}
             </div>
           );

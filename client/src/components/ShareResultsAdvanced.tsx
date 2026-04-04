@@ -44,7 +44,36 @@ export function ShareResultsAdvanced({
   // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
   const getLogoForParty = (partyId: string, partyName?: string) => {
     const fromStats = stats.find((s) => s.id === partyId || s.nombre === partyName);
-    return fromStats?.logo || partyMeta[partyId]?.logo || "";
+    if (fromStats?.logo) return fromStats.logo;
+
+    // Primero intentar búsqueda por ID
+    if (activeTab === "general") {
+      const party = PARTIES_GENERAL[partyId as keyof typeof PARTIES_GENERAL];
+      if (party?.logo) return party.logo;
+    } else {
+      const party = YOUTH_ASSOCIATIONS[partyId as keyof typeof YOUTH_ASSOCIATIONS];
+      if (party?.logo) return party.logo;
+    }
+
+    // Si no hay logo por ID, buscar por nombre en PARTIES_GENERAL
+    if (partyName) {
+      for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
+        if (partyData.name === partyName) {
+          return partyData.logo;
+        }
+      }
+    }
+
+    // Si no hay logo aún, buscar por nombre en YOUTH_ASSOCIATIONS
+    if (partyName) {
+      for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
+        if (assocData.name === partyName) {
+          return assocData.logo;
+        }
+      }
+    }
+
+    return "";
   };
 
   const generateShareText = (party: PartyStats) => {
@@ -629,11 +658,7 @@ export function ShareResultsAdvanced({
                 <button
                   onClick={() =>
                     generateAdvancedInfographic(
-                      stats.map((party) => ({
-                        ...party,
-                        logo: party.logo || partyMeta[party.id]?.logo || "",
-                        color: party.color || partyMeta[party.id]?.color,
-                      })),
+                      stats,
                       activeTab === "youth" ? "youth" : "general",
                       totalVotes,
                       edadPromedio
