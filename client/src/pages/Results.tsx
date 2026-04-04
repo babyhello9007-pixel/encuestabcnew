@@ -100,7 +100,10 @@ export default function Results() {
 
   const generalPartyMap = useMemo(() => {
     const defaults = Object.fromEntries(
-      Object.entries(PARTIES_GENERAL).map(([key, party]) => [key, { key, ...party }])
+      Object.entries(PARTIES_GENERAL).map(([key, party]) => [
+        key,
+        { key, name: party.name, color: "#9CA3AF", logo: "" },
+      ])
     );
     if (!partyConfigData?.parties?.length) return defaults;
     partyConfigData.parties.forEach((party) => {
@@ -116,7 +119,10 @@ export default function Results() {
 
   const youthPartyMap = useMemo(() => {
     const defaults = Object.fromEntries(
-      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [key, { key, ...party }])
+      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [
+        key,
+        { key, name: party.name, color: "#9CA3AF", logo: "" },
+      ])
     );
     if (!partyConfigData?.youth?.length) return defaults;
     partyConfigData.youth.forEach((party) => {
@@ -956,18 +962,8 @@ export default function Results() {
               {stats.length > 0 && (
                 (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
                   const currentPartyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
-                  let logoUrl = party.logo;
+                  const logoUrl = party.logo || currentPartyMap[party.id]?.logo || "";
                   const partyColor = party.color || currentPartyMap[party.id]?.color || "#C41E3A";
-                  
-                  if (!logoUrl) {
-                    for (const [, partyData] of Object.entries(currentPartyMap)) {
-                      if (partyData.name === party.nombre) {
-                        logoUrl = partyData.logo;
-                        break;
-                      }
-                    }
-                  }
-                  logoUrl ||= currentPartyMap[party.id]?.logo;
                   
                   return (
                   <div
@@ -991,6 +987,7 @@ export default function Results() {
                       <div className="text-right">
                         <p className="text-2xl font-bold" style={{ color: partyColor }}>{party.escanos}</p>
                         <p className="text-xs text-[#666666]">escaños</p>
+                        <p className="text-[11px] font-mono mt-1" style={{ color: partyColor }}>{partyColor}</p>
                       </div>
                     </div>
 

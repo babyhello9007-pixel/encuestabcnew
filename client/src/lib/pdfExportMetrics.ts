@@ -7,6 +7,7 @@ export interface PartyStats {
   porcentaje: number;
   escanos: number;
   logo: string;
+  color?: string;
 }
 
 export interface PartyMetricsView {
@@ -139,13 +140,18 @@ export async function exportPDFWithMetrics(
 
   // Header
   doc.setFillColor(196, 30, 58);
-  doc.rect(0, 0, pageWidth, 30, 'F');
+  doc.rect(0, 0, pageWidth, 22, 'F');
+  doc.setFillColor(139, 21, 40);
+  doc.rect(0, 22, pageWidth, 8, 'F');
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
-  const title = activeTab === "general" ? "Resultados - Elecciones Generales" : "Resultados - Asociaciones Juveniles";
-  doc.text(title, 15, 22);
+  const title = activeTab === "general" ? "Resultados · Elecciones Generales" : "Resultados · Asociaciones Juveniles";
+  doc.text(title, 15, 16);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Batalla Cultural · Informe automático', 15, 26.5);
 
   // Reset text color
   doc.setTextColor(0, 0, 0);
@@ -173,11 +179,12 @@ export async function exportPDFWithMetrics(
   doc.text('Resultados Electorales', 15, yPosition);
   yPosition += 10;
 
-  const tableHeaders = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Edad Media', 'Ideología Media'];
+  const tableHeaders = ['Partido/Asociación', 'Color', 'Votos', 'Porcentaje', 'Escaños', 'Edad Media', 'Ideología Media'];
   const tableData = stats.map((party) => {
     const metrics = metricsPerParty[party.nombre] || { edad_promedio: 0, ideologia_promedio: 0 };
     return [
       party.nombre,
+      (party.color || '#C41E3A').toUpperCase(),
       party.votos.toString(),
       `${party.porcentaje.toFixed(2)}%`,
       party.escanos.toString(),
@@ -186,7 +193,7 @@ export async function exportPDFWithMetrics(
     ];
   });
 
-  yPosition = drawTable(doc, yPosition, tableHeaders, tableData, [30, 20, 20, 20, 25, 25]) + 20;
+  yPosition = drawTable(doc, yPosition, tableHeaders, tableData, [34, 24, 18, 18, 18, 24, 24]) + 20;
 
   // Check if we need a new page
   if (yPosition > pageHeight - 50) {
