@@ -37,7 +37,7 @@ import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { usePartySync } from "@/hooks/usePartySync";
-import { trpc } from "@/lib/trpc";
+import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 
 interface PartyStats {
   id: string;
@@ -149,6 +149,15 @@ export default function Results() {
       }
 
       const allRows = data || [];
+      setRuntimePartyConfig(
+        allRows.map((row: any) => ({
+          key: row.party_key,
+          displayName: row.display_name,
+          color: row.color,
+          logoUrl: row.logo_url,
+          partyType: row.party_type,
+        }))
+      );
       setPartyConfigData({
         parties: allRows
           .filter((row: any) => row.party_type === "general")

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import ImageLoader from './ImageLoader';
 import { getPartyLogo, getPartyConfig } from '@/lib/partyConfig';
-import { PARTIES_GENERAL } from '@/lib/surveyData';
 
 interface PartyLogoProps {
   src?: string;
@@ -19,14 +18,12 @@ export default function PartyLogo({ src, alt, partyName, partyId, size = 48 }: P
   let finalSrc = src;
   let finalAlt = alt || '';
 
-  // Si se proporciona partyId, buscar el nombre en PARTIES_GENERAL
+  // Si se proporciona partyId, usar configuración dinámica por clave
   if (partyId && !partyName) {
-    const party = Object.values(PARTIES_GENERAL).find(p => p.id === partyId);
-    if (party) {
-      finalPartyName = party.name;
-      finalSrc = party.logo;
-      finalAlt = party.name;
-    }
+    const party = getPartyConfig(partyId);
+    finalPartyName = party.displayName || partyId;
+    finalSrc = party.logo;
+    finalAlt = party.displayName || partyId;
   }
 
   // Si no hay src, obtener del config de partidos
