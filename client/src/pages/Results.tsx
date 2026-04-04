@@ -1116,5 +1116,6 @@ export default function Results() {
         </main>
       </div>
     </div>
+  </div>
   );
 }
