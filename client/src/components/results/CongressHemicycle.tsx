@@ -121,7 +121,7 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
         </div>
 
         <div className="relative [perspective:1200px]">
-        <svg width="100%" height="auto" viewBox="0 0 1240 540" className="w-full [transform:rotateX(8deg)]" preserveAspectRatio="xMidYMid meet">
+        <svg width="100%" height="540" viewBox="0 0 1240 540" className="w-full h-auto [transform:rotateX(8deg)]" preserveAspectRatio="xMidYMid meet">
           <defs>
             <radialGradient id="floorGradient" cx="50%" cy="70%" r="60%">
               <stop offset="0%" stopColor="#1e293b" stopOpacity="0.95" />

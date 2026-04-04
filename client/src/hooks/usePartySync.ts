@@ -10,6 +10,13 @@ export function usePartySync() {
   const connectingRef = useRef(false);
 
   useEffect(() => {
+    const host = window.location.hostname;
+    const socketEnabledByEnv = import.meta.env.VITE_ENABLE_SOCKET_SYNC === "true";
+    const isLocalhost = host === "localhost" || host === "127.0.0.1";
+    if (!socketEnabledByEnv && !isLocalhost) {
+      return;
+    }
+
     // Si ya hay una conexión global, usarla
     if (globalSocket?.connected) {
       socketRef.current = globalSocket;

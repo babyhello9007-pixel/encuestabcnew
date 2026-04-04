@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import PartyLogo from '@/components/PartyLogo';
 import { Copy, Download, FileText, Share2 } from 'lucide-react';
 
@@ -144,6 +144,9 @@ export function ShareResultsModern({
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Compartir resultados</DialogTitle>
+          <DialogDescription>
+            Genera PNG, PDF o copia el enlace con cooldown de 15 minutos.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
