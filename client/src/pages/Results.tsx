@@ -16,11 +16,9 @@ import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
 import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
-import { TrendenciesChart } from "@/components/TrendenciesChart";
 import { LeadersResultsChart } from "@/components/LeadersResultsChart";
 import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
 import { ShareInfographicsPanel } from "@/components/ShareInfographicsPanel";
-import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 
 type PartyType = "general" | "youth";
 
@@ -61,7 +59,6 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "encuestadoras-externas" | "preguntas-varias">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -83,7 +80,6 @@ export default function Results() {
   const [votosPorPartidoProvinciaJuveniles, setVotosPorPartidoProvinciaJuveniles] = useState<Record<string, number>>({});
   const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMapJuveniles, setProvinciaMetricsMapJuveniles] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
-
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
@@ -176,65 +172,6 @@ export default function Results() {
   }, []);
 
   useEffect(() => {
-    const loadPartyConfig = async () => {
-      const { data, error } = await supabase
-        .from("party_configuration")
-        .select("party_key, display_name, color, logo_url, party_type, is_active")
-        .eq("is_active", true);
-
-      if (error) {
-        console.error("Error loading party configuration:", error);
-        return;
-      }
-
-      const allRows = data || [];
-      setRuntimePartyConfig(
-        allRows.map((row: any) => ({
-          key: row.party_key,
-          displayName: row.display_name,
-          color: row.color,
-          logoUrl: row.logo_url,
-          partyType: row.party_type,
-        }))
-      );
-      setPartyConfigData({
-        parties: allRows
-          .filter((row: any) => row.party_type === "general")
-          .map((row: any) => ({
-            partyKey: row.party_key,
-            displayName: row.display_name,
-            color: row.color,
-            logoUrl: row.logo_url,
-          })),
-        youth: allRows
-          .filter((row: any) => row.party_type === "youth")
-          .map((row: any) => ({
-            partyKey: row.party_key,
-            displayName: row.display_name,
-            color: row.color,
-            logoUrl: row.logo_url,
-          })),
-      });
-    };
-
-    loadPartyConfig();
-    const channel = supabase
-      .channel("party-configuration-results")
-      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, () => {
-        loadPartyConfig();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  useEffect(() => {
-    document.title = "La Encuesta de BC";
-  }, []);
-
-  useEffect(() => {
     const fetchResults = async () => {
       try {
         // Obtener total de respuestas usando el VIEW
@@ -251,7 +188,6 @@ export default function Results() {
               .select("*", { count: "exact", head: true });
             setTotalResponses(count || 0);
           } catch (e) {
-            // Si tampoco existe la tabla, usar datos de ejemplo
             setTotalResponses(631);
           }
         }
@@ -263,18 +199,15 @@ export default function Results() {
             .select("*");
 
           if (generalData && generalData.length > 0) {
-            // Inicializar con todos los partidos configurados con 0 votos
             const generalVotos: Record<string, number> = {};
             Object.keys(generalPartyMap).forEach((key) => {
               generalVotos[key] = 0;
             });
-            
-            // Actualizar con datos reales de la base de datos
+
             generalData.forEach((row: any) => {
               generalVotos[row.partido_id] = row.votos;
             });
 
-            // Usar cálculo por provincias si hay datos disponibles, si no usar cálculo nacional
             let escanos: Record<string, number> = {};
             if (Object.keys(votosPorProvincia).length > 0) {
               escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
@@ -294,22 +227,20 @@ export default function Results() {
               color: generalPartyMap[s.id]?.color,
             }));
             setGeneralStats(stats);
-            // Los escaños se actualizarán en el useEffect cuando votosPorProvincia esté disponible
-            // (este useEffect se ejecutará después de que votosPorProvincia se haya cargado)
-            
+
             // Cargar votos por provincia para el mapa
             try {
               const { data: provinciaData, error } = await supabase
                 .from("votos_por_provincia_view")
                 .select("provincia, partido, votos");
-              
+
               if (error) {
                 console.error("Error loading provincia data:", error);
               }
-              
+
               if (provinciaData && provinciaData.length > 0) {
                 const votosProv: Record<string, Record<string, number>> = {};
-                
+
                 provinciaData.forEach((row: any) => {
                   if (row.provincia && row.partido) {
                     if (!votosProv[row.provincia]) {
@@ -318,19 +249,19 @@ export default function Results() {
                     votosProv[row.provincia][row.partido] = row.votos;
                   }
                 });
-                
+
                 setVotosPorProvincia(votosProv);
-                
+
                 // Cargar métricas por provincia
                 try {
                   const { data: metricsData } = await supabase
                     .from("respuestas")
                     .select("provincia, edad, posicion_ideologica");
-                  
+
                   if (metricsData && metricsData.length > 0) {
                     const metricsMap: Record<string, { edad_promedio: number; ideologia_promedio: number }> = {};
                     const provinciaCounts: Record<string, { edad_sum: number; ideologia_sum: number; count: number }> = {};
-                    
+
                     metricsData.forEach((row: any) => {
                       if (row.provincia) {
                         if (!provinciaCounts[row.provincia]) {
@@ -345,14 +276,14 @@ export default function Results() {
                         provinciaCounts[row.provincia].count += 1;
                       }
                     });
-                    
+
                     Object.entries(provinciaCounts).forEach(([provincia, counts]) => {
                       metricsMap[provincia] = {
                         edad_promedio: counts.count > 0 ? counts.edad_sum / counts.count : 0,
                         ideologia_promedio: counts.count > 0 ? counts.ideologia_sum / counts.count : 0,
                       };
                     });
-                    
+
                     setProvinciaMetricsMap(metricsMap);
                   }
                 } catch (err) {
@@ -363,38 +294,19 @@ export default function Results() {
               console.error("Error fetching votos por provincia:", err);
             }
           } else {
-            // Datos de ejemplo si no hay datos
-            const exampleVotos: Record<string, number> = { PP: 180,
-              PSOE: 120,
-              VOX: 85,
-              SUMAR: 65,
-              PODEMOS: 45,
-              JUNTS: 35,
-              ERC: 30,
-              PNV: 25,
-              ALIANZA: 15,
-              BILDU: 20,
-              SAF: 40,
-              CC: 10,
-              UPN: 8,
-              CIUDADANOS: 12,
-              CAMINANDO: 5,
-              FRENTE: 3,
-              IZQUIERDA: 8,
-              JUNTOS_EXT: 6,
-              PLIB: 4,
-              EB: 2,
-              BNG: 7,
+            const exampleVotos: Record<string, number> = {
+              PP: 180, PSOE: 120, VOX: 85, SUMAR: 65, PODEMOS: 45,
+              JUNTS: 35, ERC: 30, PNV: 25, ALIANZA: 15, BILDU: 20,
+              SAF: 40, CC: 10, UPN: 8, CIUDADANOS: 12, CAMINANDO: 5,
+              FRENTE: 3, IZQUIERDA: 8, JUNTOS_EXT: 6, PLIB: 4, EB: 2, BNG: 7,
             };
             const escanos = calcularEscanosGenerales(exampleVotos);
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
-
             Object.entries(generalPartyMap).forEach(([key, party]) => {
               nombres[key] = party.name;
               logos[key] = party.logo;
             });
-
             const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
               ...s,
               color: generalPartyMap[s.id]?.color,
@@ -403,39 +315,19 @@ export default function Results() {
           }
         } catch (err) {
           console.error("Error fetching general votes:", err);
-          // Usar datos de ejemplo
           const exampleVotos: Record<string, number> = {
-            PP: 180,
-            PSOE: 120,
-            VOX: 85,
-            SUMAR: 65,
-            PODEMOS: 45,
-            JUNTS: 35,
-            ERC: 30,
-            PNV: 25,
-            ALIANZA: 15,
-            BILDU: 20,
-            SAF: 40,
-            CC: 10,
-            UPN: 8,
-            CIUDADANOS: 12,
-            CAMINANDO: 5,
-            FRENTE: 3,
-            IZQUIERDA: 8,
-            JUNTOS_EXT: 6,
-            PLIB: 4,
-            EB: 2,
-            BNG: 7,
+            PP: 180, PSOE: 120, VOX: 85, SUMAR: 65, PODEMOS: 45,
+            JUNTS: 35, ERC: 30, PNV: 25, ALIANZA: 15, BILDU: 20,
+            SAF: 40, CC: 10, UPN: 8, CIUDADANOS: 12, CAMINANDO: 5,
+            FRENTE: 3, IZQUIERDA: 8, JUNTOS_EXT: 6, PLIB: 4, EB: 2, BNG: 7,
           };
           const escanos = calcularEscanosGenerales(exampleVotos);
           const nombres: Record<string, string> = {};
           const logos: Record<string, string> = {};
-
           Object.entries(generalPartyMap).forEach(([key, party]) => {
             nombres[key] = party.name;
             logos[key] = party.logo;
           });
-
           const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
             ...s,
             color: generalPartyMap[s.id]?.color,
@@ -458,51 +350,29 @@ export default function Results() {
             const escanos = calcularEscanosJuveniles(youthVotos);
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
-
             Object.entries(youthPartyMap).forEach(([key, assoc]) => {
               nombres[key] = assoc.name;
               logos[key] = assoc.logo;
             });
-
             const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos).map((s) => ({
               ...s,
               color: youthPartyMap[s.id]?.color,
             }));
             setYouthStats(stats);
           } else {
-            // Datos de ejemplo si no hay datos
             const exampleYouthVotos: Record<string, number> = {
-              SHAACABAT: 95,
-              REVUELTA: 75,
-              NNGG: 120,
-              JVOX: 65,
-              VLE: 45,
-              JSE: 85,
-              PATRIOTA: 35,
-              JIU: 40,
-              JCOMUNISTA: 30,
-              JCS: 25,
-              EGI: 15,
-              ERNAI: 20,
-              JERC: 35,
-              JNC: 28,
-              GALIZANOVA: 18,
-              ARRAN: 22,
-              JNCANA: 12,
-              JPV: 16,
-              ACL: 14,
-              JEC: 10,
-              AGORA: 8,
+              SHAACABAT: 95, REVUELTA: 75, NNGG: 120, JVOX: 65, VLE: 45,
+              JSE: 85, PATRIOTA: 35, JIU: 40, JCOMUNISTA: 30, JCS: 25,
+              EGI: 15, ERNAI: 20, JERC: 35, JNC: 28, GALIZANOVA: 18,
+              ARRAN: 22, JNCANA: 12, JPV: 16, ACL: 14, JEC: 10, AGORA: 8,
             };
             const escanos = calcularEscanosJuveniles(exampleYouthVotos);
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
-
             Object.entries(youthPartyMap).forEach(([key, assoc]) => {
               nombres[key] = assoc.name;
               logos[key] = assoc.logo;
             });
-
             const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
               ...s,
               color: youthPartyMap[s.id]?.color,
@@ -511,57 +381,32 @@ export default function Results() {
           }
         } catch (err) {
           console.error("Error fetching youth votes:", err);
-          // Usar datos de ejemplo
           const exampleYouthVotos: Record<string, number> = {
-            SHAACABAT: 95,
-            REVUELTA: 75,
-            NNGG: 120,
-            JVOX: 65,
-            VLE: 45,
-            JSE: 85,
-            PATRIOTA: 35,
-            JIU: 40,
-            JCOMUNISTA: 30,
-            JCS: 25,
-            EGI: 15,
-            ERNAI: 20,
-            JERC: 35,
-            JNC: 28,
-            GALIZANOVA: 18,
-            ARRAN: 22,
-            JNCANA: 12,
-            JPV: 16,
-            ACL: 14,
-            JEC: 10,
-            AGORA: 8,
+            SHAACABAT: 95, REVUELTA: 75, NNGG: 120, JVOX: 65, VLE: 45,
+            JSE: 85, PATRIOTA: 35, JIU: 40, JCOMUNISTA: 30, JCS: 25,
+            EGI: 15, ERNAI: 20, JERC: 35, JNC: 28, GALIZANOVA: 18,
+            ARRAN: 22, JNCANA: 12, JPV: 16, ACL: 14, JEC: 10, AGORA: 8,
           };
           const escanos = calcularEscanosJuveniles(exampleYouthVotos);
           const nombres: Record<string, string> = {};
           const logos: Record<string, string> = {};
-
           Object.entries(youthPartyMap).forEach(([key, assoc]) => {
             nombres[key] = assoc.name;
             logos[key] = assoc.logo;
           });
-
           const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
             ...s,
             color: youthPartyMap[s.id]?.color,
           }));
           setYouthStats(stats);
         }
-
-    const channel = supabase
-      .channel("results-party-configuration")
-      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, () => {
-        loadPartyConfiguration();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+      } catch (error) {
+        console.error("Error fetching results:", error);
+      }
     };
-  }, []);
+
+    fetchResults();
+  }, [generalPartyMap, youthPartyMap, votosPorProvincia]);
 
   const partyMapByType = useMemo(() => {
     const generalMap: Record<string, PartyMeta> = {};
@@ -674,17 +519,6 @@ export default function Results() {
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
   const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
-  const partyColorMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    [...Object.values(generalPartyMap), ...Object.values(youthPartyMap)].forEach((party: any) => {
-      if (!party) return;
-      const key = typeof party.key === "string" ? party.key.toUpperCase() : "";
-      const name = typeof party.name === "string" ? party.name.toUpperCase() : "";
-      if (key && party.color) map[key] = party.color;
-      if (name && party.color) map[name] = party.color;
-    });
-    return map;
-  }, [generalPartyMap, youthPartyMap]);
 
   const activeStats = activeTab === "youth" ? youthStats : generalStats;
   const activePartyMap = mapMode === "youth" ? partyMapByType.youthMap : partyMapByType.generalMap;
@@ -838,7 +672,7 @@ export default function Results() {
                     : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
-                <Icon className="h-4 w-4" /> {tab.label}
+                Comparación CCAA
               </button>
               <button
                 onClick={() => setActiveTab("youth")}
@@ -858,7 +692,7 @@ export default function Results() {
                     : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
-                Asoc. Juveniles; Mapa y Hemiciclo
+                Asoc. Juveniles: Mapa y Hemiciclo
               </button>
               <button
                 onClick={() => setActiveTab("leaders")}
@@ -950,7 +784,7 @@ export default function Results() {
                   const currentPartyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
                   const logoUrl = party.logo || currentPartyMap[party.id]?.logo || "";
                   const partyColor = party.color || currentPartyMap[party.id]?.color || "#C41E3A";
-                  
+
                   return (
                   <div
                     key={party.id}
@@ -1050,7 +884,7 @@ export default function Results() {
                         </div>
                       </div>
                       {mapView === 'schematic' ? (
-                        <SpainMapProvincial 
+                        <SpainMapProvincial
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           isYouthAssociations={true}
                           partyMeta={youthPartyMap}
@@ -1061,7 +895,7 @@ export default function Results() {
                           }}
                         />
                       ) : (
-                        <SpainMapRealistic 
+                        <SpainMapRealistic
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           provinciaMetricsMap={provinciaMetricsMapJuveniles}
                           isYouthAssociations={true}
@@ -1074,10 +908,10 @@ export default function Results() {
                         />
                       )}
                     </div>
-                    
+
                     <div className="liquid-glass p-6 rounded-2xl">
                       {youthStats.length > 0 && (
-                        <PactometerInteractive 
+                        <PactometerInteractive
                           stats={youthStats.map(s => ({
                             id: s.id,
                             nombre: s.nombre,
@@ -1090,10 +924,10 @@ export default function Results() {
                         />
                       )}
                     </div>
-                    
+
                     <div className="liquid-glass p-4 rounded-2xl">
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo de Asociaciones Juveniles</h2>
-                      <CongressHemicycle 
+                      <CongressHemicycle
                         escanos={escanosJuvenilesPorProvincia}
                         totalEscanos={100}
                         provinciaSeleccionada={provinciaSeleccionadaJuveniles}
@@ -1145,7 +979,7 @@ export default function Results() {
                         </div>
                       </div>
                       {mapView === 'schematic' ? (
-                        <SpainMapProvincial 
+                        <SpainMapProvincial
                           votosPorProvincia={votosPorProvincia}
                           isYouthAssociations={false}
                           partyMeta={generalPartyMap}
@@ -1156,7 +990,7 @@ export default function Results() {
                           }}
                         />
                       ) : (
-                        <SpainMapRealistic 
+                        <SpainMapRealistic
                           votosPorProvincia={votosPorProvincia}
                           provinciaMetricsMap={provinciaMetricsMap}
                           isYouthAssociations={false}
@@ -1169,10 +1003,10 @@ export default function Results() {
                         />
                       )}
                     </div>
-                    
+
                     <div className="liquid-glass p-6 rounded-2xl">
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro</h2>
-                      <PactometerInteractive 
+                      <PactometerInteractive
                         stats={generalStats.map(s => ({
                           id: s.id,
                           nombre: s.nombre,
@@ -1184,10 +1018,10 @@ export default function Results() {
                         requiredForMajority={176}
                       />
                     </div>
-                    
+
                     <div className="liquid-glass p-4 rounded-2xl">
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo del Congreso de los Diputados</h2>
-                      <CongressHemicycle 
+                      <CongressHemicycle
                         escanos={escanosGeneralesPorProvincia}
                         totalEscanos={350}
                         provinciaSeleccionada={provinciaSeleccionada}
