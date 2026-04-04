@@ -66,8 +66,6 @@ interface PartyMetrics {
 export default function Results() {
   // Sincronizacion en tiempo real con WebSocket
   usePartySync();
-  const { data: partyConfigData } = trpc.parties.getAll.useQuery();
-  
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
@@ -99,38 +97,6 @@ export default function Results() {
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
-
-  const generalPartyMap = useMemo(() => {
-    const defaults = Object.fromEntries(
-      Object.entries(PARTIES_GENERAL).map(([key, party]) => [key, { key, ...party }])
-    );
-    if (!partyConfigData?.parties?.length) return defaults;
-    partyConfigData.parties.forEach((party) => {
-      defaults[party.partyKey] = {
-        key: party.partyKey,
-        name: party.displayName,
-        color: party.color,
-        logo: party.logoUrl,
-      };
-    });
-    return defaults;
-  }, [partyConfigData]);
-
-  const youthPartyMap = useMemo(() => {
-    const defaults = Object.fromEntries(
-      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [key, { key, ...party }])
-    );
-    if (!partyConfigData?.youth?.length) return defaults;
-    partyConfigData.youth.forEach((party) => {
-      defaults[party.partyKey] = {
-        key: party.partyKey,
-        name: party.displayName,
-        color: party.color,
-        logo: party.logoUrl,
-      };
-    });
-    return defaults;
-  }, [partyConfigData]);
 
   useEffect(() => {
     const loadPartyConfig = async () => {
