@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -96,6 +96,85 @@ export default function Results() {
 
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
+
+  const generalPartyMap = useMemo(() => {
+    const defaults = Object.fromEntries(
+      Object.entries(PARTIES_GENERAL).map(([key, party]) => [key, { key, ...party }])
+    );
+    if (!partyConfigData?.parties?.length) return defaults;
+    partyConfigData.parties.forEach((party) => {
+      defaults[party.partyKey] = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+    });
+    return defaults;
+  }, [partyConfigData]);
+
+  const youthPartyMap = useMemo(() => {
+    const defaults = Object.fromEntries(
+      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [key, { key, ...party }])
+    );
+    if (!partyConfigData?.youth?.length) return defaults;
+    partyConfigData.youth.forEach((party) => {
+      defaults[party.partyKey] = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+    });
+    return defaults;
+  }, [partyConfigData]);
+
+  useEffect(() => {
+    const loadPartyConfig = async () => {
+      const { data, error } = await supabase
+        .from("party_configuration")
+        .select("party_key, display_name, color, logo_url, party_type, is_active")
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error loading party configuration:", error);
+        return;
+      }
+
+      const allRows = data || [];
+      setPartyConfigData({
+        parties: allRows
+          .filter((row: any) => row.party_type === "general")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+        youth: allRows
+          .filter((row: any) => row.party_type === "youth")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+      });
+    };
+
+    loadPartyConfig();
+    const channel = supabase
+      .channel("party-configuration-results")
+      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, () => {
+        loadPartyConfig();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
@@ -155,9 +234,9 @@ export default function Results() {
             .select("*");
 
           if (generalData && generalData.length > 0) {
-            // Inicializar con todos los partidos de PARTIES_GENERAL con 0 votos
+            // Inicializar con todos los partidos configurados con 0 votos
             const generalVotos: Record<string, number> = {};
-            Object.keys(PARTIES_GENERAL).forEach((key) => {
+            Object.keys(generalPartyMap).forEach((key) => {
               generalVotos[key] = 0;
             });
             
@@ -176,12 +255,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
+            Object.entries(generalPartyMap).forEach(([key, party]) => {
               nombres[key] = party.name;
               logos[key] = party.logo;
             });
 
-            const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos);
+            const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: generalPartyMap[s.id]?.color,
+            }));
             setGeneralStats(stats);
             // Los escaños se actualizarán en el useEffect cuando votosPorProvincia esté disponible
             // (este useEffect se ejecutará después de que votosPorProvincia se haya cargado)
@@ -279,17 +361,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
+            Object.entries(generalPartyMap).forEach(([key, party]) => {
               nombres[key] = party.name;
               logos[key] = party.logo;
             });
 
-            console.log('exampleVotos keys:', Object.keys(exampleVotos));
-            console.log('PARTIES_GENERAL keys:', Object.keys(PARTIES_GENERAL));
-            console.log('logos keys:', Object.keys(logos));
-            const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos);
-            console.log('Stats generales:', stats);
-            console.log('Logos disponibles:', logos);
+            const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: generalPartyMap[s.id]?.color,
+            }));
             setGeneralStats(stats);
           }
         } catch (err) {
@@ -322,12 +402,15 @@ export default function Results() {
           const nombres: Record<string, string> = {};
           const logos: Record<string, string> = {};
 
-          Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
+          Object.entries(generalPartyMap).forEach(([key, party]) => {
             nombres[key] = party.name;
             logos[key] = party.logo;
           });
 
-          const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos);
+          const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
+            ...s,
+            color: generalPartyMap[s.id]?.color,
+          }));
           setGeneralStats(stats);
         }
 
@@ -347,12 +430,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(YOUTH_ASSOCIATIONS).forEach(([key, assoc]) => {
+            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
               nombres[key] = assoc.name;
               logos[key] = assoc.logo;
             });
 
-            const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos);
+            const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: youthPartyMap[s.id]?.color,
+            }));
             setYouthStats(stats);
           } else {
             // Datos de ejemplo si no hay datos
@@ -383,12 +469,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(YOUTH_ASSOCIATIONS).forEach(([key, assoc]) => {
+            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
               nombres[key] = assoc.name;
               logos[key] = assoc.logo;
             });
 
-            const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos);
+            const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: youthPartyMap[s.id]?.color,
+            }));
             setYouthStats(stats);
           }
         } catch (err) {
@@ -421,12 +510,15 @@ export default function Results() {
           const nombres: Record<string, string> = {};
           const logos: Record<string, string> = {};
 
-          Object.entries(YOUTH_ASSOCIATIONS).forEach(([key, assoc]) => {
+          Object.entries(youthPartyMap).forEach(([key, assoc]) => {
             nombres[key] = assoc.name;
             logos[key] = assoc.logo;
           });
 
-          const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos);
+          const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
+            ...s,
+            color: youthPartyMap[s.id]?.color,
+          }));
           setYouthStats(stats);
         }
 
@@ -565,7 +657,7 @@ export default function Results() {
     fetchResults();
     const interval = setInterval(fetchResults, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [generalPartyMap, youthPartyMap]);
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
   const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
@@ -863,49 +955,25 @@ export default function Results() {
             <div className="space-y-4">
               {stats.length > 0 && (
                 (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
-                  // Buscar el logo en PARTIES_GENERAL o YOUTH_ASSOCIATIONS basándose en el nombre
+                  const currentPartyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
                   let logoUrl = party.logo;
+                  const partyColor = party.color || currentPartyMap[party.id]?.color || "#C41E3A";
                   
-                  // Si no hay logo, buscar en PARTIES_GENERAL por nombre
                   if (!logoUrl) {
-                    for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
+                    for (const [, partyData] of Object.entries(currentPartyMap)) {
                       if (partyData.name === party.nombre) {
                         logoUrl = partyData.logo;
                         break;
                       }
                     }
                   }
-                  
-                  // Si aún no hay logo, buscar en YOUTH_ASSOCIATIONS por nombre
-                  if (!logoUrl) {
-                    for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
-                      if (assocData.name === party.nombre) {
-                        logoUrl = assocData.logo;
-                        break;
-                      }
-                    }
-                  }
-                  
-                  // Si aún no hay logo, intentar con el ID en PARTIES_GENERAL
-                  if (!logoUrl) {
-                    const partyData = PARTIES_GENERAL[party.id as keyof typeof PARTIES_GENERAL];
-                    if (partyData) {
-                      logoUrl = partyData.logo;
-                    }
-                  }
-                  
-                  // Si aún no hay logo, intentar con el ID en YOUTH_ASSOCIATIONS
-                  if (!logoUrl) {
-                    const assocData = YOUTH_ASSOCIATIONS[party.id as keyof typeof YOUTH_ASSOCIATIONS];
-                    if (assocData) {
-                      logoUrl = assocData.logo;
-                    }
-                  }
+                  logoUrl ||= currentPartyMap[party.id]?.logo;
                   
                   return (
                   <div
                     key={party.id}
-                    className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow cursor-pointer"
+                    className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow cursor-pointer border"
+                    style={{ borderColor: `${partyColor}40` }}
                     onClick={() => setSelectedPartyForStats(party.nombre)}
                   >
                     <div className="flex items-center gap-4">
@@ -921,7 +989,7 @@ export default function Results() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-[#C41E3A]">{party.escanos}</p>
+                        <p className="text-2xl font-bold" style={{ color: partyColor }}>{party.escanos}</p>
                         <p className="text-xs text-[#666666]">escaños</p>
                       </div>
                     </div>
@@ -933,8 +1001,8 @@ export default function Results() {
                       </div>
                       <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#C41E3A] transition-all duration-500"
-                          style={{ width: `${party.porcentaje}%` }}
+                          className="h-full transition-all duration-500"
+                          style={{ backgroundColor: partyColor, width: `${party.porcentaje}%` }}
                         />
                       </div>
                     </div>
@@ -1045,6 +1113,7 @@ export default function Results() {
                         provinciaSeleccionada={provinciaSeleccionadaJuveniles}
                         votosProvincia={votosPorPartidoProvinciaJuveniles}
                         escanosProvincia={escanosProvinciaJuveniles}
+                        partyMeta={youthPartyMap}
                       />
                     </div>
                   </>
@@ -1136,6 +1205,7 @@ export default function Results() {
                         provinciaSeleccionada={provinciaSeleccionada}
                         votosProvincia={votosPorPartidoProvincia}
                         escanosProvincia={escanosProvincia}
+                        partyMeta={generalPartyMap}
                       />
                     </div>
                   </>
