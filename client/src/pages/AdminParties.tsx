@@ -16,6 +16,7 @@ interface PartyEdit {
 }
 
 export default function AdminParties() {
+  const logoBucket = import.meta.env.VITE_SUPABASE_LOGO_BUCKET || 'party-logos';
   const [activeTab, setActiveTab] = useState<'parties' | 'youth'>('parties');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<PartyEdit | null>(null);
@@ -87,23 +88,26 @@ export default function AdminParties() {
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('partyKey', editData.id);
+      const ext = file.name.split('.').pop() || 'png';
+      const safeFileName = `${editData.id.toLowerCase()}-${Date.now()}.${ext}`;
+      const filePath = `logos/${safeFileName}`;
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const { error: uploadError } = await supabase.storage
+        .from(logoBucket)
+        .upload(filePath, file, { upsert: true, cacheControl: '3600' });
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (uploadError) {
+        throw uploadError;
+      }
 
-      const data = await response.json();
-      setEditData({ ...editData, logo: data.url });
+      const { data: publicData } = supabase.storage.from(logoBucket).getPublicUrl(filePath);
+      const publicUrl = publicData.publicUrl;
+      setEditData({ ...editData, logo: publicUrl });
       toast.success('Logo subido correctamente');
     } catch (error) {
       console.error('Error uploading logo:', error);
-      toast.error('Error al subir el logo');
+      const message = error instanceof Error ? error.message : 'Error al subir el logo';
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -240,7 +244,7 @@ export default function AdminParties() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-4">
+        <div className="glass-surface p-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex gap-2 border border-slate-200 rounded-xl p-1">
               <button
@@ -284,7 +288,7 @@ export default function AdminParties() {
           onChange={(e) => e.target.files?.[0] && handleUploadLogo(e.target.files[0])}
         />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="glass-surface overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
@@ -342,7 +346,7 @@ export default function AdminParties() {
                       <td className="px-4 py-3">
                         <div className="flex justify-center gap-2">
                           <Button size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700"><Save size={16} /></Button>
-                          <Button size="sm" variant="outline" onClick={handleCancel}><X size={16} /></Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}><X size={16} /></Button>
                         </div>
                       </td>
                     </>

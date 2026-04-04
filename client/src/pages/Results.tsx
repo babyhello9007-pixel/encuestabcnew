@@ -66,8 +66,6 @@ interface PartyMetrics {
 export default function Results() {
   // Sincronizacion en tiempo real con WebSocket
   usePartySync();
-  const { data: partyConfigData } = trpc.parties.getAll.useQuery();
-  
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
@@ -725,7 +723,7 @@ export default function Results() {
           <LoadingAnimation />
         ) : (
           <div className="space-y-8">
-            <div className="rounded-3xl border border-slate-200/70 bg-gradient-to-br from-white via-rose-50/30 to-white p-4 sm:p-6 md:p-8 space-y-4 shadow-sm">
+            <div className="glass-surface p-4 sm:p-6 md:p-8 space-y-4">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Resultados en Vivo</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <div className="stat-box">
@@ -793,7 +791,7 @@ export default function Results() {
             </div>
 
             <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-              <div className="flex gap-2 sm:gap-3 min-w-max rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+              <div className="flex gap-2 sm:gap-3 min-w-max glass-surface p-2">
               <button
                 onClick={() => setActiveTab("general")}
                 className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
@@ -974,7 +972,7 @@ export default function Results() {
                   return (
                   <div
                     key={party.id}
-                    className="p-6 rounded-2xl space-y-4 hover:shadow-lg transition-all cursor-pointer border bg-white"
+                    className="p-6 rounded-2xl space-y-4 hover:shadow-lg transition-all cursor-pointer border glass-surface"
                     style={{ borderColor: `${partyColor}40` }}
                     onClick={() => setSelectedPartyForStats(party.nombre)}
                   >

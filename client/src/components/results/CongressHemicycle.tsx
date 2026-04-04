@@ -121,7 +121,8 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
           <span>{majority} / {totalEscanos} escaños</span>
         </div>
 
-        <svg width="100%" height="auto" viewBox="0 0 1240 540" className="w-full" preserveAspectRatio="xMidYMid meet">
+        <div className="relative [perspective:1200px]">
+        <svg width="100%" height="auto" viewBox="0 0 1240 540" className="w-full [transform:rotateX(8deg)]" preserveAspectRatio="xMidYMid meet">
           <defs>
             <radialGradient id="floorGradient" cx="50%" cy="70%" r="60%">
               <stop offset="0%" stopColor="#1e293b" stopOpacity="0.95" />
@@ -148,7 +149,8 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
                   cy={seat.y}
                   r={totalEscanos === 100 ? 9 : 8}
                   fill={resolvePartyColor(seat.party)}
-                  opacity={isHovered ? 1 : 0.82}
+                  opacity={isHovered ? 1 : 0.85}
+                  style={{ filter: isHovered ? 'drop-shadow(0 0 6px rgba(255,255,255,0.7))' : 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
                 />
                 {isHovered && (
                   <circle cx={seat.x} cy={seat.y} r={totalEscanos === 100 ? 13 : 12} fill="none" stroke="#fff" strokeWidth="2" />
@@ -157,6 +159,7 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
             );
           })}
         </svg>
+        </div>
 
         <div className="mt-5 flex items-center justify-between text-sm">
           <div className="text-slate-300">
