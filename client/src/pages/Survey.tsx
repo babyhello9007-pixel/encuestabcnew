@@ -144,8 +144,20 @@ function SurveyOld() {
     setIsSubmitting(true);
     try {
       const normalizedResponses = normalizeProvinceInResponse(responses);
-      const { error } = await supabase.from("respuestas").insert([normalizedResponses]);
+      let { error } = await supabase.from("respuestas").insert([normalizedResponses]);
       
+      if (error?.message?.includes("DELETE requires a WHERE clause")) {
+        const fallbackPayload = {
+          ...normalizedResponses,
+          voto_generales_otro: normalizedResponses.voto_generales,
+          voto_asociacion_juvenil_otro: normalizedResponses.voto_asociacion_juvenil,
+          voto_generales: null,
+          voto_asociacion_juvenil: null,
+        };
+        const fallbackInsert = await supabase.from("respuestas").insert([fallbackPayload]);
+        error = fallbackInsert.error || null;
+      }
+
       if (error) {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
         console.error(error);
@@ -398,4 +410,3 @@ function SurveyOld() {
     </div>
   );
 }
-

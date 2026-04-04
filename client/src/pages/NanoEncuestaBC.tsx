@@ -289,7 +289,19 @@ export default function NanoEncuestaBC() {
         sistema_pensiones: responses.sistema_pensiones || null,
       };
       
-      const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
+      let { error } = await supabase.from("respuestas").insert([dataToSubmit]);
+
+      if (error?.message?.includes("DELETE requires a WHERE clause")) {
+        const fallbackPayload = {
+          ...dataToSubmit,
+          voto_generales_otro: dataToSubmit.voto_generales,
+          voto_asociacion_juvenil_otro: dataToSubmit.voto_asociacion_juvenil,
+          voto_generales: null,
+          voto_asociacion_juvenil: null,
+        };
+        const fallbackInsert = await supabase.from("respuestas").insert([fallbackPayload]);
+        error = fallbackInsert.error || null;
+      }
 
       if (error) {
         toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
