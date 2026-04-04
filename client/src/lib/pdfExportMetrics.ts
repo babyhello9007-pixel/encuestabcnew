@@ -121,7 +121,7 @@ function drawTable(
 
 export async function exportPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null
@@ -269,7 +269,7 @@ async function getMetricsFromViews(activeTab: "general" | "youth" | "asoc-juv-ma
 
 export async function downloadPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null
@@ -282,4 +282,3 @@ export async function downloadPDFWithMetrics(
     throw error;
   }
 }
-

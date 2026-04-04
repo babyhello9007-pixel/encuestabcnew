@@ -18,7 +18,17 @@ export default function ImageLoader({
   className = '',
   style = {}
 }: ImageLoaderProps) {
+  const isValidImageSource = (value: string) => {
+    if (!value) return false;
+    const trimmed = value.trim();
+    if (trimmed.startsWith('/')) return true;
+    if (trimmed.startsWith('data:image/')) return true;
+    if (/^https?:\/\//i.test(trimmed)) return true;
+    return false;
+  };
+
   const [currentSrc, setCurrentSrc] = useState<string>(() => {
+    if (!isValidImageSource(src)) return '';
     // Primero intenta obtener desde logos embebidos
     const filename = src.split('/').pop() || '';
     if (filename && EMBEDDED_LOGOS[filename]) {
@@ -39,6 +49,12 @@ export default function ImageLoader({
   const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
+    if (!isValidImageSource(src)) {
+      setCurrentSrc('');
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
     const filename = src.split('/').pop() || '';
     if (filename && EMBEDDED_LOGOS[filename]) {
       setCurrentSrc(EMBEDDED_LOGOS[filename]);
@@ -107,6 +123,11 @@ export default function ImageLoader({
   };
 
   const handleError = () => {
+    if (!currentSrc) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
     const fallbacks = generateFallbacks(currentSrc);
     const currentIndex = fallbacks.indexOf(currentSrc);
     const newAttempt = attemptCount + 1;
@@ -115,7 +136,9 @@ export default function ImageLoader({
     if (currentIndex < fallbacks.length - 1) {
       // Reintentar con siguiente fallback
       const nextSrc = fallbacks[currentIndex + 1];
-      console.warn(`ImageLoader: Failed to load ${currentSrc}, trying ${nextSrc}`);
+      if (import.meta.env.DEV) {
+        console.warn(`ImageLoader: Failed to load ${currentSrc}, trying ${nextSrc}`);
+      }
       setCurrentSrc(nextSrc);
     } else if (newAttempt < 3) {
       // Último intento: buscar en EMBEDDED_LOGOS por similitud exhaustiva
@@ -130,15 +153,21 @@ export default function ImageLoader({
       });
       
       if (similarKey && EMBEDDED_LOGOS[similarKey]) {
-        console.warn(`ImageLoader: Using embedded logo ${similarKey} for ${filename}`);
+        if (import.meta.env.DEV) {
+          console.warn(`ImageLoader: Using embedded logo ${similarKey} for ${filename}`);
+        }
         setCurrentSrc(EMBEDDED_LOGOS[similarKey]);
       } else {
-        console.error(`ImageLoader: No logo found for ${filename}`);
+        if (import.meta.env.DEV) {
+          console.error(`ImageLoader: No logo found for ${filename}`);
+        }
         setHasError(true);
         setIsLoading(false);
       }
     } else {
-      console.error(`ImageLoader: Failed after multiple attempts for ${src}`);
+      if (import.meta.env.DEV) {
+        console.error(`ImageLoader: Failed after multiple attempts for ${src}`);
+      }
       setHasError(true);
       setIsLoading(false);
     }
@@ -146,7 +175,9 @@ export default function ImageLoader({
 
   const handleLoad = () => {
     setIsLoading(false);
-    console.debug(`ImageLoader: Successfully loaded ${currentSrc}`);
+    if (import.meta.env.DEV) {
+      console.debug(`ImageLoader: Successfully loaded ${currentSrc}`);
+    }
   };
 
   if (hasError) {
