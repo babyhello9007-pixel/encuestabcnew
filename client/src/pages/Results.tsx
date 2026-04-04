@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -96,6 +96,91 @@ export default function Results() {
 
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
+
+  const generalPartyMap = useMemo(() => {
+    const defaults = Object.fromEntries(
+      Object.entries(PARTIES_GENERAL).map(([key, party]) => [
+        key,
+        { key, name: party.name, color: "#9CA3AF", logo: "" },
+      ])
+    );
+    if (!partyConfigData?.parties?.length) return defaults;
+    partyConfigData.parties.forEach((party) => {
+      defaults[party.partyKey] = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+    });
+    return defaults;
+  }, [partyConfigData]);
+
+  const youthPartyMap = useMemo(() => {
+    const defaults = Object.fromEntries(
+      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [
+        key,
+        { key, name: party.name, color: "#9CA3AF", logo: "" },
+      ])
+    );
+    if (!partyConfigData?.youth?.length) return defaults;
+    partyConfigData.youth.forEach((party) => {
+      defaults[party.partyKey] = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+    });
+    return defaults;
+  }, [partyConfigData]);
+
+  useEffect(() => {
+    const loadPartyConfig = async () => {
+      const { data, error } = await supabase
+        .from("party_configuration")
+        .select("party_key, display_name, color, logo_url, party_type, is_active")
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error loading party configuration:", error);
+        return;
+      }
+
+      const allRows = data || [];
+      setPartyConfigData({
+        parties: allRows
+          .filter((row: any) => row.party_type === "general")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+        youth: allRows
+          .filter((row: any) => row.party_type === "youth")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+      });
+    };
+
+    loadPartyConfig();
+    const channel = supabase
+      .channel("party-configuration-results")
+      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, () => {
+        loadPartyConfig();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
@@ -155,9 +240,9 @@ export default function Results() {
             .select("*");
 
           if (generalData && generalData.length > 0) {
-            // Inicializar con todos los partidos de PARTIES_GENERAL con 0 votos
+            // Inicializar con todos los partidos configurados con 0 votos
             const generalVotos: Record<string, number> = {};
-            Object.keys(PARTIES_GENERAL).forEach((key) => {
+            Object.keys(generalPartyMap).forEach((key) => {
               generalVotos[key] = 0;
             });
             
@@ -176,12 +261,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
+            Object.entries(generalPartyMap).forEach(([key, party]) => {
               nombres[key] = party.name;
               logos[key] = party.logo;
             });
 
-            const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos);
+            const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: generalPartyMap[s.id]?.color,
+            }));
             setGeneralStats(stats);
             // Los escaños se actualizarán en el useEffect cuando votosPorProvincia esté disponible
             // (este useEffect se ejecutará después de que votosPorProvincia se haya cargado)
@@ -279,17 +367,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
+            Object.entries(generalPartyMap).forEach(([key, party]) => {
               nombres[key] = party.name;
               logos[key] = party.logo;
             });
 
-            console.log('exampleVotos keys:', Object.keys(exampleVotos));
-            console.log('PARTIES_GENERAL keys:', Object.keys(PARTIES_GENERAL));
-            console.log('logos keys:', Object.keys(logos));
-            const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos);
-            console.log('Stats generales:', stats);
-            console.log('Logos disponibles:', logos);
+            const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: generalPartyMap[s.id]?.color,
+            }));
             setGeneralStats(stats);
           }
         } catch (err) {
@@ -322,12 +408,15 @@ export default function Results() {
           const nombres: Record<string, string> = {};
           const logos: Record<string, string> = {};
 
-          Object.entries(PARTIES_GENERAL).forEach(([key, party]) => {
+          Object.entries(generalPartyMap).forEach(([key, party]) => {
             nombres[key] = party.name;
             logos[key] = party.logo;
           });
 
-          const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos);
+          const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
+            ...s,
+            color: generalPartyMap[s.id]?.color,
+          }));
           setGeneralStats(stats);
         }
 
@@ -347,12 +436,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(YOUTH_ASSOCIATIONS).forEach(([key, assoc]) => {
+            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
               nombres[key] = assoc.name;
               logos[key] = assoc.logo;
             });
 
-            const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos);
+            const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: youthPartyMap[s.id]?.color,
+            }));
             setYouthStats(stats);
           } else {
             // Datos de ejemplo si no hay datos
@@ -383,12 +475,15 @@ export default function Results() {
             const nombres: Record<string, string> = {};
             const logos: Record<string, string> = {};
 
-            Object.entries(YOUTH_ASSOCIATIONS).forEach(([key, assoc]) => {
+            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
               nombres[key] = assoc.name;
               logos[key] = assoc.logo;
             });
 
-            const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos);
+            const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: youthPartyMap[s.id]?.color,
+            }));
             setYouthStats(stats);
           }
         } catch (err) {
@@ -421,12 +516,15 @@ export default function Results() {
           const nombres: Record<string, string> = {};
           const logos: Record<string, string> = {};
 
-          Object.entries(YOUTH_ASSOCIATIONS).forEach(([key, assoc]) => {
+          Object.entries(youthPartyMap).forEach(([key, assoc]) => {
             nombres[key] = assoc.name;
             logos[key] = assoc.logo;
           });
 
-          const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos);
+          const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
+            ...s,
+            color: youthPartyMap[s.id]?.color,
+          }));
           setYouthStats(stats);
         }
 
@@ -565,7 +663,7 @@ export default function Results() {
     fetchResults();
     const interval = setInterval(fetchResults, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [generalPartyMap, youthPartyMap]);
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
   const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
@@ -626,12 +724,12 @@ export default function Results() {
         </div>
       </header>
 
-      <main className="flex-1 container py-12">
+      <main className="flex-1 container py-10">
         {loading ? (
           <LoadingAnimation />
         ) : (
           <div className="space-y-8">
-            <div className="liquid-glass p-4 sm:p-6 md:p-8 space-y-4">
+            <div className="glass-surface p-4 sm:p-6 md:p-8 space-y-4">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Resultados en Vivo</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <div className="stat-box">
@@ -698,124 +796,124 @@ export default function Results() {
               </div>
             </div>
 
-            <div className="overflow-x-auto border-b border-[#E0D5CC] -mx-4 sm:mx-0 px-4 sm:px-0">
-              <div className="flex gap-2 sm:gap-4 min-w-max">
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+              <div className="flex gap-2 sm:gap-3 min-w-max glass-surface p-2">
               <button
                 onClick={() => setActiveTab("general")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "general"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Elecciones Generales
               </button>
               <button
                 onClick={() => setActiveTab("mapa-hemiciclo")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "mapa-hemiciclo"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Mapa y Hemiciclo
               </button>
               <button
                 onClick={() => setActiveTab("encuestadoras-externas")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "encuestadoras-externas"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Encuestadoras
               </button>
               <button
                 onClick={() => setActiveTab("ccaa")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "ccaa"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 CCAA
               </button>
               <button
                 onClick={() => setActiveTab("provincias")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "provincias"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Provincias
               </button>
               <button
                 onClick={() => setActiveTab("comparacion-ccaa")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "comparacion-ccaa"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Comparar CCAA
               </button>
               <button
                 onClick={() => setActiveTab("youth")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "youth"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Asociaciones
               </button>
               <button
                 onClick={() => setActiveTab("asoc-juv-mapa-hemiciclo")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "asoc-juv-mapa-hemiciclo"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Asoc. Juveniles; Mapa y Hemiciclo
               </button>
               <button
                 onClick={() => setActiveTab("leaders")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "leaders"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Líderes Preferidos
               </button>
               <button
                 onClick={() => setActiveTab("tendencias")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "tendencias"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Variación de Votaciones por Día
               </button>
               <button
                 onClick={() => setActiveTab("lideres-preferidos")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "lideres-preferidos"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Líderes de Partidos
               </button>
               <button
                 onClick={() => setActiveTab("preguntas-varias")}
-                className={`pb-4 px-4 font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
                   activeTab === "preguntas-varias"
-                    ? "text-[#C41E3A] border-b-2 border-[#C41E3A]"
-                    : "text-[#666666] hover:text-[#2D2D2D]"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
                 Preguntas Varias
@@ -863,49 +961,15 @@ export default function Results() {
             <div className="space-y-4">
               {stats.length > 0 && (
                 (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
-                  // Buscar el logo en PARTIES_GENERAL o YOUTH_ASSOCIATIONS basándose en el nombre
-                  let logoUrl = party.logo;
-                  
-                  // Si no hay logo, buscar en PARTIES_GENERAL por nombre
-                  if (!logoUrl) {
-                    for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
-                      if (partyData.name === party.nombre) {
-                        logoUrl = partyData.logo;
-                        break;
-                      }
-                    }
-                  }
-                  
-                  // Si aún no hay logo, buscar en YOUTH_ASSOCIATIONS por nombre
-                  if (!logoUrl) {
-                    for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
-                      if (assocData.name === party.nombre) {
-                        logoUrl = assocData.logo;
-                        break;
-                      }
-                    }
-                  }
-                  
-                  // Si aún no hay logo, intentar con el ID en PARTIES_GENERAL
-                  if (!logoUrl) {
-                    const partyData = PARTIES_GENERAL[party.id as keyof typeof PARTIES_GENERAL];
-                    if (partyData) {
-                      logoUrl = partyData.logo;
-                    }
-                  }
-                  
-                  // Si aún no hay logo, intentar con el ID en YOUTH_ASSOCIATIONS
-                  if (!logoUrl) {
-                    const assocData = YOUTH_ASSOCIATIONS[party.id as keyof typeof YOUTH_ASSOCIATIONS];
-                    if (assocData) {
-                      logoUrl = assocData.logo;
-                    }
-                  }
+                  const currentPartyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
+                  const logoUrl = party.logo || currentPartyMap[party.id]?.logo || "";
+                  const partyColor = party.color || currentPartyMap[party.id]?.color || "#C41E3A";
                   
                   return (
                   <div
                     key={party.id}
-                    className="glass-card p-6 rounded-xl space-y-4 hover:shadow-lg transition-shadow cursor-pointer"
+                    className="p-6 rounded-2xl space-y-4 hover:shadow-lg transition-all cursor-pointer border glass-surface"
+                    style={{ borderColor: `${partyColor}40` }}
                     onClick={() => setSelectedPartyForStats(party.nombre)}
                   >
                     <div className="flex items-center gap-4">
@@ -921,8 +985,9 @@ export default function Results() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-[#C41E3A]">{party.escanos}</p>
+                        <p className="text-2xl font-bold" style={{ color: partyColor }}>{party.escanos}</p>
                         <p className="text-xs text-[#666666]">escaños</p>
+                        <p className="text-[11px] font-mono mt-1" style={{ color: partyColor }}>{partyColor}</p>
                       </div>
                     </div>
 
@@ -933,8 +998,8 @@ export default function Results() {
                       </div>
                       <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-[#C41E3A] transition-all duration-500"
-                          style={{ width: `${party.porcentaje}%` }}
+                          className="h-full transition-all duration-500"
+                          style={{ backgroundColor: partyColor, width: `${party.porcentaje}%` }}
                         />
                       </div>
                     </div>
@@ -1045,6 +1110,7 @@ export default function Results() {
                         provinciaSeleccionada={provinciaSeleccionadaJuveniles}
                         votosProvincia={votosPorPartidoProvinciaJuveniles}
                         escanosProvincia={escanosProvinciaJuveniles}
+                        partyMeta={youthPartyMap}
                       />
                     </div>
                   </>
@@ -1136,6 +1202,7 @@ export default function Results() {
                         provinciaSeleccionada={provinciaSeleccionada}
                         votosProvincia={votosPorPartidoProvincia}
                         escanosProvincia={escanosProvincia}
+                        partyMeta={generalPartyMap}
                       />
                     </div>
                   </>

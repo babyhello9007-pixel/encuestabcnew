@@ -3,7 +3,6 @@ import { Share2, X, Download, Image, MessageCircle, Send, Linkedin } from "lucid
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import { generateAdvancedInfographic } from "@/lib/pngExportAdvanced";
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from "@/lib/surveyData";
 import ImageLoader from "./ImageLoader";
 import { ColorTheme, getThemeColors, getThemeList } from "@/lib/colorThemes";
 
@@ -14,10 +13,11 @@ interface PartyStats {
   porcentaje: number;
   escanos: number;
   logo: string;
+  color?: string;
 }
 
 interface ShareResultsAdvancedProps {
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis";
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias";
   stats: PartyStats[];
   totalVotes: number;
   edadPromedio?: number | null;
@@ -41,34 +41,8 @@ export function ShareResultsAdvanced({
 
   // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
   const getLogoForParty = (partyId: string, partyName?: string) => {
-    // Primero intentar búsqueda por ID
-    if (activeTab === "general") {
-      const party = PARTIES_GENERAL[partyId as keyof typeof PARTIES_GENERAL];
-      if (party?.logo) return party.logo;
-    } else {
-      const party = YOUTH_ASSOCIATIONS[partyId as keyof typeof YOUTH_ASSOCIATIONS];
-      if (party?.logo) return party.logo;
-    }
-
-    // Si no hay logo por ID, buscar por nombre en PARTIES_GENERAL
-    if (partyName) {
-      for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
-        if (partyData.name === partyName) {
-          return partyData.logo;
-        }
-      }
-    }
-
-    // Si no hay logo aún, buscar por nombre en YOUTH_ASSOCIATIONS
-    if (partyName) {
-      for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
-        if (assocData.name === partyName) {
-          return assocData.logo;
-        }
-      }
-    }
-
-    return "";
+    const fromStats = stats.find((s) => s.id === partyId || s.nombre === partyName);
+    return fromStats?.logo || "";
   };
 
   const generateShareText = (party: PartyStats) => {
@@ -654,7 +628,7 @@ export function ShareResultsAdvanced({
                   onClick={() =>
                     generateAdvancedInfographic(
                       stats,
-                      activeTab,
+                      activeTab === "youth" ? "youth" : "general",
                       totalVotes,
                       edadPromedio
                     )

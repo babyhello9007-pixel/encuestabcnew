@@ -1,5 +1,4 @@
 import html2canvas from 'html2canvas';
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from './surveyData';
 
 interface PartyStats {
   id?: string;
@@ -8,32 +7,11 @@ interface PartyStats {
   porcentaje: number;
   escanos: number;
   logo: string;
+  color?: string;
 }
 
-const getLogoForParty = (partyId: string, partyName: string, activeTab: "general" | "youth"): string => {
-  // Primero intentar búsqueda por ID
-  if (activeTab === "general") {
-    const party = PARTIES_GENERAL[partyId as keyof typeof PARTIES_GENERAL];
-    if (party?.logo) return party.logo;
-  } else {
-    const party = YOUTH_ASSOCIATIONS[partyId as keyof typeof YOUTH_ASSOCIATIONS];
-    if (party?.logo) return party.logo;
-  }
-  
-  // Si no hay logo por ID, buscar por nombre en PARTIES_GENERAL
-  for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
-    if (partyData.name === partyName) {
-      return partyData.logo;
-    }
-  }
-  
-  // Si no hay logo aún, buscar por nombre en YOUTH_ASSOCIATIONS
-  for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
-    if (assocData.name === partyName) {
-      return assocData.logo;
-    }
-  }
-  
+const getLogoForParty = (_partyId: string, _partyName: string, _activeTab: "general" | "youth", fallbackLogo?: string): string => {
+  if (fallbackLogo) return fallbackLogo;
   return '';
 };
 
@@ -143,7 +121,7 @@ export const generateAdvancedInfographic = async (
   stats.slice(0, 6).forEach((party) => {
     const card = document.createElement('div');
     card.style.backgroundColor = '#FFFFFF';
-    card.style.border = '2px solid #C41E3A';
+    card.style.border = `2px solid ${party.color || '#C41E3A'}`;
     card.style.borderRadius = '12px';
     card.style.padding = '30px';
     card.style.display = 'flex';
@@ -154,8 +132,10 @@ export const generateAdvancedInfographic = async (
     const logoSection = document.createElement('div');
     logoSection.style.flexShrink = '0';
     const logo = document.createElement('img');
-    const logoUrl = getLogoForParty(party.id || '', party.nombre, activeTab);
+    const logoUrl = getLogoForParty(party.id || '', party.nombre, activeTab, party.logo);
     logo.src = logoUrl || party.logo;
+    logo.crossOrigin = 'anonymous';
+    logo.referrerPolicy = 'no-referrer';
     logo.style.width = '100px';
     logo.style.height = '100px';
     logo.style.objectFit = 'contain';
@@ -200,9 +180,9 @@ export const generateAdvancedInfographic = async (
       return stat;
     };
 
-    stats.appendChild(createStat('Votos', party.votos.toLocaleString(), '#C41E3A'));
+    stats.appendChild(createStat('Votos', party.votos.toLocaleString(), party.color || '#C41E3A'));
     stats.appendChild(createStat('Porcentaje', `${party.porcentaje.toFixed(1)}%`, '#1D1D1F'));
-    stats.appendChild(createStat('Escaños', party.escanos.toString(), '#C41E3A'));
+    stats.appendChild(createStat('Escaños', party.escanos.toString(), party.color || '#C41E3A'));
 
     info.appendChild(name);
     info.appendChild(stats);
