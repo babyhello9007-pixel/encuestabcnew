@@ -194,7 +194,7 @@ export default function AdminParties() {
     handleEdit(newItem);
   };
 
-  const handleCancelEdit = () => {
+  const handleCancel = () => {
     setEditingId(null);
     setEditData(null);
   };
@@ -224,7 +224,7 @@ export default function AdminParties() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="glass-surface p-6">
+        <div className="rounded-2xl bg-white/85 backdrop-blur border border-slate-200 p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Administración de Partidos</h1>
             <span
