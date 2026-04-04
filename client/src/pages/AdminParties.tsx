@@ -220,7 +220,7 @@ export default function AdminParties() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="rounded-2xl bg-white/85 backdrop-blur border border-slate-200 p-6 shadow-sm">
+        <div className="glass-surface p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Administración de Partidos</h1>
             <span
@@ -240,7 +240,7 @@ export default function AdminParties() {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 space-y-4">
+        <div className="glass-surface p-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex gap-2 border border-slate-200 rounded-xl p-1">
               <button
@@ -284,7 +284,7 @@ export default function AdminParties() {
           onChange={(e) => e.target.files?.[0] && handleUploadLogo(e.target.files[0])}
         />
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="glass-surface overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
