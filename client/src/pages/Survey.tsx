@@ -147,7 +147,11 @@ function SurveyOld() {
       const { error } = await supabase.from("respuestas").insert([normalizedResponses]);
       
       if (error) {
-        toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
+        if (error.message?.includes("DELETE requires a WHERE clause")) {
+          toast.error("Error de trigger en Supabase (respuestas). Hay que corregir check_and_delete_respuesta en la base de datos.");
+        } else {
+          toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
+        }
         console.error(error);
       } else {
         // Registrar el voto en el cooldown
@@ -398,4 +402,3 @@ function SurveyOld() {
     </div>
   );
 }
-

@@ -292,7 +292,11 @@ export default function NanoEncuestaBC() {
       const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
 
       if (error) {
-        toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
+        if (error.message?.includes("DELETE requires a WHERE clause")) {
+          toast.error("Error de trigger en Supabase (respuestas). Hay que corregir la función check_and_delete_respuesta en BD.");
+        } else {
+          toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
+        }
         console.error(error);
         setIsSubmitting(false);
         return;

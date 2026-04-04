@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Loader2, Search } from "lucide-react";
 import { PROVINCES } from "@/lib/surveyData";
-import { getPartyColor } from "@/lib/partyConfig";
 import PartyLogo from "@/components/PartyLogo";
 
 interface ProvinceResults {
@@ -23,7 +22,11 @@ interface ProvinceSummary {
   ideologia_promedio: number;
 }
 
-export function ProvincesResultsSection() {
+interface ProvincesResultsSectionProps {
+  partyMeta?: Record<string, { color?: string; logo?: string }>;
+}
+
+export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSectionProps) {
   const [provinceResults, setProvinceResults] = useState<ProvinceResults[]>([]);
   const [provinceSummary, setProvinceSummary] = useState<ProvinceSummary[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
@@ -84,7 +87,7 @@ export function ProvincesResultsSection() {
     name: r.partido,
     votos: r.votos,
     porcentaje: r.porcentaje,
-    color: getPartyColor(r.partido)
+    color: partyMeta[r.partido]?.color || "#9CA3AF"
   }));
 
   return (
@@ -225,7 +228,7 @@ export function ProvincesResultsSection() {
                       <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm font-medium text-slate-900">
                           <span className="inline-flex items-center gap-2">
-                            <PartyLogo partyName={result.partido} size={32} />
+                            <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} strictExternal />
                             {result.partido}
                           </span>
                         </td>
