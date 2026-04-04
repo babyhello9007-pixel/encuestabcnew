@@ -37,6 +37,7 @@ import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { usePartySync } from "@/hooks/usePartySync";
+import { trpc } from "@/lib/trpc";
 
 interface PartyStats {
   id: string;
@@ -65,6 +66,7 @@ interface PartyMetrics {
 export default function Results() {
   // Sincronizacion en tiempo real con WebSocket
   usePartySync();
+  const { data: partyConfigData } = trpc.parties.getAll.useQuery();
   
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
@@ -175,6 +177,38 @@ export default function Results() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const generalPartyMap = useMemo(() => {
+    const defaults = Object.fromEntries(
+      Object.entries(PARTIES_GENERAL).map(([key, party]) => [key, { key, ...party }])
+    );
+    if (!partyConfigData?.parties?.length) return defaults;
+    partyConfigData.parties.forEach((party) => {
+      defaults[party.partyKey] = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+    });
+    return defaults;
+  }, [partyConfigData]);
+
+  const youthPartyMap = useMemo(() => {
+    const defaults = Object.fromEntries(
+      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [key, { key, ...party }])
+    );
+    if (!partyConfigData?.youth?.length) return defaults;
+    partyConfigData.youth.forEach((party) => {
+      defaults[party.partyKey] = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+    });
+    return defaults;
+  }, [partyConfigData]);
 
   useEffect(() => {
     if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
