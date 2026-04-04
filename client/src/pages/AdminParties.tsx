@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from '@/lib/surveyData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
