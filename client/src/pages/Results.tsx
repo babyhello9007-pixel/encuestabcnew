@@ -2,8 +2,17 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Map, Users, Vote, BarChart3, Share2, Sparkles } from "lucide-react";
-import { useLocation } from "wouter";
+import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS } from '@/lib/surveyData';
+import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
+import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
+import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
+import { Loader2, Download, Sparkles } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LoadingAnimation } from "@/components/LoadingAnimation";
+import { ShareResultsModern } from "@/components/ShareResultsModern";
+import { CommentsSection } from "@/components/CommentsSection";
+import { PartyMetricsDisplay } from "@/components/PartyMetricsDisplay";
+import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
 import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
@@ -79,6 +88,10 @@ export default function Results() {
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
 
+  useEffect(() => {
+    document.title = "La Encuesta de BC";
+  }, []);
+
   const generalPartyMap = useMemo(() => {
     const defaults = Object.fromEntries(
       Object.entries(PARTIES_GENERAL).map(([key, party]) => [
@@ -116,6 +129,61 @@ export default function Results() {
     });
     return defaults;
   }, [partyConfigData]);
+
+  useEffect(() => {
+    const loadPartyConfig = async () => {
+      const { data, error } = await supabase
+        .from("party_configuration")
+        .select("party_key, display_name, color, logo_url, party_type, is_active")
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error loading party configuration:", error);
+        return;
+      }
+
+      const allRows = data || [];
+      setRuntimePartyConfig(
+        allRows.map((row: any) => ({
+          key: row.party_key,
+          displayName: row.display_name,
+          color: row.color,
+          logoUrl: row.logo_url,
+          partyType: row.party_type,
+        }))
+      );
+      setPartyConfigData({
+        parties: allRows
+          .filter((row: any) => row.party_type === "general")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+        youth: allRows
+          .filter((row: any) => row.party_type === "youth" || row.party_type === "asociacion_juvenil" || row.party_type === "juvenile")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+      });
+    };
+
+    loadPartyConfig();
+    const channel = supabase
+      .channel("party-configuration-results")
+      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, () => {
+        loadPartyConfig();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     const loadPartyConfig = async () => {
@@ -616,6 +684,17 @@ export default function Results() {
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
   const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
+  const partyColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    [...Object.values(generalPartyMap), ...Object.values(youthPartyMap)].forEach((party: any) => {
+      if (!party) return;
+      const key = typeof party.key === "string" ? party.key.toUpperCase() : "";
+      const name = typeof party.name === "string" ? party.name.toUpperCase() : "";
+      if (key && party.color) map[key] = party.color;
+      if (name && party.color) map[name] = party.color;
+    });
+    return map;
+  }, [generalPartyMap, youthPartyMap]);
 
   const activeStats = activeTab === "youth" ? youthStats : generalStats;
   const activePartyMap = mapMode === "youth" ? partyMapByType.youthMap : partyMapByType.generalMap;
@@ -700,12 +779,11 @@ export default function Results() {
                   <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                   PDF
                 </Button>
-                <ShareResultsAdvanced 
-                  activeTab={activeTab} 
-                  stats={stats}
-                  totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
-                  edadPromedio={edadPromedio}
-                  partyMeta={activeTab === "youth" ? youthPartyMap : generalPartyMap}
+                <ShareResultsModern
+                  stats={generalStats}
+                  youthStats={youthStats}
+                  totalResponses={totalResponses}
+                  cooldownMinutes={15}
                 />
               </div>
             </div>
@@ -841,12 +919,11 @@ export default function Results() {
                   <Download className="h-4 w-4" />
                   PDF
                 </Button>
-                <ShareResultsAdvanced 
-                  activeTab={activeTab} 
-                  stats={stats}
-                  totalVotes={stats.reduce((sum, s) => sum + s.votos, 0)}
-                  edadPromedio={edadPromedio}
-                  partyMeta={activeTab === "youth" ? youthPartyMap : generalPartyMap}
+                <ShareResultsModern
+                  stats={generalStats}
+                  youthStats={youthStats}
+                  totalResponses={totalResponses}
+                  cooldownMinutes={15}
                 />
               </div>
               </div>
@@ -931,10 +1008,10 @@ export default function Results() {
 
             <>
             {activeTab === "tendencias" && (
-              <TrendenciesChart />
+              <TrendenciesChart partyColors={partyColorMap} />
             )}
             {activeTab === "lideres-preferidos" && (
-              <LeadersResultsChart />
+              <LeadersResultsChart partyColors={partyColorMap} />
             )}
             {activeTab === "preguntas-varias" && (
               <PreguntasVariasSection />
