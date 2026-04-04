@@ -24,6 +24,7 @@ export default function AdminParties() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [syncStatus, setSyncStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadPartyConfiguration = async () => {
@@ -64,7 +65,12 @@ export default function AdminParties() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'party_configuration' }, () => {
         loadPartyConfiguration();
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setSyncStatus('connected');
+        if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+          setSyncStatus('error');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -105,13 +111,19 @@ export default function AdminParties() {
 
   const handleSave = async () => {
     if (!editData) return;
+    const normalizedColor = editData.color.trim().toUpperCase();
+    const isValidHex = /^#[0-9A-F]{6}$/.test(normalizedColor);
+    if (!isValidHex) {
+      toast.error('Color inválido. Usa formato hexadecimal #RRGGBB');
+      return;
+    }
 
     const { error } = await supabase
       .from('party_configuration')
       .upsert({
         party_key: editData.id,
         display_name: editData.displayName.trim(),
-        color: editData.color,
+        color: normalizedColor,
         logo_url: editData.logo,
         party_type: editData.type,
         is_active: editData.isActive,
@@ -178,7 +190,7 @@ export default function AdminParties() {
     handleEdit(newItem);
   };
 
-  const handleCancel = () => {
+  const handleCancelEdit = () => {
     setEditingId(null);
     setEditData(null);
   };
@@ -209,7 +221,20 @@ export default function AdminParties() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-12 px-4">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="rounded-2xl bg-white/85 backdrop-blur border border-slate-200 p-6 shadow-sm">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Administración de Partidos</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Administración de Partidos</h1>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                syncStatus === 'connected'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : syncStatus === 'connecting'
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : 'bg-red-50 text-red-700 border-red-200'
+              }`}
+            >
+              {syncStatus === 'connected' ? 'Sincronizado con Supabase' : syncStatus === 'connecting' ? 'Conectando Supabase…' : 'Error de sincronización'}
+            </span>
+          </div>
           <p className="text-slate-600">
             Gestión directa con Supabase: cualquier cambio de nombre, color o logo se reflejará automáticamente en Resultados.
           </p>
@@ -317,7 +342,7 @@ export default function AdminParties() {
                       <td className="px-4 py-3">
                         <div className="flex justify-center gap-2">
                           <Button size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700"><Save size={16} /></Button>
-                          <Button size="sm" variant="outline" onClick={handleCancel}><X size={16} /></Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}><X size={16} /></Button>
                         </div>
                       </td>
                     </>
