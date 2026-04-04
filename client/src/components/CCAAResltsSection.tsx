@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Loader2 } from "lucide-react";
-import { getPartyColor } from "@/lib/partyConfig";
 import PartyLogo from "@/components/PartyLogo";
 
 interface CCAAReslts {
@@ -22,7 +21,11 @@ interface CCAASummary {
   ideologia_promedio: number;
 }
 
-export function CCAAResltsSection() {
+interface CCAAResltsSectionProps {
+  partyMeta?: Record<string, { color?: string; logo?: string }>;
+}
+
+export function CCAAResltsSection({ partyMeta = {} }: CCAAResltsSectionProps) {
   const [ccaaResults, setCCAAReslts] = useState<CCAAReslts[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
   const [selectedCCAA, setSelectedCCAA] = useState<string | null>(null);
@@ -90,7 +93,7 @@ export function CCAAResltsSection() {
     name: r.partido,
     votos: r.votos,
     porcentaje: r.porcentaje,
-    color: getPartyColor(r.partido)
+    color: partyMeta[r.partido]?.color || "#9CA3AF"
   }));
 
   const analysisTitle = analysisType === "generales" 
@@ -250,7 +253,7 @@ export function CCAAResltsSection() {
                       <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm font-medium text-slate-900">
                           <span className="inline-flex items-center gap-2">
-                            <PartyLogo partyName={result.partido} size={32} />
+                            <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} strictExternal />
                             {result.partido}
                           </span>
                         </td>

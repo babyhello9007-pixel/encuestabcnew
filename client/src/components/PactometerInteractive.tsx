@@ -18,42 +18,6 @@ interface PactometerInteractiveProps {
   requiredForMajority?: number;
 }
 
-// Colores mejorados y vibrantes para partidos políticos
-const PARTY_COLORS: Record<string, string> = {
-  'PP': '#0066FF',           // Azul más vibrante
-  'PSOE': '#E81B23',         // Rojo más vibrante
-  'VOX': '#2ECC71',          // Verde más vibrante
-  'SUMAR': '#9B2D96',        // Púrpura
-  'PODEMOS': '#7B3FF2',      // Púrpura más vibrante
-  'JUNTS': '#003F9F',        // Azul oscuro
-  'ERC': '#FFD700',          // Oro
-  'PNV': '#00B050',          // Verde oscuro
-  'ALIANZA': '#003D99',      // Azul oscuro
-  'BILDU': '#00AA44',        // Verde
-  'SAF': '#FF6600',          // Naranja
-  'CC': '#FFCC00',           // Amarillo
-  'UPN': '#0066FF',          // Azul
-  'CIUDADANOS': '#FF9900',   // Naranja
-  'PLIB': '#FFD700',         // Oro
-  'EB': '#999999',           // Gris
-  'BNG': '#003D99',          // Azul oscuro
-  'FO': '#CC0000',           // Rojo oscuro
-  'CJ': '#0066FF',           // Azul
-  'FALANGE': '#FF0000',      // Rojo puro
-  'IE': '#CC0000',           // Rojo oscuro
-  'COMPROMIS': '#FF9900',    // Naranja
-  'DO': '#FFD700',           // Oro
-  'AA': '#FF0000',           // Rojo
-  'CUP': '#FFC400',          // Amarillo
-  'PACMA': '#00AA44',        // Verde
-  'PCTE': '#CC0000',         // Rojo
-  'UPL': '#0066FF',          // Azul
-};
-
-const getPartyColor = (partyId: string): string => {
-  return PARTY_COLORS[partyId] || '#999999';
-};
-
 export default function PactometerInteractive({ 
   stats, 
   totalSeats = 350, 
@@ -121,6 +85,8 @@ export default function PactometerInteractive({
       .sort((a, b) => b.escanos - a.escanos);
   }, [stats]);
 
+  const getPartyColor = (party: PartyStats): string => party.color || "#9CA3AF";
+
   return (
     <div className="flex gap-6 relative">
       {/* Contenido principal a la izquierda */}
@@ -161,7 +127,7 @@ export default function PactometerInteractive({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {sortedStats.map(party => {
             const isSelected = selectedParties.includes(party.id);
-            const partyColor = getPartyColor(party.id);
+            const partyColor = getPartyColor(party);
 
             return (
               <button
@@ -206,7 +172,7 @@ export default function PactometerInteractive({
                 <div className="flex items-center gap-3 flex-1">
                   <div
                     className="w-4 h-4 rounded"
-                    style={{ backgroundColor: getPartyColor(party.id) }}
+                    style={{ backgroundColor: getPartyColor(party) }}
                   />
                   <span className="font-semibold text-slate-900 min-w-32">{party.nombre}</span>
                 </div>
@@ -216,7 +182,7 @@ export default function PactometerInteractive({
                       className="h-full transition-all duration-300"
                       style={{
                         width: `${(party.escanos / totalSeats) * 100}%`,
-                        backgroundColor: getPartyColor(party.id),
+                        backgroundColor: getPartyColor(party),
                       }}
                     />
                   </div>
