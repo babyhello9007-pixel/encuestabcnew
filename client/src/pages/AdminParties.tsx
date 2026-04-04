@@ -1,19 +1,18 @@
-import { useState, useRef, useEffect } from 'react';
-import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from '@/lib/surveyData';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit2, Save, X, Plus, Trash2, Upload } from 'lucide-react';
+import { Edit2, Save, X, Plus, Trash2, Upload, Search } from 'lucide-react';
 import PartyLogo from '@/components/PartyLogo';
-import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { usePartySync } from '@/hooks/usePartySync';
+import { supabase } from '@/lib/supabase';
 
 interface PartyEdit {
   id: string;
-  name: string;
   displayName: string;
   color: string;
   logo: string;
+  type: 'general' | 'youth';
+  isActive: boolean;
 }
 
 export default function AdminParties() {
@@ -24,42 +23,59 @@ export default function AdminParties() {
   const [youth, setYouth] = useState<PartyEdit[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [syncStatus, setSyncStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sincronizacion en tiempo real con WebSocket
-  usePartySync();
+  const loadPartyConfiguration = async () => {
+    const { data, error } = await supabase
+      .from('party_configuration')
+      .select('party_key, display_name, color, logo_url, party_type, is_active')
+      .order('party_type', { ascending: true })
+      .order('display_name', { ascending: true });
 
-  // Obtener datos de partidos desde tRPC
-  const { data: partiesData, isLoading: isLoadingParties } = trpc.parties.getAll.useQuery();
-  const updatePartyMutation = trpc.parties.update.useMutation();
-  const createPartyMutation = trpc.parties.create.useMutation();
-  const deletePartyMutation = trpc.parties.delete.useMutation();
-  const utils = trpc.useUtils();
-
-  // Cargar datos cuando estén disponibles
-  useEffect(() => {
-    if (partiesData) {
-      setParties(
-        partiesData.parties.map((p) => ({
-          id: p.partyKey,
-          name: p.partyKey,
-          displayName: p.displayName,
-          color: p.color,
-          logo: p.logoUrl,
-        }))
-      );
-      setYouth(
-        partiesData.youth.map((y) => ({
-          id: y.partyKey,
-          name: y.partyKey,
-          displayName: y.displayName,
-          color: y.color,
-          logo: y.logoUrl,
-        }))
-      );
-      setLoading(false);
+    if (error) {
+      console.error('Error loading party configuration:', error);
+      toast.error('No se pudo cargar la configuración de partidos');
+      return;
     }
-  }, [partiesData]);
+
+    const mapped = (data || []).map((row) => ({
+      id: row.party_key,
+      displayName: row.display_name,
+      color: row.color,
+      logo: row.logo_url,
+      type: row.party_type as 'general' | 'youth',
+      isActive: row.is_active ?? true,
+    }));
+
+    setParties(mapped.filter((item) => item.type === 'general'));
+    setYouth(mapped.filter((item) => item.type === 'youth'));
+  };
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await loadPartyConfiguration();
+      setLoading(false);
+    })();
+
+    const channel = supabase
+      .channel('party-configuration-admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'party_configuration' }, () => {
+        loadPartyConfiguration();
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setSyncStatus('connected');
+        if (status === 'TIMED_OUT' || status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+          setSyncStatus('error');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleEdit = (item: PartyEdit) => {
     setEditingId(item.id);
@@ -83,9 +99,7 @@ export default function AdminParties() {
       if (!response.ok) throw new Error('Upload failed');
 
       const data = await response.json();
-      const logoUrl = data.url;
-
-      setEditData({ ...editData, logo: logoUrl });
+      setEditData({ ...editData, logo: data.url });
       toast.success('Logo subido correctamente');
     } catch (error) {
       console.error('Error uploading logo:', error);
@@ -97,106 +111,106 @@ export default function AdminParties() {
 
   const handleSave = async () => {
     if (!editData) return;
-
-    try {
-      await updatePartyMutation.mutateAsync({
-        partyKey: editData.id,
-        displayName: editData.displayName,
-        color: editData.color,
-        logoUrl: editData.logo,
-        isActive: true,
-      });
-
-      // Actualizar estado local
-      if (activeTab === 'parties') {
-        setParties(parties.map(p => p.id === editData.id ? editData : p));
-      } else {
-        setYouth(youth.map(y => y.id === editData.id ? editData : y));
-      }
-
-      // Invalidar queries para sincronizar Results.tsx automáticamente
-      await utils.parties.getAll.invalidate();
-      await utils.parties.getByKey.invalidate();
-
-      toast.success(`${editData.displayName} actualizado correctamente`);
-      setEditingId(null);
-      setEditData(null);
-    } catch (error) {
-      console.error('Error saving party:', error);
-      toast.error('Error al guardar los cambios');
+    const normalizedColor = editData.color.trim().toUpperCase();
+    const isValidHex = /^#[0-9A-F]{6}$/.test(normalizedColor);
+    if (!isValidHex) {
+      toast.error('Color inválido. Usa formato hexadecimal #RRGGBB');
+      return;
     }
-  };
 
-  const handleCancel = () => {
+    const { error } = await supabase
+      .from('party_configuration')
+      .upsert({
+        party_key: editData.id,
+        display_name: editData.displayName.trim(),
+        color: normalizedColor,
+        logo_url: editData.logo,
+        party_type: editData.type,
+        is_active: editData.isActive,
+      }, { onConflict: 'party_key' });
+
+    if (error) {
+      console.error('Error saving party:', error);
+      toast.error(`Error al guardar los cambios: ${error.message}`);
+      return;
+    }
+
+    toast.success(`${editData.displayName} actualizado correctamente`);
     setEditingId(null);
     setEditData(null);
+    await loadPartyConfiguration();
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('¿Está seguro de que desea eliminar este elemento?')) {
-      try {
-        await deletePartyMutation.mutateAsync({ partyKey: id });
+    if (!confirm('¿Está seguro de que desea eliminar este elemento?')) return;
 
-        if (activeTab === 'parties') {
-          setParties(parties.filter(p => p.id !== id));
-        } else {
-          setYouth(youth.filter(y => y.id !== id));
-        }
+    const { error } = await supabase
+      .from('party_configuration')
+      .delete()
+      .eq('party_key', id);
 
-        // Invalidar queries
-        await utils.parties.getAll.invalidate();
-
-        toast.success('Elemento eliminado correctamente');
-      } catch (error) {
-        console.error('Error deleting party:', error);
-        toast.error('Error al eliminar el elemento');
-      }
+    if (error) {
+      console.error('Error deleting party:', error);
+      toast.error('Error al eliminar el elemento');
+      return;
     }
+
+    toast.success('Elemento eliminado correctamente');
+    await loadPartyConfiguration();
   };
 
   const handleAddNew = async () => {
     const newId = `NEW_${Date.now()}`;
     const newItem: PartyEdit = {
       id: newId,
-      name: 'Nuevo Partido',
       displayName: 'Nuevo Partido',
       color: '#0066FF',
       logo: 'https://files.manuscdn.com/placeholder.png',
+      type: activeTab === 'parties' ? 'general' : 'youth',
+      isActive: true,
     };
 
-    try {
-      await createPartyMutation.mutateAsync({
-        partyKey: newId,
-        displayName: newItem.displayName,
-        color: newItem.color,
-        logoUrl: newItem.logo,
-        type: activeTab === 'parties' ? 'general' : 'youth',
-      });
+    const { error } = await supabase.from('party_configuration').insert({
+      party_key: newItem.id,
+      display_name: newItem.displayName,
+      color: newItem.color,
+      logo_url: newItem.logo,
+      party_type: newItem.type,
+      is_active: true,
+    });
 
-      if (activeTab === 'parties') {
-        setParties([...parties, newItem]);
-      } else {
-        setYouth([...youth, newItem]);
-      }
-
-      // Invalidar queries
-      await utils.parties.getAll.invalidate();
-
-      handleEdit(newItem);
-      toast.success('Nuevo elemento creado');
-    } catch (error) {
+    if (error) {
       console.error('Error creating party:', error);
-      toast.error('Error al crear el nuevo elemento');
+      toast.error(`Error al crear el nuevo elemento: ${error.message}`);
+      return;
     }
+
+    toast.success('Nuevo elemento creado');
+    await loadPartyConfiguration();
+    handleEdit(newItem);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditData(null);
   };
 
   const currentData = activeTab === 'parties' ? parties : youth;
+  const filteredData = useMemo(
+    () =>
+      currentData.filter(
+        (item) =>
+          item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [currentData, searchTerm]
+  );
 
-  if (loading || isLoadingParties) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4" />
           <p className="text-slate-600">Cargando partidos...</p>
         </div>
       </div>
@@ -204,201 +218,150 @@ export default function AdminParties() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">
-            Administración de Partidos
-          </h1>
-          <p className="text-lg text-slate-600">
-            Gestiona nombres, siglas, colores y URLs de logos. Los cambios se reflejan automáticamente en Resultados.
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-12 px-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="glass-surface p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Administración de Partidos</h1>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                syncStatus === 'connected'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : syncStatus === 'connecting'
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : 'bg-red-50 text-red-700 border-red-200'
+              }`}
+            >
+              {syncStatus === 'connected' ? 'Sincronizado con Supabase' : syncStatus === 'connecting' ? 'Conectando Supabase…' : 'Error de sincronización'}
+            </span>
+          </div>
+          <p className="text-slate-600">
+            Gestión directa con Supabase: cualquier cambio de nombre, color o logo se reflejará automáticamente en Resultados.
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-8 border-b border-slate-200">
-          <button
-            onClick={() => setActiveTab('parties')}
-            className={`px-6 py-3 font-semibold transition-colors ${
-              activeTab === 'parties'
-                ? 'text-red-600 border-b-2 border-red-600'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Partidos Políticos ({parties.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('youth')}
-            className={`px-6 py-3 font-semibold transition-colors ${
-              activeTab === 'youth'
-                ? 'text-red-600 border-b-2 border-red-600'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Asociaciones Juveniles ({youth.length})
-          </button>
+        <div className="glass-surface p-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-2 border border-slate-200 rounded-xl p-1">
+              <button
+                onClick={() => setActiveTab('parties')}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  activeTab === 'parties' ? 'bg-red-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Partidos ({parties.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('youth')}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  activeTab === 'youth' ? 'bg-red-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Asociaciones ({youth.length})
+              </button>
+            </div>
+            <Button onClick={handleAddNew} className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
+              <Plus size={18} /> Agregar Nuevo
+            </Button>
+          </div>
+
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+              placeholder="Buscar por clave o nombre"
+            />
+          </div>
         </div>
 
-        {/* Add New Button */}
-        <div className="mb-6">
-          <Button
-            onClick={handleAddNew}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-          >
-            <Plus size={20} />
-            Agregar Nuevo
-          </Button>
-        </div>
-
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) => {
-            if (e.target.files?.[0]) {
-              handleUploadLogo(e.target.files[0]);
-            }
-          }}
+          onChange={(e) => e.target.files?.[0] && handleUploadLogo(e.target.files[0])}
         />
 
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="glass-surface overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 text-left font-semibold text-slate-900">Logo</th>
-                <th className="px-6 py-4 text-left font-semibold text-slate-900">Nombre</th>
-                <th className="px-6 py-4 text-left font-semibold text-slate-900">Nombre Mostrado</th>
-                <th className="px-6 py-4 text-left font-semibold text-slate-900">Color</th>
-                <th className="px-6 py-4 text-left font-semibold text-slate-900">URL Logo</th>
-                <th className="px-6 py-4 text-center font-semibold text-slate-900">Acciones</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Logo</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Clave</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Nombre mostrado</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">Color</th>
+                <th className="px-4 py-3 text-left font-semibold text-slate-900">URL Logo</th>
+                <th className="px-4 py-3 text-center font-semibold text-slate-900">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {currentData.map((item) => (
-                <tr key={item.id} className="border-b border-slate-200 hover:bg-slate-50">
+              {filteredData.map((item) => (
+                <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/70 align-top">
                   {editingId === item.id && editData ? (
                     <>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex flex-col gap-2">
-                          <PartyLogo partyName={editData.displayName} size={48} />
-                          <Button
-                            size="sm"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploading}
-                            className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Upload size={14} />
+                          <PartyLogo src={editData.logo} alt={editData.displayName} partyName={editData.displayName} size={42} />
+                          <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                            <Upload size={14} className="mr-1" />
                             {uploading ? 'Subiendo...' : 'Subir'}
                           </Button>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <Input
-                          value={editData.name}
-                          onChange={(e) =>
-                            setEditData({ ...editData, name: e.target.value })
-                          }
-                          className="text-sm"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900">{item.id}</td>
+                      <td className="px-4 py-3">
                         <Input
                           value={editData.displayName}
-                          onChange={(e) =>
-                            setEditData({ ...editData, displayName: e.target.value })
-                          }
-                          className="text-sm"
+                          onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
                         />
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <input
                             type="color"
                             value={editData.color}
-                            onChange={(e) =>
-                              setEditData({ ...editData, color: e.target.value })
-                            }
-                            className="w-12 h-10 rounded cursor-pointer"
+                            onChange={(e) => setEditData({ ...editData, color: e.target.value })}
+                            className="w-10 h-10 rounded cursor-pointer"
                           />
                           <Input
                             value={editData.color}
-                            onChange={(e) =>
-                              setEditData({ ...editData, color: e.target.value })
-                            }
-                            className="text-sm flex-1"
+                            onChange={(e) => setEditData({ ...editData, color: e.target.value })}
+                            className="w-32"
                           />
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <Input
                           value={editData.logo}
-                          onChange={(e) =>
-                            setEditData({ ...editData, logo: e.target.value })
-                          }
-                          className="text-sm"
+                          onChange={(e) => setEditData({ ...editData, logo: e.target.value })}
                           placeholder="https://..."
                         />
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex justify-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={handleSave}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <Save size={16} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleCancel}
-                          >
-                            <X size={16} />
-                          </Button>
+                          <Button size="sm" onClick={handleSave} className="bg-green-600 hover:bg-green-700"><Save size={16} /></Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}><X size={16} /></Button>
                         </div>
                       </td>
                     </>
                   ) : (
                     <>
-                      <td className="px-6 py-4">
-                        <PartyLogo partyName={item.displayName} size={48} />
-                      </td>
-                      <td className="px-6 py-4 font-medium text-slate-900">{item.name}</td>
-                      <td className="px-6 py-4 text-slate-700">{item.displayName}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3"><PartyLogo src={item.logo} alt={item.displayName} partyName={item.displayName} size={42} /></td>
+                      <td className="px-4 py-3 font-medium text-slate-900">{item.id}</td>
+                      <td className="px-4 py-3 text-slate-700">{item.displayName}</td>
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div
-                            className="w-6 h-6 rounded border border-slate-300"
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <code className="text-sm text-slate-700">{item.color}</code>
+                          <div className="w-5 h-5 rounded border border-slate-300" style={{ backgroundColor: item.color }} />
+                          <code className="text-xs text-slate-700">{item.color}</code>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="text-sm text-slate-600 truncate max-w-xs">
-                          {item.logo}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 max-w-xs"><p className="text-sm text-slate-600 truncate">{item.logo}</p></td>
+                      <td className="px-4 py-3">
                         <div className="flex justify-center gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleEdit(item)}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Edit2 size={16} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(item.id)}
-                          >
-                            <Trash2 size={16} />
-                          </Button>
+                          <Button size="sm" onClick={() => handleEdit(item)} className="bg-blue-600 hover:bg-blue-700"><Edit2 size={16} /></Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDelete(item.id)}><Trash2 size={16} /></Button>
                         </div>
                       </td>
                     </>
@@ -407,35 +370,6 @@ export default function AdminParties() {
               ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Export/Import Section */}
-        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Exportar/Importar</h2>
-          <div className="flex gap-4">
-            <Button
-              onClick={() => {
-                const data = {
-                  parties,
-                  youth,
-                  exportedAt: new Date().toISOString(),
-                };
-                const json = JSON.stringify(data, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `parties-backup-${Date.now()}.json`;
-                a.click();
-              }}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              Descargar Backup
-            </Button>
-            <p className="text-sm text-slate-600 flex items-center">
-              Descarga un backup de todos los partidos y asociaciones
-            </p>
-          </div>
         </div>
       </div>
     </div>
