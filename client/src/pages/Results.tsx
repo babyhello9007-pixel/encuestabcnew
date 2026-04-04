@@ -37,6 +37,7 @@ import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { usePartySync } from "@/hooks/usePartySync";
+import { trpc } from "@/lib/trpc";
 
 interface PartyStats {
   id: string;
@@ -65,6 +66,7 @@ interface PartyMetrics {
 export default function Results() {
   // Sincronizacion en tiempo real con WebSocket
   usePartySync();
+  const { data: partyConfigData } = trpc.parties.getAll.useQuery();
   
   const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
