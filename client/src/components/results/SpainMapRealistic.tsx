@@ -33,6 +33,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
+  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || '#9CA3AF';
 
   // LAZY LOADING: Cargar GeoJSON solo cuando el componente se monta
   useEffect(() => {

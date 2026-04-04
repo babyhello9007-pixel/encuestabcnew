@@ -23,6 +23,23 @@ const ROW_HEIGHT = 8;
 const MARGIN_LEFT = 15;
 const MARGIN_RIGHT = 15;
 
+async function toDataUrl(url: string): Promise<string> {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return '';
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result || ''));
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return '';
+  }
+}
+
 function drawTable(
   doc: jsPDF,
   startY: number,
@@ -172,6 +189,58 @@ export async function exportPDFWithMetrics(
   ];
 
   yPosition = drawTable(doc, yPosition, summaryHeaders, summaryData, [50, 80]) + 15;
+
+  // Top partidos (mejora visual con color/logo)
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Top Partidos / Asociaciones', 15, yPosition);
+  yPosition += 8;
+
+  const topParties = [...stats].sort((a, b) => b.votos - a.votos).slice(0, 5);
+  const cardWidth = (pageWidth - 30 - 8) / 2;
+  const cardHeight = 24;
+  for (let i = 0; i < topParties.length; i++) {
+    if (yPosition + cardHeight > pageHeight - 30) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    const party = topParties[i];
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = 15 + col * (cardWidth + 8);
+    const y = yPosition + row * (cardHeight + 4);
+
+    doc.setFillColor(250, 250, 250);
+    doc.setDrawColor(220, 220, 220);
+    doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2, 'FD');
+
+    const hex = (party.color || '#9CA3AF').replace('#', '');
+    const rgb = hex.length === 6 ? [
+      parseInt(hex.substring(0, 2), 16),
+      parseInt(hex.substring(2, 4), 16),
+      parseInt(hex.substring(4, 6), 16),
+    ] : [156, 163, 175];
+    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+    doc.rect(x, y, 4, cardHeight, 'F');
+
+    const logoData = await toDataUrl(party.logo || '');
+    if (logoData) {
+      try {
+        doc.addImage(logoData, 'PNG', x + 6, y + 4, 8, 8);
+      } catch {
+        // Ignore logo drawing failures
+      }
+    }
+
+    doc.setFontSize(9);
+    doc.setTextColor(30, 30, 30);
+    doc.setFont('helvetica', 'bold');
+    doc.text(party.nombre.substring(0, 28), x + 16, y + 8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${party.votos.toLocaleString()} votos · ${party.porcentaje.toFixed(1)}%`, x + 16, y + 13);
+    doc.text(`${party.escanos} escaños · ${(party.color || '#9CA3AF').toUpperCase()}`, x + 16, y + 18);
+  }
+  yPosition += Math.ceil(topParties.length / 2) * (cardHeight + 4) + 8;
 
   // Tabla de resultados con métricas por partido
   doc.setFontSize(14);

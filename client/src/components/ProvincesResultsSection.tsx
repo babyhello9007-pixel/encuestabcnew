@@ -228,7 +228,7 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
                       <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm font-medium text-slate-900">
                           <span className="inline-flex items-center gap-2">
-                            <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} />
+                            <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} strictExternal />
                             {result.partido}
                           </span>
                         </td>

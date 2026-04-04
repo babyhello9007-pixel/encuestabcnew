@@ -100,7 +100,10 @@ export default function Results() {
 
   const generalPartyMap = useMemo(() => {
     const defaults = Object.fromEntries(
-      Object.entries(PARTIES_GENERAL).map(([key, party]) => [key, { key, ...party }])
+      Object.entries(PARTIES_GENERAL).map(([key, party]) => [
+        key,
+        { key, name: party.name, color: "#9CA3AF", logo: "" },
+      ])
     );
     if (!partyConfigData?.parties?.length) return defaults;
     partyConfigData.parties.forEach((party) => {
@@ -116,7 +119,10 @@ export default function Results() {
 
   const youthPartyMap = useMemo(() => {
     const defaults = Object.fromEntries(
-      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [key, { key, ...party }])
+      Object.entries(YOUTH_ASSOCIATIONS).map(([key, party]) => [
+        key,
+        { key, name: party.name, color: "#9CA3AF", logo: "" },
+      ])
     );
     if (!partyConfigData?.youth?.length) return defaults;
     partyConfigData.youth.forEach((party) => {
@@ -143,6 +149,15 @@ export default function Results() {
       }
 
       const allRows = data || [];
+      setRuntimePartyConfig(
+        allRows.map((row: any) => ({
+          key: row.party_key,
+          displayName: row.display_name,
+          color: row.color,
+          logoUrl: row.logo_url,
+          partyType: row.party_type,
+        }))
+      );
       setPartyConfigData({
         parties: allRows
           .filter((row: any) => row.party_type === "general")
@@ -958,18 +973,8 @@ export default function Results() {
               {stats.length > 0 && (
                 (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
                   const currentPartyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
-                  let logoUrl = party.logo;
+                  const logoUrl = party.logo || currentPartyMap[party.id]?.logo || "";
                   const partyColor = party.color || currentPartyMap[party.id]?.color || "#C41E3A";
-                  
-                  if (!logoUrl) {
-                    for (const [, partyData] of Object.entries(currentPartyMap)) {
-                      if (partyData.name === party.nombre) {
-                        logoUrl = partyData.logo;
-                        break;
-                      }
-                    }
-                  }
-                  logoUrl ||= currentPartyMap[party.id]?.logo;
                   
                   return (
                   <div
@@ -980,7 +985,7 @@ export default function Results() {
                   >
                     <div className="flex items-center gap-4">
                       {logoUrl ? (
-                        <PartyLogo src={logoUrl} alt={party.nombre} partyName={party.nombre} size={48} />
+                        <PartyLogo src={logoUrl} alt={party.nombre} partyName={party.nombre} size={48} strictExternal />
                       ) : (
                         <div className="h-12 w-12 bg-gray-300 rounded-2xl flex items-center justify-center text-xs text-gray-500">N/A</div>
                       )}

@@ -7,7 +7,7 @@ interface ProvincePopupProps {
   escanos?: Record<string, number>;
   edadPromedio?: number;
   ideologiaPromedio?: number;
-  partyMeta?: Record<string, { color?: string }>;
+  partyMeta?: Record<string, { color?: string; logo?: string }>;
 }
 
 export const ProvincePopup: React.FC<ProvincePopupProps> = ({
@@ -67,8 +67,10 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
                 {/* Logo del partido */}
                 <div className="flex-shrink-0 w-8 h-8">
                   <PartyLogo
+                    src={partyMeta[partido]?.logo || ""}
                     partyName={partido}
                     size={32}
+                    strictExternal
                   />
                 </div>
 

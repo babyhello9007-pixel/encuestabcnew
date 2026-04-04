@@ -254,7 +254,7 @@ export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionP
                             <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
                               <td className="px-3 py-2 text-slate-900">
                                 <span className="inline-flex items-center gap-2">
-                                  <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} />
+                                  <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} strictExternal />
                                   {result.partido}
                                 </span>
                               </td>

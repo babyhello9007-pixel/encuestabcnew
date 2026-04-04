@@ -10,31 +10,8 @@ interface PartyStats {
   color?: string;
 }
 
-const getLogoForParty = (partyId: string, partyName: string, activeTab: "general" | "youth", fallbackLogo?: string): string => {
+const getLogoForParty = (_partyId: string, _partyName: string, _activeTab: "general" | "youth", fallbackLogo?: string): string => {
   if (fallbackLogo) return fallbackLogo;
-  // Primero intentar búsqueda por ID
-  if (activeTab === "general") {
-    const party = PARTIES_GENERAL[partyId as keyof typeof PARTIES_GENERAL];
-    if (party?.logo) return party.logo;
-  } else {
-    const party = YOUTH_ASSOCIATIONS[partyId as keyof typeof YOUTH_ASSOCIATIONS];
-    if (party?.logo) return party.logo;
-  }
-  
-  // Si no hay logo por ID, buscar por nombre en PARTIES_GENERAL
-  for (const [key, partyData] of Object.entries(PARTIES_GENERAL)) {
-    if (partyData.name === partyName) {
-      return partyData.logo;
-    }
-  }
-  
-  // Si no hay logo aún, buscar por nombre en YOUTH_ASSOCIATIONS
-  for (const [key, assocData] of Object.entries(YOUTH_ASSOCIATIONS)) {
-    if (assocData.name === partyName) {
-      return assocData.logo;
-    }
-  }
-  
   return '';
 };
 
@@ -172,7 +149,9 @@ export const generateAdvancedInfographic = async (
     logoSection.style.flexShrink = '0';
     const logo = document.createElement('img');
     const logoUrl = getLogoForParty(party.id || '', party.nombre, activeTab, party.logo);
-    logo.src = logoUrl || party.logo;
+    logo.src = await toDataUrl(logoUrl || party.logo);
+    logo.crossOrigin = 'anonymous';
+    logo.referrerPolicy = 'no-referrer';
     logo.style.width = '100px';
     logo.style.height = '100px';
     logo.style.objectFit = 'contain';
@@ -260,6 +239,15 @@ export const generateAdvancedInfographic = async (
   document.body.appendChild(container);
 
   try {
+    const images = Array.from(container.querySelectorAll('img'));
+    await Promise.all(
+      images.map((img) => new Promise<void>((resolve) => {
+        if (img.complete) return resolve();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      }))
+    );
+
     // Generar canvas
     const canvas = await html2canvas(container, {
       scale: 2,
@@ -394,6 +382,15 @@ export const generateAllLogosInfographic = async (
   document.body.appendChild(container);
 
   try {
+    const images = Array.from(container.querySelectorAll('img'));
+    await Promise.all(
+      images.map((img) => new Promise<void>((resolve) => {
+        if (img.complete) return resolve();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      }))
+    );
+
     // Generar canvas
     const canvas = await html2canvas(container, {
       scale: 2,

@@ -8,9 +8,10 @@ interface PartyLogoProps {
   partyName?: string;
   partyId?: string;
   size?: number;
+  strictExternal?: boolean;
 }
 
-export default function PartyLogo({ src, alt, partyName, partyId, size = 48 }: PartyLogoProps) {
+export default function PartyLogo({ src, alt, partyName, partyId, size = 48, strictExternal = false }: PartyLogoProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   // Determinar el nombre del partido y el logo
@@ -27,7 +28,7 @@ export default function PartyLogo({ src, alt, partyName, partyId, size = 48 }: P
   }
 
   // Si no hay src, obtener del config de partidos
-  if (!finalSrc && finalPartyName) {
+  if (!strictExternal && !finalSrc && finalPartyName) {
     finalSrc = getPartyLogo(finalPartyName);
     if (!finalAlt) {
       finalAlt = finalPartyName;
@@ -36,8 +37,8 @@ export default function PartyLogo({ src, alt, partyName, partyId, size = 48 }: P
 
   // Fallback si no hay información
   if (!finalSrc) {
-    finalSrc = '/assets/icons/Otros.png';
-    finalAlt = 'Partido desconocido';
+    finalSrc = '';
+    finalAlt = finalAlt || 'Partido desconocido';
   }
 
   if (!finalPartyName) {
