@@ -205,7 +205,11 @@ export default function AdminParties() {
     handleEdit(newItem);
   };
 
+<<<<<<< Updated upstream
   const handleCancelEdit = () => {
+=======
+  const handleCancel = () => {
+>>>>>>> Stashed changes
     setEditingId(null);
     setEditData(null);
   };
