@@ -41,6 +41,20 @@ export function ShareResultsAdvanced({
 
   const theme = getThemeColors(selectedTheme);
 
+  const waitForImages = async (container: HTMLElement) => {
+    const images = Array.from(container.querySelectorAll("img"));
+    await Promise.all(
+      images.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete) return resolve();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          })
+      )
+    );
+  };
+
   // Obtener logos directamente de los datos - Misma lógica robusta que Results.tsx
   const getLogoForParty = (partyId: string, partyName?: string) => {
     const fromStats = stats.find((s) => s.id === partyId || s.nombre === partyName);
@@ -59,6 +73,7 @@ export function ShareResultsAdvanced({
     try {
       // Clonar el elemento para obtener sus dimensiones reales
       const element = infographyRef.current;
+      await waitForImages(element);
       const rect = element.getBoundingClientRect();
       const scrollHeight = element.scrollHeight;
       const scrollWidth = element.scrollWidth;
@@ -97,6 +112,7 @@ export function ShareResultsAdvanced({
     if (!selectedParty || !infographyRef.current) return;
     try {
       const element = infographyRef.current;
+      await waitForImages(element);
       const scrollHeight = element.scrollHeight;
       const scrollWidth = element.scrollWidth;
       
@@ -145,6 +161,7 @@ export function ShareResultsAdvanced({
     if (!selectedParty || !infographyRef.current) return;
     try {
       const element = infographyRef.current;
+      await waitForImages(element);
       const scrollHeight = element.scrollHeight;
       const scrollWidth = element.scrollWidth;
       
