@@ -18,7 +18,11 @@ interface PartyLeaders {
   [key: string]: LeaderResult[];
 }
 
-export function LeadersResultsChart() {
+interface LeadersResultsChartProps {
+  partyColors?: Record<string, string>;
+}
+
+export function LeadersResultsChart({ partyColors = {} }: LeadersResultsChartProps) {
   const [leadersByParty, setLeadersByParty] = useState<PartyLeaders>({});
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

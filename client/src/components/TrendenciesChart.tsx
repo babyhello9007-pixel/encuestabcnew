@@ -12,7 +12,11 @@ interface VotoData {
   votos_diarios: number;
 }
 
-export function TrendenciesChart() {
+interface TrendenciesChartProps {
+  partyColors?: Record<string, string>;
+}
+
+export function TrendenciesChart({ partyColors = {} }: TrendenciesChartProps) {
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
   const [trendData, setTrendData] = useState<any[]>([]);
   const [parties, setParties] = useState<string[]>([]);
