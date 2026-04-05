@@ -95,70 +95,122 @@ const TAB_GROUPS: TabGroup[] = [
   },
 ];
 
+// ─── Dropdown Portal Component ─────────────────────────────────────────────────
+interface DropdownPortalProps {
+  isOpen: boolean;
+  buttonRef: React.RefObject<HTMLButtonElement>;
+  tabs: { key: TabKey; label: string }[];
+  activeTab: TabKey;
+  onTabChange: (t: TabKey) => void;
+  onClose: () => void;
+}
+
+function DropdownPortal({ isOpen, buttonRef, tabs, activeTab, onTabChange, onClose }: DropdownPortalProps) {
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+      });
+    }
+  }, [isOpen, buttonRef]);
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div
+      className="fixed min-w-[210px] bg-white rounded-b-xl rounded-tr-xl shadow-xl border border-slate-100 overflow-hidden z-50"
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+      }}
+    >
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          onClick={() => {
+            onTabChange(tab.key);
+            onClose();
+          }}
+          className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-l-2
+            ${activeTab === tab.key
+              ? "bg-red-50 text-[#C41E3A] font-semibold border-[#C41E3A]"
+              : "text-slate-600 hover:bg-slate-50 font-medium border-transparent hover:border-slate-200"
+            }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>,
+    document.body
+  );
+}
+
 // ─── NavBar con dropdowns ─────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: {
   activeTab: TabKey; onTabChange: (t: TabKey) => void;
 }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpenGroup(null);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   return (
-    <div ref={ref} className="sticky top-14 z-40 w-full border-b border-slate-200/60 bg-white/85 backdrop-blur-xl shadow-sm">
-      <div className="container">
-        <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-none py-0.5">
-          {TAB_GROUPS.map((group) => {
-            const activeTabInGroup = group.tabs.find((t) => t.key === activeTab);
-            const isGroupActive = !!activeTabInGroup;
-            const isOpen = openGroup === group.label;
-            return (
-              <div key={group.label} className="relative flex-shrink-0">
-                <button
-                  onClick={() => setOpenGroup(isOpen ? null : group.label)}
-                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold rounded-t-lg transition-all duration-150 whitespace-nowrap border-b-2
-                    ${isGroupActive
-                      ? "text-[#C41E3A] border-[#C41E3A] bg-red-50/60"
-                      : "text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-100/60"
-                    }`}
-                >
-                  {group.icon}
-                  <span>{activeTabInGroup ? activeTabInGroup.label : group.label}</span>
-                  <ChevronDown className={`w-3 h-3 opacity-60 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-                </button>
+    <>
+      <div ref={ref} className="sticky top-14 z-40 w-full border-b border-slate-200/60 bg-white/85 backdrop-blur-xl shadow-sm">
+        <div className="container">
+          <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-none py-0.5">
+            {TAB_GROUPS.map((group) => {
+              const activeTabInGroup = group.tabs.find((t) => t.key === activeTab);
+              const isGroupActive = !!activeTabInGroup;
+              const isOpen = openGroup === group.label;
+              return (
+                <div key={group.label} className="relative flex-shrink-0">
+                  <button
+                    ref={(el) => {
+                      if (el) buttonRefs.current[group.label] = el;
+                    }}
+                    onClick={() => setOpenGroup(isOpen ? null : group.label)}
+                    className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold rounded-t-lg transition-all duration-150 whitespace-nowrap border-b-2
+                      ${isGroupActive
+                        ? "text-[#C41E3A] border-[#C41E3A] bg-red-50/60"
+                        : "text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-100/60"
+                      }`}
+                  >
+                    {group.icon}
+                    <span>{activeTabInGroup ? activeTabInGroup.label : group.label}</span>
+                    <ChevronDown className={`w-3 h-3 opacity-60 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
 
-                {isOpen && (
-                  <div className="absolute top-full left-0 mt-0 min-w-[210px] bg-white rounded-b-xl rounded-tr-xl shadow-xl border border-slate-100 overflow-hidden z-50">
-                    {group.tabs.map((tab) => (
-                      <button
-                        key={tab.key}
-                        onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-l-2
-                          ${activeTab === tab.key
-                            ? "bg-red-50 text-[#C41E3A] font-semibold border-[#C41E3A]"
-                            : "text-slate-600 hover:bg-slate-50 font-medium border-transparent hover:border-slate-200"
-                          }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
+                  <DropdownPortal
+                    isOpen={isOpen}
+                    buttonRef={{ current: buttonRefs.current[group.label] || null }}
+                    tabs={group.tabs}
+                    activeTab={activeTab}
+                    onTabChange={onTabChange}
+                    onClose={() => setOpenGroup(null)}
+                  />
+                </div>
+              );
+            })}
+          </nav>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
-
 
 // ─── LideresDePartidosSection ─────────────────────────────────────────────────
 function LideresDePartidosSection() {
