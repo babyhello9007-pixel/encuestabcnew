@@ -14,13 +14,24 @@ import { CommentsSection } from "@/components/CommentsSection";
 import { PartyMetricsDisplay } from "@/components/PartyMetricsDisplay";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
-import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
-import { CongressHemicycle } from "@/components/results/CongressHemicycle";
+import { PartyStatsModal } from "@/components/PartyStatsModal";
 import { LeadersResultsChart } from "@/components/LeadersResultsChart";
-import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
-import { ShareInfographicsPanel } from "@/components/ShareInfographicsPanel";
+import { CCAAResltsSection } from "@/components/CCAAResltsSection";
+import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
+import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
+import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
+import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
+import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
+import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 
-type PartyType = "general" | "youth";
+import EncuestadorasGrid from "@/components/results/EncuestadorasGrid";
+import EncuestasExternasTable from "@/components/results/EncuestasExternasTable";
+import EncuestadorasComparativa from "@/components/results/EncuestadorasComparativa";
+import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
+import Footer from "@/components/Footer";
+import FollowUsMenu from "@/components/FollowUsMenu";
+import Pactometer from "@/components/Pactometer";
+import PactometerInteractive from "@/components/PactometerInteractive";
 
 import { Map, Grid3x3, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -38,27 +49,36 @@ interface PartyStats {
   color?: string;
 }
 
-const tabs = [
-  { id: "general", label: "Generales", icon: Vote },
-  { id: "youth", label: "Juveniles", icon: Users },
-  { id: "map", label: "Mapa", icon: Map },
-  { id: "hemicycle", label: "Hemiciclo", icon: Sparkles },
-  { id: "trends", label: "Variación", icon: BarChart3 },
-  { id: "leaders", label: "Líderes", icon: Users },
-  { id: "preguntas-varias", label: "Preguntas varias", icon: BarChart3 },
-  { id: "share", label: "Compartir", icon: Share2 },
-] as const;
+interface LeaderRating {
+  name: string;
+  fieldName: string;
+  average: number;
+  count: number;
+}
 
-type ActiveTab = (typeof tabs)[number]["id"];
+interface PartyMetrics {
+  nombre: string;
+  edad_promedio: number;
+  ideologia_promedio: number;
+  total_votos: number;
+}
+
+interface CustomSimulatorParty {
+  key: string;
+  name: string;
+  color: string;
+}
 
 export default function Results() {
+  // Sincronizacion en tiempo real con WebSocket
+  usePartySync();
+  
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<ActiveTab>("general");
-  const [partyConfig, setPartyConfig] = useState<PartyMeta[]>([]);
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "encuestadoras-externas" | "preguntas-varias" | "simulador-electoral" | "el-analisis">("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
@@ -80,9 +100,17 @@ export default function Results() {
   const [votosPorPartidoProvinciaJuveniles, setVotosPorPartidoProvinciaJuveniles] = useState<Record<string, number>>({});
   const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMapJuveniles, setProvinciaMetricsMapJuveniles] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
+
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
+  const [simulatorVotes, setSimulatorVotes] = useState<Record<string, number>>({});
+  const [simulatorCustomParties, setSimulatorCustomParties] = useState<CustomSimulatorParty[]>([]);
+  const [newSimulatorPartyName, setNewSimulatorPartyName] = useState("");
+  const [newSimulatorPartyColor, setNewSimulatorPartyColor] = useState("#7c3aed");
+  const [simProvinciaSeleccionada, setSimProvinciaSeleccionada] = useState<string | null>(null);
+  const [simVotosProvincia, setSimVotosProvincia] = useState<Record<string, number>>({});
+  const [simEscanosProvincia, setSimEscanosProvincia] = useState<Record<string, number>>({});
 
   useEffect(() => {
     document.title = "La Encuesta de BC";
@@ -212,6 +240,87 @@ export default function Results() {
   }, [partyConfigData]);
 
   useEffect(() => {
+    if (!generalStats.length) return;
+    const baseVotes: Record<string, number> = {};
+    generalStats.forEach((party) => {
+      baseVotes[party.id] = party.votos;
+    });
+    setSimulatorVotes((prev) => (Object.keys(prev).length ? { ...baseVotes, ...prev } : baseVotes));
+  }, [generalStats]);
+
+  const simulatorPartyMap = useMemo(() => {
+    const mergedMap: Record<string, { key: string; name: string; color: string; logo: string }> = { ...generalPartyMap };
+    simulatorCustomParties.forEach((party) => {
+      mergedMap[party.key] = { key: party.key, name: party.name, color: party.color, logo: "" };
+    });
+    return mergedMap;
+  }, [generalPartyMap, simulatorCustomParties]);
+
+  const simulatorStats = useMemo(() => {
+    const normalizedVotes: Record<string, number> = {};
+    Object.entries(simulatorVotes).forEach(([key, value]) => {
+      normalizedVotes[key] = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    });
+    const escanos = calcularEscanosGenerales(normalizedVotes);
+    const nombres: Record<string, string> = {};
+    const logos: Record<string, string> = {};
+    Object.entries(simulatorPartyMap).forEach(([key, party]) => {
+      nombres[key] = party.name;
+      logos[key] = party.logo;
+    });
+    return obtenerEstadisticas(normalizedVotes, escanos, nombres, logos).map((s) => ({
+      ...s,
+      color: simulatorPartyMap[s.id]?.color || "#C41E3A",
+    }));
+  }, [simulatorVotes, simulatorPartyMap]);
+
+  const simulatorVotesByProvince = useMemo(() => {
+    if (!Object.keys(votosPorProvincia).length) return {};
+    const totalVotes = Object.values(simulatorVotes).reduce((acc, v) => acc + Math.max(0, Number(v) || 0), 0);
+    if (totalVotes === 0) return {};
+    const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [party, votes]) => {
+      acc[party] = Math.max(0, Number(votes) || 0) / totalVotes;
+      return acc;
+    }, {});
+
+    const simulatedByProvince: Record<string, Record<string, number>> = {};
+    Object.entries(votosPorProvincia).forEach(([province, provinceVotes]) => {
+      const provinceTotal = Object.values(provinceVotes).reduce((acc, v) => acc + v, 0);
+      const simProvince: Record<string, number> = {};
+      Object.entries(shares).forEach(([party, share]) => {
+        simProvince[party] = Math.round(provinceTotal * share);
+      });
+      simulatedByProvince[province] = simProvince;
+    });
+
+    return simulatedByProvince;
+  }, [votosPorProvincia, simulatorVotes]);
+
+  const simulatorEscanosByProvince = useMemo(() => {
+    if (!Object.keys(simulatorVotesByProvince).length) return {};
+    return calcularEscanosGeneralesPorProvincia(simulatorVotesByProvince);
+  }, [simulatorVotesByProvince]);
+
+  const addSimulatorCustomParty = () => {
+    const trimmedName = newSimulatorPartyName.trim();
+    if (!trimmedName) return;
+
+    const slug = trimmedName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toUpperCase();
+
+    const baseKey = slug || `PARTY_${Date.now()}`;
+    const key = simulatorPartyMap[baseKey] ? `${baseKey}_${Date.now()}` : baseKey;
+
+    setSimulatorCustomParties((prev) => [...prev, { key, name: trimmedName, color: newSimulatorPartyColor }]);
+    setSimulatorVotes((prev) => ({ ...prev, [key]: 0 }));
+    setNewSimulatorPartyName("");
+  };
+
+  useEffect(() => {
     const loadPartyConfig = async () => {
       const { data, error } = await supabase
         .from("party_configuration")
@@ -265,6 +374,35 @@ export default function Results() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  useEffect(() => {
+    if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
+      const escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
+      setEscanosGeneralesPorProvincia(escanos);
+      
+      // Actualizar generalStats con los escaños calculados por provincia
+      // Esto asegura que Elecciones Generales y Hemiciclo muestren los mismos números
+      const statsActualizados = generalStats.map(stat => ({
+        ...stat,
+        escanos: escanos[stat.id] || 0
+      }));
+      setGeneralStats(statsActualizados);
+    }
+  }, [votosPorProvincia]);
+
+  useEffect(() => {
+    if (Object.keys(votosPorProvinciaJuveniles).length > 0 && youthStats.length > 0) {
+      const escanos = calcularEscanosJuvenilesPorProvincia(votosPorProvinciaJuveniles);
+      setEscanosJuvenilesPorProvincia(escanos);
+      
+      // Actualizar youthStats con los escaños calculados por provincia
+      const statsActualizados = youthStats.map(stat => ({
+        ...stat,
+        escanos: escanos[stat.id] || 0
+      }));
+      setYouthStats(statsActualizados);
+    }
+  }, [votosPorProvinciaJuveniles]);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -283,6 +421,7 @@ export default function Results() {
               .select("*", { count: "exact", head: true });
             setTotalResponses(count || 0);
           } catch (e) {
+            // Si tampoco existe la tabla, usar datos de ejemplo
             setTotalResponses(631);
           }
         }
@@ -299,11 +438,13 @@ export default function Results() {
             Object.keys(generalPartyMap).forEach((key) => {
               generalVotos[key] = 0;
             });
-
+            
+            // Actualizar con datos reales de la base de datos
             generalData.forEach((row: any) => {
               generalVotos[row.partido_id] = row.votos;
             });
 
+            // Usar cálculo por provincias si hay datos disponibles, si no usar cálculo nacional
             let escanos: Record<string, number> = {};
             if (Object.keys(votosPorProvincia).length > 0) {
               escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
@@ -323,20 +464,22 @@ export default function Results() {
               color: generalPartyMap[s.id]?.color,
             }));
             setGeneralStats(stats);
-
+            // Los escaños se actualizarán en el useEffect cuando votosPorProvincia esté disponible
+            // (este useEffect se ejecutará después de que votosPorProvincia se haya cargado)
+            
             // Cargar votos por provincia para el mapa
             try {
               const { data: provinciaData, error } = await supabase
                 .from("votos_por_provincia_view")
                 .select("provincia, partido, votos");
-
+              
               if (error) {
                 console.error("Error loading provincia data:", error);
               }
-
+              
               if (provinciaData && provinciaData.length > 0) {
                 const votosProv: Record<string, Record<string, number>> = {};
-
+                
                 provinciaData.forEach((row: any) => {
                   if (row.provincia && row.partido) {
                     if (!votosProv[row.provincia]) {
@@ -345,19 +488,19 @@ export default function Results() {
                     votosProv[row.provincia][row.partido] = row.votos;
                   }
                 });
-
+                
                 setVotosPorProvincia(votosProv);
-
+                
                 // Cargar métricas por provincia
                 try {
                   const { data: metricsData } = await supabase
                     .from("respuestas")
                     .select("provincia, edad, posicion_ideologica");
-
+                  
                   if (metricsData && metricsData.length > 0) {
                     const metricsMap: Record<string, { edad_promedio: number; ideologia_promedio: number }> = {};
                     const provinciaCounts: Record<string, { edad_sum: number; ideologia_sum: number; count: number }> = {};
-
+                    
                     metricsData.forEach((row: any) => {
                       if (row.provincia) {
                         if (!provinciaCounts[row.provincia]) {
@@ -372,14 +515,14 @@ export default function Results() {
                         provinciaCounts[row.provincia].count += 1;
                       }
                     });
-
+                    
                     Object.entries(provinciaCounts).forEach(([provincia, counts]) => {
                       metricsMap[provincia] = {
                         edad_promedio: counts.count > 0 ? counts.edad_sum / counts.count : 0,
                         ideologia_promedio: counts.count > 0 ? counts.ideologia_sum / counts.count : 0,
                       };
                     });
-
+                    
                     setProvinciaMetricsMap(metricsMap);
                   }
                 } catch (err) {
@@ -390,11 +533,28 @@ export default function Results() {
               console.error("Error fetching votos por provincia:", err);
             }
           } else {
-            const exampleVotos: Record<string, number> = {
-              PP: 180, PSOE: 120, VOX: 85, SUMAR: 65, PODEMOS: 45,
-              JUNTS: 35, ERC: 30, PNV: 25, ALIANZA: 15, BILDU: 20,
-              SAF: 40, CC: 10, UPN: 8, CIUDADANOS: 12, CAMINANDO: 5,
-              FRENTE: 3, IZQUIERDA: 8, JUNTOS_EXT: 6, PLIB: 4, EB: 2, BNG: 7,
+            // Datos de ejemplo si no hay datos
+            const exampleVotos: Record<string, number> = { PP: 180,
+              PSOE: 120,
+              VOX: 85,
+              SUMAR: 65,
+              PODEMOS: 45,
+              JUNTS: 35,
+              ERC: 30,
+              PNV: 25,
+              ALIANZA: 15,
+              BILDU: 20,
+              SAF: 40,
+              CC: 10,
+              UPN: 8,
+              CIUDADANOS: 12,
+              CAMINANDO: 5,
+              FRENTE: 3,
+              IZQUIERDA: 8,
+              JUNTOS_EXT: 6,
+              PLIB: 4,
+              EB: 2,
+              BNG: 7,
             };
             const escanos = calcularEscanosGenerales(exampleVotos);
             const nombres: Record<string, string> = {};
@@ -413,11 +573,29 @@ export default function Results() {
           }
         } catch (err) {
           console.error("Error fetching general votes:", err);
+          // Usar datos de ejemplo
           const exampleVotos: Record<string, number> = {
-            PP: 180, PSOE: 120, VOX: 85, SUMAR: 65, PODEMOS: 45,
-            JUNTS: 35, ERC: 30, PNV: 25, ALIANZA: 15, BILDU: 20,
-            SAF: 40, CC: 10, UPN: 8, CIUDADANOS: 12, CAMINANDO: 5,
-            FRENTE: 3, IZQUIERDA: 8, JUNTOS_EXT: 6, PLIB: 4, EB: 2, BNG: 7,
+            PP: 180,
+            PSOE: 120,
+            VOX: 85,
+            SUMAR: 65,
+            PODEMOS: 45,
+            JUNTS: 35,
+            ERC: 30,
+            PNV: 25,
+            ALIANZA: 15,
+            BILDU: 20,
+            SAF: 40,
+            CC: 10,
+            UPN: 8,
+            CIUDADANOS: 12,
+            CAMINANDO: 5,
+            FRENTE: 3,
+            IZQUIERDA: 8,
+            JUNTOS_EXT: 6,
+            PLIB: 4,
+            EB: 2,
+            BNG: 7,
           };
           const escanos = calcularEscanosGenerales(exampleVotos);
           const nombres: Record<string, string> = {};
@@ -462,11 +640,29 @@ export default function Results() {
             }));
             setYouthStats(stats);
           } else {
+            // Datos de ejemplo si no hay datos
             const exampleYouthVotos: Record<string, number> = {
-              SHAACABAT: 95, REVUELTA: 75, NNGG: 120, JVOX: 65, VLE: 45,
-              JSE: 85, PATRIOTA: 35, JIU: 40, JCOMUNISTA: 30, JCS: 25,
-              EGI: 15, ERNAI: 20, JERC: 35, JNC: 28, GALIZANOVA: 18,
-              ARRAN: 22, JNCANA: 12, JPV: 16, ACL: 14, JEC: 10, AGORA: 8,
+              SHAACABAT: 95,
+              REVUELTA: 75,
+              NNGG: 120,
+              JVOX: 65,
+              VLE: 45,
+              JSE: 85,
+              PATRIOTA: 35,
+              JIU: 40,
+              JCOMUNISTA: 30,
+              JCS: 25,
+              EGI: 15,
+              ERNAI: 20,
+              JERC: 35,
+              JNC: 28,
+              GALIZANOVA: 18,
+              ARRAN: 22,
+              JNCANA: 12,
+              JPV: 16,
+              ACL: 14,
+              JEC: 10,
+              AGORA: 8,
             };
             const escanos = calcularEscanosJuveniles(exampleYouthVotos);
             const nombres: Record<string, string> = {};
@@ -485,11 +681,29 @@ export default function Results() {
           }
         } catch (err) {
           console.error("Error fetching youth votes:", err);
+          // Usar datos de ejemplo
           const exampleYouthVotos: Record<string, number> = {
-            SHAACABAT: 95, REVUELTA: 75, NNGG: 120, JVOX: 65, VLE: 45,
-            JSE: 85, PATRIOTA: 35, JIU: 40, JCOMUNISTA: 30, JCS: 25,
-            EGI: 15, ERNAI: 20, JERC: 35, JNC: 28, GALIZANOVA: 18,
-            ARRAN: 22, JNCANA: 12, JPV: 16, ACL: 14, JEC: 10, AGORA: 8,
+            SHAACABAT: 95,
+            REVUELTA: 75,
+            NNGG: 120,
+            JVOX: 65,
+            VLE: 45,
+            JSE: 85,
+            PATRIOTA: 35,
+            JIU: 40,
+            JCOMUNISTA: 30,
+            JCS: 25,
+            EGI: 15,
+            ERNAI: 20,
+            JERC: 35,
+            JNC: 28,
+            GALIZANOVA: 18,
+            ARRAN: 22,
+            JNCANA: 12,
+            JPV: 16,
+            ACL: 14,
+            JEC: 10,
+            AGORA: 8,
           };
           const escanos = calcularEscanosJuveniles(exampleYouthVotos);
           const nombres: Record<string, string> = {};
@@ -506,120 +720,141 @@ export default function Results() {
           }));
           setYouthStats(stats);
         }
+
+        // Cargar votos por provincia para asociaciones juveniles
+        try {
+          const { data: provinciaJuvenilData } = await supabase
+            .from("votos_por_provincia_juveniles_view")
+            .select("provincia, asociacion, votos");
+          
+          if (provinciaJuvenilData && provinciaJuvenilData.length > 0) {
+            const votosProvJuveniles: Record<string, Record<string, number>> = {};
+            
+            provinciaJuvenilData.forEach((row: any) => {
+              if (row.provincia && row.asociacion) {
+                if (!votosProvJuveniles[row.provincia]) {
+                  votosProvJuveniles[row.provincia] = {};
+                }
+                votosProvJuveniles[row.provincia][row.asociacion] = row.votos;
+              }
+            });
+            
+            setVotosPorProvinciaJuveniles(votosProvJuveniles);
+          }
+        } catch (err) {
+          console.error("Error fetching votos por provincia juveniles:", err);
+        }
+
+        // Intentar usar el VIEW de valoraciones
+        try {
+          const { data: viewData } = await supabase
+            .from("valoraciones_lideres_view")
+            .select("*");
+          
+          if (viewData && viewData.length > 0) {
+            const leaderMap: Record<string, { name: string; fieldName: string }> = {
+              'feijoo': { name: 'Alberto Núñez Feijóo', fieldName: 'val_feijoo' },
+              'sanchez': { name: 'Pedro Sánchez', fieldName: 'val_sanchez' },
+              'abascal': { name: 'Santiago Abascal', fieldName: 'val_abascal' },
+              'alvise': { name: 'Alvise Pérez', fieldName: 'val_alvise' },
+              'yolanda_diaz': { name: 'Yolanda Díaz', fieldName: 'val_yolanda_diaz' },
+              'irene_montero': { name: 'Irene Montero', fieldName: 'val_irene_montero' },
+              'ayuso': { name: 'Isabel Díaz Ayuso', fieldName: 'val_ayuso' },
+              'buxade': { name: 'Jorge Buxadé', fieldName: 'val_buxade' },
+            };
+            
+            const ratings: LeaderRating[] = viewData.map((row: any) => {
+              const leader = leaderMap[row.lider];
+              return {
+                name: leader.name,
+                fieldName: leader.fieldName,
+                average: parseFloat(row.valoracion_media) || 0,
+                count: row.total_valoraciones || 0,
+              };
+            });
+            setLeaderRatings(ratings);
+          }
+        } catch (err) {
+          // Fallback: calcular manualmente si el VIEW no existe
+          const { data: allResponses } = await supabase
+            .from("respuestas")
+            .select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
+
+          if (allResponses && allResponses.length > 0) {
+            const leaders = [
+              { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" },
+              { name: "Pedro Sánchez", fieldName: "val_sanchez" },
+              { name: "Santiago Abascal", fieldName: "val_abascal" },
+              { name: "Alvise Pérez", fieldName: "val_alvise" },
+              { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" },
+              { name: "Irene Montero", fieldName: "val_irene_montero" },
+              { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" },
+              { name: "Jorge Buxadé", fieldName: "val_buxade" },
+            ];
+
+            const ratings: LeaderRating[] = leaders.map((leader) => {
+              let sum = 0;
+              let count = 0;
+              allResponses.forEach((r: any) => {
+                const value = r[leader.fieldName];
+                if (value !== null && value !== undefined) {
+                  sum += value;
+                  count += 1;
+                }
+              });
+              const average = count > 0 ? sum / count : 0;
+              return {
+                name: leader.name,
+                fieldName: leader.fieldName,
+                average: Math.round(average * 10) / 10,
+                count: count,
+              };
+            });
+
+            setLeaderRatings(ratings);
+          }
+        }
+
+        // Obtener nota ejecutivo
+        try {
+          const { data: notaData } = await supabase
+            .from("media_nota_ejecutivo")
+            .select("nota_media");
+          if (notaData && notaData.length > 0) {
+            setNotaEjecutivo(notaData[0].nota_media);
+          }
+        } catch (err) {
+          console.log('Nota ejecutivo no disponible');
+        }
+
+        // Obtener edad promedio
+        try {
+          const { data: edadData } = await supabase.from("edad_promedio").select("edad_media");
+          if (edadData && edadData.length > 0) {
+            setEdadPromedio(edadData[0].edad_media);
+          }
+        } catch (err) {
+          console.error("Error fetching edad promedio:", err);
+        }
+
+        // Obtener ideología promedio
+        try {
+          const { data: ideologiaData } = await supabase.from("ideologia_promedio").select("ideologia_media");
+          if (ideologiaData && ideologiaData.length > 0) {
+            setIdeologiaPromedio(ideologiaData[0].ideologia_media);
+          }
+        } catch (err) {
+          console.error("Error fetching ideologia promedio:", err);
+        }
       } catch (error) {
         console.error("Error fetching results:", error);
-      }
-    };
-
-    fetchResults();
-  }, [generalPartyMap, youthPartyMap, votosPorProvincia]);
-
-  const partyMapByType = useMemo(() => {
-    const generalMap: Record<string, PartyMeta> = {};
-    const youthMap: Record<string, PartyMeta> = {};
-
-    partyConfig.forEach((party) => {
-      if (party.type === "general") generalMap[party.key] = party;
-      if (party.type === "youth") youthMap[party.key] = party;
-    });
-
-    return { generalMap, youthMap };
-  }, [partyConfig]);
-
-  const partyColorMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    partyConfig.forEach((p) => {
-      m[p.key.toUpperCase()] = p.color;
-      m[p.name.toUpperCase()] = p.color;
-    });
-    return m;
-  }, [partyConfig]);
-
-  useEffect(() => {
-    if (!partyConfig.length) return;
-
-    const loadResults = async () => {
-      setLoading(true);
-      try {
-        const { count } = await supabase.from("respuestas").select("*", { head: true, count: "exact" });
-        setTotalResponses(count || 0);
-
-        const { data: generalVotes } = await supabase.from("votos_generales_totales").select("partido_id, votos");
-        const generalVotosMap: Record<string, number> = {};
-        Object.values(partyMapByType.generalMap).forEach((party) => {
-          generalVotosMap[party.key] = 0;
-        });
-        (generalVotes || []).forEach((row: any) => {
-          generalVotosMap[row.partido_id] = Number(row.votos || 0);
-        });
-
-        const generalEscanos = calcularEscanosGenerales(generalVotosMap);
-        const generalNames: Record<string, string> = {};
-        const generalLogos: Record<string, string> = {};
-        Object.values(partyMapByType.generalMap).forEach((party) => {
-          generalNames[party.key] = party.name;
-          generalLogos[party.key] = party.logo;
-        });
-
-        const generalStatsCalculated = obtenerEstadisticas(generalVotosMap, generalEscanos, generalNames, generalLogos).map((s) => ({
-          ...s,
-          color: partyMapByType.generalMap[s.id]?.color,
-        }));
-        setGeneralStats(generalStatsCalculated);
-
-        const { data: youthVotes } = await supabase.from("votos_juveniles_totales").select("asociacion_id, votos");
-        const youthVotosMap: Record<string, number> = {};
-        Object.values(partyMapByType.youthMap).forEach((party) => {
-          youthVotosMap[party.key] = 0;
-        });
-        (youthVotes || []).forEach((row: any) => {
-          youthVotosMap[row.asociacion_id] = Number(row.votos || 0);
-        });
-
-        const youthEscanos = calcularEscanosJuveniles(youthVotosMap);
-        const youthNames: Record<string, string> = {};
-        const youthLogos: Record<string, string> = {};
-        Object.values(partyMapByType.youthMap).forEach((party) => {
-          youthNames[party.key] = party.name;
-          youthLogos[party.key] = party.logo;
-        });
-
-        const youthStatsCalculated = obtenerEstadisticas(youthVotosMap, youthEscanos, youthNames, youthLogos).map((s) => ({
-          ...s,
-          color: partyMapByType.youthMap[s.id]?.color,
-        }));
-        setYouthStats(youthStatsCalculated);
-
-        const { data: mapGeneral } = await supabase
-          .from("votos_por_provincia_view")
-          .select("provincia, partido, votos");
-
-        const groupedGeneral: Record<string, Record<string, number>> = {};
-        (mapGeneral || []).forEach((row: any) => {
-          if (!groupedGeneral[row.provincia]) groupedGeneral[row.provincia] = {};
-          groupedGeneral[row.provincia][row.partido] = Number(row.votos || 0);
-        });
-        setVotosPorProvinciaGeneral(groupedGeneral);
-
-        const { data: mapYouth } = await supabase
-          .from("votos_por_provincia_juveniles_view")
-          .select("provincia, asociacion, votos");
-
-        const groupedYouth: Record<string, Record<string, number>> = {};
-        (mapYouth || []).forEach((row: any) => {
-          if (!groupedYouth[row.provincia]) groupedYouth[row.provincia] = {};
-          groupedYouth[row.provincia][row.asociacion] = Number(row.votos || 0);
-        });
-        setVotosPorProvinciaYouth(groupedYouth);
-      } catch (error) {
-        console.error("Error loading results:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadResults();
-    const interval = setInterval(loadResults, 10000);
+    fetchResults();
+    const interval = setInterval(fetchResults, 10000);
     return () => clearInterval(interval);
   }, [generalPartyMap, youthPartyMap]);
 
@@ -637,91 +872,62 @@ export default function Results() {
     return map;
   }, [generalPartyMap, youthPartyMap]);
 
-  const activeStats = activeTab === "youth" ? youthStats : generalStats;
-  const activePartyMap = mapMode === "youth" ? partyMapByType.youthMap : partyMapByType.generalMap;
-  const activeProvinceVotes = mapMode === "youth" ? votosPorProvinciaYouth : votosPorProvinciaGeneral;
+  const exportToCSV = () => {
+    const headers = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Porcentaje de Escaños'];
+    const rows = stats.map(party => [
+      party.nombre,
+      party.votos,
+      party.porcentaje.toFixed(2) + '%',
+      party.escanos,
+      ((party.escanos / totalEscanos) * 100).toFixed(2) + '%'
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `resultados-${activeTab}-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = async () => {
+    try {
+      const { downloadPDFWithMetrics } = await import("@/lib/pdfExportMetrics");
+      const exportTab = activeTab === "simulador-electoral" ? "general" : activeTab;
+      await downloadPDFWithMetrics(stats, exportTab, totalResponses, edadPromedio, ideologiaPromedio);
+    } catch (err) {
+      console.error("Error exporting to PDF:", err);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8">
-
-        {/* Header */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">La Encuesta de BC</h1>
-            <p className="text-sm text-slate-500">Resultados en tiempo real</p>
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="sticky top-0 z-50 frosted-glass border-0 shadow-none">
+        <div className="container h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+            <h1 className="text-lg font-semibold text-foreground">Resultados - Batalla Cultural</h1>
           </div>
-          <button
-            onClick={() => setLocation("/")}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100"
-          >
-            <ArrowLeft className="h-4 w-4" /> Volver
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div className="glass-surface p-4 sm:p-6 md:p-8 space-y-4 mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Resultados en Vivo</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-            <div className="stat-box">
-              <p className="text-xs sm:text-sm text-muted-foreground">Total de Respuestas</p>
-              <p className="stat-value text-lg sm:text-2xl md:text-3xl">{totalResponses.toLocaleString()}</p>
-            </div>
-            <div className="stat-box">
-              <p className="text-xs sm:text-sm text-muted-foreground">Escaños en Juego</p>
-              <p className="stat-value text-lg sm:text-2xl md:text-3xl">{totalEscanos}</p>
-            </div>
-            <div className="stat-box">
-              <p className="text-xs sm:text-sm text-muted-foreground">Última Actualización</p>
-              <p className="text-base sm:text-lg font-semibold text-foreground">Tiempo Real</p>
-            </div>
-          </div>
-          {edadPromedio !== null && (
-            <div className="stat-box">
-              <p className="text-sm text-muted-foreground">Edad Media</p>
-              <p className="stat-value">{edadPromedio}</p>
-              <p className="text-xs text-muted-foreground">años</p>
-            </div>
-          )}
-          {ideologiaPromedio !== null && (
-            <div className="frosted-glass p-4 rounded-lg text-center">
-              <p className="text-sm text-[#666666]">Posición Ideológica Media</p>
-              <p className="text-3xl font-bold text-[#C41E3A]">{ideologiaPromedio}</p>
-              <p className="text-xs text-[#999999]">en escala 1-10</p>
-            </div>
-          )}
-          {notaEjecutivo !== null && (
-            <div className="frosted-glass p-4 rounded-lg text-center">
-              <p className="text-sm text-[#666666]">Nota Ejecutivo</p>
-              <p className="text-3xl font-bold text-[#C41E3A]">{notaEjecutivo}</p>
-              <p className="text-xs text-[#999999]">sobre 10</p>
-            </div>
-          )}
-          <div className="flex gap-2 sm:gap-3 mt-6 flex-wrap">
+          <div className="flex items-center gap-4">
             <Button
-              onClick={() => setShowAIAnalysis(true)}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
-            >
-              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Análisis de IA</span>
-              <span className="sm:hidden">IA</span>
-            </Button>
-            <Button
-              onClick={exportToPDF}
+              onClick={() => setLocation("/")}
               variant="outline"
-              className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
+              className="btn-secondary text-sm"
             >
-              <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-              PDF
+              Volver
             </Button>
-            <ShareResultsModern
-              stats={generalStats}
-              youthStats={youthStats}
-              totalResponses={totalResponses}
-              cooldownMinutes={15}
-            />
+            <FollowUsMenu />
           </div>
         </div>
+      </header>
 
       <main className="flex-1 container py-10">
         {loading ? (
@@ -895,7 +1101,7 @@ export default function Results() {
                     : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
                 }`}
               >
-                {tab.label}
+                Variación de Votaciones por Día
               </button>
               <button
                 onClick={() => setActiveTab("lideres-preferidos")}
@@ -917,6 +1123,16 @@ export default function Results() {
               >
                 Preguntas Varias
               </button>
+              <button
+                onClick={() => setActiveTab("simulador-electoral")}
+                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
+                  activeTab === "simulador-electoral"
+                    ? "bg-[#C41E3A] text-white"
+                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
+                }`}
+              >
+                Simulador Electoral
+              </button>
               <div className="ml-auto flex gap-2">
                 <Button
                   onClick={exportToPDF}
@@ -935,24 +1151,25 @@ export default function Results() {
               </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Main content */}
-        {loading ? (
-          <LoadingAnimation />
-        ) : (
-          <div className="space-y-6">
-
-            {/* Sort buttons */}
             {(activeTab === "general" || activeTab === "youth") && (
-              <div className="flex gap-2">
-                <Button onClick={() => setSortBy('votos')} variant={sortBy === 'votos' ? 'default' : 'outline'} className="text-sm">
-                  Ordenar por Votos
-                </Button>
-                <Button onClick={() => setSortBy('escanos')} variant={sortBy === 'escanos' ? 'default' : 'outline'} className="text-sm">
-                  Ordenar por Escaños
-                </Button>
+              <div className="space-y-6">
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    onClick={() => setSortBy('votos')}
+                    variant={sortBy === 'votos' ? 'default' : 'outline'}
+                    className="text-sm"
+                  >
+                    Ordenar por Votos
+                  </Button>
+                  <Button
+                    onClick={() => setSortBy('escanos')}
+                    variant={sortBy === 'escanos' ? 'default' : 'outline'}
+                    className="text-sm"
+                  >
+                    Ordenar por Escaños
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -1026,21 +1243,37 @@ export default function Results() {
             {activeTab === "comparacion-ccaa" && (
               <CCAAComparisonSection partyMeta={generalPartyMap} />
             )}
-
-            {/* Mapa y Hemiciclo - Generales */}
-            {activeTab === "mapa-hemiciclo" && (
+            {activeTab === "asoc-juv-mapa-hemiciclo" && (
               <div className="space-y-4">
-                {Object.keys(votosPorProvincia).length > 0 ? (
-                  <div className="space-y-4">
+                {Object.keys(votosPorProvinciaJuveniles).length > 0 ? (
+                  <>
                     <div className="liquid-glass p-4 rounded-2xl">
                       <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias</h2>
+                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias - Asociaciones Juveniles</h2>
                         <div className="flex gap-2">
-                          <Button onClick={() => setMapView('schematic')} variant={mapView === 'schematic' ? 'default' : 'outline'} className={`flex items-center gap-2 ${mapView === 'schematic' ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white' : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'}`}>
-                            <Grid3x3 className="w-4 h-4" /> Esquemática
+                          <Button
+                            onClick={() => setMapView('schematic')}
+                            variant={mapView === 'schematic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'schematic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Grid3x3 className="w-4 h-4" />
+                            Esquemática
                           </Button>
-                          <Button onClick={() => setMapView('realistic')} variant={mapView === 'realistic' ? 'default' : 'outline'} className={`flex items-center gap-2 ${mapView === 'realistic' ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white' : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'}`}>
-                            <Map className="w-4 h-4" /> Realista
+                          <Button
+                            onClick={() => setMapView('realistic')}
+                            variant={mapView === 'realistic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'realistic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Map className="w-4 h-4" />
+                            Realista
                           </Button>
                         </div>
                       </div>
@@ -1069,10 +1302,23 @@ export default function Results() {
                         />
                       )}
                     </div>
+                    
                     <div className="liquid-glass p-6 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro</h2>
-                      <PactometerInteractive stats={generalStats.map(s => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={350} requiredForMajority={176} />
+                      {youthStats.length > 0 && (
+                        <PactometerInteractive 
+                          stats={youthStats.map(s => ({
+                            id: s.id,
+                            nombre: s.nombre,
+                            escanos: s.escanos,
+                            porcentaje: s.porcentaje,
+                            color: s.color
+                          }))}
+                          totalSeats={100}
+                          requiredForMajority={51}
+                        />
+                      )}
                     </div>
+                    
                     <div className="liquid-glass p-4 rounded-2xl">
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo de Asociaciones Juveniles</h2>
                       <CongressHemicycle 
@@ -1084,29 +1330,45 @@ export default function Results() {
                         partyMeta={youthPartyMap}
                       />
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <div className="liquid-glass p-8 rounded-2xl text-center">
-                    <p className="text-[#666666]">Cargando datos de provincias...</p>
+                    <p className="text-[#666666]">Cargando datos de provincias de Asociaciones Juveniles...</p>
                   </div>
                 )}
               </div>
             )}
-
-            {/* Mapa y Hemiciclo - Juveniles */}
-            {activeTab === "asoc-juv-mapa-hemiciclo" && (
+            {activeTab === "mapa-hemiciclo" && (
               <div className="space-y-4">
-                {Object.keys(votosPorProvinciaJuveniles).length > 0 ? (
-                  <div className="space-y-4">
+                {Object.keys(votosPorProvincia).length > 0 ? (
+                  <>
                     <div className="liquid-glass p-4 rounded-2xl">
                       <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias - Asociaciones Juveniles</h2>
+                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias</h2>
                         <div className="flex gap-2">
-                          <Button onClick={() => setMapView('schematic')} variant={mapView === 'schematic' ? 'default' : 'outline'} className={`flex items-center gap-2 ${mapView === 'schematic' ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white' : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'}`}>
-                            <Grid3x3 className="w-4 h-4" /> Esquemática
+                          <Button
+                            onClick={() => setMapView('schematic')}
+                            variant={mapView === 'schematic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'schematic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Grid3x3 className="w-4 h-4" />
+                            Esquemática
                           </Button>
-                          <Button onClick={() => setMapView('realistic')} variant={mapView === 'realistic' ? 'default' : 'outline'} className={`flex items-center gap-2 ${mapView === 'realistic' ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white' : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'}`}>
-                            <Map className="w-4 h-4" /> Realista
+                          <Button
+                            onClick={() => setMapView('realistic')}
+                            variant={mapView === 'realistic' ? 'default' : 'outline'}
+                            className={`flex items-center gap-2 ${
+                              mapView === 'realistic'
+                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                            }`}
+                          >
+                            <Map className="w-4 h-4" />
+                            Realista
                           </Button>
                         </div>
                       </div>
@@ -1135,11 +1397,22 @@ export default function Results() {
                         />
                       )}
                     </div>
+                    
                     <div className="liquid-glass p-6 rounded-2xl">
-                      {youthStats.length > 0 && (
-                        <PactometerInteractive stats={youthStats.map(s => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={100} requiredForMajority={51} />
-                      )}
+                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro</h2>
+                      <PactometerInteractive 
+                        stats={generalStats.map(s => ({
+                          id: s.id,
+                          nombre: s.nombre,
+                          escanos: s.escanos,
+                          porcentaje: s.porcentaje,
+                          color: s.color
+                        }))}
+                        totalSeats={350}
+                        requiredForMajority={176}
+                      />
                     </div>
+                    
                     <div className="liquid-glass p-4 rounded-2xl">
                       <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo del Congreso de los Diputados</h2>
                       <CongressHemicycle 
@@ -1151,43 +1424,309 @@ export default function Results() {
                         partyMeta={generalPartyMap}
                       />
                     </div>
-                  </div>
+                  </>
                 ) : (
                   <div className="liquid-glass p-8 rounded-2xl text-center">
-                    <p className="text-[#666666]">Cargando datos de provincias de Asociaciones Juveniles...</p>
+                    <p className="text-[#666666]">Cargando datos de provincias...</p>
                   </div>
                 )}
               </div>
             )}
+            {activeTab === "simulador-electoral" && (
+              <div className="space-y-6">
+                <div className="glass-surface p-4 rounded-2xl space-y-4">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D]">Simulador Electoral</h2>
+                  <p className="text-sm text-[#666666]">
+                    Ajusta los votos por partido, crea partidos personalizados y simula el reparto de escaños.
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {Object.entries(simulatorPartyMap).map(([partyKey, party]) => (
+                      <label key={partyKey} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: party.color }} />
+                        <span className="min-w-[120px] text-sm font-semibold text-slate-700">{party.name}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={simulatorVotes[partyKey] ?? 0}
+                          onChange={(e) =>
+                            setSimulatorVotes((prev) => ({
+                              ...prev,
+                              [partyKey]: Math.max(0, Number(e.target.value) || 0),
+                            }))
+                          }
+                          className="ml-auto w-32 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm"
+                        />
+                      </label>
+                    ))}
+                  </div>
 
-            {activeTab === "map" && (
-              <section className="space-y-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
-                <div className="flex gap-2">
-                  <button onClick={() => setMapMode("general")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${mapMode === "general" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>Mapa Generales</button>
-                  <button onClick={() => setMapMode("youth")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${mapMode === "youth" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>Mapa Juveniles</button>
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-700">Crear partido personalizado</p>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="text"
+                        value={newSimulatorPartyName}
+                        onChange={(e) => setNewSimulatorPartyName(e.target.value)}
+                        placeholder="Nombre del partido"
+                        className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      />
+                      <input
+                        type="color"
+                        value={newSimulatorPartyColor}
+                        onChange={(e) => setNewSimulatorPartyColor(e.target.value)}
+                        className="h-10 w-14 rounded-md border border-slate-300 bg-white"
+                      />
+                      <Button onClick={addSimulatorCustomParty} className="bg-[#C41E3A] hover:bg-[#A01830] text-white">
+                        Añadir
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <SpainMapProvincial votosPorProvincia={activeProvinceVotes} isYouthAssociations={mapMode === "youth"} partyMeta={Object.fromEntries(Object.entries(activePartyMap).map(([k, v]) => [k, { color: v.color }]))} />
-              </section>
+
+                <div className="liquid-glass p-6 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro Simulado</h2>
+                  <PactometerInteractive
+                    stats={simulatorStats.map((s) => ({
+                      id: s.id,
+                      nombre: s.nombre,
+                      escanos: s.escanos,
+                      porcentaje: s.porcentaje,
+                      color: s.color,
+                    }))}
+                    totalSeats={350}
+                    requiredForMajority={176}
+                  />
+                </div>
+
+                <div className="liquid-glass p-4 rounded-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias (Simulado)</h2>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setMapView('schematic')}
+                        variant={mapView === 'schematic' ? 'default' : 'outline'}
+                        className={`flex items-center gap-2 ${
+                          mapView === 'schematic'
+                            ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                            : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                        }`}
+                      >
+                        <Grid3x3 className="w-4 h-4" />
+                        Esquemática
+                      </Button>
+                      <Button
+                        onClick={() => setMapView('realistic')}
+                        variant={mapView === 'realistic' ? 'default' : 'outline'}
+                        className={`flex items-center gap-2 ${
+                          mapView === 'realistic'
+                            ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
+                            : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
+                        }`}
+                      >
+                        <Map className="w-4 h-4" />
+                        Realista
+                      </Button>
+                    </div>
+                  </div>
+                  {mapView === 'schematic' ? (
+                    <SpainMapProvincial
+                      votosPorProvincia={simulatorVotesByProvince}
+                      isYouthAssociations={false}
+                      partyMeta={simulatorPartyMap}
+                      onProvinceClick={(province, data, votos, escanos) => {
+                        setSimProvinciaSeleccionada(province);
+                        setSimVotosProvincia(votos);
+                        setSimEscanosProvincia(escanos);
+                      }}
+                    />
+                  ) : (
+                    <SpainMapRealistic
+                      votosPorProvincia={simulatorVotesByProvince}
+                      provinciaMetricsMap={provinciaMetricsMap}
+                      isYouthAssociations={false}
+                      partyMeta={simulatorPartyMap}
+                      onProvinceClick={(province, data, votos, escanos) => {
+                        setSimProvinciaSeleccionada(province);
+                        setSimVotosProvincia(votos);
+                        setSimEscanosProvincia(escanos);
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="liquid-glass p-4 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo Simulado</h2>
+                  <CongressHemicycle
+                    escanos={simulatorEscanosByProvince}
+                    totalEscanos={350}
+                    provinciaSeleccionada={simProvinciaSeleccionada}
+                    votosProvincia={simVotosProvincia}
+                    escanosProvincia={simEscanosProvincia}
+                    partyMeta={simulatorPartyMap}
+                  />
+                </div>
+              </div>
+            )}
+            {activeTab === "leaders" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
+              {leaderRatings.length === 0 ? (
+                <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
+                  <p>Aún no hay valoraciones. Sé el primero en responder la encuesta.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {leaderRatings.map((leader) => {
+                    // Mapeo de fieldName a clave de LEADERS
+                    const leaderKeyMap: Record<string, keyof typeof LEADERS> = {
+                      'val_feijoo': 'FEIJOO',
+                      'val_sanchez': 'SANCHEZ',
+                      'val_abascal': 'ABASCAL',
+                      'val_alvise': 'ALVISE',
+                      'val_yolanda_diaz': 'YOLANDA',
+                      'val_irene_montero': 'IRENE',
+                      'val_ayuso': 'AYUSO',
+                      'val_buxade': 'BUXADE',
+                    };
+                    const leaderKey = leaderKeyMap[leader.fieldName];
+                    const leaderData = leaderKey ? LEADERS[leaderKey] : null;
+                    const leaderImagePath = leaderData?.image;
+                    let leaderImage: string | undefined;
+                    if (leaderImagePath) {
+                      const filename = leaderImagePath.split('/').pop();
+                      if (filename) {
+                        const embeddedKey = Object.keys(EMBEDDED_LEADERS).find(key => key.toLowerCase().includes(filename.toLowerCase().replace(/\.[^/.]+$/, '')));
+                        if (embeddedKey) leaderImage = EMBEDDED_LEADERS[embeddedKey];
+                      }
+                    }
+                    if (!leaderImage && leaderImagePath) leaderImage = leaderImagePath;
+                    
+                    // Debug logging para Feijóo
+                    if (leader.fieldName === 'FEIJOO') {
+                      console.log('Feijóo image:', leaderImage, 'Leader data:', leaderData);
+                    }
+                    
+                    return (
+                    <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
+                      {leaderImage ? (
+                        <img
+                          src={leaderImage}
+                          alt={leader.name}
+                          className="w-full h-32 object-cover rounded-lg"
+                          style={{ display: 'block', width: '100%', height: '128px' }}
+                          onError={(e) => {
+                            console.error('Error loading image for', leader.name, ':', e);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          onLoad={() => {
+                            if (leader.fieldName === 'FEIJOO') console.log('Feijóo image loaded successfully');
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-32 bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+                          Sin imagen
+                        </div>
+                      )}
+                      <h4 className="font-semibold text-[#2D2D2D] text-sm">{leader.name}</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-[#666666]">
+                          <span>Valoración Media</span>
+                          <span className="text-[#C41E3A] font-bold">{leader.average.toFixed(1)}/10</span>
+                        </div>
+                        <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                          <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: `${(leader.average / 10) * 100}%` }} />
+                        </div>
+                        <p className="text-xs text-[#999999]">({leader.count} respuestas)</p>
+                      </div>
+                    </div>
+                    );
+                  })}
+                  </div>
+
+                  <div className="liquid-glass p-8 rounded-2xl">
+                    <h3 className="text-xl font-bold text-[#2D2D2D] mb-6">Comparativa de Valoraciones</h3>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={leaderRatings}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E0D5CC" />
+                        <XAxis dataKey="name" stroke="#666666" angle={-45} textAnchor="end" height={100} />
+                        <YAxis stroke="#666666" domain={[0, 10]} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: "#F5F1E8", border: "1px solid #E0D5CC", borderRadius: "8px" }}
+                          formatter={(value: any) => value.toFixed(1)}
+                          labelStyle={{ color: "#2D2D2D" }}
+                        />
+                        <Bar dataKey="average" fill="#C41E3A" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
+            </div>
+            )}
+            {activeTab === "encuestadoras-externas" && (
+              <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />
             )}
 
-            {activeTab === "hemicycle" && (
-              <section className="space-y-4">
-                <div className="flex gap-2">
-                  <button onClick={() => setMapMode("general")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${mapMode === "general" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>Hemiciclo Generales</button>
-                  <button onClick={() => setMapMode("youth")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${mapMode === "youth" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700"}`}>Hemiciclo Juveniles</button>
-                </div>
-                <CongressHemicycle
-                  escanos={Object.fromEntries((mapMode === "youth" ? youthStats : generalStats).map((s) => [s.id, s.escanos]))}
-                  totalEscanos={mapMode === "youth" ? 100 : 350}
-                  partyMeta={Object.fromEntries(Object.entries(activePartyMap).map(([k, v]) => [k, { name: v.name, color: v.color, logo: v.logo }]))}
-                />
-              </section>
+            {activeTab !== "leaders" && activeTab !== "encuestadoras-externas" && (
+            <div className="liquid-glass p-8 rounded-2xl space-y-4">
+              <h3 className="text-xl font-bold text-[#2D2D2D]">Metodología</h3>
+              <div className="space-y-3 text-sm text-[#666666]">
+                <p>
+                  <span className="font-semibold text-[#2D2D2D]">Ley d'Hondt:</span> Los escaños se distribuyen
+                  utilizando el método d'Hondt, que es el sistema electoral utilizado en España.
+                </p>
+                <p>
+                  <span className="font-semibold text-[#2D2D2D]">Umbral Mínimo:</span> En elecciones generales se
+                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 4%.
+                </p>
+                <p>
+                  <span className="font-semibold text-[#2D2D2D]">Actualización:</span> Los resultados se actualizan
+                  en tiempo real conforme se reciben nuevas respuestas.
+                </p>
+              </div>
+            </div>
             )}
 
+            <CommentsSection activeTab={activeTab === "simulador-electoral" ? "general" : activeTab} />
+            </>
+
+            <div className="text-center space-y-4">
+              <p className="text-[#666666]">¿Aún no has respondido la encuesta?</p>
+              <Button
+                onClick={() => setLocation("/encuesta")}
+                className="bg-[#C41E3A] hover:bg-[#A01830] text-white px-8 h-12 rounded-lg font-semibold"
+              >
+                Responder Encuesta
+              </Button>
+            </div>
           </div>
         )}
+      </main>
 
-      </div>
+      <PartyStatsModal
+        isOpen={!!selectedPartyForStats}
+        onClose={() => setSelectedPartyForStats(null)}
+        partyName={selectedPartyForStats || ""}
+        partyType={activeTab === "general" ? "general" : "youth"}
+      />
+
+      <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
+        <div className="container py-8 text-center text-sm text-[#666666]">
+          <p>
+            La Encuesta de Batalla Cultural © 2025 | Todos los datos son anónimos y públicos
+          </p>
+        </div>
+      </footer>
+
+      <AIAnalysisModal
+        open={showAIAnalysis}
+        onOpenChange={setShowAIAnalysis}
+        totalResponses={totalResponses}
+        edadPromedio={edadPromedio}
+        ideologiaPromedio={ideologiaPromedio}
+        topParties={[...stats].sort((a, b) => b.votos - a.votos).slice(0, 5)}
+      />
     </div>
   );
 }
