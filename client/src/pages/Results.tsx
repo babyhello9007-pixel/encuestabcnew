@@ -120,6 +120,101 @@ export default function Results() {
     const defaults: Record<string, { key: string; name: string; color: string; logo: string }> = {};
     if (!partyConfigData?.parties?.length) return defaults;
     partyConfigData.parties.forEach((party) => {
+      const entry = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+      defaults[party.partyKey] = entry;
+      defaults[party.displayName] = entry;
+      defaults[String(party.partyKey).toUpperCase()] = entry;
+      defaults[String(party.displayName).toUpperCase()] = entry;
+    });
+    return defaults;
+  }, [partyConfigData]);
+
+  const youthPartyMap = useMemo(() => {
+    const defaults: Record<string, { key: string; name: string; color: string; logo: string }> = {};
+    if (!partyConfigData?.youth?.length) return defaults;
+    partyConfigData.youth.forEach((party) => {
+      const entry = {
+        key: party.partyKey,
+        name: party.displayName,
+        color: party.color,
+        logo: party.logoUrl,
+      };
+      defaults[party.partyKey] = entry;
+      defaults[party.displayName] = entry;
+      defaults[String(party.partyKey).toUpperCase()] = entry;
+      defaults[String(party.displayName).toUpperCase()] = entry;
+    });
+    return defaults;
+  }, [partyConfigData]);
+
+  useEffect(() => {
+    const loadPartyConfig = async () => {
+      const { data, error } = await supabase
+        .from("party_configuration")
+        .select("party_key, display_name, color, logo_url, party_type, is_active")
+        .eq("is_active", true);
+
+      if (error) {
+        console.error("Error loading party configuration:", error);
+        return;
+      }
+
+      const allRows = data || [];
+      setRuntimePartyConfig(
+        allRows.map((row: any) => ({
+          key: row.party_key,
+          displayName: row.display_name,
+          color: row.color,
+          logoUrl: row.logo_url,
+          partyType: row.party_type,
+        }))
+      );
+      setPartyConfigData({
+        parties: allRows
+          .filter((row: any) => row.party_type === "general")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+        youth: allRows
+          .filter((row: any) => row.party_type === "youth" || row.party_type === "asociacion_juvenil" || row.party_type === "juvenile")
+          .map((row: any) => ({
+            partyKey: row.party_key,
+            displayName: row.display_name,
+            color: row.color,
+            logoUrl: row.logo_url,
+          })),
+      });
+    };
+
+    loadPartyConfig();
+    const channel = supabase
+      .channel("party-configuration-results")
+      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, () => {
+        loadPartyConfig();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.title = "La Encuesta de BC";
+  }, []);
+
+  const generalPartyMap = useMemo(() => {
+    const defaults: Record<string, { key: string; name: string; color: string; logo: string }> = {};
+    if (!partyConfigData?.parties?.length) return defaults;
+    partyConfigData.parties.forEach((party) => {
       defaults[party.partyKey] = {
         key: party.partyKey,
         name: party.displayName,
