@@ -275,6 +275,87 @@ export default function Results() {
   };
 
   useEffect(() => {
+    if (!generalStats.length) return;
+    const baseVotes: Record<string, number> = {};
+    generalStats.forEach((party) => {
+      baseVotes[party.id] = party.votos;
+    });
+    setSimulatorVotes((prev) => (Object.keys(prev).length ? { ...baseVotes, ...prev } : baseVotes));
+  }, [generalStats]);
+
+  const simulatorPartyMap = useMemo(() => {
+    const mergedMap: Record<string, { key: string; name: string; color: string; logo: string }> = { ...generalPartyMap };
+    simulatorCustomParties.forEach((party) => {
+      mergedMap[party.key] = { key: party.key, name: party.name, color: party.color, logo: "" };
+    });
+    return mergedMap;
+  }, [generalPartyMap, simulatorCustomParties]);
+
+  const simulatorStats = useMemo(() => {
+    const normalizedVotes: Record<string, number> = {};
+    Object.entries(simulatorVotes).forEach(([key, value]) => {
+      normalizedVotes[key] = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    });
+    const escanos = calcularEscanosGenerales(normalizedVotes);
+    const nombres: Record<string, string> = {};
+    const logos: Record<string, string> = {};
+    Object.entries(simulatorPartyMap).forEach(([key, party]) => {
+      nombres[key] = party.name;
+      logos[key] = party.logo;
+    });
+    return obtenerEstadisticas(normalizedVotes, escanos, nombres, logos).map((s) => ({
+      ...s,
+      color: simulatorPartyMap[s.id]?.color || "#C41E3A",
+    }));
+  }, [simulatorVotes, simulatorPartyMap]);
+
+  const simulatorVotesByProvince = useMemo(() => {
+    if (!Object.keys(votosPorProvincia).length) return {};
+    const totalVotes = Object.values(simulatorVotes).reduce((acc, v) => acc + Math.max(0, Number(v) || 0), 0);
+    if (totalVotes === 0) return {};
+    const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [party, votes]) => {
+      acc[party] = Math.max(0, Number(votes) || 0) / totalVotes;
+      return acc;
+    }, {});
+
+    const simulatedByProvince: Record<string, Record<string, number>> = {};
+    Object.entries(votosPorProvincia).forEach(([province, provinceVotes]) => {
+      const provinceTotal = Object.values(provinceVotes).reduce((acc, v) => acc + v, 0);
+      const simProvince: Record<string, number> = {};
+      Object.entries(shares).forEach(([party, share]) => {
+        simProvince[party] = Math.round(provinceTotal * share);
+      });
+      simulatedByProvince[province] = simProvince;
+    });
+
+    return simulatedByProvince;
+  }, [votosPorProvincia, simulatorVotes]);
+
+  const simulatorEscanosByProvince = useMemo(() => {
+    if (!Object.keys(simulatorVotesByProvince).length) return {};
+    return calcularEscanosGeneralesPorProvincia(simulatorVotesByProvince);
+  }, [simulatorVotesByProvince]);
+
+  const addSimulatorCustomParty = () => {
+    const trimmedName = newSimulatorPartyName.trim();
+    if (!trimmedName) return;
+
+    const slug = trimmedName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toUpperCase();
+
+    const baseKey = slug || `PARTY_${Date.now()}`;
+    const key = simulatorPartyMap[baseKey] ? `${baseKey}_${Date.now()}` : baseKey;
+
+    setSimulatorCustomParties((prev) => [...prev, { key, name: trimmedName, color: newSimulatorPartyColor }]);
+    setSimulatorVotes((prev) => ({ ...prev, [key]: 0 }));
+    setNewSimulatorPartyName("");
+  };
+
+  useEffect(() => {
     const loadPartyConfig = async () => {
       const { data, error } = await supabase
         .from("party_configuration")
@@ -1646,6 +1727,32 @@ export default function Results() {
               </div>
             </div>
             )}
+            {activeTab === "encuestadoras-externas" && (
+              <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />
+            )}
+
+            {activeTab !== "leaders" && activeTab !== "encuestadoras-externas" && (
+            <div className="liquid-glass p-8 rounded-2xl space-y-4">
+              <h3 className="text-xl font-bold text-[#2D2D2D]">Metodología</h3>
+              <div className="space-y-3 text-sm text-[#666666]">
+                <p>
+                  <span className="font-semibold text-[#2D2D2D]">Ley d'Hondt:</span> Los escaños se distribuyen
+                  utilizando el método d'Hondt, que es el sistema electoral utilizado en España.
+                </p>
+                <p>
+                  <span className="font-semibold text-[#2D2D2D]">Umbral Mínimo:</span> En elecciones generales se
+                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 4%.
+                </p>
+                <p>
+                  <span className="font-semibold text-[#2D2D2D]">Actualización:</span> Los resultados se actualizan
+                  en tiempo real conforme se reciben nuevas respuestas.
+                </p>
+              </div>
+            </div>
+            )}
+
+            <CommentsSection activeTab={activeTab === "simulador-electoral" ? "general" : activeTab} />
+            </>
 
             <CommentsSection activeTab={activeTab === "simulador-electoral" ? "general" : activeTab} />
             </>
