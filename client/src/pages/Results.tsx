@@ -156,6 +156,18 @@ export default function Results() {
     const normalized = normalizePartyKey(value);
     if (!normalized) return value;
     const foundKey = Object.keys(metaMap).find((k) => normalizePartyKey(k) === normalized);
+    if (foundKey) return foundKey;
+
+    const foundByPartyKey = Object.entries(metaMap).find(
+      ([, party]) => normalizePartyKey(String(party?.key || "")) === normalized
+    )?.[0];
+    if (foundByPartyKey) return foundByPartyKey;
+
+    const foundByDisplayName = Object.entries(metaMap).find(
+      ([, party]) => normalizePartyKey(String(party?.name || "")) === normalized
+    )?.[0];
+    if (foundByDisplayName) return foundByDisplayName;
+
     return foundKey || value;
   };
 
@@ -175,6 +187,28 @@ export default function Results() {
     });
     return mergedMap;
   }, [generalPartyMap, simulatorCustomParties]);
+
+  const generalPartyMetaLookup = useMemo(() => {
+    const lookup: Record<string, { key: string; name: string; color: string; logo: string }> = {};
+    Object.entries(generalPartyMap).forEach(([mapKey, party]) => {
+      const aliases = [mapKey, party.key, party.name, normalizePartyKey(mapKey), normalizePartyKey(party.key), normalizePartyKey(party.name)];
+      aliases.forEach((alias) => {
+        if (alias) lookup[String(alias)] = party;
+      });
+    });
+    return lookup;
+  }, [generalPartyMap]);
+
+  const youthPartyMetaLookup = useMemo(() => {
+    const lookup: Record<string, { key: string; name: string; color: string; logo: string }> = {};
+    Object.entries(youthPartyMap).forEach(([mapKey, party]) => {
+      const aliases = [mapKey, party.key, party.name, normalizePartyKey(mapKey), normalizePartyKey(party.key), normalizePartyKey(party.name)];
+      aliases.forEach((alias) => {
+        if (alias) lookup[String(alias)] = party;
+      });
+    });
+    return lookup;
+  }, [youthPartyMap]);
 
   const simulatorStats = useMemo(() => {
     const normalizedVotes: Record<string, number> = {};
@@ -1100,7 +1134,7 @@ export default function Results() {
             <div className="space-y-4">
               {stats.length > 0 && (
                 (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
-                  const currentPartyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
+                  const currentPartyMap = activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup;
                   const resolvedPartyKey = resolvePartyKey(party.id, currentPartyMap);
                   const logoUrl = party.logo || currentPartyMap[resolvedPartyKey]?.logo || "";
                   const partyColor = party.color || currentPartyMap[resolvedPartyKey]?.color || "#C41E3A";
@@ -1160,13 +1194,13 @@ export default function Results() {
               <PreguntasVariasSection />
             )}
             {activeTab === "ccaa" && (
-              <CCAAResltsSection partyMeta={generalPartyMap} />
+              <CCAAResltsSection partyMeta={generalPartyMetaLookup} />
             )}
             {activeTab === "provincias" && (
-              <ProvincesResultsSection partyMeta={generalPartyMap} />
+              <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />
             )}
             {activeTab === "comparacion-ccaa" && (
-              <CCAAComparisonSection partyMeta={generalPartyMap} />
+              <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />
             )}
             {activeTab === "asoc-juv-mapa-hemiciclo" && (
               <div className="space-y-4">
@@ -1206,7 +1240,7 @@ export default function Results() {
                         <SpainMapProvincial 
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           isYouthAssociations={true}
-                          partyMeta={youthPartyMap}
+                          partyMeta={youthPartyMetaLookup}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionadaJuveniles(province);
                             setVotosPorPartidoProvinciaJuveniles(votos);
@@ -1218,7 +1252,7 @@ export default function Results() {
                           votosPorProvincia={votosPorProvinciaJuveniles}
                           provinciaMetricsMap={provinciaMetricsMapJuveniles}
                           isYouthAssociations={true}
-                          partyMeta={youthPartyMap}
+                          partyMeta={youthPartyMetaLookup}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionadaJuveniles(province);
                             setVotosPorPartidoProvinciaJuveniles(votos);
@@ -1252,7 +1286,7 @@ export default function Results() {
                         provinciaSeleccionada={provinciaSeleccionadaJuveniles}
                         votosProvincia={votosPorPartidoProvinciaJuveniles}
                         escanosProvincia={escanosProvinciaJuveniles}
-                        partyMeta={youthPartyMap}
+                        partyMeta={youthPartyMetaLookup}
                       />
                     </div>
                   </>
@@ -1301,7 +1335,7 @@ export default function Results() {
                         <SpainMapProvincial 
                           votosPorProvincia={votosPorProvincia}
                           isYouthAssociations={false}
-                          partyMeta={generalPartyMap}
+                          partyMeta={generalPartyMetaLookup}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);
@@ -1313,7 +1347,7 @@ export default function Results() {
                           votosPorProvincia={votosPorProvincia}
                           provinciaMetricsMap={provinciaMetricsMap}
                           isYouthAssociations={false}
-                          partyMeta={generalPartyMap}
+                          partyMeta={generalPartyMetaLookup}
                           onProvinceClick={(province, data, votos, escanos) => {
                             setProvinciaSeleccionada(province);
                             setVotosPorPartidoProvincia(votos);
@@ -1346,7 +1380,7 @@ export default function Results() {
                         provinciaSeleccionada={provinciaSeleccionada}
                         votosProvincia={votosPorPartidoProvincia}
                         escanosProvincia={escanosProvincia}
-                        partyMeta={generalPartyMap}
+                        partyMeta={generalPartyMetaLookup}
                       />
                     </div>
                   </>
