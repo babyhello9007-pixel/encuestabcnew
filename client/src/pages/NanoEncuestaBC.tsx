@@ -392,7 +392,7 @@ export default function NanoEncuestaBC() {
         <ServerCooldownClock isOpen={showServerCooldownClock} remainingMinutes={cooldownMinutes} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <p className="text-white text-lg">Vuelve cuando termine el cooldown para participar nuevamente</p>
+            <p className="text-white text-lg">Actualmente el sistema de prevención de caída está activado. Vuelve cuando termine el cooldown para participar nuevamente</p>
             <Button
               onClick={() => setLocation('/')}
               className="bg-[#C41E3A] hover:bg-[#A01830] text-white"
@@ -419,7 +419,7 @@ export default function NanoEncuestaBC() {
               onClick={() => setLocation("/resultados")}
               className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold"
             >
-              Ver Resultados
+              Ven a ver los resultados.
             </Button>
             <Button
               onClick={() => setLocation("/")}
