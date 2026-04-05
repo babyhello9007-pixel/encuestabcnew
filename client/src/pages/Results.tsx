@@ -49,18 +49,24 @@ interface LiderPreferido {
   photo_url?: string; color?: string; display_name?: string; logo_url?: string;
 }
 
-// ─── Tab navigation types ─────────────────────────────────────────────────────
+/ ─── Tab navigation types ─────────────────────────────────────────────────────
 type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
   | "preguntas-varias" | "simulador-electoral";
 
-interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
+interface TabGroup {
+  label: string;
+  icon: React.ReactNode;
+  tabs: { key: TabKey; label: string }[];
+}
 
 const TAB_GROUPS: TabGroup[] = [
   {
-    label: "Elecciones", icon: <Vote className="w-4 h-4" />, tabs: [
+    label: "Elecciones",
+    icon: <Vote className="w-4 h-4" />,
+    tabs: [
       { key: "general", label: "Resultados Generales" },
       { key: "mapa-hemiciclo", label: "Mapa y Hemiciclo" },
       { key: "simulador-electoral", label: "Simulador Electoral" },
@@ -68,27 +74,35 @@ const TAB_GROUPS: TabGroup[] = [
     ],
   },
   {
-    label: "Territorio", icon: <MapPin className="w-4 h-4" />, tabs: [
+    label: "Territorio",
+    icon: <MapPin className="w-4 h-4" />,
+    tabs: [
       { key: "ccaa", label: "Comunidades Autónomas" },
       { key: "provincias", label: "Provincias" },
       { key: "comparacion-ccaa", label: "Comparar CCAA" },
     ],
   },
   {
-    label: "Juventud", icon: <Users className="w-4 h-4" />, tabs: [
+    label: "Juventud",
+    icon: <Users className="w-4 h-4" />,
+    tabs: [
       { key: "youth", label: "Asociaciones Juveniles" },
       { key: "asoc-juv-mapa-hemiciclo", label: "Mapa y Hemiciclo Juvenil" },
     ],
   },
   {
-    label: "Líderes", icon: <Star className="w-4 h-4" />, tabs: [
+    label: "Líderes",
+    icon: <Star className="w-4 h-4" />,
+    tabs: [
       { key: "lideres-partidos", label: "Líderes por Partido" },
       { key: "leaders", label: "Valoración de Líderes" },
       { key: "lideres-preferidos", label: "Líderes Preferidos" },
     ],
   },
   {
-    label: "Análisis", icon: <BarChart2 className="w-4 h-4" />, tabs: [
+    label: "Análisis",
+    icon: <BarChart2 className="w-4 h-4" />,
+    tabs: [
       { key: "tendencias", label: "Tendencias por Día" },
       { key: "preguntas-varias", label: "Preguntas Varias" },
     ],
@@ -96,41 +110,57 @@ const TAB_GROUPS: TabGroup[] = [
 ];
 
 // ─── NavBar con dropdowns ─────────────────────────────────────────────────────
-function ResultsNavBar({ activeTab, onTabChange }: {
-  activeTab: TabKey; onTabChange: (t: TabKey) => void;
+function ResultsNavBar({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: TabKey;
+  onTabChange: (t: TabKey) => void;
 }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpenGroup(null);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   return (
-    <div ref={ref} className="sticky top-14 z-40 w-full border-b border-slate-200/60 bg-white/85 backdrop-blur-xl shadow-sm">
-      <div className="container">
+    <div
+      ref={ref}
+      className="sticky top-14 z-40 w-full border-b border-slate-200/60 bg-white/85 backdrop-blur-xl shadow-sm"
+    >
+      <div className="container mx-auto px-4">
         <nav className="flex items-center gap-0.5 overflow-x-auto scrollbar-none py-0.5">
           {TAB_GROUPS.map((group) => {
             const activeTabInGroup = group.tabs.find((t) => t.key === activeTab);
             const isGroupActive = !!activeTabInGroup;
             const isOpen = openGroup === group.label;
+
             return (
               <div key={group.label} className="relative flex-shrink-0">
                 <button
                   onClick={() => setOpenGroup(isOpen ? null : group.label)}
-                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold rounded-t-lg transition-all duration-150 whitespace-nowrap border-b-2
-                    ${isGroupActive
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold rounded-t-lg transition-all duration-150 whitespace-nowrap border-b-2 ${
+                    isGroupActive
                       ? "text-[#C41E3A] border-[#C41E3A] bg-red-50/60"
                       : "text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-100/60"
-                    }`}
+                  }`}
                 >
                   {group.icon}
-                  <span>{activeTabInGroup ? activeTabInGroup.label : group.label}</span>
-                  <ChevronDown className={`w-3 h-3 opacity-60 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                  <span>
+                    {activeTabInGroup ? activeTabInGroup.label : group.label}
+                  </span>
+                  <ChevronDown
+                    className={`w-3 h-3 opacity-60 transition-transform duration-200 ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
 
                 {isOpen && (
@@ -138,12 +168,15 @@ function ResultsNavBar({ activeTab, onTabChange }: {
                     {group.tabs.map((tab) => (
                       <button
                         key={tab.key}
-                        onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-l-2
-                          ${activeTab === tab.key
+                        onClick={() => {
+                          onTabChange(tab.key);
+                          setOpenGroup(null);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-l-2 ${
+                          activeTab === tab.key
                             ? "bg-red-50 text-[#C41E3A] font-semibold border-[#C41E3A]"
                             : "text-slate-600 hover:bg-slate-50 font-medium border-transparent hover:border-slate-200"
-                          }`}
+                        }`}
                       >
                         {tab.label}
                       </button>
@@ -158,6 +191,8 @@ function ResultsNavBar({ activeTab, onTabChange }: {
     </div>
   );
 }
+
+export default ResultsNavBar;
 
 // ─── LideresDePartidosSection ─────────────────────────────────────────────────
 function LideresDePartidosSection() {
