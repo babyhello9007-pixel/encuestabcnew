@@ -38,6 +38,12 @@ interface PartyStats {
   color?: string;
 }
 
+interface CustomSimulatorParty {
+  key: string;
+  name: string;
+  color: string;
+}
+
 const tabs = [
   { id: "general", label: "Generales", icon: Vote },
   { id: "youth", label: "Juveniles", icon: Users },
@@ -47,6 +53,7 @@ const tabs = [
   { id: "leaders", label: "Líderes", icon: Users },
   { id: "preguntas-varias", label: "Preguntas varias", icon: BarChart3 },
   { id: "share", label: "Compartir", icon: Share2 },
+  { id: "simulador-electoral", label: "Simulador Electoral", icon: Sparkles },
 ] as const;
 
 type ActiveTab = (typeof tabs)[number]["id"];
@@ -83,6 +90,13 @@ export default function Results() {
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
+  const [simulatorVotes, setSimulatorVotes] = useState<Record<string, number>>({});
+  const [simulatorCustomParties, setSimulatorCustomParties] = useState<CustomSimulatorParty[]>([]);
+  const [newSimulatorPartyName, setNewSimulatorPartyName] = useState("");
+  const [newSimulatorPartyColor, setNewSimulatorPartyColor] = useState("#7c3aed");
+  const [simProvinciaSeleccionada, setSimProvinciaSeleccionada] = useState<string | null>(null);
+  const [simVotosProvincia, setSimVotosProvincia] = useState<Record<string, number>>({});
+  const [simEscanosProvincia, setSimEscanosProvincia] = useState<Record<string, number>>({});
 
   useEffect(() => {
     document.title = "La Encuesta de BC";
@@ -115,6 +129,108 @@ export default function Results() {
     });
     return defaults;
   }, [partyConfigData]);
+
+  useEffect(() => {
+    if (!generalStats.length) return;
+
+    const nextVotes: Record<string, number> = {};
+    generalStats.forEach((party) => {
+      nextVotes[party.id] = party.votos;
+    });
+
+    setSimulatorVotes((prev) => {
+      if (Object.keys(prev).length > 0) {
+        const mergedVotes = { ...nextVotes, ...prev };
+        return mergedVotes;
+      }
+      return nextVotes;
+    });
+  }, [generalStats]);
+
+  const simulatorPartyMap = useMemo(() => {
+    const mergedMap: Record<string, { key: string; name: string; color: string; logo: string }> = { ...generalPartyMap };
+    simulatorCustomParties.forEach((party) => {
+      mergedMap[party.key] = {
+        key: party.key,
+        name: party.name,
+        color: party.color,
+        logo: "",
+      };
+    });
+    return mergedMap;
+  }, [generalPartyMap, simulatorCustomParties]);
+
+  const simulatorStats = useMemo(() => {
+    const normalizedVotes: Record<string, number> = {};
+    Object.entries(simulatorVotes).forEach(([key, value]) => {
+      normalizedVotes[key] = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    });
+
+    const escanos = calcularEscanosGenerales(normalizedVotes);
+    const nombres: Record<string, string> = {};
+    const logos: Record<string, string> = {};
+    Object.entries(simulatorPartyMap).forEach(([key, party]) => {
+      nombres[key] = party.name;
+      logos[key] = party.logo;
+    });
+
+    return obtenerEstadisticas(normalizedVotes, escanos, nombres, logos).map((s) => ({
+      ...s,
+      color: simulatorPartyMap[s.id]?.color || "#C41E3A",
+    }));
+  }, [simulatorVotes, simulatorPartyMap]);
+
+  const simulatorVotesByProvince = useMemo(() => {
+    if (!Object.keys(votosPorProvincia).length) return {};
+    const allVotes = Object.values(simulatorVotes).reduce((acc, v) => acc + Math.max(0, Number(v) || 0), 0);
+    if (allVotes === 0) return {};
+
+    const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [party, votes]) => {
+      acc[party] = Math.max(0, Number(votes) || 0) / allVotes;
+      return acc;
+    }, {});
+
+    const simulatedByProvince: Record<string, Record<string, number>> = {};
+    Object.entries(votosPorProvincia).forEach(([province, provinceVotes]) => {
+      const provinceTotal = Object.values(provinceVotes).reduce((acc, v) => acc + v, 0);
+      const simProvince: Record<string, number> = {};
+      Object.entries(shares).forEach(([party, share]) => {
+        simProvince[party] = Math.round(provinceTotal * share);
+      });
+      simulatedByProvince[province] = simProvince;
+    });
+
+    return simulatedByProvince;
+  }, [votosPorProvincia, simulatorVotes]);
+
+  const simulatorEscanosByProvince = useMemo(() => {
+    if (!Object.keys(simulatorVotesByProvince).length) return {};
+    return calcularEscanosGeneralesPorProvincia(simulatorVotesByProvince);
+  }, [simulatorVotesByProvince]);
+
+  const addSimulatorCustomParty = () => {
+    const trimmedName = newSimulatorPartyName.trim();
+    if (!trimmedName) return;
+
+    const slug = trimmedName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toUpperCase();
+    const baseKey = slug || `PARTY_${Date.now()}`;
+    const key = simulatorPartyMap[baseKey] ? `${baseKey}_${Date.now()}` : baseKey;
+
+    const nextParty: CustomSimulatorParty = {
+      key,
+      name: trimmedName,
+      color: newSimulatorPartyColor,
+    };
+
+    setSimulatorCustomParties((prev) => [...prev, nextParty]);
+    setSimulatorVotes((prev) => ({ ...prev, [key]: 0 }));
+    setNewSimulatorPartyName("");
+  };
 
   useEffect(() => {
     const loadPartyConfig = async () => {
@@ -622,6 +738,7 @@ export default function Results() {
               { id: "tendencias", label: "Variación por Día" },
               { id: "lideres-preferidos", label: "Líderes de Partidos" },
               { id: "preguntas-varias", label: "Preguntas Varias" },
+              { id: "simulador-electoral", label: "Simulador Electoral" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -819,6 +936,125 @@ export default function Results() {
                     <p className="text-[#666666]">Cargando datos de provincias de Asociaciones Juveniles...</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === "simulador-electoral" && (
+              <div className="space-y-6">
+                <div className="glass-surface p-4 rounded-2xl space-y-4">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D]">Simulador Electoral</h2>
+                  <p className="text-sm text-[#666666]">
+                    Ajusta votos para todos los partidos de administración y añade partidos nuevos para simular escenarios.
+                  </p>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {Object.entries(simulatorPartyMap).map(([partyKey, party]) => (
+                      <label key={partyKey} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: party.color }} />
+                        <span className="min-w-[120px] text-sm font-semibold text-slate-700">{party.name}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={simulatorVotes[partyKey] ?? 0}
+                          onChange={(e) =>
+                            setSimulatorVotes((prev) => ({
+                              ...prev,
+                              [partyKey]: Math.max(0, Number(e.target.value) || 0),
+                            }))
+                          }
+                          className="ml-auto w-32 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm"
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-700">Crear partido personalizado</p>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        type="text"
+                        value={newSimulatorPartyName}
+                        onChange={(e) => setNewSimulatorPartyName(e.target.value)}
+                        placeholder="Nombre del partido"
+                        className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      />
+                      <input
+                        type="color"
+                        value={newSimulatorPartyColor}
+                        onChange={(e) => setNewSimulatorPartyColor(e.target.value)}
+                        className="h-10 w-14 rounded-md border border-slate-300 bg-white"
+                      />
+                      <Button onClick={addSimulatorCustomParty} className="bg-[#C41E3A] hover:bg-[#A01830] text-white">
+                        Añadir
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="liquid-glass p-6 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro Simulado</h2>
+                  <PactometerInteractive
+                    stats={simulatorStats.map((s) => ({
+                      id: s.id,
+                      nombre: s.nombre,
+                      escanos: s.escanos,
+                      porcentaje: s.porcentaje,
+                      color: s.color,
+                    }))}
+                    totalSeats={350}
+                    requiredForMajority={176}
+                  />
+                </div>
+
+                <div className="liquid-glass p-4 rounded-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias (Simulado)</h2>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setMapView('schematic')} variant={mapView === 'schematic' ? 'default' : 'outline'} className={`flex items-center gap-2 ${mapView === 'schematic' ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white' : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'}`}>
+                        <Grid3x3 className="w-4 h-4" /> Esquemática
+                      </Button>
+                      <Button onClick={() => setMapView('realistic')} variant={mapView === 'realistic' ? 'default' : 'outline'} className={`flex items-center gap-2 ${mapView === 'realistic' ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white' : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'}`}>
+                        <Map className="w-4 h-4" /> Realista
+                      </Button>
+                    </div>
+                  </div>
+                  {mapView === 'schematic' ? (
+                    <SpainMapProvincial
+                      votosPorProvincia={simulatorVotesByProvince}
+                      isYouthAssociations={false}
+                      partyMeta={simulatorPartyMap}
+                      onProvinceClick={(province, data, votos, escanos) => {
+                        setSimProvinciaSeleccionada(province);
+                        setSimVotosProvincia(votos);
+                        setSimEscanosProvincia(escanos);
+                      }}
+                    />
+                  ) : (
+                    <SpainMapRealistic
+                      votosPorProvincia={simulatorVotesByProvince}
+                      provinciaMetricsMap={provinciaMetricsMap}
+                      isYouthAssociations={false}
+                      partyMeta={simulatorPartyMap}
+                      onProvinceClick={(province, data, votos, escanos) => {
+                        setSimProvinciaSeleccionada(province);
+                        setSimVotosProvincia(votos);
+                        setSimEscanosProvincia(escanos);
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="liquid-glass p-4 rounded-2xl">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo Simulado</h2>
+                  <CongressHemicycle
+                    escanos={simulatorEscanosByProvince}
+                    totalEscanos={350}
+                    provinciaSeleccionada={simProvinciaSeleccionada}
+                    votosProvincia={simVotosProvincia}
+                    escanosProvincia={simEscanosProvincia}
+                    partyMeta={simulatorPartyMap}
+                  />
+                </div>
               </div>
             )}
 
