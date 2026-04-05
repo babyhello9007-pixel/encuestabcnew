@@ -159,6 +159,7 @@ function ResultsNavBar({ activeTab, onTabChange }: {
   );
 }
 
+
 // ─── LideresDePartidosSection ─────────────────────────────────────────────────
 function LideresDePartidosSection() {
   const [leaders, setLeaders] = useState<PartyLeader[]>([]);
