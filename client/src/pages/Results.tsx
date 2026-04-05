@@ -275,87 +275,6 @@ export default function Results() {
   };
 
   useEffect(() => {
-    if (!generalStats.length) return;
-    const baseVotes: Record<string, number> = {};
-    generalStats.forEach((party) => {
-      baseVotes[party.id] = party.votos;
-    });
-    setSimulatorVotes((prev) => (Object.keys(prev).length ? { ...baseVotes, ...prev } : baseVotes));
-  }, [generalStats]);
-
-  const simulatorPartyMap = useMemo(() => {
-    const mergedMap: Record<string, { key: string; name: string; color: string; logo: string }> = { ...generalPartyMap };
-    simulatorCustomParties.forEach((party) => {
-      mergedMap[party.key] = { key: party.key, name: party.name, color: party.color, logo: "" };
-    });
-    return mergedMap;
-  }, [generalPartyMap, simulatorCustomParties]);
-
-  const simulatorStats = useMemo(() => {
-    const normalizedVotes: Record<string, number> = {};
-    Object.entries(simulatorVotes).forEach(([key, value]) => {
-      normalizedVotes[key] = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
-    });
-    const escanos = calcularEscanosGenerales(normalizedVotes);
-    const nombres: Record<string, string> = {};
-    const logos: Record<string, string> = {};
-    Object.entries(simulatorPartyMap).forEach(([key, party]) => {
-      nombres[key] = party.name;
-      logos[key] = party.logo;
-    });
-    return obtenerEstadisticas(normalizedVotes, escanos, nombres, logos).map((s) => ({
-      ...s,
-      color: simulatorPartyMap[s.id]?.color || "#C41E3A",
-    }));
-  }, [simulatorVotes, simulatorPartyMap]);
-
-  const simulatorVotesByProvince = useMemo(() => {
-    if (!Object.keys(votosPorProvincia).length) return {};
-    const totalVotes = Object.values(simulatorVotes).reduce((acc, v) => acc + Math.max(0, Number(v) || 0), 0);
-    if (totalVotes === 0) return {};
-    const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [party, votes]) => {
-      acc[party] = Math.max(0, Number(votes) || 0) / totalVotes;
-      return acc;
-    }, {});
-
-    const simulatedByProvince: Record<string, Record<string, number>> = {};
-    Object.entries(votosPorProvincia).forEach(([province, provinceVotes]) => {
-      const provinceTotal = Object.values(provinceVotes).reduce((acc, v) => acc + v, 0);
-      const simProvince: Record<string, number> = {};
-      Object.entries(shares).forEach(([party, share]) => {
-        simProvince[party] = Math.round(provinceTotal * share);
-      });
-      simulatedByProvince[province] = simProvince;
-    });
-
-    return simulatedByProvince;
-  }, [votosPorProvincia, simulatorVotes]);
-
-  const simulatorEscanosByProvince = useMemo(() => {
-    if (!Object.keys(simulatorVotesByProvince).length) return {};
-    return calcularEscanosGeneralesPorProvincia(simulatorVotesByProvince);
-  }, [simulatorVotesByProvince]);
-
-  const addSimulatorCustomParty = () => {
-    const trimmedName = newSimulatorPartyName.trim();
-    if (!trimmedName) return;
-
-    const slug = trimmedName
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .toUpperCase();
-
-    const baseKey = slug || `PARTY_${Date.now()}`;
-    const key = simulatorPartyMap[baseKey] ? `${baseKey}_${Date.now()}` : baseKey;
-
-    setSimulatorCustomParties((prev) => [...prev, { key, name: trimmedName, color: newSimulatorPartyColor }]);
-    setSimulatorVotes((prev) => ({ ...prev, [key]: 0 }));
-    setNewSimulatorPartyName("");
-  };
-
-  useEffect(() => {
     const loadPartyConfig = async () => {
       const { data, error } = await supabase
         .from("party_configuration")
@@ -1264,7 +1183,6 @@ export default function Results() {
               )}
             </div>
 
-            <>
             {activeTab === "tendencias" && (
               <TrendenciesChart partyColors={partyColorMap} />
             )}
@@ -1727,35 +1645,84 @@ export default function Results() {
               </div>
             </div>
             )}
-            {activeTab === "encuestadoras-externas" && (
-              <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />
-            )}
-
-            {activeTab !== "leaders" && activeTab !== "encuestadoras-externas" && (
-            <div className="liquid-glass p-8 rounded-2xl space-y-4">
-              <h3 className="text-xl font-bold text-[#2D2D2D]">Metodología</h3>
-              <div className="space-y-3 text-sm text-[#666666]">
-                <p>
-                  <span className="font-semibold text-[#2D2D2D]">Ley d'Hondt:</span> Los escaños se distribuyen
-                  utilizando el método d'Hondt, que es el sistema electoral utilizado en España.
-                </p>
-                <p>
-                  <span className="font-semibold text-[#2D2D2D]">Umbral Mínimo:</span> En elecciones generales se
-                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 4%.
-                </p>
-                <p>
-                  <span className="font-semibold text-[#2D2D2D]">Actualización:</span> Los resultados se actualizan
-                  en tiempo real conforme se reciben nuevas respuestas.
-                </p>
-              </div>
-            </div>
-            )}
+            {activeTab === "leaders" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
+              {leaderRatings.length === 0 ? (
+                <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
+                  <p>Aún no hay valoraciones. Sé el primero en responder la encuesta.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {leaderRatings.map((leader) => {
+                    // Mapeo de fieldName a clave de LEADERS
+                    const leaderKeyMap: Record<string, keyof typeof LEADERS> = {
+                      'val_feijoo': 'FEIJOO',
+                      'val_sanchez': 'SANCHEZ',
+                      'val_abascal': 'ABASCAL',
+                      'val_alvise': 'ALVISE',
+                      'val_yolanda_diaz': 'YOLANDA',
+                      'val_irene_montero': 'IRENE',
+                      'val_ayuso': 'AYUSO',
+                      'val_buxade': 'BUXADE',
+                    };
+                    const leaderKey = leaderKeyMap[leader.fieldName];
+                    const leaderData = leaderKey ? LEADERS[leaderKey] : null;
+                    const leaderImagePath = leaderData?.image;
+                    let leaderImage: string | undefined;
+                    if (leaderImagePath) {
+                      const filename = leaderImagePath.split('/').pop();
+                      if (filename) {
+                        const embeddedKey = Object.keys(EMBEDDED_LEADERS).find(key => key.toLowerCase().includes(filename.toLowerCase().replace(/\.[^/.]+$/, '')));
+                        if (embeddedKey) leaderImage = EMBEDDED_LEADERS[embeddedKey];
+                      }
+                    }
+                    if (!leaderImage && leaderImagePath) leaderImage = leaderImagePath;
+                    
+                    // Debug logging para Feijóo
+                    if (leader.fieldName === 'FEIJOO') {
+                      console.log('Feijóo image:', leaderImage, 'Leader data:', leaderData);
+                    }
+                    
+                    return (
+                    <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
+                      {leaderImage ? (
+                        <img
+                          src={leaderImage}
+                          alt={leader.name}
+                          className="w-full h-32 object-cover rounded-lg"
+                          style={{ display: 'block', width: '100%', height: '128px' }}
+                          onError={(e) => {
+                            console.error('Error loading image for', leader.name, ':', e);
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          onLoad={() => {
+                            if (leader.fieldName === 'FEIJOO') console.log('Feijóo image loaded successfully');
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-32 bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+                          Sin imagen
+                        </div>
+                      )}
+                      <h4 className="font-semibold text-[#2D2D2D] text-sm">{leader.name}</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-[#666666]">
+                          <span>Valoración Media</span>
+                          <span className="text-[#C41E3A] font-bold">{leader.average.toFixed(1)}/10</span>
+                        </div>
+                        <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                          <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: `${(leader.average / 10) * 100}%` }} />
+                        </div>
+                        <p className="text-xs text-[#999999]">({leader.count} respuestas)</p>
+                      </div>
+                    </div>
+                    );
+                  })}
+                  </div>
 
             <CommentsSection activeTab={activeTab === "simulador-electoral" ? "general" : activeTab} />
-            </>
-
-            <CommentsSection activeTab={activeTab === "simulador-electoral" ? "general" : activeTab} />
-            </>
 
             <div className="text-center space-y-4">
               <p className="text-[#666666]">¿Aún no has respondido la encuesta?</p>
