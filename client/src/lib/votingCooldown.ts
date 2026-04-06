@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const COOLDOWN_MINUTES = 0.5;
+const COOLDOWN_MINUTES = 59.5;
 
 export async function getUserIP(): Promise<string> {
   try {
