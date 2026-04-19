@@ -109,7 +109,7 @@ export default function Home() {
 
                 <div className="flex flex-col gap-3 sm:gap-4 pt-4">
                   <button
-                    onClick={() => setLocation("/encuesta")}
+                    onClick={() => setLocation("/nanoencuesta")}
                     className="btn-primary w-full inline-flex items-center justify-center gap-2 group text-sm sm:text-base"
                   >
                     Comenzar Encuesta
