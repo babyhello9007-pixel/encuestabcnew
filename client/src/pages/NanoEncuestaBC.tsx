@@ -1,1876 +1,705 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { LEADERS } from '@/lib/surveyData';
-import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
-import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
-import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
-import { Loader2, Download, Sparkles } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { LoadingAnimation } from "@/components/LoadingAnimation";
-import { ShareResultsModern } from "@/components/ShareResultsModern";
-import { CommentsSection } from "@/components/CommentsSection";
-import { PartyMetricsDisplay } from "@/components/PartyMetricsDisplay";
-import { TrendenciesChart } from "@/components/TrendenciesChart";
-import PartyLogo from "@/components/PartyLogo";
-import { PartyStatsModal } from "@/components/PartyStatsModal";
-import { LeadersResultsChart } from "@/components/LeadersResultsChart";
-import { CCAAResltsSection } from "@/components/CCAAResltsSection";
-import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
-import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
-import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
-import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
-import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
-import { CongressHemicycle } from "@/components/results/CongressHemicycle";
-
-import EncuestadorasGrid from "@/components/results/EncuestadorasGrid";
-import EncuestasExternasTable from "@/components/results/EncuestasExternasTable";
-import EncuestadorasComparativa from "@/components/results/EncuestadorasComparativa";
-import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
+import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS, LEADERS, PROVINCES, CCAA } from "@/lib/surveyData";
+import { toast } from "sonner";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { normalizeProvinceName } from "@/lib/provinceNormalizer";
+import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
+import { getLeaderOptions } from "@/lib/leadersData";
+import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 import Footer from "@/components/Footer";
-import FollowUsMenu from "@/components/FollowUsMenu";
-import Pactometer from "@/components/Pactometer";
-import PactometerInteractive from "@/components/PactometerInteractive";
+import { checkVotingCooldown, recordVote, getUserIP } from "@/lib/votingCooldown";
+import ServerCooldownClock from "@/components/ServerCooldownClock";
 
-import { Map, Grid3x3, ArrowLeft } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { AIAnalysisModal } from "@/components/AIAnalysisModal";
-import { usePartySync } from "@/hooks/usePartySync";
-import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
-
-interface PartyStats {
-  id: string;
-  nombre: string;
-  votos: number;
-  porcentaje: number;
-  escanos: number;
-  logo: string;
-  color?: string;
+interface NanoSurveyResponse {
+  edad?: string;
+  provincia?: string;
+  comunidad_autonoma?: string;
+  nacionalidad?: string;
+  voto_generales?: string;
+  voto_autonomicas?: string;
+  voto_municipales?: string;
+  voto_europeas?: string;
+  nota_ejecutivo?: number;
+  valoracion_feijoo?: number;
+  valoracion_sanchez?: number;
+  valoracion_abascal?: number;
+  valoracion_alvise?: number;
+  valoracion_yolanda?: number;
+  valoracion_irene?: number;
+  valoracion_ayuso?: number;
+  valoracion_buxade?: number;
+  posicion_ideologica?: number;
+  asociacion_juvenil?: string;
+  lider_partido?: string;
+  monarquia_republica?: string;
+  division_territorial?: string;
+  sistema_pensiones?: string;
+  created_at?: string;
 }
 
-interface LeaderRating {
-  name: string;
-  fieldName: string;
-  average: number;
-  count: number;
-}
-
-interface PartyMetrics {
-  nombre: string;
-  edad_promedio: number;
-  ideologia_promedio: number;
-  total_votos: number;
-}
-
-interface CustomSimulatorParty {
-  key: string;
-  name: string;
-  color: string;
-}
-
-interface PartyLeaderProfile {
-  partyKey: string;
-  leaderName: string;
-  photoUrl: string;
-}
-
-interface PreferredLeaderResult {
-  leaderName: string;
-  party: string;
-  votes: number;
-  percentage: number;
-  image: string;
-}
-
-export default function Results() {
-  // Sincronizacion en tiempo real con WebSocket
-  usePartySync();
-  
+export default function NanoEncuestaBC() {
   const [, setLocation] = useLocation();
-  const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
-  const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
-  const [totalResponses, setTotalResponses] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "encuestadoras-externas" | "preguntas-varias" | "simulador-electoral" | "el-analisis">("general");
-  const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
-  const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
-  const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
-  const [generalMetrics, setGeneralMetrics] = useState<PartyMetrics[]>([]);
-  const [youthMetrics, setYouthMetrics] = useState<PartyMetrics[]>([]);
-  const [historialVotos, setHistorialVotos] = useState<Array<{fecha: string, votos: number}>>([]);
-  const [notaEjecutivo, setNotaEjecutivo] = useState<number | null>(null);
-  const [selectedPartyForStats, setSelectedPartyForStats] = useState<string | null>(null);
-  const [votosPorProvincia, setVotosPorProvincia] = useState<Record<string, Record<string, number>>>({});
-  const [escanosGeneralesPorProvincia, setEscanosGeneralesPorProvincia] = useState<Record<string, number>>({});
-  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string | null>(null);
-  const [votosPorPartidoProvincia, setVotosPorPartidoProvincia] = useState<Record<string, number>>({});
-  const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
-  const [sortBy, setSortBy] = useState<'votos' | 'escanos'>('votos');
-  const [mapView, setMapView] = useState<'schematic' | 'realistic'>('realistic');
-  const [votosPorProvinciaJuveniles, setVotosPorProvinciaJuveniles] = useState<Record<string, Record<string, number>>>({});
-  const [escanosJuvenilesPorProvincia, setEscanosJuvenilesPorProvincia] = useState<Record<string, number>>({});
-  const [provinciaSeleccionadaJuveniles, setProvinciaSeleccionadaJuveniles] = useState<string | null>(null);
-  const [votosPorPartidoProvinciaJuveniles, setVotosPorPartidoProvinciaJuveniles] = useState<Record<string, number>>({});
-  const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
-  const [provinciaMetricsMapJuveniles, setProvinciaMetricsMapJuveniles] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
+  const [currentStep, setCurrentStep] = useState(0);
+  const [responses, setResponses] = useState<NanoSurveyResponse>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [showOtroInput, setShowOtroInput] = useState(false);
+  const [showCustomLeaderInput, setShowCustomLeaderInput] = useState(false);
+  const [ccaaWarning, setCCAAWarning] = useState<string | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showServerCooldownClock, setShowServerCooldownClock] = useState(false);
+  const [cooldownMinutes, setCooldownMinutes] = useState(0);
 
-  const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
-  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
-  const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
-  const [simulatorVotes, setSimulatorVotes] = useState<Record<string, number>>({});
-  const [simulatorCustomParties, setSimulatorCustomParties] = useState<CustomSimulatorParty[]>([]);
-  const [newSimulatorPartyName, setNewSimulatorPartyName] = useState("");
-  const [newSimulatorPartyColor, setNewSimulatorPartyColor] = useState("#7c3aed");
-  const [simProvinciaSeleccionada, setSimProvinciaSeleccionada] = useState<string | null>(null);
-  const [simVotosProvincia, setSimVotosProvincia] = useState<Record<string, number>>({});
-  const [simEscanosProvincia, setSimEscanosProvincia] = useState<Record<string, number>>({});
-  const [simulatorEditProvince, setSimulatorEditProvince] = useState<string>("");
-  const [simulatorProvinceOverrides, setSimulatorProvinceOverrides] = useState<Record<string, Record<string, number>>>({});
-  const [partyLeaders, setPartyLeaders] = useState<PartyLeaderProfile[]>([]);
-  const [preferredLeaders, setPreferredLeaders] = useState<PreferredLeaderResult[]>([]);
-
+  // Verificar cooldown al cargar
   useEffect(() => {
-    document.title = "La Encuesta de BC";
+    const checkCooldown = async () => {
+      try {
+        const userIP = await getUserIP();
+        const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+        if (!canVote) {
+          setShowServerCooldownClock(true);
+          setCooldownMinutes(remainingMinutes);
+        }
+      } catch (error) {
+        console.error('Error checking cooldown:', error);
+      }
+    };
+    checkCooldown();
   }, []);
 
-  const normalizePartyKey = (value: string) => value?.trim().toUpperCase();
+  const steps = [
+    { title: "Edad", key: "edad", type: "text" },
+    { title: "Comunidad Autónoma", key: "comunidad_autonoma", type: "select" },
+    { title: "Provincia", key: "provincia", type: "select" },
+    { title: "Nacionalidad", key: "nacionalidad", type: "text" },
+    { title: "Voto Elecciones Generales", key: "voto_generales", type: "select" },
+    { title: "Voto Elecciones Autonómicas", key: "voto_autonomicas", type: "select" },
+    { title: "Voto Elecciones Municipales", key: "voto_municipales", type: "select" },
+    { title: "Voto Elecciones Europeas", key: "voto_europeas", type: "select" },
+    { title: "Nota al Ejecutivo", key: "nota_ejecutivo", type: "slider" },
+    { title: "Valoración: Alberto Núñez Feijóo", key: "valoracion_feijoo", type: "slider" },
+    { title: "Valoración: Pedro Sánchez", key: "valoracion_sanchez", type: "slider" },
+    { title: "Valoración: Santiago Abascal", key: "valoracion_abascal", type: "slider" },
+    { title: "Valoración: Alvise Pérez", key: "valoracion_alvise", type: "slider" },
+    { title: "Valoración: Yolanda Díaz", key: "valoracion_yolanda", type: "slider" },
+    { title: "Valoración: Irene Montero", key: "valoracion_irene", type: "slider" },
+    { title: "Valoración: Isabel Díaz Ayuso", key: "valoracion_ayuso", type: "slider" },
+    { title: "Valoración: Jorge Buxadé", key: "valoracion_buxade", type: "slider" },
+    { title: "Tu Posición Ideológica", key: "posicion_ideologica", type: "buttons" },
+    { title: "Asociación Juvenil", key: "asociacion_juvenil", type: "select" },
+    { title: "Líder de tu Partido", key: "lider_partido", type: "leader" },
+    { title: "Forma del Estado", key: "monarquia_republica", type: "select" },
+    { title: "División Territorial", key: "division_territorial", type: "select" },
+    { title: "Sistema de Pensiones", key: "sistema_pensiones", type: "select" },
+  ];
 
-  const generalPartyMap = useMemo(() => {
-    const defaults: Record<string, { key: string; name: string; color: string; logo: string }> = {};
-    if (!partyConfigData?.parties?.length) return defaults;
-    partyConfigData.parties.forEach((party) => {
-      const rawKey = String(party.partyKey || "");
-      defaults[rawKey] = {
-        key: party.partyKey,
-        name: party.displayName,
-        color: party.color,
-        logo: party.logoUrl,
+  const currentStepData = steps[currentStep];
+  const progress = ((currentStep + 1) / steps.length) * 100;
+  
+  // Obtener provincias filtradas por CCAA seleccionada
+  const getFilteredProvinces = () => {
+    if (currentStepData.key === 'provincia' && responses.comunidad_autonoma) {
+      const filtered = getProvincesInCCAA(responses.comunidad_autonoma as string);
+      return filtered.length > 0 ? filtered : PROVINCES;
+    }
+    return PROVINCES;
+  };
+
+  // Validar si el campo actual esta completo
+  const isCurrentFieldComplete = () => {
+    const currentValue = responses[currentStepData.key as keyof NanoSurveyResponse];
+    
+    if (currentStepData.type === 'text') {
+      return currentValue && String(currentValue).trim().length > 0;
+    }
+    if (currentStepData.type === 'select') {
+      return currentValue && String(currentValue).length > 0;
+    }
+    if (currentStepData.type === 'slider' || currentStepData.type === 'buttons') {
+      return currentValue !== undefined && currentValue !== null && currentValue !== '';
+    }
+    if (currentStepData.type === 'leader') {
+      return currentValue && String(currentValue).length > 0 && responses.voto_generales;
+    }
+    return false;
+  };
+
+  const handleAnswer = (value: any) => {
+    setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
+    setShowOtroInput(value === "OTRO");
+    
+    // Autocompletado de CCAA cuando se selecciona provincia
+    if (currentStepData.key === 'provincia') {
+      const ccaa = getCCAAFromProvince(value);
+      if (ccaa) {
+        setResponses(prev => ({ ...prev, comunidad_autonoma: ccaa }));
+        setCCAAWarning(null);
+      }
+    }
+    
+    // Validacion de consistencia CCAA-Provincia
+    if (currentStepData.key === 'comunidad_autonoma') {
+      const provincia = responses.provincia as string;
+      if (provincia && !isProvinceInCCAA(provincia, value)) {
+        setCCAAWarning(`Advertencia: ${provincia} no pertenece a ${value}. Por favor, selecciona una provincia valida.`);
+      } else {
+        setCCAAWarning(null);
+      }
+    }
+    
+    if (currentStepData.key === 'provincia') {
+      const ccaa = responses.comunidad_autonoma as string;
+      if (ccaa && !isProvinceInCCAA(value, ccaa)) {
+        setCCAAWarning(`Advertencia: ${value} no pertenece a ${ccaa}. Por favor, selecciona una CCAA valida.`);
+      } else {
+        setCCAAWarning(null);
+      }
+    }
+  };
+
+  const handleOtroAnswer = (value: string) => {
+    // Cuando el usuario selecciona "Otro", guarda solo el texto personalizado
+    setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
+  };
+
+  // Limpiar el input de "Otro" cuando se deselecciona
+  const handleSelectChange = (value: string) => {
+    if (value !== "OTRO") {
+      // Si se deselecciona "Otro", limpiar el campo
+      setShowOtroInput(false);
+      setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
+    } else {
+      // Si se selecciona "Otro", mostrar el input
+      setShowOtroInput(true);
+      // Limpiar el campo para que el usuario escriba desde cero
+      setResponses(prev => ({ ...prev, [currentStepData.key]: "" }));
+    }
+  };
+
+  const handleNext = () => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        // Al llegar al final, mostrar pantalla de revisión
+        setShowReview(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      setIsAnimating(false);
+    }, 300);
+  };
+
+  const handlePrevious = () => {
+    setIsAnimating(true);
+    setTimeout(() => {
+      if (currentStep > 0) {
+        setCurrentStep(currentStep - 1);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      setIsAnimating(false);
+    }, 300);
+  };
+
+  const handleSubmit = async () => {
+    // Verificar cooldown por IP
+    try {
+      const userIP = await getUserIP();
+      const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+      
+      if (!canVote) {
+        toast.error(`Debes esperar ${remainingMinutes} minutos antes de votar de nuevo.`);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking cooldown:', error);
+      // Continuar aunque falle la verificación del cooldown
+    }
+
+    // Validar que todas las preguntas sean respondidas
+    const requiredFields = [
+      'edad',
+      'provincia',
+      'comunidad_autonoma',
+      'nacionalidad',
+      'voto_generales',
+      'voto_autonomicas',
+      'voto_municipales',
+      'voto_europeas',
+      'nota_ejecutivo',
+      'valoracion_feijoo',
+      'valoracion_sanchez',
+      'valoracion_abascal',
+      'valoracion_alvise',
+      'valoracion_yolanda',
+      'valoracion_irene',
+      'valoracion_ayuso',
+      'valoracion_buxade',
+      'posicion_ideologica',
+      'asociacion_juvenil',
+      'lider_partido',
+      'monarquia_republica',
+      'division_territorial',
+      'sistema_pensiones'
+    ];
+
+    const missingFields = requiredFields.filter(field => {
+      const value = responses[field as keyof NanoSurveyResponse];
+      return value === undefined || value === null || value === '' || (typeof value === 'number' && isNaN(value));
+    });
+
+    if (missingFields.length > 0) {
+      toast.error(`Por favor, responde todas las preguntas. Faltan ${missingFields.length} respuestas.`);
+      return;
+    }
+
+    // Validar que si se selecciona "Otro", haya texto en el campo
+    // Nota: Los campos de voto solo contienen el texto personalizado sin prefijo
+    // No hay validación adicional necesaria ya que el campo debe tener contenido para pasar la validación general
+
+    setIsSubmitting(true);
+    try {
+      const dataToSubmit = {
+        edad: responses.edad ? parseInt(responses.edad) : 18,
+        provincia: normalizeProvinceName(responses.provincia) || null,
+        ccaa: responses.comunidad_autonoma || null,
+        nacionalidad: responses.nacionalidad || null,
+        voto_generales: responses.voto_generales || null,
+        voto_autonomicas: responses.voto_autonomicas || null,
+        voto_municipales: responses.voto_municipales || null,
+        voto_europeas: responses.voto_europeas || null,
+        nota_ejecutivo: responses.nota_ejecutivo || null,
+        val_feijoo: responses.valoracion_feijoo || 0,
+        val_sanchez: responses.valoracion_sanchez || 0,
+        val_abascal: responses.valoracion_abascal || 0,
+        val_alvise: responses.valoracion_alvise || 0,
+        val_yolanda_diaz: responses.valoracion_yolanda || 0,
+        val_irene_montero: responses.valoracion_irene || 0,
+        val_ayuso: responses.valoracion_ayuso || 0,
+        val_buxade: responses.valoracion_buxade || 0,
+        posicion_ideologica: responses.posicion_ideologica || null,
+        voto_asociacion_juvenil: responses.asociacion_juvenil || null,
+        monarquia_republica: responses.monarquia_republica || null,
+        division_territorial: responses.division_territorial || null,
+        sistema_pensiones: responses.sistema_pensiones || null,
       };
-    });
-    return defaults;
-  }, [partyConfigData]);
-
-  const youthPartyMap = useMemo(() => {
-    const defaults: Record<string, { key: string; name: string; color: string; logo: string }> = {};
-    if (!partyConfigData?.youth?.length) return defaults;
-    partyConfigData.youth.forEach((party) => {
-      const rawKey = String(party.partyKey || "");
-      defaults[rawKey] = {
-        key: party.partyKey,
-        name: party.displayName,
-        color: party.color,
-        logo: party.logoUrl,
-      };
-    });
-    return defaults;
-  }, [partyConfigData]);
-
-  const resolvePartyKey = (
-    value: string,
-    metaMap: Record<string, { key: string; name: string; color: string; logo: string }>
-  ) => {
-    if (metaMap[value]) return value;
-    const normalized = normalizePartyKey(value);
-    if (!normalized) return value;
-    const foundKey = Object.keys(metaMap).find((k) => normalizePartyKey(k) === normalized);
-    if (foundKey) return foundKey;
-
-    const foundByPartyKey = Object.entries(metaMap).find(
-      ([, party]) => normalizePartyKey(String(party?.key || "")) === normalized
-    )?.[0];
-    if (foundByPartyKey) return foundByPartyKey;
-
-    const foundByDisplayName = Object.entries(metaMap).find(
-      ([, party]) => normalizePartyKey(String(party?.name || "")) === normalized
-    )?.[0];
-    if (foundByDisplayName) return foundByDisplayName;
-
-    return foundKey || value;
-  };
-
-  const getLeaderImage = (leaderName: string) => {
-    const normalized = leaderName
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-    const leaderEntry = Object.values(LEADERS).find((l) => {
-      const normalizedLeader = l.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-      return normalizedLeader === normalized;
-    });
-    return leaderEntry?.image || "/favicon.png";
-  };
-
-  useEffect(() => {
-    if (!generalStats.length) return;
-    const baseVotes: Record<string, number> = {};
-    generalStats.forEach((party) => {
-      baseVotes[party.id] = party.votos;
-    });
-    setSimulatorVotes((prev) => (Object.keys(prev).length ? { ...baseVotes, ...prev } : baseVotes));
-  }, [generalStats]);
-
-  const simulatorPartyMap = useMemo(() => {
-    const mergedMap: Record<string, { key: string; name: string; color: string; logo: string }> = { ...generalPartyMap };
-    simulatorCustomParties.forEach((party) => {
-      mergedMap[party.key] = { key: party.key, name: party.name, color: party.color, logo: "" };
-    });
-    return mergedMap;
-  }, [generalPartyMap, simulatorCustomParties]);
-
-  const generalPartyMetaLookup = useMemo(() => {
-    const lookup: Record<string, { key: string; name: string; color: string; logo: string }> = {};
-    Object.entries(generalPartyMap).forEach(([mapKey, party]) => {
-      const aliases = [mapKey, party.key, party.name, normalizePartyKey(mapKey), normalizePartyKey(party.key), normalizePartyKey(party.name)];
-      aliases.forEach((alias) => {
-        if (alias) lookup[String(alias)] = party;
-      });
-    });
-    return lookup;
-  }, [generalPartyMap]);
-
-  const youthPartyMetaLookup = useMemo(() => {
-    const lookup: Record<string, { key: string; name: string; color: string; logo: string }> = {};
-    Object.entries(youthPartyMap).forEach(([mapKey, party]) => {
-      const aliases = [mapKey, party.key, party.name, normalizePartyKey(mapKey), normalizePartyKey(party.key), normalizePartyKey(party.name)];
-      aliases.forEach((alias) => {
-        if (alias) lookup[String(alias)] = party;
-      });
-    });
-    return lookup;
-  }, [youthPartyMap]);
-
-  const simulatorStats = useMemo(() => {
-    const normalizedVotes: Record<string, number> = {};
-    Object.entries(simulatorVotes).forEach(([key, value]) => {
-      normalizedVotes[key] = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
-    });
-    const escanos = calcularEscanosGenerales(normalizedVotes);
-    const nombres: Record<string, string> = {};
-    const logos: Record<string, string> = {};
-    Object.entries(simulatorPartyMap).forEach(([key, party]) => {
-      nombres[key] = party.name;
-      logos[key] = party.logo;
-    });
-    return obtenerEstadisticas(normalizedVotes, escanos, nombres, logos).map((s) => ({
-      ...s,
-      color: simulatorPartyMap[resolvePartyKey(s.id, simulatorPartyMap)]?.color || "#C41E3A",
-    }));
-  }, [simulatorVotes, simulatorPartyMap]);
-
-  const simulatorVotesByProvince = useMemo(() => {
-    if (!Object.keys(votosPorProvincia).length) return {};
-    const totalVotes = Object.values(simulatorVotes).reduce((acc, v) => acc + Math.max(0, Number(v) || 0), 0);
-    if (totalVotes === 0) return {};
-    const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [party, votes]) => {
-      acc[party] = Math.max(0, Number(votes) || 0) / totalVotes;
-      return acc;
-    }, {});
-
-    const simulatedByProvince: Record<string, Record<string, number>> = {};
-    Object.entries(votosPorProvincia).forEach(([province, provinceVotes]) => {
-      const provinceTotal = Object.values(provinceVotes).reduce((acc, v) => acc + v, 0);
-      const simProvince: Record<string, number> = {};
-      Object.entries(shares).forEach(([party, share]) => {
-        simProvince[party] = Math.round(provinceTotal * share);
-      });
-      simulatedByProvince[province] = simulatorProvinceOverrides[province] || simProvince;
-    });
-
-    return simulatedByProvince;
-  }, [votosPorProvincia, simulatorVotes, simulatorProvinceOverrides]);
-
-  const simulatorEscanosByProvince = useMemo(() => {
-    if (!Object.keys(simulatorVotesByProvince).length) return {};
-    return calcularEscanosGeneralesPorProvincia(simulatorVotesByProvince);
-  }, [simulatorVotesByProvince]);
-
-  useEffect(() => {
-    if (!simProvinciaSeleccionada) return;
-    const provinceVotes = simulatorVotesByProvince[simProvinciaSeleccionada] || {};
-    const provinceEscanos = calcularEscanosGeneralesPorProvincia({
-      [simProvinciaSeleccionada]: provinceVotes,
-    });
-    setSimVotosProvincia(provinceVotes);
-    setSimEscanosProvincia(provinceEscanos);
-  }, [simProvinciaSeleccionada, simulatorVotesByProvince]);
-
-  const addSimulatorCustomParty = () => {
-    const trimmedName = newSimulatorPartyName.trim();
-    if (!trimmedName) return;
-
-    const slug = trimmedName
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .toUpperCase();
-
-    const baseKey = slug || `PARTY_${Date.now()}`;
-    const key = simulatorPartyMap[baseKey] ? `${baseKey}_${Date.now()}` : baseKey;
-
-    setSimulatorCustomParties((prev) => [...prev, { key, name: trimmedName, color: newSimulatorPartyColor }]);
-    setSimulatorVotes((prev) => ({ ...prev, [key]: 0 }));
-    setNewSimulatorPartyName("");
-  };
-
-  useEffect(() => {
-    const loadPartyConfig = async () => {
-      const { data, error } = await supabase
-        .from("party_configuration")
-        .select("party_key, display_name, color, logo_url, party_type, is_active")
-        .eq("is_active", true);
+      
+      const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
 
       if (error) {
-        console.error("Error loading party configuration:", error);
+        toast.error("Error al enviar la encuesta. Por favor, intenta de nuevo.");
+        console.error(error);
+        setIsSubmitting(false);
         return;
       }
 
-      const allRows = data || [];
-      setRuntimePartyConfig(
-        allRows.map((row: any) => ({
-          key: row.party_key,
-          displayName: row.display_name,
-          color: row.color,
-          logoUrl: row.logo_url,
-          partyType: row.party_type,
-        }))
-      );
-      setPartyConfigData({
-        parties: allRows
-          .filter((row: any) => row.party_type === "general")
-          .map((row: any) => ({
-            partyKey: row.party_key,
-            displayName: row.display_name,
-            color: row.color,
-            logoUrl: row.logo_url,
-          })),
-        youth: allRows
-          .filter((row: any) => row.party_type === "youth" || row.party_type === "asociacion_juvenil" || row.party_type === "juvenile")
-          .map((row: any) => ({
-            partyKey: row.party_key,
-            displayName: row.display_name,
-            color: row.color,
-            logoUrl: row.logo_url,
-          })),
-      });
-    };
-
-    loadPartyConfig();
-    const channel = supabase
-      .channel("party-configuration-results")
-      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, () => {
-        loadPartyConfig();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
-      const escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
-      setEscanosGeneralesPorProvincia(escanos);
-      
-      // Actualizar generalStats con los escaños calculados por provincia
-      // Esto asegura que Elecciones Generales y Hemiciclo muestren los mismos números
-      const statsActualizados = generalStats.map(stat => ({
-        ...stat,
-        escanos: escanos[stat.id] || 0
-      }));
-      setGeneralStats(statsActualizados);
-    }
-  }, [votosPorProvincia]);
-
-  useEffect(() => {
-    if (Object.keys(votosPorProvinciaJuveniles).length > 0 && youthStats.length > 0) {
-      const escanos = calcularEscanosJuvenilesPorProvincia(votosPorProvinciaJuveniles);
-      setEscanosJuvenilesPorProvincia(escanos);
-      
-      // Actualizar youthStats con los escaños calculados por provincia
-      const statsActualizados = youthStats.map(stat => ({
-        ...stat,
-        escanos: escanos[stat.id] || 0
-      }));
-      setYouthStats(statsActualizados);
-    }
-  }, [votosPorProvinciaJuveniles]);
-
-  useEffect(() => {
-    const fetchResults = async () => {
+      // Registrar el voto en el cooldown
       try {
-        // Obtener total de respuestas usando el VIEW
-        try {
-          const { data: viewData } = await supabase
-            .from("total_respuestas_view")
-            .select("total_respuestas");
-          setTotalResponses(viewData?.[0]?.total_respuestas || 0);
-        } catch (err) {
-          // Fallback si el VIEW no existe
-          try {
-            const { count } = await supabase
-              .from("respuestas")
-              .select("*", { count: "exact", head: true });
-            setTotalResponses(count || 0);
-          } catch (e) {
-            // Si tampoco existe la tabla, usar datos de ejemplo
-            setTotalResponses(631);
-          }
-        }
-
-        // Intentar obtener datos de votos generales
-        try {
-          const { data: generalData } = await supabase
-            .from("votos_generales_totales")
-            .select("*");
-
-          if (generalData && generalData.length > 0) {
-            // Inicializar con todos los partidos configurados con 0 votos
-            const generalVotos: Record<string, number> = {};
-            Object.keys(generalPartyMap).forEach((key) => {
-              generalVotos[key] = 0;
-            });
-            
-            // Actualizar con datos reales de la base de datos
-            generalData.forEach((row: any) => {
-              const partyKey = resolvePartyKey(String(row.partido_id || ""), generalPartyMap);
-              generalVotos[partyKey] = row.votos;
-            });
-
-            // Usar cálculo por provincias si hay datos disponibles, si no usar cálculo nacional
-            let escanos: Record<string, number> = {};
-            if (Object.keys(votosPorProvincia).length > 0) {
-              escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
-            } else {
-              escanos = calcularEscanosGenerales(generalVotos);
-            }
-            const nombres: Record<string, string> = {};
-            const logos: Record<string, string> = {};
-
-            Object.entries(generalPartyMap).forEach(([key, party]) => {
-              nombres[key] = party.name;
-              logos[key] = party.logo;
-            });
-
-            const stats = obtenerEstadisticas(generalVotos, escanos, nombres, logos).map((s) => ({
-              ...s,
-              color: generalPartyMap[resolvePartyKey(s.id, generalPartyMap)]?.color,
-            }));
-            setGeneralStats(stats);
-            // Los escaños se actualizarán en el useEffect cuando votosPorProvincia esté disponible
-            // (este useEffect se ejecutará después de que votosPorProvincia se haya cargado)
-            
-            // Cargar votos por provincia para el mapa
-            try {
-              const { data: provinciaData, error } = await supabase
-                .from("votos_por_provincia_view")
-                .select("provincia, partido, votos");
-              
-              if (error) {
-                console.error("Error loading provincia data:", error);
-              }
-              
-              if (provinciaData && provinciaData.length > 0) {
-                const votosProv: Record<string, Record<string, number>> = {};
-                
-                provinciaData.forEach((row: any) => {
-                  if (row.provincia && row.partido) {
-                    if (!votosProv[row.provincia]) {
-                      votosProv[row.provincia] = {};
-                    }
-                    const partyKey = resolvePartyKey(String(row.partido), generalPartyMap);
-                    votosProv[row.provincia][partyKey] = row.votos;
-                  }
-                });
-                
-                setVotosPorProvincia(votosProv);
-                
-                // Cargar métricas por provincia
-                try {
-                  const { data: metricsData } = await supabase
-                    .from("respuestas")
-                    .select("provincia, edad, posicion_ideologica");
-                  
-                  if (metricsData && metricsData.length > 0) {
-                    const metricsMap: Record<string, { edad_promedio: number; ideologia_promedio: number }> = {};
-                    const provinciaCounts: Record<string, { edad_sum: number; ideologia_sum: number; count: number }> = {};
-                    
-                    metricsData.forEach((row: any) => {
-                      if (row.provincia) {
-                        if (!provinciaCounts[row.provincia]) {
-                          provinciaCounts[row.provincia] = { edad_sum: 0, ideologia_sum: 0, count: 0 };
-                        }
-                        if (row.edad !== null && row.edad !== undefined) {
-                          provinciaCounts[row.provincia].edad_sum += row.edad;
-                        }
-                        if (row.posicion_ideologica !== null && row.posicion_ideologica !== undefined) {
-                          provinciaCounts[row.provincia].ideologia_sum += row.posicion_ideologica;
-                        }
-                        provinciaCounts[row.provincia].count += 1;
-                      }
-                    });
-                    
-                    Object.entries(provinciaCounts).forEach(([provincia, counts]) => {
-                      metricsMap[provincia] = {
-                        edad_promedio: counts.count > 0 ? counts.edad_sum / counts.count : 0,
-                        ideologia_promedio: counts.count > 0 ? counts.ideologia_sum / counts.count : 0,
-                      };
-                    });
-                    
-                    setProvinciaMetricsMap(metricsMap);
-                  }
-                } catch (err) {
-                  console.error("Error fetching provincia metrics:", err);
-                }
-              }
-            } catch (err) {
-              console.error("Error fetching votos por provincia:", err);
-            }
-          } else {
-            // Datos de ejemplo si no hay datos
-            const exampleVotos: Record<string, number> = { PP: 180,
-              PSOE: 120,
-              VOX: 85,
-              SUMAR: 65,
-              PODEMOS: 45,
-              JUNTS: 35,
-              ERC: 30,
-              PNV: 25,
-              ALIANZA: 15,
-              BILDU: 20,
-              SAF: 40,
-              CC: 10,
-              UPN: 8,
-              CIUDADANOS: 12,
-              CAMINANDO: 5,
-              FRENTE: 3,
-              IZQUIERDA: 8,
-              JUNTOS_EXT: 6,
-              PLIB: 4,
-              EB: 2,
-              BNG: 7,
-            };
-            const escanos = calcularEscanosGenerales(exampleVotos);
-            const nombres: Record<string, string> = {};
-            const logos: Record<string, string> = {};
-
-            Object.entries(generalPartyMap).forEach(([key, party]) => {
-              nombres[key] = party.name;
-              logos[key] = party.logo;
-            });
-
-            const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
-              ...s,
-              color: generalPartyMap[resolvePartyKey(s.id, generalPartyMap)]?.color,
-            }));
-            setGeneralStats(stats);
-          }
-        } catch (err) {
-          console.error("Error fetching general votes:", err);
-          // Usar datos de ejemplo
-          const exampleVotos: Record<string, number> = {
-            PP: 180,
-            PSOE: 120,
-            VOX: 85,
-            SUMAR: 65,
-            PODEMOS: 45,
-            JUNTS: 35,
-            ERC: 30,
-            PNV: 25,
-            ALIANZA: 15,
-            BILDU: 20,
-            SAF: 40,
-            CC: 10,
-            UPN: 8,
-            CIUDADANOS: 12,
-            CAMINANDO: 5,
-            FRENTE: 3,
-            IZQUIERDA: 8,
-            JUNTOS_EXT: 6,
-            PLIB: 4,
-            EB: 2,
-            BNG: 7,
-          };
-          const escanos = calcularEscanosGenerales(exampleVotos);
-          const nombres: Record<string, string> = {};
-          const logos: Record<string, string> = {};
-
-          Object.entries(generalPartyMap).forEach(([key, party]) => {
-            nombres[key] = party.name;
-            logos[key] = party.logo;
-          });
-
-          const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
-            ...s,
-            color: generalPartyMap[resolvePartyKey(s.id, generalPartyMap)]?.color,
-          }));
-          setGeneralStats(stats);
-        }
-
-        // Intentar obtener datos de votos juveniles
-        try {
-          const { data: youthData } = await supabase
-            .from("votos_juveniles_totales")
-            .select("*");
-
-          if (youthData && youthData.length > 0) {
-            const youthVotos: Record<string, number> = {};
-            youthData.forEach((row: any) => {
-              const assocKey = resolvePartyKey(String(row.asociacion_id || ""), youthPartyMap);
-              youthVotos[assocKey] = row.votos;
-            });
-
-            const escanos = calcularEscanosJuveniles(youthVotos);
-            const nombres: Record<string, string> = {};
-            const logos: Record<string, string> = {};
-
-            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
-              nombres[key] = assoc.name;
-              logos[key] = assoc.logo;
-            });
-
-            const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos).map((s) => ({
-              ...s,
-              color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color,
-            }));
-            setYouthStats(stats);
-          } else {
-            // Datos de ejemplo si no hay datos
-            const exampleYouthVotos: Record<string, number> = {
-              SHAACABAT: 95,
-              REVUELTA: 75,
-              NNGG: 120,
-              JVOX: 65,
-              VLE: 45,
-              JSE: 85,
-              PATRIOTA: 35,
-              JIU: 40,
-              JCOMUNISTA: 30,
-              JCS: 25,
-              EGI: 15,
-              ERNAI: 20,
-              JERC: 35,
-              JNC: 28,
-              GALIZANOVA: 18,
-              ARRAN: 22,
-              JNCANA: 12,
-              JPV: 16,
-              ACL: 14,
-              JEC: 10,
-              AGORA: 8,
-            };
-            const escanos = calcularEscanosJuveniles(exampleYouthVotos);
-            const nombres: Record<string, string> = {};
-            const logos: Record<string, string> = {};
-
-            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
-              nombres[key] = assoc.name;
-              logos[key] = assoc.logo;
-            });
-
-            const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
-              ...s,
-              color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color,
-            }));
-            setYouthStats(stats);
-          }
-        } catch (err) {
-          console.error("Error fetching youth votes:", err);
-          // Usar datos de ejemplo
-          const exampleYouthVotos: Record<string, number> = {
-            SHAACABAT: 95,
-            REVUELTA: 75,
-            NNGG: 120,
-            JVOX: 65,
-            VLE: 45,
-            JSE: 85,
-            PATRIOTA: 35,
-            JIU: 40,
-            JCOMUNISTA: 30,
-            JCS: 25,
-            EGI: 15,
-            ERNAI: 20,
-            JERC: 35,
-            JNC: 28,
-            GALIZANOVA: 18,
-            ARRAN: 22,
-            JNCANA: 12,
-            JPV: 16,
-            ACL: 14,
-            JEC: 10,
-            AGORA: 8,
-          };
-          const escanos = calcularEscanosJuveniles(exampleYouthVotos);
-          const nombres: Record<string, string> = {};
-          const logos: Record<string, string> = {};
-
-          Object.entries(youthPartyMap).forEach(([key, assoc]) => {
-            nombres[key] = assoc.name;
-            logos[key] = assoc.logo;
-          });
-
-          const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
-            ...s,
-            color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color,
-          }));
-          setYouthStats(stats);
-        }
-
-        // Cargar votos por provincia para asociaciones juveniles
-        try {
-          const { data: provinciaJuvenilData } = await supabase
-            .from("votos_por_provincia_juveniles_view")
-            .select("provincia, asociacion, votos");
-          
-          if (provinciaJuvenilData && provinciaJuvenilData.length > 0) {
-            const votosProvJuveniles: Record<string, Record<string, number>> = {};
-            
-            provinciaJuvenilData.forEach((row: any) => {
-              if (row.provincia && row.asociacion) {
-                if (!votosProvJuveniles[row.provincia]) {
-                  votosProvJuveniles[row.provincia] = {};
-                }
-                const assocKey = resolvePartyKey(String(row.asociacion), youthPartyMap);
-                votosProvJuveniles[row.provincia][assocKey] = row.votos;
-              }
-            });
-            
-            setVotosPorProvinciaJuveniles(votosProvJuveniles);
-          }
-        } catch (err) {
-          console.error("Error fetching votos por provincia juveniles:", err);
-        }
-
-        // Intentar usar el VIEW de valoraciones
-        try {
-          const { data: viewData } = await supabase
-            .from("valoraciones_lideres_view")
-            .select("*");
-          
-          if (viewData && viewData.length > 0) {
-            const leaderMap: Record<string, { name: string; fieldName: string }> = {
-              'feijoo': { name: 'Alberto Núñez Feijóo', fieldName: 'val_feijoo' },
-              'sanchez': { name: 'Pedro Sánchez', fieldName: 'val_sanchez' },
-              'abascal': { name: 'Santiago Abascal', fieldName: 'val_abascal' },
-              'alvise': { name: 'Alvise Pérez', fieldName: 'val_alvise' },
-              'yolanda_diaz': { name: 'Yolanda Díaz', fieldName: 'val_yolanda_diaz' },
-              'irene_montero': { name: 'Irene Montero', fieldName: 'val_irene_montero' },
-              'ayuso': { name: 'Isabel Díaz Ayuso', fieldName: 'val_ayuso' },
-              'buxade': { name: 'Jorge Buxadé', fieldName: 'val_buxade' },
-            };
-            
-            const ratings: LeaderRating[] = viewData.map((row: any) => {
-              const leader = leaderMap[row.lider];
-              return {
-                name: leader.name,
-                fieldName: leader.fieldName,
-                average: parseFloat(row.valoracion_media) || 0,
-                count: row.total_valoraciones || 0,
-              };
-            });
-            setLeaderRatings(ratings);
-          }
-        } catch (err) {
-          // Fallback: calcular manualmente si el VIEW no existe
-          const { data: allResponses } = await supabase
-            .from("respuestas")
-            .select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
-
-          if (allResponses && allResponses.length > 0) {
-            const leaders = [
-              { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" },
-              { name: "Pedro Sánchez", fieldName: "val_sanchez" },
-              { name: "Santiago Abascal", fieldName: "val_abascal" },
-              { name: "Alvise Pérez", fieldName: "val_alvise" },
-              { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" },
-              { name: "Irene Montero", fieldName: "val_irene_montero" },
-              { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" },
-              { name: "Jorge Buxadé", fieldName: "val_buxade" },
-            ];
-
-            const ratings: LeaderRating[] = leaders.map((leader) => {
-              let sum = 0;
-              let count = 0;
-              allResponses.forEach((r: any) => {
-                const value = r[leader.fieldName];
-                if (value !== null && value !== undefined) {
-                  sum += value;
-                  count += 1;
-                }
-              });
-              const average = count > 0 ? sum / count : 0;
-              return {
-                name: leader.name,
-                fieldName: leader.fieldName,
-                average: Math.round(average * 10) / 10,
-                count: count,
-              };
-            });
-
-            setLeaderRatings(ratings);
-          }
-        }
-
-        // Obtener nota ejecutivo
-        try {
-          const { data: notaData } = await supabase
-            .from("media_nota_ejecutivo")
-            .select("nota_media");
-          if (notaData && notaData.length > 0) {
-            setNotaEjecutivo(notaData[0].nota_media);
-          }
-        } catch (err) {
-          console.log('Nota ejecutivo no disponible');
-        }
-
-        // Obtener edad promedio
-        try {
-          const { data: edadData } = await supabase.from("edad_promedio").select("edad_media");
-          if (edadData && edadData.length > 0) {
-            setEdadPromedio(edadData[0].edad_media);
-          }
-        } catch (err) {
-          console.error("Error fetching edad promedio:", err);
-        }
-
-        // Obtener ideología promedio
-        try {
-          const { data: ideologiaData } = await supabase.from("ideologia_promedio").select("ideologia_media");
-          if (ideologiaData && ideologiaData.length > 0) {
-            setIdeologiaPromedio(ideologiaData[0].ideologia_media);
-          }
-        } catch (err) {
-          console.error("Error fetching ideologia promedio:", err);
-        }
-
-        try {
-          const { data: leadersData } = await supabase
-            .from("party_leaders")
-            .select("party_key, leader_name, photo_url, is_active")
-            .eq("is_active", true);
-          if (leadersData) {
-            setPartyLeaders(
-              leadersData.map((row: any) => ({
-                partyKey: row.party_key,
-                leaderName: row.leader_name,
-                photoUrl: row.photo_url,
-              }))
-            );
-          }
-        } catch (err) {
-          console.error("Error loading party leaders:", err);
-        }
-
-        try {
-          const { data: preferredRows } = await supabase
-            .from("lideres_preferidos")
-            .select("partido, lider_preferido");
-          if (preferredRows) {
-            const total = preferredRows.length || 1;
-            const grouped = preferredRows.reduce<Record<string, { leaderName: string; party: string; votes: number }>>((acc, row: any) => {
-              const leaderName = String(row.lider_preferido || "").trim();
-              if (!leaderName) return acc;
-              const key = `${leaderName}__${row.partido || ""}`;
-              if (!acc[key]) {
-                acc[key] = { leaderName, party: String(row.partido || ""), votes: 0 };
-              }
-              acc[key].votes += 1;
-              return acc;
-            }, {});
-            const parsed = Object.values(grouped)
-              .sort((a, b) => b.votes - a.votes)
-              .map((item) => ({
-                ...item,
-                percentage: Number(((item.votes / total) * 100).toFixed(1)),
-                image: getLeaderImage(item.leaderName),
-              }));
-            setPreferredLeaders(parsed);
-          }
-        } catch (err) {
-          console.error("Error loading lideres_preferidos:", err);
-        }
+        const userIP = await getUserIP();
+        await recordVote(userIP);
       } catch (error) {
-        console.error("Error fetching results:", error);
-      } finally {
-        setLoading(false);
+        console.error('Error recording vote cooldown:', error);
       }
-    };
 
-    fetchResults();
-    const interval = setInterval(fetchResults, 10000);
-    return () => clearInterval(interval);
-  }, [generalPartyMap, youthPartyMap]);
+      if (responses.lider_partido) {
+        const { error: leaderError } = await supabase.from("lideres_preferidos").insert({
+          partido: responses.voto_generales || null,
+          lider_preferido: responses.lider_partido,
+          es_personalizado: !getLeaderOptions(responses.voto_generales || "").some(l => l.name === responses.lider_partido),
+        });
 
-  const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
-  const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
-  const partyColorMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    [...Object.values(generalPartyMap), ...Object.values(youthPartyMap)].forEach((party: any) => {
-      if (!party) return;
-      const key = typeof party.key === "string" ? party.key.toUpperCase() : "";
-      const name = typeof party.name === "string" ? party.name.toUpperCase() : "";
-      if (key && party.color) map[key] = party.color;
-      if (name && party.color) map[name] = party.color;
-    });
-    return map;
-  }, [generalPartyMap, youthPartyMap]);
+        if (leaderError) {
+          console.error("Error al guardar preferencia de lider:", leaderError);
+        }
+      }
 
-  const exportToCSV = () => {
-    const headers = ['Partido/Asociación', 'Votos', 'Porcentaje', 'Escaños', 'Porcentaje de Escaños'];
-    const rows = stats.map(party => [
-      party.nombre,
-      party.votos,
-      party.porcentaje.toFixed(2) + '%',
-      party.escanos,
-      ((party.escanos / totalEscanos) * 100).toFixed(2) + '%'
-    ]);
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `resultados-${activeTab}-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const exportToPDF = async () => {
-    try {
-      const { downloadPDFWithMetrics } = await import("@/lib/pdfExportMetrics");
-      const exportTab = activeTab === "simulador-electoral" ? "general" : activeTab;
-      await downloadPDFWithMetrics(stats, exportTab, totalResponses, edadPromedio, ideologiaPromedio);
-    } catch (err) {
-      console.error("Error exporting to PDF:", err);
+      setShowThankYou(true);
+      toast.success("¡Gracias por tu participación!");
+    } catch (error) {
+      toast.error("Error al enviar la encuesta");
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-50 frosted-glass border-0 shadow-none">
-        <div className="container h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
-            <h1 className="text-lg font-semibold text-foreground">Resultados - Batalla Cultural</h1>
+  if (showReview) {
+    return (
+      <ReviewNanoEncuesta
+        responses={responses}
+        onEdit={() => {
+          setShowReview(false);
+          setCurrentStep(0);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onConfirm={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
+    );
+  }
+
+  if (showServerCooldownClock) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
+        <ServerCooldownClock isOpen={showServerCooldownClock} remainingMinutes={cooldownMinutes} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-white text-lg">Vuelve cuando termine el cooldown para participar nuevamente</p>
+            <Button
+              onClick={() => setLocation('/')}
+              className="bg-[#C41E3A] hover:bg-[#A01830] text-white"
+            >
+              Volver al Inicio
+            </Button>
           </div>
-          <div className="flex items-center gap-4">
+        </div>
+      </div>
+    );
+  }
+
+  if (showThankYou) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#FAFAF8] via-[#F5F1E8] to-[#FAFAF8] p-4">
+        <div className="liquid-glass p-8 rounded-2xl text-center max-w-md space-y-6">
+          <div className="text-6xl">✨</div>
+          <h1 className="text-3xl font-bold text-[#2D2D2D]">¡Gracias!</h1>
+          <p className="text-[#666666]">
+            Tu respuesta ha sido registrada exitosamente. Tu opinión es valiosa para entender el panorama político y cultural de España.
+          </p>
+          <div className="space-y-3">
+            <Button
+              onClick={() => setLocation("/resultados")}
+              className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold"
+            >
+              Ver Resultados
+            </Button>
             <Button
               onClick={() => setLocation("/")}
               variant="outline"
-              className="btn-secondary text-sm"
+              className="w-full border-[#C41E3A] text-[#C41E3A] h-12 rounded-lg font-semibold"
             >
-              Volver
+              Volver al Inicio
             </Button>
-            <FollowUsMenu />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 frosted-glass border-0 shadow-none">
+        <div className="container h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+              <h1 className="text-foreground font-semibold">NanoEncuestaBC</h1>
+            </div>
+            {/* Resumen de progreso */}
+            <div className="hidden md:flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Completados:</span>
+              <span className="text-primary font-semibold">
+                {Object.values(responses).filter(v => v !== undefined && v !== null && v !== '').length}/{steps.length}
+              </span>
+            </div>
+          </div>
+          <Button
+            onClick={() => setLocation("/")}
+            variant="ghost"
+            className="text-muted-foreground hover:text-primary"
+          >
+            Cerrar
+          </Button>
         </div>
       </header>
 
-      <main className="flex-1 container py-10">
-        {loading ? (
-          <LoadingAnimation />
-        ) : (
-          <div className="space-y-8">
-            <div className="glass-surface p-4 sm:p-6 md:p-8 space-y-4">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Resultados en Vivo</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-                <div className="stat-box">
-                  <p className="text-xs sm:text-sm text-muted-foreground">Total de Respuestas</p>
-                  <p className="stat-value text-lg sm:text-2xl md:text-3xl">
-                    {totalResponses.toLocaleString()}
-                  </p>
-                </div>
-                <div className="stat-box">
-                  <p className="text-xs sm:text-sm text-muted-foreground">Escaños en Juego</p>
-                  <p className="stat-value text-lg sm:text-2xl md:text-3xl">{totalEscanos}</p>
-                </div>
-                <div className="stat-box">
-                  <p className="text-xs sm:text-sm text-muted-foreground">Última Actualización</p>
-                  <p className="text-base sm:text-lg font-semibold text-foreground">Tiempo Real</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mt-4">
-                {edadPromedio !== null && (
-                  <div className="stat-box">
-                    <p className="text-sm text-muted-foreground">Edad Media</p>
-                    <p className="stat-value">{edadPromedio}</p>
-                    <p className="text-xs text-muted-foreground">años</p>
-                  </div>
-                )}
-                {ideologiaPromedio !== null && (
-                  <div className="frosted-glass p-4 rounded-lg text-center">
-                    <p className="text-sm text-[#666666]">Posición Ideológica Media</p>
-                    <p className="text-3xl font-bold text-[#C41E3A]">{ideologiaPromedio}</p>
-                    <p className="text-xs text-[#999999]">en escala 1-10</p>
-                  </div>
-                )}
-                {notaEjecutivo !== null && (
-                  <div className="frosted-glass p-4 rounded-lg text-center">
-                    <p className="text-sm text-[#666666]">Nota Ejecutivo</p>
-                    <p className="text-3xl font-bold text-[#C41E3A]">{notaEjecutivo}</p>
-                    <p className="text-xs text-[#999999]">sobre 10</p>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2 sm:gap-3 mt-6 flex-wrap">
-                <Button
-                  onClick={() => setShowAIAnalysis(true)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
-                >
-                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Análisis de IA</span>
-                  <span className="sm:hidden">IA</span>
-                </Button>
-                <Button
-                  onClick={exportToPDF}
-                  variant="outline"
-                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2"
-                >
-                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-                  PDF
-                </Button>
-                <ShareResultsModern
-                  stats={generalStats}
-                  youthStats={youthStats}
-                  totalResponses={totalResponses}
-                  cooldownMinutes={15}
+      {/* Main Content */}
+      <div className="flex-1 container py-8">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm text-muted-foreground font-medium">Pregunta {currentStep + 1} de {steps.length}</span>
+            <span className="text-sm text-primary font-semibold">{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-border rounded-full h-3 mb-4 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          
+          {/* Indicador de pasos completados */}
+          <div className="flex gap-1 flex-wrap">
+            {steps.map((step, index) => {
+              const isCompleted = responses[step.key as keyof NanoSurveyResponse] !== undefined && responses[step.key as keyof NanoSurveyResponse] !== null && responses[step.key as keyof NanoSurveyResponse] !== '';
+              const isCurrent = index === currentStep;
+              return (
+                <div
+                  key={index}
+                  className={`h-2 flex-1 rounded-full transition-all duration-300 ${isCurrent ? 'bg-primary' : isCompleted ? 'bg-green-500' : 'bg-border'}`}
+                  title={`${step.title}: ${isCompleted ? 'Completado' : 'Pendiente'}`}
                 />
-              </div>
-            </div>
+              );
+            })}
+          </div>
+        </div>
 
-            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 sticky top-16 z-30">
-              <div className="flex gap-2 sm:gap-3 min-w-max glass-surface p-2 rounded-2xl border border-slate-200 shadow-sm backdrop-blur-md">
-              <button
-                onClick={() => setActiveTab("general")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "general"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Elecciones Generales
-              </button>
-              <button
-                onClick={() => setActiveTab("mapa-hemiciclo")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "mapa-hemiciclo"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Mapa y Hemiciclo
-              </button>
-              <button
-                onClick={() => setActiveTab("encuestadoras-externas")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "encuestadoras-externas"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Encuestadoras
-              </button>
-              <button
-                onClick={() => setActiveTab("ccaa")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "ccaa"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                CCAA
-              </button>
-              <button
-                onClick={() => setActiveTab("provincias")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "provincias"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Provincias
-              </button>
-              <button
-                onClick={() => setActiveTab("comparacion-ccaa")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "comparacion-ccaa"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Comparar CCAA
-              </button>
-              <button
-                onClick={() => setActiveTab("youth")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "youth"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Asociaciones
-              </button>
-              <button
-                onClick={() => setActiveTab("asoc-juv-mapa-hemiciclo")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "asoc-juv-mapa-hemiciclo"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Asoc. Juveniles; Mapa y Hemiciclo
-              </button>
-              <button
-                onClick={() => setActiveTab("leaders")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "leaders"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Líderes Preferidos
-              </button>
-              <button
-                onClick={() => setActiveTab("tendencias")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "tendencias"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Variación de Votaciones por Día
-              </button>
-              <button
-                onClick={() => setActiveTab("lideres-preferidos")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "lideres-preferidos"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Líderes de Partidos
-              </button>
-              <button
-                onClick={() => setActiveTab("preguntas-varias")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "preguntas-varias"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Preguntas Varias
-              </button>
-              <button
-                onClick={() => setActiveTab("simulador-electoral")}
-                className={`px-4 py-2 rounded-xl font-semibold transition-colors ${
-                  activeTab === "simulador-electoral"
-                    ? "bg-[#C41E3A] text-white"
-                    : "text-[#666666] hover:text-[#2D2D2D] hover:bg-slate-100"
-                }`}
-              >
-                Simulador Electoral
-              </button>
-              <div className="ml-auto flex gap-2">
-                <Button
-                  onClick={exportToPDF}
-                  variant="outline"
-                  className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  PDF
-                </Button>
-                <ShareResultsModern
-                  stats={generalStats}
-                  youthStats={youthStats}
-                  totalResponses={totalResponses}
-                  cooldownMinutes={15}
-                />
-              </div>
-              </div>
-            </div>
+        {/* Question Card */}
+        <div className="max-w-2xl mx-auto">
+          <div className={`liquid-glass p-8 transition-all duration-300 ${isAnimating ? 'fade-out' : 'fade-in'}`}>
+            <h2 className="text-3xl font-bold text-foreground mb-6">{currentStepData.title}</h2>
 
-            {(activeTab === "general" || activeTab === "youth") && (
-              <div className="space-y-6">
-                <div className="flex gap-2 mb-4">
-                  <Button
-                    onClick={() => setSortBy('votos')}
-                    variant={sortBy === 'votos' ? 'default' : 'outline'}
-                    className="text-sm"
-                  >
-                    Ordenar por Votos
-                  </Button>
-                  <Button
-                    onClick={() => setSortBy('escanos')}
-                    variant={sortBy === 'escanos' ? 'default' : 'outline'}
-                    className="text-sm"
-                  >
-                    Ordenar por Escaños
-                  </Button>
-                </div>
+            {/* Advertencia de CCAA */}
+            {ccaaWarning && (
+              <div className="p-4 rounded-lg bg-yellow-50 border-l-4 border-yellow-500 text-yellow-900 mb-6">
+                <p className="font-semibold">{ccaaWarning}</p>
               </div>
             )}
 
+            {/* Input Fields */}
             <div className="space-y-4">
-              {stats.length > 0 && (
-                (sortBy === 'votos' ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map((party) => {
-                  const currentPartyMap = activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup;
-                  const resolvedPartyKey = resolvePartyKey(party.id, currentPartyMap);
-                  const logoUrl = party.logo || currentPartyMap[resolvedPartyKey]?.logo || "";
-                  const partyColor = party.color || currentPartyMap[resolvedPartyKey]?.color || "#C41E3A";
-                  
-                  return (
-                  <div
-                    key={party.id}
-                    className="p-6 rounded-2xl space-y-4 hover:shadow-lg transition-all cursor-pointer border glass-surface"
-                    style={{ borderColor: `${partyColor}40` }}
-                    onClick={() => setSelectedPartyForStats(party.nombre)}
-                  >
-                    <div className="flex items-center gap-4">
-                      {logoUrl ? (
-                        <PartyLogo src={logoUrl} alt={party.nombre} partyName={party.nombre} size={48} strictExternal />
-                      ) : (
-                        <div className="h-12 w-12 bg-gray-300 rounded-2xl flex items-center justify-center text-xs text-gray-500">N/A</div>
-                      )}
-                      <div className="flex-1">
-                        <h3 className="font-bold text-[#2D2D2D]">{party.nombre}</h3>
-                        <p className="text-sm text-[#666666]">
-                          {party.votos.toLocaleString()} votos
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold" style={{ color: partyColor }}>{party.escanos}</p>
-                        <p className="text-xs text-[#666666]">escaños</p>
-                        <p className="text-[11px] font-mono mt-1" style={{ color: partyColor }}>{partyColor}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs text-[#666666]">
-                        <span>{party.porcentaje.toFixed(1)}%</span>
-                        <span>{((party.escanos / totalEscanos) * 100).toFixed(1)}% de escaños</span>
-                      </div>
-                      <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                        <div
-                          className="h-full transition-all duration-500"
-                          style={{ backgroundColor: partyColor, width: `${party.porcentaje}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-                })
+              {currentStepData.type === "text" && (
+                <input
+                  type="text"
+                  value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
+                  onChange={(e) => handleAnswer(e.target.value)}
+                  placeholder="Escribe tu respuesta..."
+                  className="input-modern w-full"
+                />
               )}
-            </div>
 
-            {activeTab === "tendencias" && (
-              <TrendenciesChart partyColors={partyColorMap} />
-            )}
-            {activeTab === "lideres-preferidos" && (
-              <div className="space-y-5">
-                {preferredLeaders.length > 0 ? (
-                  <div className="glass-surface p-4 rounded-2xl">
-                    <h3 className="text-lg font-bold text-slate-900 mb-3">Líderes de Partidos elegidos (según votos)</h3>
-                    <div className="space-y-3">
-                      {preferredLeaders.map((leader) => {
-                        const partyKey = resolvePartyKey(leader.party, generalPartyMetaLookup);
-                        const partyColor = generalPartyMetaLookup[partyKey]?.color || "#64748b";
-                        const partyName = generalPartyMetaLookup[partyKey]?.name || leader.party || "Sin partido";
-                        return (
-                          <div key={`${leader.party}-${leader.leaderName}`} className="rounded-xl border p-3 bg-white" style={{ borderColor: `${partyColor}66` }}>
-                            <div className="flex items-center gap-3">
-                              <img src={leader.image} alt={leader.leaderName} className="h-12 w-12 rounded-full object-cover border border-slate-200" />
-                              <div className="flex-1">
-                                <p className="font-semibold text-slate-900">{leader.leaderName}</p>
-                                <p className="text-xs font-medium" style={{ color: partyColor }}>{partyName}</p>
-                                <div className="mt-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-                                  <div className="h-full" style={{ width: `${leader.percentage}%`, backgroundColor: partyColor }} />
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-lg font-bold text-slate-900">{leader.votes}</p>
-                                <p className="text-xs text-slate-500">{leader.percentage}%</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="glass-surface p-6 rounded-2xl text-center text-slate-600">
-                    Aún no hay datos en líderes preferidos.
-                  </div>
-                )}
-                <LeadersResultsChart partyColors={partyColorMap} />
-              </div>
-            )}
-            {activeTab === "preguntas-varias" && (
-              <PreguntasVariasSection />
-            )}
-            {activeTab === "ccaa" && (
-              <CCAAResltsSection partyMeta={generalPartyMetaLookup} />
-            )}
-            {activeTab === "provincias" && (
-              <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />
-            )}
-            {activeTab === "comparacion-ccaa" && (
-              <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />
-            )}
-            {activeTab === "asoc-juv-mapa-hemiciclo" && (
-              <div className="space-y-4">
-                {Object.keys(votosPorProvinciaJuveniles).length > 0 ? (
-                  <>
-                    <div className="liquid-glass p-4 rounded-2xl">
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias - Asociaciones Juveniles</h2>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => setMapView('schematic')}
-                            variant={mapView === 'schematic' ? 'default' : 'outline'}
-                            className={`flex items-center gap-2 ${
-                              mapView === 'schematic'
-                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
-                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
-                            }`}
-                          >
-                            <Grid3x3 className="w-4 h-4" />
-                            Esquemática
-                          </Button>
-                          <Button
-                            onClick={() => setMapView('realistic')}
-                            variant={mapView === 'realistic' ? 'default' : 'outline'}
-                            className={`flex items-center gap-2 ${
-                              mapView === 'realistic'
-                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
-                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
-                            }`}
-                          >
-                            <Map className="w-4 h-4" />
-                            Realista
-                          </Button>
-                        </div>
-                      </div>
-                      {mapView === 'schematic' ? (
-                        <SpainMapProvincial 
-                          votosPorProvincia={votosPorProvinciaJuveniles}
-                          isYouthAssociations={true}
-                          partyMeta={youthPartyMetaLookup}
-                          onProvinceClick={(province, data, votos, escanos) => {
-                            setProvinciaSeleccionadaJuveniles(province);
-                            setVotosPorPartidoProvinciaJuveniles(votos);
-                            setEscanosProvinciaJuveniles(escanos);
-                          }}
-                        />
-                      ) : (
-                        <SpainMapRealistic 
-                          votosPorProvincia={votosPorProvinciaJuveniles}
-                          provinciaMetricsMap={provinciaMetricsMapJuveniles}
-                          isYouthAssociations={true}
-                          partyMeta={youthPartyMetaLookup}
-                          onProvinceClick={(province, data, votos, escanos) => {
-                            setProvinciaSeleccionadaJuveniles(province);
-                            setVotosPorPartidoProvinciaJuveniles(votos);
-                            setEscanosProvinciaJuveniles(escanos);
-                          }}
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="liquid-glass p-6 rounded-2xl">
-                      {youthStats.length > 0 && (
-                        <PactometerInteractive 
-                          stats={youthStats.map(s => ({
-                            id: s.id,
-                            nombre: s.nombre,
-                            escanos: s.escanos,
-                            porcentaje: s.porcentaje,
-                            color: s.color
-                          }))}
-                          totalSeats={100}
-                          requiredForMajority={51}
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="liquid-glass p-4 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo de Asociaciones Juveniles</h2>
-                      <CongressHemicycle 
-                        escanos={escanosJuvenilesPorProvincia}
-                        totalEscanos={100}
-                        provinciaSeleccionada={provinciaSeleccionadaJuveniles}
-                        votosProvincia={votosPorPartidoProvinciaJuveniles}
-                        escanosProvincia={escanosProvinciaJuveniles}
-                        partyMeta={youthPartyMetaLookup}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className="liquid-glass p-8 rounded-2xl text-center">
-                    <p className="text-[#666666]">Cargando datos de provincias de Asociaciones Juveniles...</p>
-                  </div>
-                )}
-              </div>
-            )}
-            {activeTab === "mapa-hemiciclo" && (
-              <div className="space-y-4">
-                {Object.keys(votosPorProvincia).length > 0 ? (
-                  <>
-                    <div className="liquid-glass p-4 rounded-2xl">
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias</h2>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => setMapView('schematic')}
-                            variant={mapView === 'schematic' ? 'default' : 'outline'}
-                            className={`flex items-center gap-2 ${
-                              mapView === 'schematic'
-                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
-                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
-                            }`}
-                          >
-                            <Grid3x3 className="w-4 h-4" />
-                            Esquemática
-                          </Button>
-                          <Button
-                            onClick={() => setMapView('realistic')}
-                            variant={mapView === 'realistic' ? 'default' : 'outline'}
-                            className={`flex items-center gap-2 ${
-                              mapView === 'realistic'
-                                ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
-                                : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
-                            }`}
-                          >
-                            <Map className="w-4 h-4" />
-                            Realista
-                          </Button>
-                        </div>
-                      </div>
-                      {mapView === 'schematic' ? (
-                        <SpainMapProvincial 
-                          votosPorProvincia={votosPorProvincia}
-                          isYouthAssociations={false}
-                          partyMeta={generalPartyMetaLookup}
-                          onProvinceClick={(province, data, votos, escanos) => {
-                            setProvinciaSeleccionada(province);
-                            setVotosPorPartidoProvincia(votos);
-                            setEscanosProvincia(escanos);
-                          }}
-                        />
-                      ) : (
-                        <SpainMapRealistic 
-                          votosPorProvincia={votosPorProvincia}
-                          provinciaMetricsMap={provinciaMetricsMap}
-                          isYouthAssociations={false}
-                          partyMeta={generalPartyMetaLookup}
-                          onProvinceClick={(province, data, votos, escanos) => {
-                            setProvinciaSeleccionada(province);
-                            setVotosPorPartidoProvincia(votos);
-                            setEscanosProvincia(escanos);
-                          }}
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="liquid-glass p-6 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro</h2>
-                      <PactometerInteractive 
-                        stats={generalStats.map(s => ({
-                          id: s.id,
-                          nombre: s.nombre,
-                          escanos: s.escanos,
-                          porcentaje: s.porcentaje,
-                          color: s.color
-                        }))}
-                        totalSeats={350}
-                        requiredForMajority={176}
-                      />
-                    </div>
-                    
-                    <div className="liquid-glass p-4 rounded-2xl">
-                      <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo del Congreso de los Diputados</h2>
-                      <CongressHemicycle 
-                        escanos={escanosGeneralesPorProvincia}
-                        totalEscanos={350}
-                        provinciaSeleccionada={provinciaSeleccionada}
-                        votosProvincia={votosPorPartidoProvincia}
-                        escanosProvincia={escanosProvincia}
-                        partyMeta={generalPartyMetaLookup}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className="liquid-glass p-8 rounded-2xl text-center">
-                    <p className="text-[#666666]">Cargando datos de provincias...</p>
-                  </div>
-                )}
-              </div>
-            )}
-            {activeTab === "simulador-electoral" && (
-              <div className="space-y-6">
-                <div className="glass-surface p-4 rounded-2xl space-y-4">
-                  <h2 className="text-2xl font-bold text-[#2D2D2D]">Simulador Electoral</h2>
-                  <p className="text-sm text-[#666666]">
-                    Ajusta los votos por partido, crea partidos personalizados y simula el reparto de escaños.
-                  </p>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {Object.entries(simulatorPartyMap).map(([partyKey, party]) => (
-                      <label key={partyKey} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: party.color }} />
-                        <span className="min-w-[120px] text-sm font-semibold text-slate-700">{party.name}</span>
-                        <input
-                          type="number"
-                          min={0}
-                          value={simulatorVotes[partyKey] ?? 0}
-                          onChange={(e) =>
-                            setSimulatorVotes((prev) => ({
-                              ...prev,
-                              [partyKey]: Math.max(0, Number(e.target.value) || 0),
-                            }))
-                          }
-                          className="ml-auto w-32 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm"
-                        />
-                      </label>
+              {currentStepData.type === "select" && (
+                <div className="space-y-3">
+                  <select
+                    value={responses[currentStepData.key as keyof NanoSurveyResponse] || ""}
+                    onChange={(e) => {
+                      // Si es un campo de voto, asociacion juvenil, o preguntas varias, usar handleSelectChange para manejar "Otro"
+                      if ((currentStepData.key.includes("voto_") || currentStepData.key === "asociacion_juvenil" || currentStepData.key === "monarquia_republica" || currentStepData.key === "division_territorial" || currentStepData.key === "sistema_pensiones")) {
+                        handleSelectChange(e.target.value);
+                      } else {
+                        handleAnswer(e.target.value);
+                      }
+                    }}
+                    className="input-modern w-full"
+                  >
+                    <option value="">Selecciona una opcion...</option>
+                    {currentStepData.key === "provincia" && getFilteredProvinces().map(p => (
+                      <option key={p} value={p}>{p}</option>
                     ))}
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-700">Editar simulación por circunscripción (provincia)</p>
-                      <select
-                        value={simulatorEditProvince}
-                        onChange={(e) => setSimulatorEditProvince(e.target.value)}
-                        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                      >
-                        <option value="">Selecciona provincia…</option>
-                        {Object.keys(votosPorProvincia).sort().map((province) => (
-                          <option key={province} value={province}>{province}</option>
+                    {currentStepData.key === "comunidad_autonoma" && CCAA.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                    {(currentStepData.key.includes("voto_")) && (
+                      <>
+                        {Object.entries(PARTIES_GENERAL).map(([key, party]) => (
+                          <option key={key} value={party.name}>{party.name}</option>
                         ))}
-                      </select>
-                      {simulatorEditProvince && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setSimulatorProvinceOverrides((prev) => {
-                              const next = { ...prev };
-                              delete next[simulatorEditProvince];
-                              return next;
-                            })
-                          }
-                        >
-                          Reset provincia
-                        </Button>
-                      )}
-                    </div>
-                    {simulatorEditProvince && (
-                      <div className="grid gap-2 md:grid-cols-2">
-                        {Object.entries(simulatorPartyMap).map(([partyKey, party]) => {
-                          const provinceVotes = simulatorProvinceOverrides[simulatorEditProvince] || simulatorVotesByProvince[simulatorEditProvince] || {};
-                          return (
-                            <label key={`${simulatorEditProvince}-${partyKey}`} className="flex items-center gap-2 rounded border border-slate-200 p-2">
-                              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: party.color }} />
-                              <span className="text-xs font-semibold text-slate-700 truncate">{party.name}</span>
-                              <input
-                                type="number"
-                                min={0}
-                                value={provinceVotes[partyKey] ?? 0}
-                                onChange={(e) =>
-                                  setSimulatorProvinceOverrides((prev) => ({
-                                    ...prev,
-                                    [simulatorEditProvince]: {
-                                      ...(prev[simulatorEditProvince] || simulatorVotesByProvince[simulatorEditProvince] || {}),
-                                      [partyKey]: Math.max(0, Number(e.target.value) || 0),
-                                    },
-                                  }))
-                                }
-                                className="ml-auto w-28 rounded border border-slate-300 px-2 py-1 text-right text-xs"
-                              />
-                            </label>
-                          );
-                        })}
-                      </div>
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
                     )}
-                  </div>
-
-                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3">
-                    <p className="mb-2 text-sm font-semibold text-slate-700">Crear partido personalizado</p>
-                    <div className="flex flex-wrap gap-2">
-                      <input
-                        type="text"
-                        value={newSimulatorPartyName}
-                        onChange={(e) => setNewSimulatorPartyName(e.target.value)}
-                        placeholder="Nombre del partido"
-                        className="min-w-[220px] flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                      />
-                      <input
-                        type="color"
-                        value={newSimulatorPartyColor}
-                        onChange={(e) => setNewSimulatorPartyColor(e.target.value)}
-                        className="h-10 w-14 rounded-md border border-slate-300 bg-white"
-                      />
-                      <Button onClick={addSimulatorCustomParty} className="bg-[#C41E3A] hover:bg-[#A01830] text-white">
-                        Añadir
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="liquid-glass p-6 rounded-2xl">
-                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Pactómetro Simulado</h2>
-                  <PactometerInteractive
-                    stats={simulatorStats.map((s) => ({
-                      id: s.id,
-                      nombre: s.nombre,
-                      escanos: s.escanos,
-                      porcentaje: s.porcentaje,
-                      color: s.color,
-                    }))}
-                    totalSeats={350}
-                    requiredForMajority={176}
-                  />
-                </div>
-
-                <div className="liquid-glass p-4 rounded-2xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-[#2D2D2D]">Mapa de Provincias (Simulado)</h2>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => setMapView('schematic')}
-                        variant={mapView === 'schematic' ? 'default' : 'outline'}
-                        className={`flex items-center gap-2 ${
-                          mapView === 'schematic'
-                            ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
-                            : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
-                        }`}
-                      >
-                        <Grid3x3 className="w-4 h-4" />
-                        Esquemática
-                      </Button>
-                      <Button
-                        onClick={() => setMapView('realistic')}
-                        variant={mapView === 'realistic' ? 'default' : 'outline'}
-                        className={`flex items-center gap-2 ${
-                          mapView === 'realistic'
-                            ? 'bg-[#C41E3A] hover:bg-[#A01830] text-white'
-                            : 'border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white'
-                        }`}
-                      >
-                        <Map className="w-4 h-4" />
-                        Realista
-                      </Button>
-                    </div>
-                  </div>
-                  {mapView === 'schematic' ? (
-                    <SpainMapProvincial
-                      votosPorProvincia={simulatorVotesByProvince}
-                      isYouthAssociations={false}
-                      partyMeta={simulatorPartyMap}
-                      onProvinceClick={(province, data, votos, escanos) => {
-                        setSimProvinciaSeleccionada(province);
-                        setSimVotosProvincia(votos);
-                        setSimEscanosProvincia(escanos);
-                      }}
-                    />
-                  ) : (
-                    <SpainMapRealistic
-                      votosPorProvincia={simulatorVotesByProvince}
-                      provinciaMetricsMap={provinciaMetricsMap}
-                      isYouthAssociations={false}
-                      partyMeta={simulatorPartyMap}
-                      onProvinceClick={(province, data, votos, escanos) => {
-                        setSimProvinciaSeleccionada(province);
-                        setSimVotosProvincia(votos);
-                        setSimEscanosProvincia(escanos);
-                      }}
+                    {currentStepData.key === "asociacion_juvenil" && (
+                      <>
+                        {Object.entries(YOUTH_ASSOCIATIONS).map(([key, assoc]) => (
+                          <option key={key} value={assoc.name}>{assoc.name}</option>
+                        ))}
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                    {currentStepData.key === "monarquia_republica" && (
+                      <>
+                        <option value="Monarquía Parlamentaria">Monarquía Parlamentaria</option>
+                        <option value="República">República</option>
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                    {currentStepData.key === "division_territorial" && (
+                      <>
+                        <option value="Sistema actual de Autonomías">Sistema actual de Autonomías</option>
+                        <option value="Sistema Federal">Sistema Federal</option>
+                        <option value="Sistema Provincial (Sin Autonomías)">Sistema Provincial (Sin Autonomías)</option>
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                    {currentStepData.key === "sistema_pensiones" && (
+                      <>
+                        <option value="Público (Actual)">Público (Actual)</option>
+                        <option value="Privado">Privado</option>
+                        <option value="Mixto">Mixto</option>
+                        <option value="OTRO">Otro (especificar)</option>
+                      </>
+                    )}
+                  </select>
+                  {showOtroInput && (
+                    <input
+                      type="text"
+                      value={responses[currentStepData.key as keyof NanoSurveyResponse]?.toString() || ""}
+                      onChange={(e) => handleOtroAnswer(e.target.value)}
+                      placeholder="Especifica tu opcion..."
+                      className="input-modern w-full border-primary"
                     />
                   )}
                 </div>
+              )}
 
-                <div className="liquid-glass p-4 rounded-2xl">
-                  <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Hemiciclo Simulado</h2>
-                  <CongressHemicycle
-                    escanos={simulatorEscanosByProvince}
-                    totalEscanos={350}
-                    provinciaSeleccionada={simProvinciaSeleccionada}
-                    votosProvincia={simVotosProvincia}
-                    escanosProvincia={simEscanosProvincia}
-                    partyMeta={simulatorPartyMap}
-                  />
-                </div>
-              </div>
-            )}
-            {activeTab === "leaders" && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-[#2D2D2D]">Valoración de Líderes Políticos</h2>
-              {leaderRatings.length === 0 ? (
-                <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
-                  <p>Aún no hay valoraciones. Sé el primero en responder la encuesta.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {leaderRatings.map((leader) => {
-                    // Mapeo de fieldName a clave de LEADERS
-                    const leaderKeyMap: Record<string, keyof typeof LEADERS> = {
-                      'val_feijoo': 'FEIJOO',
-                      'val_sanchez': 'SANCHEZ',
-                      'val_abascal': 'ABASCAL',
-                      'val_alvise': 'ALVISE',
-                      'val_yolanda_diaz': 'YOLANDA',
-                      'val_irene_montero': 'IRENE',
-                      'val_ayuso': 'AYUSO',
-                      'val_buxade': 'BUXADE',
-                    };
-                    const leaderKey = leaderKeyMap[leader.fieldName];
-                    const leaderData = leaderKey ? LEADERS[leaderKey] : null;
-                    const leaderImagePath = leaderData?.image;
-                    let leaderImage: string | undefined;
-                    if (leaderImagePath) {
-                      const filename = leaderImagePath.split('/').pop();
-                      if (filename) {
-                        const embeddedKey = Object.keys(EMBEDDED_LEADERS).find(key => key.toLowerCase().includes(filename.toLowerCase().replace(/\.[^/.]+$/, '')));
-                        if (embeddedKey) leaderImage = EMBEDDED_LEADERS[embeddedKey];
-                      }
-                    }
-                    if (!leaderImage && leaderImagePath) leaderImage = leaderImagePath;
-                    
-                    // Debug logging para Feijóo
-                    if (leader.fieldName === 'FEIJOO') {
-                      console.log('Feijóo image:', leaderImage, 'Leader data:', leaderData);
-                    }
-                    
-                    return (
-                    <div key={leader.fieldName} className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-shadow">
-                      {leaderImage ? (
-                        <img
-                          src={leaderImage}
-                          alt={leader.name}
-                          className="w-full h-32 object-cover rounded-lg"
-                          style={{ display: 'block', width: '100%', height: '128px' }}
-                          onError={(e) => {
-                            console.error('Error loading image for', leader.name, ':', e);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                          onLoad={() => {
-                            if (leader.fieldName === 'FEIJOO') console.log('Feijóo image loaded successfully');
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-32 bg-gray-300 rounded-lg flex items-center justify-center text-gray-500">
-                          Sin imagen
-                        </div>
-                      )}
-                      <h4 className="font-semibold text-[#2D2D2D] text-sm">{leader.name}</h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-[#666666]">
-                          <span>Valoración Media</span>
-                          <span className="text-[#C41E3A] font-bold">{leader.average.toFixed(1)}/10</span>
-                        </div>
-                        <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                          <div className="h-full bg-[#C41E3A] transition-all duration-500" style={{ width: `${(leader.average / 10) * 100}%` }} />
-                        </div>
-                        <p className="text-xs text-[#999999]">({leader.count} respuestas)</p>
-                      </div>
-                    </div>
-                    );
-                  })}
+              {currentStepData.type === "slider" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-5 gap-2 sm:grid-cols-11">
+                    {Array.from({ length: 11 }, (_, i) => i).map((num) => {
+                      const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === num;
+                      return (
+                        <button
+                          key={num}
+                          onClick={() => handleAnswer(num)}
+                          className={`py-3 px-2 rounded-lg font-semibold transition-all duration-200 text-sm ${
+                            isSelected
+                              ? "bg-primary text-white shadow-lg scale-105"
+                              : "bg-border text-foreground hover:bg-border/80 hover:scale-105"
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
                   </div>
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="text-sm text-muted-foreground">0 (Muy malo)</span>
+                    <span className="text-2xl font-bold text-primary">{responses[currentStepData.key as keyof NanoSurveyResponse] || 0}</span>
+                    <span className="text-sm text-muted-foreground">10 (Muy bueno)</span>
+                  </div>
+                </div>
+              )}
 
-                  <div className="liquid-glass p-8 rounded-2xl">
-                    <h3 className="text-xl font-bold text-[#2D2D2D] mb-6">Comparativa de Valoraciones</h3>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart data={leaderRatings}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#E0D5CC" />
-                        <XAxis dataKey="name" stroke="#666666" angle={-45} textAnchor="end" height={100} />
-                        <YAxis stroke="#666666" domain={[0, 10]} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: "#F5F1E8", border: "1px solid #E0D5CC", borderRadius: "8px" }}
-                          formatter={(value: any) => value.toFixed(1)}
-                          labelStyle={{ color: "#2D2D2D" }}
-                        />
-                        <Bar dataKey="average" fill="#C41E3A" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+              {currentStepData.type === "buttons" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-5 gap-2">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => {
+                      const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === num;
+                      return (
+                        <button
+                          key={num}
+                          onClick={() => handleAnswer(num)}
+                          className={`py-3 px-2 rounded-lg font-semibold transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-primary text-white shadow-lg scale-105'
+                              : 'bg-border text-foreground hover:bg-border/80 hover:scale-105'
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
                   </div>
-                </>
+                  <div className="flex justify-between items-center text-sm text-muted-foreground mt-4">
+                    <span>Izquierda</span>
+                    <span className="text-lg font-bold text-primary">{responses[currentStepData.key as keyof NanoSurveyResponse] || '-'}</span>
+                    <span>Derecha</span>
+                  </div>
+                </div>
+              )}
+
+              {currentStepData.type === "leader" && responses.voto_generales && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Selecciona el lider que prefieres para <strong>{responses.voto_generales}</strong>
+                  </p>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {getLeaderOptions(responses.voto_generales).map((leader) => {
+                      const isSelected = responses.lider_partido === leader.name;
+                      const partyData = Object.values(PARTIES_GENERAL).find(p => p.name === responses.voto_generales);
+                      const partyColor = partyData?.color || '#C41E3A';
+                      
+                      return (
+                        <button
+                          key={leader.name}
+                          onClick={() => {
+                            handleAnswer(leader.name);
+                            setShowCustomLeaderInput(false);
+                          }}
+                          style={{
+                            borderColor: isSelected ? partyColor : '#d1d5db',
+                            backgroundColor: isSelected ? `${partyColor}15` : '#ffffff',
+                            color: isSelected ? partyColor : '#374151',
+                          }}
+                          className="w-full p-4 rounded-lg border-2 transition-all text-left font-medium hover:shadow-md"
+                        >
+                          {leader.name}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => setShowCustomLeaderInput(!showCustomLeaderInput)}
+                      style={{
+                        borderColor: showCustomLeaderInput ? '#9333ea' : '#d1d5db',
+                        backgroundColor: showCustomLeaderInput ? '#9333ea15' : '#ffffff',
+                        color: showCustomLeaderInput ? '#9333ea' : '#374151',
+                      }}
+                      className="w-full p-4 rounded-lg border-2 transition-all text-left font-medium hover:shadow-md"
+                    >
+                      + Otro (especificar)
+                    </button>
+                  </div>
+                  {showCustomLeaderInput && (
+                    <input
+                      type="text"
+                      placeholder="Escribe el nombre del lider..."
+                      value={responses.lider_partido?.toString() || ""}
+                      onChange={(e) => handleAnswer(e.target.value)}
+                      className="input-modern w-full border-primary"
+                    />
+                  )}
+                </div>
+              )}
+
+              {currentStepData.type === "leader" && !responses.voto_generales && (
+                <div className="p-6 bg-yellow-50 border-2 border-yellow-200 rounded-lg text-center">
+                  <p className="text-yellow-800 font-semibold">
+                    Por favor, selecciona primero tu voto en Elecciones Generales para ver los lideres disponibles.
+                  </p>
+                </div>
               )}
             </div>
-            )}
-            {activeTab === "encuestadoras-externas" && (
-              <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />
-            )}
-
-            {activeTab !== "leaders" && activeTab !== "encuestadoras-externas" && (
-            <div className="liquid-glass p-8 rounded-2xl space-y-4">
-              <h3 className="text-xl font-bold text-[#2D2D2D]">Metodología</h3>
-              <div className="space-y-3 text-sm text-[#666666]">
-                <p>
-                  <span className="font-semibold text-[#2D2D2D]">Ley d'Hondt:</span> Los escaños se distribuyen
-                  utilizando el método d'Hondt, que es el sistema electoral utilizado en España.
-                </p>
-                <p>
-                  <span className="font-semibold text-[#2D2D2D]">Umbral Mínimo:</span> En elecciones generales se
-                  requiere el 3% de los votos válidos. En asociaciones juveniles, el 4%.
-                </p>
-                <p>
-                  <span className="font-semibold text-[#2D2D2D]">Actualización:</span> Los resultados se actualizan
-                  en tiempo real conforme se reciben nuevas respuestas.
-                </p>
-              </div>
-            </div>
-            )}
-
-            <CommentsSection activeTab={activeTab === "simulador-electoral" ? "general" : activeTab} />
-
-            <div className="text-center space-y-4">
-              <p className="text-[#666666]">¿Aún no has respondido la encuesta?</p>
-              <Button
-                onClick={() => setLocation("/encuesta")}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white px-8 h-12 rounded-lg font-semibold"
-              >
-                Responder Encuesta
-              </Button>
-            </div>
           </div>
-        )}
-      </main>
 
-      <PartyStatsModal
-        isOpen={!!selectedPartyForStats}
-        onClose={() => setSelectedPartyForStats(null)}
-        partyName={selectedPartyForStats || ""}
-        partyType={activeTab === "general" ? "general" : "youth"}
-      />
+          {/* Navigation Buttons */}
+          <div className="flex justify-between gap-4 mt-8">
+            <Button
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+              variant="outline"
+              className="btn-secondary disabled:opacity-50"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Anterior
+            </Button>
 
-      <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
-        <div className="container py-8 text-center text-sm text-[#666666]">
-          <p>
-            La Encuesta de Batalla Cultural © 2025 | Todos los datos son anónimos y públicos
-          </p>
+            {currentStep === steps.length - 1 ? (
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="btn-primary flex-1 disabled:opacity-50"
+              >
+                {isSubmitting ? "Enviando..." : "Enviar Encuesta"}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={!isCurrentFieldComplete()}
+                className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
         </div>
-      </footer>
-
-      <AIAnalysisModal
-        open={showAIAnalysis}
-        onOpenChange={setShowAIAnalysis}
-        totalResponses={totalResponses}
-        edadPromedio={edadPromedio}
-        ideologiaPromedio={ideologiaPromedio}
-        topParties={[...stats].sort((a, b) => b.votos - a.votos).slice(0, 5)}
-      />
+      </div>
     </div>
   );
 }
+
