@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const COOLDOWN_MINUTES = 15;
+const COOLDOWN_MINUTES = 0.5;
 
 export async function getUserIP(): Promise<string> {
   try {
@@ -37,7 +37,7 @@ export async function checkVotingCooldown(userIP: string): Promise<{ canVote: bo
     const minutesElapsed = (now - lastVoteTime) / (1000 * 60);
 
     if (minutesElapsed < COOLDOWN_MINUTES) {
-      const remainingMinutes = Math.ceil(COOLDOWN_MINUTES - minutesElapsed);
+      const remainingMinutes = Math.ceil((COOLDOWN_MINUTES - minutesElapsed) * 10) / 10;
       return { canVote: false, remainingMinutes };
     }
 
