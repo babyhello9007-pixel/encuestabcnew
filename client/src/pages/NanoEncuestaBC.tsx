@@ -344,6 +344,31 @@ export default function NanoEncuestaBC() {
     }
   };
 
+  const formatPensionesForTweet = (value?: string) => {
+    if (!value) return "No respondido";
+    const normalized = value.toLowerCase();
+    if (normalized.includes("público")) return "PÚBLICAS";
+    if (normalized.includes("privado")) return "PRIVADAS";
+    if (normalized.includes("mixto")) return "MIXTAS";
+    return value.toUpperCase();
+  };
+
+  const handleShareOnX = () => {
+    const tweetText = [
+      "🚨 ¡Ya voté en #LaEncuestaBC y estos son MIS RESULTADOS! 🔥",
+      `• Partido al que votaría HOY: ${responses.voto_generales || "No respondido"}`,
+      `• Mi líder preferido: ${responses.lider_partido || "No respondido"}`,
+      `• Monarquía o República: ${responses.monarquia_republica || "No respondido"}`,
+      `• Pensiones: ${formatPensionesForTweet(responses.sistema_pensiones)}`,
+      "",
+      "🔗 ATRÉVETE: https://encuestabcnew.vercel.app/nanoencuestabc",
+      "#LaEncuestaBC",
+    ].join("\n");
+
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  };
+
   if (showReview) {
     return (
       <ReviewNanoEncuesta
@@ -388,6 +413,12 @@ export default function NanoEncuestaBC() {
             Tu respuesta ha sido registrada exitosamente. Tu opinión es valiosa para entender el panorama político y cultural de España.
           </p>
           <div className="space-y-3">
+            <Button
+              onClick={handleShareOnX}
+              className="w-full bg-black hover:bg-neutral-800 text-white h-12 rounded-lg font-semibold"
+            >
+              Compartir tus respuestas en X (Twitter)
+            </Button>
             <Button
               onClick={() => setLocation("/resultados")}
               className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold"
