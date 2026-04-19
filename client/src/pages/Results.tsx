@@ -24,11 +24,20 @@ import { ProvincesResultsSection } from "@/components/ProvincesResultsSection";
 import { CCAAComparisonSection } from "@/components/CCAAComparisonSection";
 import { SpainMapProvincial } from "@/components/results/SpainMapProvincial";
 import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
+import { ParliamentHemicycle } from "@/components/results/ParliamentHemicycle";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
+
+import EncuestadorasGrid from "@/components/results/EncuestadorasGrid";
+import EncuestasExternasTable from "@/components/results/EncuestasExternasTable";
 import EncuestadorasComparativa from "@/components/results/EncuestadorasComparativa";
 import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
+import Footer from "@/components/Footer";
 import FollowUsMenu from "@/components/FollowUsMenu";
+import Pactometer from "@/components/Pactometer";
 import PactometerInteractive from "@/components/PactometerInteractive";
+
+import { Map, Grid3x3, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
@@ -750,10 +759,23 @@ export default function Results() {
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
+  const [simulatorVotes, setSimulatorVotes] = useState<Record<string, number>>({});
+  const [simulatorCustomParties, setSimulatorCustomParties] = useState<CustomSimulatorParty[]>([]);
+  const [newSimulatorPartyName, setNewSimulatorPartyName] = useState("");
+  const [newSimulatorPartyColor, setNewSimulatorPartyColor] = useState("#7c3aed");
+  const [simProvinciaSeleccionada, setSimProvinciaSeleccionada] = useState<string | null>(null);
+  const [simVotosProvincia, setSimVotosProvincia] = useState<Record<string, number>>({});
+  const [simEscanosProvincia, setSimEscanosProvincia] = useState<Record<string, number>>({});
+  const [simulatorEditProvince, setSimulatorEditProvince] = useState<string>("");
+  const [simulatorProvinceOverrides, setSimulatorProvinceOverrides] = useState<Record<string, Record<string, number>>>({});
+  const [partyLeaders, setPartyLeaders] = useState<PartyLeaderProfile[]>([]);
+  const [preferredLeaders, setPreferredLeaders] = useState<PreferredLeaderResult[]>([]);
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
   const normalizePartyKey = (v: string) => v?.trim().toUpperCase();
+
+  const normalizePartyKey = (value: string) => value?.trim().toUpperCase();
 
   const generalPartyMap = useMemo(() => {
     const d: Record<string, { key: string; name: string; color: string; logo: string }> = {};
@@ -821,11 +843,55 @@ export default function Results() {
   }, []);
 
   useEffect(() => {
+    if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
+      const escanos = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
+      setEscanosGeneralesPorProvincia(escanos);
+      
+      // Actualizar generalStats con los escaños calculados por provincia
+      // Esto asegura que Elecciones Generales y Hemiciclo muestren los mismos números
+      const statsActualizados = generalStats.map(stat => ({
+        ...stat,
+        escanos: escanos[stat.id] || 0
+      }));
+      setGeneralStats(statsActualizados);
+    }
+  }, [votosPorProvincia]);
+
+  useEffect(() => {
+    if (Object.keys(votosPorProvinciaJuveniles).length > 0 && youthStats.length > 0) {
+      const escanos = calcularEscanosJuvenilesPorProvincia(votosPorProvinciaJuveniles);
+      setEscanosJuvenilesPorProvincia(escanos);
+      
+      // Actualizar youthStats con los escaños calculados por provincia
+      const statsActualizados = youthStats.map(stat => ({
+        ...stat,
+        escanos: escanos[stat.id] || 0
+      }));
+      setYouthStats(statsActualizados);
+    }
+  }, [votosPorProvinciaJuveniles]);
+
+  useEffect(() => {
     const fetchResults = async () => {
       try {
-        // Total respuestas
-        try { const { data } = await supabase.from("total_respuestas_view").select("total_respuestas"); setTotalResponses(data?.[0]?.total_respuestas || 0); }
-        catch { try { const { count } = await supabase.from("respuestas").select("*", { count: "exact", head: true }); setTotalResponses(count || 0); } catch { setTotalResponses(631); } }
+        // Obtener total de respuestas usando el VIEW
+        try {
+          const { data: viewData } = await supabase
+            .from("total_respuestas_view")
+            .select("total_respuestas");
+          setTotalResponses(viewData?.[0]?.total_respuestas || 0);
+        } catch (err) {
+          // Fallback si el VIEW no existe
+          try {
+            const { count } = await supabase
+              .from("respuestas")
+              .select("*", { count: "exact", head: true });
+            setTotalResponses(count || 0);
+          } catch (e) {
+            // Si tampoco existe la tabla, usar datos de ejemplo
+            setTotalResponses(631);
+          }
+        }
 
         // Votos generales
         try {
@@ -858,55 +924,374 @@ export default function Results() {
                   }
                 } catch { /* skip */ }
               }
-            } catch (e) { console.error(e); }
+            } catch (err) {
+              console.error("Error fetching votos por provincia:", err);
+            }
+          } else {
+            // Datos de ejemplo si no hay datos
+            const exampleVotos: Record<string, number> = { PP: 180,
+              PSOE: 120,
+              VOX: 85,
+              SUMAR: 65,
+              PODEMOS: 45,
+              JUNTS: 35,
+              ERC: 30,
+              PNV: 25,
+              ALIANZA: 15,
+              BILDU: 20,
+              SAF: 40,
+              CC: 10,
+              UPN: 8,
+              CIUDADANOS: 12,
+              CAMINANDO: 5,
+              FRENTE: 3,
+              IZQUIERDA: 8,
+              JUNTOS_EXT: 6,
+              PLIB: 4,
+              EB: 2,
+              BNG: 7,
+            };
+            const escanos = calcularEscanosGenerales(exampleVotos);
+            const nombres: Record<string, string> = {};
+            const logos: Record<string, string> = {};
+
+            Object.entries(generalPartyMap).forEach(([key, party]) => {
+              nombres[key] = party.name;
+              logos[key] = party.logo;
+            });
+
+            const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: generalPartyMap[resolvePartyKey(s.id, generalPartyMap)]?.color,
+            }));
+            setGeneralStats(stats);
           }
-        } catch (e) { console.error(e); }
+        } catch (err) {
+          console.error("Error fetching general votes:", err);
+          // Usar datos de ejemplo
+          const exampleVotos: Record<string, number> = {
+            PP: 180,
+            PSOE: 120,
+            VOX: 85,
+            SUMAR: 65,
+            PODEMOS: 45,
+            JUNTS: 35,
+            ERC: 30,
+            PNV: 25,
+            ALIANZA: 15,
+            BILDU: 20,
+            SAF: 40,
+            CC: 10,
+            UPN: 8,
+            CIUDADANOS: 12,
+            CAMINANDO: 5,
+            FRENTE: 3,
+            IZQUIERDA: 8,
+            JUNTOS_EXT: 6,
+            PLIB: 4,
+            EB: 2,
+            BNG: 7,
+          };
+          const escanos = calcularEscanosGenerales(exampleVotos);
+          const nombres: Record<string, string> = {};
+          const logos: Record<string, string> = {};
+
+          Object.entries(generalPartyMap).forEach(([key, party]) => {
+            nombres[key] = party.name;
+            logos[key] = party.logo;
+          });
+
+          const stats = obtenerEstadisticas(exampleVotos, escanos, nombres, logos).map((s) => ({
+            ...s,
+            color: generalPartyMap[resolvePartyKey(s.id, generalPartyMap)]?.color,
+          }));
+          setGeneralStats(stats);
+        }
 
         // Votos juveniles
         try {
-          const { data: yd } = await supabase.from("votos_juveniles_totales").select("*");
-          if (yd && yd.length > 0) {
-            const yv: Record<string, number> = {};
-            yd.forEach((r: any) => { yv[resolvePartyKey(String(r.asociacion_id || ""), youthPartyMap)] = r.votos; });
-            const escanos = calcularEscanosJuveniles(yv);
-            const nombres: Record<string, string> = {}; const logos: Record<string, string> = {};
-            Object.entries(youthPartyMap).forEach(([k, p]) => { nombres[k] = p.name; logos[k] = p.logo; });
-            setYouthStats(obtenerEstadisticas(yv, escanos, nombres, logos).map((s) => ({ ...s, color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color })));
-          }
-        } catch (e) { console.error(e); }
+          const { data: youthData } = await supabase
+            .from("votos_juveniles_totales")
+            .select("*");
 
-        // Votos juveniles por provincia
-        try {
-          const { data: jpd } = await supabase.from("votos_por_provincia_juveniles_view").select("provincia, asociacion, votos");
-          if (jpd && jpd.length > 0) {
-            const vjp: Record<string, Record<string, number>> = {};
-            jpd.forEach((r: any) => { if (r.provincia && r.asociacion) { if (!vjp[r.provincia]) vjp[r.provincia] = {}; vjp[r.provincia][resolvePartyKey(String(r.asociacion), youthPartyMap)] = r.votos; } });
-            setVotosPorProvinciaJuveniles(vjp);
-          }
-        } catch (e) { console.error(e); }
+          if (youthData && youthData.length > 0) {
+            const youthVotos: Record<string, number> = {};
+            youthData.forEach((row: any) => {
+              const assocKey = resolvePartyKey(String(row.asociacion_id || ""), youthPartyMap);
+              youthVotos[assocKey] = row.votos;
+            });
 
-        // Valoraciones líderes
-        try {
-          const { data: vld } = await supabase.from("valoraciones_lideres_view").select("*");
-          if (vld && vld.length > 0) {
-            const lm: Record<string, { name: string; fieldName: string }> = { feijoo: { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" }, sanchez: { name: "Pedro Sánchez", fieldName: "val_sanchez" }, abascal: { name: "Santiago Abascal", fieldName: "val_abascal" }, alvise: { name: "Alvise Pérez", fieldName: "val_alvise" }, yolanda_diaz: { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" }, irene_montero: { name: "Irene Montero", fieldName: "val_irene_montero" }, ayuso: { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" }, buxade: { name: "Jorge Buxadé", fieldName: "val_buxade" } };
-            setLeaderRatings(vld.map((r: any) => { const l = lm[r.lider]; return { name: l?.name ?? r.lider, fieldName: l?.fieldName ?? r.lider, average: parseFloat(r.valoracion_media) || 0, count: r.total_valoraciones || 0 }; }));
+            const escanos = calcularEscanosJuveniles(youthVotos);
+            const nombres: Record<string, string> = {};
+            const logos: Record<string, string> = {};
+
+            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
+              nombres[key] = assoc.name;
+              logos[key] = assoc.logo;
+            });
+
+            const stats = obtenerEstadisticas(youthVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color,
+            }));
+            setYouthStats(stats);
+          } else {
+            // Datos de ejemplo si no hay datos
+            const exampleYouthVotos: Record<string, number> = {
+              SHAACABAT: 95,
+              REVUELTA: 75,
+              NNGG: 120,
+              JVOX: 65,
+              VLE: 45,
+              JSE: 85,
+              PATRIOTA: 35,
+              JIU: 40,
+              JCOMUNISTA: 30,
+              JCS: 25,
+              EGI: 15,
+              ERNAI: 20,
+              JERC: 35,
+              JNC: 28,
+              GALIZANOVA: 18,
+              ARRAN: 22,
+              JNCANA: 12,
+              JPV: 16,
+              ACL: 14,
+              JEC: 10,
+              AGORA: 8,
+            };
+            const escanos = calcularEscanosJuveniles(exampleYouthVotos);
+            const nombres: Record<string, string> = {};
+            const logos: Record<string, string> = {};
+
+            Object.entries(youthPartyMap).forEach(([key, assoc]) => {
+              nombres[key] = assoc.name;
+              logos[key] = assoc.logo;
+            });
+
+            const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
+              ...s,
+              color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color,
+            }));
+            setYouthStats(stats);
           }
-        } catch {
-          try {
-            const { data: ar } = await supabase.from("respuestas").select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
-            if (ar) {
-              const ls = [{ name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" }, { name: "Pedro Sánchez", fieldName: "val_sanchez" }, { name: "Santiago Abascal", fieldName: "val_abascal" }, { name: "Alvise Pérez", fieldName: "val_alvise" }, { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" }, { name: "Irene Montero", fieldName: "val_irene_montero" }, { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" }, { name: "Jorge Buxadé", fieldName: "val_buxade" }];
-              setLeaderRatings(ls.map((l) => { let s = 0, c = 0; ar.forEach((r: any) => { const v = r[l.fieldName]; if (v != null) { s += v; c++; } }); return { ...l, average: Math.round(c > 0 ? (s / c) * 10 : 0) / 10, count: c }; }));
-            }
-          } catch (e) { console.error(e); }
+        } catch (err) {
+          console.error("Error fetching youth votes:", err);
+          // Usar datos de ejemplo
+          const exampleYouthVotos: Record<string, number> = {
+            SHAACABAT: 95,
+            REVUELTA: 75,
+            NNGG: 120,
+            JVOX: 65,
+            VLE: 45,
+            JSE: 85,
+            PATRIOTA: 35,
+            JIU: 40,
+            JCOMUNISTA: 30,
+            JCS: 25,
+            EGI: 15,
+            ERNAI: 20,
+            JERC: 35,
+            JNC: 28,
+            GALIZANOVA: 18,
+            ARRAN: 22,
+            JNCANA: 12,
+            JPV: 16,
+            ACL: 14,
+            JEC: 10,
+            AGORA: 8,
+          };
+          const escanos = calcularEscanosJuveniles(exampleYouthVotos);
+          const nombres: Record<string, string> = {};
+          const logos: Record<string, string> = {};
+
+          Object.entries(youthPartyMap).forEach(([key, assoc]) => {
+            nombres[key] = assoc.name;
+            logos[key] = assoc.logo;
+          });
+
+          const stats = obtenerEstadisticas(exampleYouthVotos, escanos, nombres, logos).map((s) => ({
+            ...s,
+            color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color,
+          }));
+          setYouthStats(stats);
         }
 
-        try { const { data } = await supabase.from("media_nota_ejecutivo").select("nota_media"); if (data?.[0]) setNotaEjecutivo(data[0].nota_media); } catch { /* skip */ }
-        try { const { data } = await supabase.from("edad_promedio").select("edad_media"); if (data?.[0]) setEdadPromedio(data[0].edad_media); } catch { /* skip */ }
-        try { const { data } = await supabase.from("ideologia_promedio").select("ideologia_media"); if (data?.[0]) setIdeologiaPromedio(data[0].ideologia_media); } catch { /* skip */ }
-      } catch (err) {
-        console.error("Error fetching results:", err);
+        // Cargar votos por provincia para asociaciones juveniles
+        try {
+          const { data: provinciaJuvenilData } = await supabase
+            .from("votos_por_provincia_juveniles_view")
+            .select("provincia, asociacion, votos");
+          
+          if (provinciaJuvenilData && provinciaJuvenilData.length > 0) {
+            const votosProvJuveniles: Record<string, Record<string, number>> = {};
+            
+            provinciaJuvenilData.forEach((row: any) => {
+              if (row.provincia && row.asociacion) {
+                if (!votosProvJuveniles[row.provincia]) {
+                  votosProvJuveniles[row.provincia] = {};
+                }
+                const assocKey = resolvePartyKey(String(row.asociacion), youthPartyMap);
+                votosProvJuveniles[row.provincia][assocKey] = row.votos;
+              }
+            });
+            
+            setVotosPorProvinciaJuveniles(votosProvJuveniles);
+          }
+        } catch (err) {
+          console.error("Error fetching votos por provincia juveniles:", err);
+        }
+
+        // Intentar usar el VIEW de valoraciones
+        try {
+          const { data: viewData } = await supabase
+            .from("valoraciones_lideres_view")
+            .select("*");
+          
+          if (viewData && viewData.length > 0) {
+            const leaderMap: Record<string, { name: string; fieldName: string }> = {
+              'feijoo': { name: 'Alberto Núñez Feijóo', fieldName: 'val_feijoo' },
+              'sanchez': { name: 'Pedro Sánchez', fieldName: 'val_sanchez' },
+              'abascal': { name: 'Santiago Abascal', fieldName: 'val_abascal' },
+              'alvise': { name: 'Alvise Pérez', fieldName: 'val_alvise' },
+              'yolanda_diaz': { name: 'Yolanda Díaz', fieldName: 'val_yolanda_diaz' },
+              'irene_montero': { name: 'Irene Montero', fieldName: 'val_irene_montero' },
+              'ayuso': { name: 'Isabel Díaz Ayuso', fieldName: 'val_ayuso' },
+              'buxade': { name: 'Jorge Buxadé', fieldName: 'val_buxade' },
+            };
+            
+            const ratings: LeaderRating[] = viewData.map((row: any) => {
+              const leader = leaderMap[row.lider];
+              return {
+                name: leader.name,
+                fieldName: leader.fieldName,
+                average: parseFloat(row.valoracion_media) || 0,
+                count: row.total_valoraciones || 0,
+              };
+            });
+            setLeaderRatings(ratings);
+          }
+        } catch (err) {
+          // Fallback: calcular manualmente si el VIEW no existe
+          const { data: allResponses } = await supabase
+            .from("respuestas")
+            .select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
+
+          if (allResponses && allResponses.length > 0) {
+            const leaders = [
+              { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" },
+              { name: "Pedro Sánchez", fieldName: "val_sanchez" },
+              { name: "Santiago Abascal", fieldName: "val_abascal" },
+              { name: "Alvise Pérez", fieldName: "val_alvise" },
+              { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" },
+              { name: "Irene Montero", fieldName: "val_irene_montero" },
+              { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" },
+              { name: "Jorge Buxadé", fieldName: "val_buxade" },
+            ];
+
+            const ratings: LeaderRating[] = leaders.map((leader) => {
+              let sum = 0;
+              let count = 0;
+              allResponses.forEach((r: any) => {
+                const value = r[leader.fieldName];
+                if (value !== null && value !== undefined) {
+                  sum += value;
+                  count += 1;
+                }
+              });
+              const average = count > 0 ? sum / count : 0;
+              return {
+                name: leader.name,
+                fieldName: leader.fieldName,
+                average: Math.round(average * 10) / 10,
+                count: count,
+              };
+            });
+
+            setLeaderRatings(ratings);
+          }
+        }
+
+        // Obtener nota ejecutivo
+        try {
+          const { data: notaData } = await supabase
+            .from("media_nota_ejecutivo")
+            .select("nota_media");
+          if (notaData && notaData.length > 0) {
+            setNotaEjecutivo(notaData[0].nota_media);
+          }
+        } catch (err) {
+          console.log('Nota ejecutivo no disponible');
+        }
+
+        // Obtener edad promedio
+        try {
+          const { data: edadData } = await supabase.from("edad_promedio").select("edad_media");
+          if (edadData && edadData.length > 0) {
+            setEdadPromedio(edadData[0].edad_media);
+          }
+        } catch (err) {
+          console.error("Error fetching edad promedio:", err);
+        }
+
+        // Obtener ideología promedio
+        try {
+          const { data: ideologiaData } = await supabase.from("ideologia_promedio").select("ideologia_media");
+          if (ideologiaData && ideologiaData.length > 0) {
+            setIdeologiaPromedio(ideologiaData[0].ideologia_media);
+          }
+        } catch (err) {
+          console.error("Error fetching ideologia promedio:", err);
+        }
+
+        try {
+          const { data: leadersData } = await supabase
+            .from("party_leaders")
+            .select("party_key, leader_name, photo_url, is_active")
+            .eq("is_active", true);
+          if (leadersData) {
+            setPartyLeaders(
+              leadersData.map((row: any) => ({
+                partyKey: row.party_key,
+                leaderName: row.leader_name,
+                photoUrl: row.photo_url,
+              }))
+            );
+          }
+        } catch (err) {
+          console.error("Error loading party leaders:", err);
+        }
+
+        try {
+          const { data: preferredRows } = await supabase
+            .from("lideres_preferidos")
+            .select("partido, lider_preferido");
+          if (preferredRows) {
+            const total = preferredRows.length || 1;
+            const grouped = preferredRows.reduce<Record<string, { leaderName: string; party: string; votes: number }>>((acc, row: any) => {
+              const leaderName = String(row.lider_preferido || "").trim();
+              if (!leaderName) return acc;
+              const key = `${leaderName}__${row.partido || ""}`;
+              if (!acc[key]) {
+                acc[key] = { leaderName, party: String(row.partido || ""), votes: 0 };
+              }
+              acc[key].votes += 1;
+              return acc;
+            }, {});
+            const parsed = Object.values(grouped)
+              .sort((a, b) => b.votes - a.votes)
+              .map((item) => ({
+                ...item,
+                percentage: Number(((item.votes / total) * 100).toFixed(1)),
+                image: getLeaderImage(item.leaderName),
+              }));
+            setPreferredLeaders(parsed);
+          }
+        } catch (err) {
+          console.error("Error loading lideres_preferidos:", err);
+        }
+      } catch (error) {
+        console.error("Error fetching results:", error);
       } finally {
         setLoading(false);
       }
@@ -918,6 +1303,17 @@ export default function Results() {
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
   const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
+  const partyColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    [...Object.values(generalPartyMap), ...Object.values(youthPartyMap)].forEach((party: any) => {
+      if (!party) return;
+      const key = typeof party.key === "string" ? party.key.toUpperCase() : "";
+      const name = typeof party.name === "string" ? party.name.toUpperCase() : "";
+      if (key && party.color) map[key] = party.color;
+      if (name && party.color) map[name] = party.color;
+    });
+    return map;
+  }, [generalPartyMap, youthPartyMap]);
 
   const partyColorMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -1047,8 +1443,65 @@ export default function Results() {
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs text-[#666666]">
+                        <span>{party.porcentaje.toFixed(1)}%</span>
+                        <span>{((party.escanos / totalEscanos) * 100).toFixed(1)}% de escaños</span>
+                      </div>
+                      <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-500"
+                          style={{ backgroundColor: partyColor, width: `${party.porcentaje}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+                })
+              )}
+            </div>
+
+            {activeTab === "tendencias" && (
+              <TrendenciesChart partyColors={partyColorMap} />
+            )}
+            {activeTab === "lideres-preferidos" && (
+              <div className="space-y-5">
+                {preferredLeaders.length > 0 ? (
+                  <div className="glass-surface p-4 rounded-2xl">
+                    <h3 className="text-lg font-bold text-slate-900 mb-3">Líderes de Partidos elegidos (según votos)</h3>
+                    <div className="space-y-3">
+                      {preferredLeaders.map((leader) => {
+                        const partyKey = resolvePartyKey(leader.party, generalPartyMetaLookup);
+                        const partyColor = generalPartyMetaLookup[partyKey]?.color || "#64748b";
+                        const partyName = generalPartyMetaLookup[partyKey]?.name || leader.party || "Sin partido";
+                        return (
+                          <div key={`${leader.party}-${leader.leaderName}`} className="rounded-xl border p-3 bg-white" style={{ borderColor: `${partyColor}66` }}>
+                            <div className="flex items-center gap-3">
+                              <img src={leader.image} alt={leader.leaderName} className="h-12 w-12 rounded-full object-cover border border-slate-200" />
+                              <div className="flex-1">
+                                <p className="font-semibold text-slate-900">{leader.leaderName}</p>
+                                <p className="text-xs font-medium" style={{ color: partyColor }}>{partyName}</p>
+                                <div className="mt-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                                  <div className="h-full" style={{ width: `${leader.percentage}%`, backgroundColor: partyColor }} />
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-slate-900">{leader.votes}</p>
+                                <p className="text-xs text-slate-500">{leader.percentage}%</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="glass-surface p-6 rounded-2xl text-center text-slate-600">
+                    Aún no hay datos en líderes preferidos.
+                  </div>
+                )}
+                <LeadersResultsChart partyColors={partyColorMap} />
               </div>
             )}
 
@@ -1135,10 +1588,12 @@ export default function Results() {
                         <SpainMapRealistic votosPorProvincia={votosPorProvincia} provinciaMetricsMap={provinciaMetricsMap} isYouthAssociations={false} partyMeta={generalPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionada(p); setVotosPorPartidoProvincia(v); setEscanosProvincia(e); }} />
                       )}
                     </div>
+                    
                     <div className="liquid-glass p-6 rounded-2xl">
                       <h2 className="text-xl font-bold text-[#2D2D2D] mb-4">Pactómetro</h2>
                       <PactometerInteractive stats={generalStats.map((s) => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={350} requiredForMajority={176} />
                     </div>
+                    
                     <div className="liquid-glass p-4 rounded-2xl">
                       <h2 className="text-xl font-bold text-[#2D2D2D] mb-4">Hemiciclo del Congreso</h2>
                       <CongressHemicycle escanos={escanosGeneralesPorProvincia} totalEscanos={350} provinciaSeleccionada={provinciaSeleccionada} votosProvincia={votosPorPartidoProvincia} escanosProvincia={escanosProvincia} partyMeta={generalPartyMetaLookup} />
@@ -1172,9 +1627,11 @@ export default function Results() {
                         <SpainMapRealistic votosPorProvincia={votosPorProvinciaJuveniles} provinciaMetricsMap={provinciaMetricsMapJuveniles} isYouthAssociations={true} partyMeta={youthPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionadaJuveniles(p); setVotosPorPartidoProvinciaJuveniles(v); setEscanosProvinciaJuveniles(e); }} />
                       )}
                     </div>
+                    
                     <div className="liquid-glass p-6 rounded-2xl">
                       {youthStats.length > 0 && <PactometerInteractive stats={youthStats.map((s) => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={100} requiredForMajority={51} />}
                     </div>
+                    
                     <div className="liquid-glass p-4 rounded-2xl">
                       <h2 className="text-xl font-bold text-[#2D2D2D] mb-4">Hemiciclo Asociaciones Juveniles</h2>
                       <CongressHemicycle escanos={escanosJuvenilesPorProvincia} totalEscanos={100} provinciaSeleccionada={provinciaSeleccionadaJuveniles} votosProvincia={votosPorPartidoProvinciaJuveniles} escanosProvincia={escanosProvinciaJuveniles} partyMeta={youthPartyMetaLookup} />
@@ -1185,6 +1642,92 @@ export default function Results() {
                 )}
               </div>
             )}
+            {activeTab === "simulador-electoral" && (
+              <div className="space-y-6">
+                <div className="glass-surface p-4 rounded-2xl space-y-4">
+                  <h2 className="text-2xl font-bold text-[#2D2D2D]">Simulador Electoral</h2>
+                  <p className="text-sm text-[#666666]">
+                    Ajusta los votos por partido, crea partidos personalizados y simula el reparto de escaños.
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {Object.entries(simulatorPartyMap).map(([partyKey, party]) => (
+                      <label key={partyKey} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: party.color }} />
+                        <span className="min-w-[120px] text-sm font-semibold text-slate-700">{party.name}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={simulatorVotes[partyKey] ?? 0}
+                          onChange={(e) =>
+                            setSimulatorVotes((prev) => ({
+                              ...prev,
+                              [partyKey]: Math.max(0, Number(e.target.value) || 0),
+                            }))
+                          }
+                          className="ml-auto w-32 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm"
+                        />
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-slate-700">Editar simulación por circunscripción (provincia)</p>
+                      <select
+                        value={simulatorEditProvince}
+                        onChange={(e) => setSimulatorEditProvince(e.target.value)}
+                        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      >
+                        <option value="">Selecciona provincia…</option>
+                        {Object.keys(votosPorProvincia).sort().map((province) => (
+                          <option key={province} value={province}>{province}</option>
+                        ))}
+                      </select>
+                      {simulatorEditProvince && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setSimulatorProvinceOverrides((prev) => {
+                              const next = { ...prev };
+                              delete next[simulatorEditProvince];
+                              return next;
+                            })
+                          }
+                        >
+                          Reset provincia
+                        </Button>
+                      )}
+                    </div>
+                    {simulatorEditProvince && (
+                      <div className="grid gap-2 md:grid-cols-2">
+                        {Object.entries(simulatorPartyMap).map(([partyKey, party]) => {
+                          const provinceVotes = simulatorProvinceOverrides[simulatorEditProvince] || simulatorVotesByProvince[simulatorEditProvince] || {};
+                          return (
+                            <label key={`${simulatorEditProvince}-${partyKey}`} className="flex items-center gap-2 rounded border border-slate-200 p-2">
+                              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: party.color }} />
+                              <span className="text-xs font-semibold text-slate-700 truncate">{party.name}</span>
+                              <input
+                                type="number"
+                                min={0}
+                                value={provinceVotes[partyKey] ?? 0}
+                                onChange={(e) =>
+                                  setSimulatorProvinceOverrides((prev) => ({
+                                    ...prev,
+                                    [simulatorEditProvince]: {
+                                      ...(prev[simulatorEditProvince] || simulatorVotesByProvince[simulatorEditProvince] || {}),
+                                      [partyKey]: Math.max(0, Number(e.target.value) || 0),
+                                    },
+                                  }))
+                                }
+                                className="ml-auto w-28 rounded border border-slate-300 px-2 py-1 text-right text-xs"
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
             {/* Metodología */}
             {!["simulador-electoral", "lideres-partidos", "encuestadoras-externas"].includes(activeTab) && (
