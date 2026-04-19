@@ -304,6 +304,33 @@ export default function NanoEncuestaBC() {
       }
 
       if (error) {
+        const minimalPayload = {
+          edad: dataToSubmit.edad,
+          provincia: dataToSubmit.provincia,
+          ccaa: dataToSubmit.ccaa,
+          nacionalidad: dataToSubmit.nacionalidad,
+          voto_autonomicas: dataToSubmit.voto_autonomicas,
+          voto_municipales: dataToSubmit.voto_municipales,
+          voto_europeas: dataToSubmit.voto_europeas,
+          nota_ejecutivo: dataToSubmit.nota_ejecutivo,
+          val_feijoo: dataToSubmit.val_feijoo,
+          val_sanchez: dataToSubmit.val_sanchez,
+          val_abascal: dataToSubmit.val_abascal,
+          val_alvise: dataToSubmit.val_alvise,
+          val_yolanda_diaz: dataToSubmit.val_yolanda_diaz,
+          val_irene_montero: dataToSubmit.val_irene_montero,
+          val_ayuso: dataToSubmit.val_ayuso,
+          val_buxade: dataToSubmit.val_buxade,
+          posicion_ideologica: dataToSubmit.posicion_ideologica,
+          monarquia_republica: dataToSubmit.monarquia_republica,
+          division_territorial: dataToSubmit.division_territorial,
+          sistema_pensiones: dataToSubmit.sistema_pensiones,
+        };
+        const minimalInsert = await supabase.from("respuestas").insert([minimalPayload]);
+        error = minimalInsert.error || null;
+      }
+
+      if (error) {
         if (error.message?.includes("DELETE requires a WHERE clause")) {
           toast.error("Error de trigger en Supabase (respuestas). Hay que corregir la función check_and_delete_respuesta en BD.");
         } else {
@@ -390,7 +417,7 @@ export default function NanoEncuestaBC() {
         <ServerCooldownClock isOpen={showServerCooldownClock} remainingMinutes={cooldownMinutes} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <p className="text-white text-lg">Vuelve cuando termine el cooldown para participar nuevamente</p>
+            <p className="text-white text-lg">Actualmente el sistema de prevención de caída está activado. Vuelve cuando termine el cooldown para participar nuevamente</p>
             <Button
               onClick={() => setLocation('/')}
               className="bg-[#C41E3A] hover:bg-[#A01830] text-white"
@@ -423,7 +450,7 @@ export default function NanoEncuestaBC() {
               onClick={() => setLocation("/resultados")}
               className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold"
             >
-              Ver Resultados
+              Ven a ver los resultados.
             </Button>
             <Button
               onClick={() => setLocation("/")}

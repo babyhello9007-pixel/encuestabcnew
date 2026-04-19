@@ -151,7 +151,7 @@ export default function CooldownModal({ isOpen, remainingMinutes, onClose }: Coo
             marginBottom: 16,
           }}>
             <span style={{ fontSize: 13, color: '#a5b4fc', fontWeight: 600, letterSpacing: '0.04em' }}>
-              ⏱ COOLDOWN ACTIVO
+              ⏱ COOLDOWN DE DESCANSO EL SISTEMA ACTIVO
             </span>
           </div>
           <h2 style={{
@@ -161,10 +161,10 @@ export default function CooldownModal({ isOpen, remainingMinutes, onClose }: Coo
             color: '#f1f5f9',
             letterSpacing: '-0.01em',
           }}>
-            Vuelve en un momento
+            Debido a la alta demananda, el sistema de prevención de caída se ha activado. Vuelve en un momento
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: 13.5, color: '#64748b', lineHeight: 1.5 }}>
-            Debes esperar antes de participar de nuevo
+            Debes esperar antes de participar de nuevo. 
           </p>
         </div>
 

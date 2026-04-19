@@ -222,7 +222,7 @@ export default function AdminParties() {
     handleEdit(newItem);
   };
 
-  const handleCancel = () => {
+  const handleCancelEdit = () => {
     setEditingId(null);
     setEditData(null);
   };

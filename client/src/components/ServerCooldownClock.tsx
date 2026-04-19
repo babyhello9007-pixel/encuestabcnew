@@ -136,6 +136,7 @@ export default function ServerCooldownClock({
 
           {/* Información de sincronización */}
           <div className="text-xs text-gray-400 text-center">
+            <p>Sistema de Prevención de Caída Activado. Temporalmente habrá una hora de espera</p>
             <p>Tiempo sincronizado con servidor</p>
             <p>No se puede manipular el contador</p>
           </div>
