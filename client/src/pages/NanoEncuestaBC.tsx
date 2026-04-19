@@ -75,13 +75,15 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
   const progressPercent = (1 - (timeLeft / (remainingMinutes * 60))) * 100;
 
   return (
-    <div className="nc-cooldown-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)" }}>
-      <div className="nc-cooldown-card" style={{ maxWidth: "500px", textAlign: "center", padding: "40px 30px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-        <div className="nc-cooldown-icon" style={{ marginBottom: "20px", animation: "pulse 2s infinite" }}>
-          <Clock size={48} color="#C41E3A" strokeWidth={1.5} />
+    <div className="nc-cooldown-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <div className="nc-cooldown-card" style={{ maxWidth: "500px", textAlign: "center", padding: "50px 40px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+        <div className="nc-cooldown-icon" style={{ marginBottom: "30px", animation: "pulse 2s infinite" }}>
+          <div style={{ width: "100px", height: "100px", margin: "0 auto", background: "rgba(196,30,58,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Clock size={56} color="#C41E3A" strokeWidth={1.5} />
+          </div>
         </div>
-        <h2 className="nc-cooldown-title" style={{ fontSize: "28px", fontWeight: "700", marginBottom: "10px", color: "#fff" }}>Ya has participado</h2>
-        <p className="nc-cooldown-sub" style={{ fontSize: "14px", color: "rgba(255,255,255,0.7)", marginBottom: "30px" }}>Podrás volver a votar cuando expire el período de espera</p>
+        <h2 className="nc-cooldown-title" style={{ fontSize: "32px", fontWeight: "700", marginBottom: "10px", color: "#fff" }}>¡Gracias por participar!</h2>
+        <p className="nc-cooldown-sub" style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "30px", lineHeight: "1.6" }}>Ya has votado recientemente. Podrás volver a participar cuando expire el período de espera.</p>
         
         <div style={{ width: "100%", height: "4px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", marginBottom: "30px", overflow: "hidden" }}>
           <div style={{ width: `${progressPercent}%`, height: "100%", background: "linear-gradient(90deg, #C41E3A, #ff6b6b)", transition: "width 0.3s ease" }} />
@@ -121,18 +123,31 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
 
 function ThankYouScreen({ onResults, onHome }: { onResults: () => void; onHome: () => void }) {
   return (
-    <div className="nc-thankyou-screen">
-      <div className="nc-thankyou-card">
-        <div className="nc-thankyou-check">
-          <Check size={36} strokeWidth={2.5} />
+    <div className="nc-thankyou-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <div className="nc-thankyou-card" style={{ maxWidth: "500px", textAlign: "center", padding: "50px 40px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+        <div className="nc-thankyou-check" style={{ marginBottom: "30px", animation: "scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
+          <div style={{ width: "80px", height: "80px", margin: "0 auto", background: "rgba(196,30,58,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Check size={48} strokeWidth={2} color="#C41E3A" />
+          </div>
         </div>
-        <h2 className="nc-thankyou-title">¡Gracias!</h2>
-        <p className="nc-thankyou-sub">Tu respuesta ha sido registrada. Tu opinión construye el mapa real de la opinión española.</p>
-        <div className="nc-thankyou-btns">
-          <button className="nc-btn-primary" onClick={onResults}>Ver Resultados</button>
-          <button className="nc-btn-outline" onClick={onHome}>Volver al Inicio</button>
+        <h2 className="nc-thankyou-title" style={{ fontSize: "32px", fontWeight: "700", marginBottom: "15px", color: "#fff" }}>¡Gracias por participar!</h2>
+        <p className="nc-thankyou-sub" style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "10px", lineHeight: "1.6" }}>Tu respuesta ha sido registrada correctamente.</p>
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "35px", lineHeight: "1.6" }}>Tu opinión construye el mapa real de la opinión española. Vuelve en 15 minutos para participar de nuevo.</p>
+        
+        <div className="nc-thankyou-btns" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <button className="nc-btn-primary" onClick={onResults} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #C41E3A, #ff6b6b)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(196,30,58,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; (e.target as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(196,30,58,0.4)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; (e.target as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(196,30,58,0.3)"; }}>📊 Ver Resultados en Vivo</button>
+          <button className="nc-btn-outline" onClick={onHome} style={{ width: "100%", padding: "14px 24px", background: "rgba(196,30,58,0.15)", border: "1px solid #C41E3A", color: "#C41E3A", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.25)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.15)"; }}>← Volver al Inicio</button>
         </div>
+        
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "25px", paddingTop: "25px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>Comparte tus resultados en redes sociales</p>
       </div>
+      <style>{`
+        @keyframes scaleIn {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
