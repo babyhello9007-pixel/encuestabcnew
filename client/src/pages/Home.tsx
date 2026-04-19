@@ -727,10 +727,6 @@ export default function Home() {
                   Comenzar Encuesta
                   <span className="bc-arrow-icon"><ArrowRight size={18} /></span>
                 </button>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <button onClick={() => setLocation("/nano-encuesta")} className="bc-btn-secondary" style={{ fontSize: 14 }}>
-                    Versión rápida · 5 min
-                  </button>
                   <button onClick={() => setLocation("/resultados")} className="bc-btn-ghost" style={{ fontSize: 14 }}>
                     Ver resultados
                   </button>
