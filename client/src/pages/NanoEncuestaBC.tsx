@@ -334,11 +334,16 @@ export default function NanoEncuestaBC() {
         const selectedParty = parties.find(p => p.display_name === responses.voto_generales);
         const partyLeaders = leaders.filter(l => l.party_key === selectedParty?.party_key);
         const isCustom = !partyLeaders.some(l => l.leader_name === responses.lider_partido);
-        await supabase.from("lideres_preferidos").insert({
-          partido: responses.voto_generales || null,
-          lider_preferido: responses.lider_partido,
-          es_personalizado: isCustom,
-        }).catch(console.error);
+        try {
+          const { error: leaderError } = await supabase.from("lideres_preferidos").insert({
+            partido: responses.voto_generales || null,
+            lider_preferido: responses.lider_partido,
+            es_personalizado: isCustom,
+          });
+          if (leaderError) console.error("Error saving leader preference:", leaderError);
+        } catch (e) {
+          console.error("Error saving leader preference:", e);
+        }
       }
 
       setShowThankYou(true);
