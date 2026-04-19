@@ -522,7 +522,7 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
   const mayoriaAbs = Math.floor(totalEscanos / 2) + 1;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)", minHeight: "100vh", color: "#fff", padding: "20px" }}>
       {/* Panel de control */}
       <div className="glass-surface p-6 rounded-2xl space-y-5">
         <div className="flex items-start justify-between flex-wrap gap-3">

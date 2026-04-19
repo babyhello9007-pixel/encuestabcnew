@@ -72,32 +72,47 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
   const secs = timeLeft % 60;
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  const progressPercent = (1 - (timeLeft / (remainingMinutes * 60))) * 100;
+
   return (
-    <div className="nc-cooldown-screen">
-      <div className="nc-cooldown-card">
-        <div className="nc-cooldown-icon">
-          <Clock size={32} />
+    <div className="nc-cooldown-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)" }}>
+      <div className="nc-cooldown-card" style={{ maxWidth: "500px", textAlign: "center", padding: "40px 30px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+        <div className="nc-cooldown-icon" style={{ marginBottom: "20px", animation: "pulse 2s infinite" }}>
+          <Clock size={48} color="#C41E3A" strokeWidth={1.5} />
         </div>
-        <h2 className="nc-cooldown-title">Ya has participado</h2>
-        <p className="nc-cooldown-sub">Podrás volver a votar cuando expire el período de espera</p>
-        <div className="nc-cooldown-timer">
-          <div className="nc-timer-block">
-            <span className="nc-timer-num">{pad(hours)}</span>
-            <span className="nc-timer-label">h</span>
+        <h2 className="nc-cooldown-title" style={{ fontSize: "28px", fontWeight: "700", marginBottom: "10px", color: "#fff" }}>Ya has participado</h2>
+        <p className="nc-cooldown-sub" style={{ fontSize: "14px", color: "rgba(255,255,255,0.7)", marginBottom: "30px" }}>Podrás volver a votar cuando expire el período de espera</p>
+        
+        <div style={{ width: "100%", height: "4px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", marginBottom: "30px", overflow: "hidden" }}>
+          <div style={{ width: `${progressPercent}%`, height: "100%", background: "linear-gradient(90deg, #C41E3A, #ff6b6b)", transition: "width 0.3s ease" }} />
+        </div>
+        
+        <div className="nc-cooldown-timer" style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "30px" }}>
+          <div className="nc-timer-block" style={{ background: "rgba(196,30,58,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
+            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#C41E3A", display: "block" }}>{pad(hours)}</span>
+            <span className="nc-timer-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>horas</span>
           </div>
-          <span className="nc-timer-sep">:</span>
-          <div className="nc-timer-block">
-            <span className="nc-timer-num">{pad(mins)}</span>
-            <span className="nc-timer-label">min</span>
+          <span className="nc-timer-sep" style={{ fontSize: "20px", color: "rgba(255,255,255,0.3)", alignSelf: "center" }}>:</span>
+          <div className="nc-timer-block" style={{ background: "rgba(196,30,58,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
+            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#C41E3A", display: "block" }}>{pad(mins)}</span>
+            <span className="nc-timer-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>min</span>
           </div>
-          <span className="nc-timer-sep">:</span>
-          <div className="nc-timer-block">
-            <span className="nc-timer-num">{pad(secs)}</span>
-            <span className="nc-timer-label">seg</span>
+          <span className="nc-timer-sep" style={{ fontSize: "20px", color: "rgba(255,255,255,0.3)", alignSelf: "center" }}>:</span>
+          <div className="nc-timer-block" style={{ background: "rgba(196,30,58,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
+            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#C41E3A", display: "block" }}>{pad(secs)}</span>
+            <span className="nc-timer-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>seg</span>
           </div>
         </div>
-        <button className="nc-btn-outline" onClick={onBack}>Volver al inicio</button>
+        
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "25px" }}>Vuelve en {remainingMinutes} minuto{remainingMinutes !== 1 ? 's' : ''}</p>
+        <button className="nc-btn-outline" onClick={onBack} style={{ width: "100%", padding: "12px 20px", background: "rgba(196,30,58,0.15)", border: "1px solid #C41E3A", color: "#C41E3A", borderRadius: "10px", fontSize: "14px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.3)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.15)"; }}>← Volver al inicio</button>
       </div>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -302,7 +317,13 @@ export default function NanoEncuestaBC() {
         sistema_pensiones: responses.sistema_pensiones || null,
       };
       const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
-      if (error) { toast.error("Error al enviar la encuesta"); console.error(error); setIsSubmitting(false); return; }
+      if (error) { 
+        const errorMsg = error.message || "Error desconocido al enviar la encuesta";
+        toast.error(`Error: ${errorMsg}`); 
+        console.error("Supabase error:", error); 
+        setIsSubmitting(false); 
+        return; 
+      }
 
       try {
         const userIP = await getUserIP();
@@ -322,7 +343,11 @@ export default function NanoEncuestaBC() {
 
       setShowThankYou(true);
       toast.success("¡Gracias por participar!");
-    } catch (error) { toast.error("Error al enviar la encuesta"); console.error(error); }
+    } catch (error) { 
+      const errorMsg = error instanceof Error ? error.message : "Error desconocido";
+      toast.error(`Error: ${errorMsg}`); 
+      console.error("Submit error:", error); 
+    }
     finally { setIsSubmitting(false); }
   };
 
@@ -1090,10 +1115,6 @@ export default function NanoEncuestaBC() {
                       )}
                       {loadingParties ? (
                         <div className="nc-loading-msg"><div className="nc-loading-spinner" style={{ marginBottom: 10 }} />Cargando líderes...</div>
-                      ) : partyLeaders.length === 0 ? (
-                        <div style={{ color: "var(--nc-muted)", fontSize: 14, textAlign: "center", padding: "20px 0" }}>
-                          No hay líderes registrados para este partido. Puedes escribir uno a continuación.
-                        </div>
                       ) : (
                         <div className="nc-leader-grid">
                           {partyLeaders.map(leader => {
