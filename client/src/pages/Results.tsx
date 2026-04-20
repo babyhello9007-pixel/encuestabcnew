@@ -70,36 +70,29 @@ const RESULTS_CSS = `
 
 /* Subnav */
 .r-subnav {
-  position: fixed; top: 58px; left: 0; right: 0; z-index: 50;
+  position: sticky; top: 58px; z-index: 50;
   background: rgba(17,17,24,0.95); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   overflow-x: auto;
-  overflow-y: visible;
-  height: auto;
 }
 .r-subnav::-webkit-scrollbar { height: 0; }
-.r-subnav-inner { display: flex; align-items: stretch; padding: 0 24px; min-width: max-content; gap: 0; }
-.r-nav-group {
-  position: relative;
-  display: flex;
-  align-items: center;}
+.r-subnav-inner { display: flex; align-items: stretch; padding: 0 24px; min-width: max-content; }
+.r-nav-group { position: relative; }
 .r-nav-group-btn {
   display: flex; align-items: center; gap: 6px;
-  padding: 11px 16px;
+  padding: 12px 16px;
   font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
   background: none; border: none; border-bottom: 2px solid transparent;
   color: #7a7990; transition: all 0.18s; white-space: nowrap;
-  position: relative;
 }
 .r-nav-group-btn:hover { color: #f0eff8; }
 .r-nav-group-btn.active { color: #e8465a; border-bottom-color: #e8465a; }
 .r-dropdown {
-  position: absolute; top: 100%; left: 0; min-width: 220px; z-index: 100;
+  position: absolute; top: 100%; left: 0; min-width: 220px; z-index: 60;
   background: #18181f; border: 1px solid rgba(255,255,255,0.1);
   border-radius: 12px; overflow: hidden;
   animation: dropIn 0.15s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  margin-top: 2px;
 }
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 .r-dropdown-item {
@@ -113,7 +106,7 @@ const RESULTS_CSS = `
 .r-dropdown-item.active { color: #e8465a; border-left-color: #e8465a; background: rgba(232,70,90,0.06); font-weight: 700; }
 
 /* Main */
-.r-main { flex: 1; padding: 28px 24px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; margin-top: 50px; }
+.r-main { flex: 1; padding: 28px 24px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .r-space { display: flex; flex-direction: column; gap: 20px; }
 
 /* Quick stats */
@@ -215,7 +208,7 @@ const RESULTS_CSS = `
 
 /* Simulator */
 .r-sim-wrap { background: #0d0d14; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; }
-.r-sim-header { padding: 40px 54px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.r-sim-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .r-sim-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: #f0eff8; margin: 0 0 2px; }
 .r-sim-sub { font-size: 12px; color: #7a7990; margin: 0; }
 .r-sim-body { padding: 24px; }
@@ -365,62 +358,43 @@ const TAB_GROUPS: TabGroup[] = [
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
-  
   useEffect(() => {
-    const h = (e: MouseEvent) => { 
-      const target = e.target as HTMLElement;
-      if (ref.current && !ref.current.contains(target) && !target.closest('.r-dropdown-portal')) {
-        setOpenGroup(null);
-      }
-    };
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
-  
-  const handleGroupClick = (groupLabel: string, buttonEl: HTMLButtonElement | null) => {
-    const isOpen = openGroup === groupLabel;
-    if (!isOpen && buttonEl) {
-      const rect = buttonEl.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 2, left: rect.left });
-    }
-    setOpenGroup(isOpen ? null : groupLabel);
-  };
-  
   return (
-    <>
-      <div ref={ref} className="r-subnav">
-        <div className="r-subnav-inner">
-          {TAB_GROUPS.map((group) => {
-            const active = group.tabs.find(t => t.key === activeTab);
-            const isOpen = openGroup === group.label;
-            return (
-              <div key={group.label} className="r-nav-group">
-                <button
-                  className={`r-nav-group-btn${active ? " active" : ""}`}
-                  onClick={(e) => handleGroupClick(group.label, e.currentTarget)}
-                >
-                  {group.icon}
-                  <span>{active ? active.label : group.label}</span>
-                  <ChevronDown className="w-3 h-3" style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
+    <div ref={ref} className="r-subnav">
+      <div className="r-subnav-inner">
+        {TAB_GROUPS.map((group) => {
+          const active = group.tabs.find(t => t.key === activeTab);
+          const isOpen = openGroup === group.label;
+          return (
+            <div key={group.label} className="r-nav-group">
+              <button
+                className={`r-nav-group-btn${active ? " active" : ""}`}
+                onClick={() => setOpenGroup(isOpen ? null : group.label)}
+              >
+                {group.icon}
+                <span>{active ? active.label : group.label}</span>
+                <ChevronDown className="w-3 h-3" style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+              </button>
+              {isOpen && (
+                <div className="r-dropdown">
+                  {group.tabs.map(tab => (
+                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? " active" : ""}`}
+                      onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-      {openGroup && dropdownPos && (
-        <div className="r-dropdown-portal" style={{ top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px` }}>
-          {TAB_GROUPS.find(g => g.label === openGroup)?.tabs.map(tab => (
-            <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? " active" : ""}`}
-              onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </>
+    </div>
   );
 }
 
