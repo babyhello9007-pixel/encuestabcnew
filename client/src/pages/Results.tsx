@@ -45,8 +45,8 @@ const RESULTS_CSS = `
 }
 .r-header {
   position: sticky; top: 0; z-index: 60;
-  height: 80px; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 40px;
+  height: 58px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
   background: rgba(10,10,15,0.92); backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
@@ -74,16 +74,18 @@ const RESULTS_CSS = `
   background: rgba(17,17,24,0.95); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   overflow-x: auto;
+  height: auto;
 }
 .r-subnav::-webkit-scrollbar { height: 0; }
-.r-subnav-inner { display: flex; align-items: stretch; padding: 0 24px; min-width: max-content; }
+.r-subnav-inner { display: flex; align-items: stretch; padding: 0 24px; min-width: max-content; gap: 0; }
 .r-nav-group { position: relative; }
 .r-nav-group-btn {
   display: flex; align-items: center; gap: 6px;
-  padding: 12px 16px;
+  padding: 11px 16px;
   font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
   background: none; border: none; border-bottom: 2px solid transparent;
   color: #7a7990; transition: all 0.18s; white-space: nowrap;
+  position: relative;
 }
 .r-nav-group-btn:hover { color: #f0eff8; }
 .r-nav-group-btn.active { color: #e8465a; border-bottom-color: #e8465a; }
@@ -93,11 +95,12 @@ const RESULTS_CSS = `
   border-radius: 12px; overflow: hidden;
   animation: dropIn 0.15s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  margin-top: -1px;
 }
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 .r-dropdown-item {
   display: block; width: 100%; text-align: left;
-  padding: 32px 50px; font-size: 13px; font-weight: 500;
+  padding: 11px 16px; font-size: 13px; font-weight: 500;
   font-family: inherit; cursor: pointer; background: none; border: none;
   color: #7a7990; border-left: 2px solid transparent;
   transition: all 0.15s;
