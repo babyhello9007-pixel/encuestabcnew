@@ -43,13 +43,12 @@ const RESULTS_CSS = `
   background: #0a0a0f; color: #f0eff8;
   font-family: 'DM Sans', sans-serif;
 }
-/* HEADER (máxima prioridad) */
 .r-header {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 10000;
+  z-index: 1000;
 
   height: 58px;
   display: flex;
@@ -64,13 +63,10 @@ const RESULTS_CSS = `
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
-/* SUBNAV (justo debajo del header, pero encima de todo lo demás) */
 .r-subnav {
-  position: fixed; /* 🔑 cambio clave */
-  top: 58px;
-  left: 0;
-  width: 100%;
-  z-index: 9999;
+  position: sticky;
+  top: 58px; /* justo debajo del header */
+  z-index: 900;
 
   background: rgba(17,17,24,0.95);
   backdrop-filter: blur(20px);
@@ -80,14 +76,13 @@ const RESULTS_CSS = `
   overflow-x: auto;
 }
 
-/* DROPDOWN (por encima incluso de subnav) */
 .r-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
   min-width: 220px;
 
-  z-index: 11000; /* 🔑 más alto que todo */
+  z-index: 2000; /* más alto que header/subnav */
 
   background: #18181f;
   border: 1px solid rgba(255,255,255,0.1);
@@ -97,6 +92,7 @@ const RESULTS_CSS = `
   animation: dropIn 0.15s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
+
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 .r-dropdown-item {
   display: block; width: 100%; text-align: left;
@@ -211,7 +207,7 @@ const RESULTS_CSS = `
 
 /* Simulator */
 .r-sim-wrap { background: #0d0d14; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; }
-.r-sim-header { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.r-sim-header { padding: 20px 58px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .r-sim-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: #f0eff8; margin: 0 0 2px; }
 .r-sim-sub { font-size: 12px; color: #7a7990; margin: 0; }
 .r-sim-body { padding: 24px; }
