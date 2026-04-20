@@ -70,7 +70,7 @@ const RESULTS_CSS = `
 
 /* Subnav */
 .r-subnav {
-  position: sticky; top: 58px; z-index: 50;
+  position: fixed; top: 58px; left: 0; right: 0; z-index: 50;
   background: rgba(17,17,24,0.95); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   overflow-x: auto;
@@ -113,7 +113,7 @@ const RESULTS_CSS = `
 .r-dropdown-item.active { color: #e8465a; border-left-color: #e8465a; background: rgba(232,70,90,0.06); font-weight: 700; }
 
 /* Main */
-.r-main { flex: 1; padding: 28px 24px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.r-main { flex: 1; padding: 28px 24px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; margin-top: 50px; }
 .r-space { display: flex; flex-direction: column; gap: 20px; }
 
 /* Quick stats */
