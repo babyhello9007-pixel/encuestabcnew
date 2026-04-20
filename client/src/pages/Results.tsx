@@ -45,8 +45,8 @@ const RESULTS_CSS = `
 }
 .r-header {
   position: sticky; top: 0; z-index: 60;
-  height: 58px; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px;
+  height: 80px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px;
   background: rgba(10,10,15,0.92); backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
@@ -97,7 +97,7 @@ const RESULTS_CSS = `
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 .r-dropdown-item {
   display: block; width: 100%; text-align: left;
-  padding: 11px 16px; font-size: 13px; font-weight: 500;
+  padding: 32px 50px; font-size: 13px; font-weight: 500;
   font-family: inherit; cursor: pointer; background: none; border: none;
   color: #7a7990; border-left: 2px solid transparent;
   transition: all 0.15s;
