@@ -43,9 +43,8 @@ const RESULTS_CSS = `
   background: #0a0a0f; color: #f0eff8;
   font-family: 'DM Sans', sans-serif;
 }
-/* Header */
 .r-header {
-  position: sticky; top: 0; z-index: 1000;  /* Aumentado de 60 a 1000 */
+  position: sticky; top: 0; z-index: 60;  /* Mantener igual */
   height: 58px; display: flex; align-items: center; justify-content: space-between;
   padding: 0 24px;
   background: rgba(10,10,15,0.92); backdrop-filter: blur(24px);
@@ -54,7 +53,7 @@ const RESULTS_CSS = `
 
 /* Subnav */
 .r-subnav {
-  position: sticky; top: 58px; z-index: 999;  /* Aumentado de 50 a 999 */
+  position: sticky; top: 58px; z-index: 65;  /* Aumentado de 50 a 65 */
   background: rgba(17,17,24,0.95); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   overflow-x: auto;
@@ -67,6 +66,7 @@ const RESULTS_CSS = `
   animation: dropIn 0.15s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
+
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 .r-dropdown-item {
   display: block; width: 100%; text-align: left;
