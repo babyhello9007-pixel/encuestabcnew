@@ -365,43 +365,62 @@ const TAB_GROUPS: TabGroup[] = [
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null); };
+    const h = (e: MouseEvent) => { 
+      const target = e.target as HTMLElement;
+      if (ref.current && !ref.current.contains(target) && !target.closest('.r-dropdown-portal')) {
+        setOpenGroup(null);
+      }
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+  
+  const handleGroupClick = (groupLabel: string, buttonEl: HTMLButtonElement | null) => {
+    const isOpen = openGroup === groupLabel;
+    if (!isOpen && buttonEl) {
+      const rect = buttonEl.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 2, left: rect.left });
+    }
+    setOpenGroup(isOpen ? null : groupLabel);
+  };
+  
   return (
-    <div ref={ref} className="r-subnav">
-      <div className="r-subnav-inner">
-        {TAB_GROUPS.map((group) => {
-          const active = group.tabs.find(t => t.key === activeTab);
-          const isOpen = openGroup === group.label;
-          return (
-            <div key={group.label} className="r-nav-group">
-              <button
-                className={`r-nav-group-btn${active ? " active" : ""}`}
-                onClick={() => setOpenGroup(isOpen ? null : group.label)}
-              >
-                {group.icon}
-                <span>{active ? active.label : group.label}</span>
-                <ChevronDown className="w-3 h-3" style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
-              </button>
-              {isOpen && (
-                <div className="r-dropdown">
-                  {group.tabs.map(tab => (
-                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? " active" : ""}`}
-                      onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+    <>
+      <div ref={ref} className="r-subnav">
+        <div className="r-subnav-inner">
+          {TAB_GROUPS.map((group) => {
+            const active = group.tabs.find(t => t.key === activeTab);
+            const isOpen = openGroup === group.label;
+            return (
+              <div key={group.label} className="r-nav-group">
+                <button
+                  className={`r-nav-group-btn${active ? " active" : ""}`}
+                  onClick={(e) => handleGroupClick(group.label, e.currentTarget)}
+                >
+                  {group.icon}
+                  <span>{active ? active.label : group.label}</span>
+                  <ChevronDown className="w-3 h-3" style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+      {openGroup && dropdownPos && (
+        <div className="r-dropdown-portal" style={{ top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px` }}>
+          {TAB_GROUPS.find(g => g.label === openGroup)?.tabs.map(tab => (
+            <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? " active" : ""}`}
+              onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
