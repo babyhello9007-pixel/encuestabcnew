@@ -44,55 +44,56 @@ const RESULTS_CSS = `
   font-family: 'DM Sans', sans-serif;
 }
 .r-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-
-  height: 58px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  position: sticky; top: 0; z-index: 60;
+  height: 58px; display: flex; align-items: center; justify-content: space-between;
   padding: 0 24px;
-
-  background: rgba(10,10,15,0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-
+  background: rgba(10,10,15,0.92); backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
+.r-brand { display: flex; align-items: center; gap: 10px; }
+.r-brand img { height: 28px; width: 28px; }
+.r-brand-title { font-size: 14px; font-weight: 700; color: #f0eff8; line-height: 1.2; }
+.r-brand-sub { font-size: 11px; color: #7a7990; }
+.r-header-actions { display: flex; align-items: center; gap: 6px; }
+.r-hbtn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+  transition: all 0.18s;
+}
+.r-hbtn-ai { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; }
+.r-hbtn-ai:hover { background: rgba(245,158,11,0.25); }
+.r-hbtn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #7a7990; }
+.r-hbtn-outline:hover { color: #f0eff8; border-color: rgba(255,255,255,0.2); }
+.r-hbtn-infog { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #818cf8; }
+.r-hbtn-infog:hover { background: rgba(99,102,241,0.25); }
 
+/* Subnav */
 .r-subnav {
-  position: sticky;
-  top: 58px; /* justo debajo del header */
-  z-index: 900;
-
-  background: rgba(17,17,24,0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-
+  position: sticky; top: 58px; z-index: 50;
+  background: rgba(17,17,24,0.95); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   overflow-x: auto;
 }
-
+.r-subnav::-webkit-scrollbar { height: 0; }
+.r-subnav-inner { display: flex; align-items: stretch; padding: 0 24px; min-width: max-content; }
+.r-nav-group { position: relative; }
+.r-nav-group-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 12px 16px;
+  font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: #7a7990; transition: all 0.18s; white-space: nowrap;
+}
+.r-nav-group-btn:hover { color: #f0eff8; }
+.r-nav-group-btn.active { color: #e8465a; border-bottom-color: #e8465a; }
 .r-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 220px;
-
-  z-index: 2000; /* más alto que header/subnav */
-
-  background: #18181f;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
-  overflow: hidden;
-
+  position: absolute; top: 100%; left: 0; min-width: 220px; z-index: 60;
+  background: #18181f; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; overflow: hidden;
   animation: dropIn 0.15s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
-
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 .r-dropdown-item {
   display: block; width: 100%; text-align: left;
@@ -207,7 +208,7 @@ const RESULTS_CSS = `
 
 /* Simulator */
 .r-sim-wrap { background: #0d0d14; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; }
-.r-sim-header { padding: 20px 58px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.r-sim-header { padding: 40px 54px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .r-sim-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: #f0eff8; margin: 0 0 2px; }
 .r-sim-sub { font-size: 12px; color: #7a7990; margin: 0; }
 .r-sim-body { padding: 24px; }
