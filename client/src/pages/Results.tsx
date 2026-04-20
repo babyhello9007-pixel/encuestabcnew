@@ -74,11 +74,15 @@ const RESULTS_CSS = `
   background: rgba(17,17,24,0.95); backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   overflow-x: auto;
+  overflow-y: visible;
   height: auto;
 }
 .r-subnav::-webkit-scrollbar { height: 0; }
 .r-subnav-inner { display: flex; align-items: stretch; padding: 0 24px; min-width: max-content; gap: 0; }
-.r-nav-group { position: relative; }
+.r-nav-group {
+  position: relative;
+  display: flex;
+  align-items: center;}
 .r-nav-group-btn {
   display: flex; align-items: center; gap: 6px;
   padding: 11px 16px;
@@ -90,12 +94,12 @@ const RESULTS_CSS = `
 .r-nav-group-btn:hover { color: #f0eff8; }
 .r-nav-group-btn.active { color: #e8465a; border-bottom-color: #e8465a; }
 .r-dropdown {
-  position: absolute; top: 100%; left: 0; min-width: 220px; z-index: 60;
+  position: absolute; top: 100%; left: 0; min-width: 220px; z-index: 100;
   background: #18181f; border: 1px solid rgba(255,255,255,0.1);
   border-radius: 12px; overflow: hidden;
   animation: dropIn 0.15s ease;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  margin-top: -1px;
+  margin-top: 2px;
 }
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 .r-dropdown-item {
