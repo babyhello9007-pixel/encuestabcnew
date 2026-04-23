@@ -313,7 +313,7 @@ export default function NanoEncuestaBC() {
         ccaa: responses.comunidad_autonoma || null,
         nacionalidad: responses.nacionalidad || null,
         voto_generales: responses.voto_generales || null,
-        voto_autonomicas: responses.voto_autonomicas || null,
+        voto_auton: responses.voto_autonomicas || null,
         voto_municipales: responses.voto_municipales || null,
         voto_europeas: responses.voto_europeas || null,
         nota_ejecutivo: responses.nota_ejecutivo || null,
