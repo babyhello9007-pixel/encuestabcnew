@@ -708,14 +708,239 @@ const LEADER_MAP: Record<string, { name: string; party: string; partyColor: stri
 const normalizeKey = (k?: string) =>
   (k || "").trim().toLowerCase();
 
-// ─────────────────────────────────────────────────────────────
-// LÍDERES POR PARTIDO
-// ─────────────────────────────────────────────────────────────
-function LideresDePartidosSection({
-  partyMeta,
-}: {
+import React, { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  ResponsiveContainer,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Bar,
+  Cell,
+} from "recharts";
+import { Building2 } from "lucide-react";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface PartyMeta {
+  color: string;
+  name: string;
+  logo: string;
+  key?: string;
+}
+
+interface PartyLeader {
+  id: string;
+  party_key: string;
+  leader_name: string;
+  photo_url: string | null;
+  is_active: boolean;
+  display_name: string;
+  color: string;
+  logo_url: string;
+}
+
+interface LiderPreferido {
+  id: string;
+  partido: string;
+  lider_preferido: string;
+  votos: number;
+  porcentaje: number;
+  photo_url: string | null;
+  color: string;
+  display_name: string;
+  logo_url: string;
+}
+
+interface LeaderRating {
+  leader_name: string;
+  avg_rating: number;
+  field_name: string;
+}
+
+interface PartyStats {
+  nombre: string;
+  votos: number;
+  porcentaje: number;
+}
+
+interface ChartDataItem {
+  name: string;
+  votos: number;
+  porcentaje: number;
+}
+
+// Mapeo de campos de valoración a nombres de líderes
+const LEADER_MAP: Record<string, { name: string; field: string }> = {
+  val_feijoo: { name: "Alberto Feijóo", field: "val_feijoo" },
+  val_sanchez: { name: "Pedro Sánchez", field: "val_sanchez" },
+  val_abascal: { name: "Santiago Abascal", field: "val_abascal" },
+  val_alvise: { name: "Álvise Pérez", field: "val_alvise" },
+  val_yolanda_diaz: { name: "Yolanda Díaz", field: "val_yolanda_diaz" },
+  val_irene_montero: { name: "Irene Montero", field: "val_irene_montero" },
+  val_ayuso: { name: "Isabel Díaz Ayuso", field: "val_ayuso" },
+  val_buxade: { name: "Jorge Buxadé", field: "val_buxade" },
+};
+
+// ─── Componentes Helper ───────────────────────────────────────────────────────
+
+interface PartyLogoImgProps {
+  src: string | null | undefined;
+  name: string;
+  color: string;
+  size: number;
+}
+
+function PartyLogoImg({ src, name, color, size }: PartyLogoImgProps) {
+  const [hasError, setHasError] = useState(false);
+
+  if (!src || hasError) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          background: color,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: size * 0.5,
+          fontWeight: 800,
+          color: "#fff",
+        }}
+      >
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        objectFit: "cover",
+        border: `2px solid ${color}`,
+      }}
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
+interface GobiernoModalProps {
+  onClose: () => void;
+  leaders: PartyLeader[];
   partyMeta: Record<string, PartyMeta>;
-}) {
+  logoPresidenciaB64: string;
+}
+
+function GobiernoModal({
+  onClose,
+  leaders,
+  partyMeta,
+  logoPresidenciaB64,
+}: GobiernoModalProps) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(0,0,0,0.7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: "#18181f",
+          borderRadius: 12,
+          padding: 24,
+          maxWidth: 700,
+          maxHeight: "80vh",
+          overflow: "auto",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ color: "#f0eff8", marginBottom: 16, fontSize: 20, fontWeight: 700 }}>
+          Constructor de Gobierno
+        </h3>
+        <p style={{ color: "#7a7990", marginBottom: 20, fontSize: 14 }}>
+          Selecciona ministros de diferentes partidos para construir tu gobierno ideal.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+          {leaders.map((leader) => {
+            const pm = partyMeta[leader.party_key];
+            const color = pm?.color || leader.color;
+            return (
+              <div
+                key={leader.id}
+                style={{
+                  padding: 12,
+                  border: `1px solid ${color}40`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = `${color}10`;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
+              >
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <PartyLogoImg src={leader.photo_url} name={leader.leader_name} color={color} size={40} />
+                  <div>
+                    <div style={{ color: "#f0eff8", fontWeight: 700, fontSize: 12 }}>
+                      {leader.leader_name}
+                    </div>
+                    <div style={{ color, fontSize: 10, fontWeight: 600 }}>{leader.display_name}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 20,
+            padding: "10px 20px",
+            background: "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 6,
+            color: "#f0eff8",
+            cursor: "pointer",
+            fontWeight: 600,
+          }}
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Líderes por partido ─────────────────────────────────────────────────────
+
+interface LideresDePartidosSectionProps {
+  partyMeta: Record<string, PartyMeta>;
+}
+
+export function LideresDePartidosSection({ partyMeta }: LideresDePartidosSectionProps) {
   const [leaders, setLeaders] = useState<PartyLeader[]>([]);
   const [lideresPreferidos, setLideresPreferidos] = useState<LiderPreferido[]>([]);
   const [loading, setLoading] = useState(true);
@@ -723,46 +948,47 @@ function LideresDePartidosSection({
   const [subTab, setSubTab] = useState<"candidatos" | "gobierno">("candidatos");
   const [logoB64, setLogoB64] = useState("");
   const [showGobModal, setShowGobModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Logo
+  // Cargar logo presidencia
   useEffect(() => {
-    fetch("/logo-presidencia-blanco.png")
-      .then(r => r.blob())
-      .then(blob => {
-        const reader = new FileReader();
-        reader.onload = () => setLogoB64(reader.result as string);
-        reader.readAsDataURL(blob);
-      })
-      .catch(() => {});
+    const loadLogo = async () => {
+      try {
+        const response = await fetch("/logo-presidencia-blanco.png");
+        if (response.ok) {
+          const blob = await response.blob();
+          const reader = new FileReader();
+          reader.onload = () => setLogoB64(reader.result as string);
+          reader.readAsDataURL(blob);
+        }
+      } catch (err) {
+        console.warn("No se pudo cargar logo presidencia:", err);
+      }
+    };
+    loadLogo();
   }, []);
 
-  // FETCH DATA
+  // Cargar datos principales
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchAllData = async () => {
       setLoading(true);
-
+      setError(null);
       try {
-        // ───────── LEADERS ─────────
-        const { data: ld, error: ldError } = await supabase
+        // Cargar líderes del partido
+        const { data: leaderData, error: leaderError } = await supabase
           .from("party_leaders")
-          .select(`
-            id,
-            party_key,
-            leader_name,
-            photo_url,
-            is_active,
-            party_configuration!inner(display_name, color, logo_url)
-          `)
+          .select(
+            `id, party_key, leader_name, photo_url, is_active, 
+             party_configuration(display_name, color, logo_url)`
+          )
           .eq("is_active", true)
           .order("party_key");
 
-        if (ldError) {
-          console.error("leaders error:", ldError);
-        }
+        if (leaderError) throw leaderError;
 
-        const mapped: PartyLeader[] = (ld || []).map((row: any) => ({
+        const mappedLeaders: PartyLeader[] = (leaderData || []).map((row: any) => ({
           id: row.id,
-          party_key: normalizeKey(row.party_key),
+          party_key: row.party_key,
           leader_name: row.leader_name,
           photo_url: row.photo_url,
           is_active: row.is_active,
@@ -771,209 +997,870 @@ function LideresDePartidosSection({
           logo_url: row.party_configuration?.logo_url ?? "",
         }));
 
-        setLeaders(mapped);
+        setLeaders(mappedLeaders);
 
-        // ───────── VOTOS ─────────
-        const { data: pd, error: pdError } = await supabase
-          .from("lideres_preferidos")
-          .select("partido, lider_preferido");
+        // Cargar preferencias de líderes usando la vista
+        const { data: prefData, error: prefError } = await supabase
+          .from("ranking_lideres_por_partido")
+          .select("partido, lider_preferido, total_votos, porcentaje");
 
-        if (pdError) {
-          console.error("votos error:", pdError);
+        if (prefError) {
+          console.warn("Error en vista ranking:", prefError);
+          // Fallback: cargar directamente desde lideres_preferidos
+          await loadPreferencesDirectly(mappedLeaders);
+        } else {
+          processPreferenceData(prefData || [], mappedLeaders);
         }
-
-        if (pd?.length) {
-          const cnt: Record<string, Record<string, number>> = {};
-
-          pd.forEach((r: any) => {
-            const party = normalizeKey(r.partido);
-            const leader = r.lider_preferido;
-
-            if (!party || !leader) return;
-
-            if (!cnt[party]) cnt[party] = {};
-            cnt[party][leader] = (cnt[party][leader] || 0) + 1;
-          });
-
-          const arr: LiderPreferido[] = [];
-
-          Object.entries(cnt).forEach(([party, leadersMap]) => {
-            const tot = Object.values(leadersMap).reduce((a, b) => a + b, 0);
-
-            Object.entries(leadersMap).forEach(([leader, votos]) => {
-              const li = mapped.find(
-                l =>
-                  normalizeKey(l.party_key) === party &&
-                  l.leader_name === leader
-              );
-
-              const pm = mapped.find(
-                l => normalizeKey(l.party_key) === party
-              );
-
-              arr.push({
-                partido: party,
-                lider_preferido: leader,
-                votos,
-                porcentaje: tot ? (votos / tot) * 100 : 0,
-                photo_url: li?.photo_url,
-                color: pm?.color,
-                display_name: pm?.display_name ?? party,
-                logo_url: pm?.logo_url,
-              });
-            });
-          });
-
-          setLideresPreferidos(arr);
-        }
-      } catch (e) {
-        console.error("fetchAll error:", e);
+      } catch (err) {
+        console.error("Error cargando datos:", err);
+        setError(
+          err instanceof Error ? err.message : "Error desconocido al cargar datos"
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAll();
+    fetchAllData();
   }, []);
 
-  // GROUPS
-  const byParty = useMemo(() => {
-    const m: Record<string, PartyLeader[]> = {};
+  // Cargar preferencias directamente como fallback
+  const loadPreferencesDirectly = async (mappedLeaders: PartyLeader[]) => {
+    try {
+      const { data: rawData, error } = await supabase
+        .from("lideres_preferidos")
+        .select("partido, lider_preferido")
+        .order("created_at", { ascending: false });
 
-    leaders.forEach(l => {
-      const key = normalizeKey(l.party_key);
-      if (!m[key]) m[key] = [];
-      m[key].push(l);
+      if (error) throw error;
+
+      const aggregated = aggregatePreferences(rawData || [], mappedLeaders);
+      setLideresPreferidos(aggregated);
+    } catch (err) {
+      console.error("Error en fallback:", err);
+    }
+  };
+
+  // Procesar datos de la vista
+  const processPreferenceData = (
+    data: any[],
+    mappedLeaders: PartyLeader[]
+  ) => {
+    const result: LiderPreferido[] = data.map((row) => {
+      const leaderInfo = mappedLeaders.find(
+        (l) => l.party_key === row.partido && l.leader_name === row.lider_preferido
+      );
+      const partyInfo = mappedLeaders.find((l) => l.party_key === row.partido);
+
+      return {
+        id: `${row.partido}-${row.lider_preferido}`,
+        partido: row.partido,
+        lider_preferido: row.lider_preferido,
+        votos: row.total_votos || 0,
+        porcentaje: row.porcentaje || 0,
+        photo_url: leaderInfo?.photo_url ?? null,
+        color: partyInfo?.color ?? "#e8465a",
+        display_name: partyInfo?.display_name ?? row.partido,
+        logo_url: partyInfo?.logo_url ?? "",
+      };
     });
 
+    setLideresPreferidos(result);
+  };
+
+  // Agregar preferencias manualmente (si falla la vista)
+  const aggregatePreferences = (rawData: any[], mappedLeaders: PartyLeader[]) => {
+    const counts: Record<string, Record<string, number>> = {};
+
+    rawData.forEach((r: any) => {
+      if (!counts[r.partido]) counts[r.partido] = {};
+      counts[r.partido][r.lider_preferido] =
+        (counts[r.partido][r.lider_preferido] || 0) + 1;
+    });
+
+    const result: LiderPreferido[] = [];
+    Object.entries(counts).forEach(([partido, leaders]) => {
+      const total = Object.values(leaders).reduce((a, b) => a + b, 0);
+      Object.entries(leaders).forEach(([lider, votos]) => {
+        const leaderInfo = mappedLeaders.find(
+          (l) => l.party_key === partido && l.leader_name === lider
+        );
+        const partyInfo = mappedLeaders.find((l) => l.party_key === partido);
+
+        result.push({
+          id: `${partido}-${lider}`,
+          partido,
+          lider_preferido: lider,
+          votos,
+          porcentaje: total > 0 ? (votos / total) * 100 : 0,
+          photo_url: leaderInfo?.photo_url ?? null,
+          color: partyInfo?.color ?? "#e8465a",
+          display_name: partyInfo?.display_name ?? partido,
+          logo_url: partyInfo?.logo_url ?? "",
+        });
+      });
+    });
+
+    return result;
+  };
+
+  // Memoización de datos por partido
+  const byParty = useMemo(() => {
+    const m: Record<string, PartyLeader[]> = {};
+    leaders.forEach((l) => {
+      if (!m[l.party_key]) m[l.party_key] = [];
+      m[l.party_key].push(l);
+    });
     return m;
   }, [leaders]);
 
   const prefByParty = useMemo(() => {
     const m: Record<string, LiderPreferido[]> = {};
-
-    lideresPreferidos.forEach(l => {
-      const key = normalizeKey(l.partido);
-      if (!m[key]) m[key] = [];
-      m[key].push(l);
+    lideresPreferidos.forEach((l) => {
+      if (!m[l.partido]) m[l.partido] = [];
+      m[l.partido].push(l);
     });
-
-    Object.keys(m).forEach(k =>
-      m[k].sort((a, b) => b.votos - a.votos)
-    );
-
+    Object.keys(m).forEach((k) => m[k].sort((a, b) => b.votos - a.votos));
     return m;
   }, [lideresPreferidos]);
 
-  if (loading) return <div className="r-loader"><div className="r-spin" /></div>;
+  if (loading) {
+    return (
+      <div className="r-loader">
+        <div className="r-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        style={{
+          padding: 20,
+          background: "#2a1f30",
+          borderRadius: 8,
+          color: "#e8465a",
+          borderLeft: "4px solid #e8465a",
+        }}
+      >
+        <strong>Error al cargar datos:</strong> {error}
+      </div>
+    );
+  }
 
   const partyKeys = Object.keys(byParty);
+  const allLeadersForGov = leaders;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800 }}>Líderes por Partido</h2>
-
-        <div className="r-mode-tabs">
-          <button
-            className={subTab === "candidatos" ? "active" : ""}
-            onClick={() => setSubTab("candidatos")}
-          >
-            Candidatos
-          </button>
-
-          <button
-            className={subTab === "gobierno" ? "active" : ""}
-            onClick={() => setSubTab("gobierno")}
-          >
-            Gobierno
-          </button>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <h2
+          style={{
+            fontFamily: "'Playfair Display',serif",
+            fontSize: 20,
+            fontWeight: 800,
+            color: "#f0eff8",
+            margin: 0,
+          }}
+        >
+          Líderes por Partido
+        </h2>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div className="r-mode-tabs" style={{ marginBottom: 0 }}>
+            <button
+              className={`r-mode-tab${subTab === "candidatos" ? " active" : ""}`}
+              onClick={() => setSubTab("candidatos")}
+            >
+              Candidatos
+            </button>
+            <button
+              className={`r-mode-tab${subTab === "gobierno" ? " active" : ""}`}
+              onClick={() => setSubTab("gobierno")}
+            >
+              Constructor de Gobierno
+            </button>
+          </div>
+          {selectedParty && subTab === "candidatos" && (
+            <button className="r-subtab-btn" onClick={() => setSelectedParty(null)}>
+              ← Ver todos
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ───────── CANDIDATOS ───────── */}
+      {/* Tab: Gobierno */}
+      {subTab === "gobierno" && (
+        <div className="r-section">
+          <div className="r-section-title" style={{ marginBottom: 6 }}>
+            🏛️ Constructor de Gobierno
+          </div>
+          <p className="r-section-sub">
+            Selecciona un partido, asigna ministros y genera una infografía oficial
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: 10,
+              marginBottom: 16,
+            }}
+          >
+            {partyKeys.map((pk) => {
+              const info = byParty[pk][0];
+              const pm = partyMeta[pk] || {
+                color: info.color,
+                name: info.display_name,
+                logo: info.logo_url,
+              };
+              return (
+                <button
+                  key={pk}
+                  className="r-party-card"
+                  style={{
+                    borderColor:
+                      selectedParty === pk ? pm.color : undefined,
+                    background:
+                      selectedParty === pk ? `${pm.color}12` : undefined,
+                  }}
+                  onClick={() => {
+                    setSelectedParty(pk);
+                    setShowGobModal(true);
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <PartyLogoImg
+                      src={pm.logo || info.logo_url}
+                      name={pm.name}
+                      color={pm.color}
+                      size={32}
+                    />
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "#f0eff8",
+                        }}
+                      >
+                        {pm.name}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#7a7990" }}>
+                        {byParty[pk].length} candidato
+                        {byParty[pk].length !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <button
+              className="r-infog-generate"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "12px 28px",
+                fontSize: 14,
+              }}
+              onClick={() => setShowGobModal(true)}
+            >
+              <Building2 size={16} />
+              Abrir Constructor de Gobierno
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Candidatos */}
       {subTab === "candidatos" && (
         <>
           {!selectedParty && (
             <div className="r-subtab-bar">
-              {partyKeys.map(pk => {
-                const info = byParty[pk]?.[0];
-                const pm = partyMeta[pk] || {};
-
-                const name = pm.name || info?.display_name || pk;
-                const color = pm.color || info?.color || "#e8465a";
+              {partyKeys.map((pk) => {
+                const info = byParty[pk][0];
+                const pm = partyMeta[pk];
+                const color = pm?.color || info.color;
+                const name = pm?.name || info.display_name;
+                const logo = pm?.logo || info.logo_url;
+                const tot = (prefByParty[pk] || []).reduce(
+                  (a, b) => a + b.votos,
+                  0
+                );
 
                 return (
                   <button
                     key={pk}
                     className="r-subtab-btn"
                     onClick={() => setSelectedParty(pk)}
-                    style={{ color, borderColor: color }}
+                    style={{
+                      borderColor: `${color}40`,
+                      color,
+                      background: `${color}0d`,
+                    }}
                   >
+                    {logo && (
+                      <img
+                        src={logo}
+                        alt={name}
+                        style={{
+                          width: 13,
+                          height: 13,
+                          objectFit: "contain",
+                        }}
+                        onError={(e) =>
+                          ((e.currentTarget as HTMLImageElement).style.display =
+                            "none")
+                        }
+                      />
+                    )}
                     {name}
+                    {tot > 0 && (
+                      <span style={{ fontSize: 10, opacity: 0.6 }}>
+                        · {tot}v
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
           )}
 
-          {(selectedParty ? [selectedParty] : partyKeys).map(partyKey => {
+          {(selectedParty ? [selectedParty] : partyKeys).map((partyKey) => {
             const partyLeaders = byParty[partyKey] || [];
             const partyPrefs = prefByParty[partyKey] || [];
-
             const info = partyLeaders[0];
+
             if (!info) return null;
 
-            const color = info.color;
-            const name = info.display_name;
+            const pm = partyMeta[partyKey];
+            const color = pm?.color || info.color;
+            const name = pm?.name || info.display_name;
+            const logo = pm?.logo || info.logo_url;
+            const tot = partyPrefs.reduce((a, b) => a + b.votos, 0);
 
             const leadersWithVotes = partyLeaders
-              .map(l => {
-                const pref = partyPrefs.find(p => p.lider_preferido === l.leader_name);
+              .map((l) => {
+                const pref = partyPrefs.find(
+                  (p) => p.lider_preferido === l.leader_name
+                );
                 return {
                   ...l,
-                  votos: pref?.votos || 0,
-                  porcentaje: pref?.porcentaje || 0,
+                  votos: pref?.votos ?? 0,
+                  porcentaje: pref?.porcentaje ?? 0,
                 };
               })
               .sort((a, b) => b.votos - a.votos);
 
-            return (
-              <div key={partyKey} className="r-section">
-                <h3 style={{ color }}>{name}</h3>
+            const extraPrefs = partyPrefs.filter(
+              (p) =>
+                !partyLeaders.some((l) => l.leader_name === p.lider_preferido)
+            );
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px,1fr))", gap: 12 }}>
-                  {leadersWithVotes.map(l => (
-                    <div key={l.id} style={{ textAlign: "center" }}>
+            const chartData: ChartDataItem[] = [
+              ...leadersWithVotes
+                .filter((l) => l.votos > 0)
+                .map((l) => ({
+                  name: l.leader_name,
+                  votos: l.votos,
+                  porcentaje: l.porcentaje,
+                })),
+              ...extraPrefs.map((e) => ({
+                name: e.lider_preferido,
+                votos: e.votos,
+                porcentaje: e.porcentaje,
+              })),
+            ]
+              .sort((a, b) => b.votos - a.votos)
+              .slice(0, 10);
+
+            return (
+              <div
+                key={partyKey}
+                className="r-section"
+                style={{ borderColor: `${color}25` }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginBottom: 16,
+                    paddingBottom: 14,
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <PartyLogoImg
+                    src={logo}
+                    name={name}
+                    color={color}
+                    size={34}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontFamily: "'Playfair Display',serif",
+                        fontSize: 16,
+                        fontWeight: 800,
+                        color,
+                      }}
+                    >
+                      {name}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#7a7990" }}>
+                      {partyLeaders.length} candidato
+                      {partyLeaders.length !== 1 ? "s" : ""} ·{" "}
+                      {tot > 0 ? `${tot} votos` : "Sin votos aún"}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                    gap: 14,
+                    marginBottom: 16,
+                  }}
+                >
+                  {leadersWithVotes.map((leader) => (
+                    <div key={leader.id} style={{ textAlign: "center" }}>
                       <div
                         style={{
-                          width: 60,
-                          height: 60,
+                          position: "relative",
+                          width: 64,
+                          height: 64,
                           borderRadius: "50%",
                           overflow: "hidden",
                           border: `2px solid ${color}`,
-                          margin: "0 auto",
+                          margin: "0 auto 8px",
                         }}
                       >
-                        {l.photo_url ? (
-                          <img src={l.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        {leader.photo_url ? (
+                          <img
+                            src={leader.photo_url}
+                            alt={leader.leader_name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                            onError={(e) => {
+                              (
+                                e.currentTarget as HTMLImageElement
+                              ).style.display = "none";
+                            }}
+                          />
                         ) : (
-                          <div style={{ background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {l.leader_name[0]}
+                          <div
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              background: color,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 20,
+                              fontWeight: 800,
+                              color: "#fff",
+                            }}
+                          >
+                            {leader.leader_name.charAt(0)}
+                          </div>
+                        )}
+                        {leader.votos > 0 && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              bottom: 0,
+                              right: 0,
+                              background: color,
+                              color: "#fff",
+                              fontSize: 8,
+                              fontWeight: 800,
+                              padding: "1px 3px",
+                              borderRadius: 100,
+                            }}
+                          >
+                            {leader.votos}
                           </div>
                         )}
                       </div>
-
-                      <div style={{ fontSize: 11 }}>{l.leader_name}</div>
-                      <div style={{ fontSize: 10, opacity: 0.7 }}>{l.votos} votos</div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#f0eff8",
+                          marginBottom: 4,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {leader.leader_name}
+                      </div>
+                      {leader.votos > 0 ? (
+                        <>
+                          <div
+                            style={{
+                              height: 3,
+                              background: "rgba(255,255,255,0.06)",
+                              borderRadius: 2,
+                              overflow: "hidden",
+                              marginBottom: 2,
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: "100%",
+                                width: `${leader.porcentaje}%`,
+                                background: color,
+                                borderRadius: 2,
+                              }}
+                            />
+                          </div>
+                          <div style={{ fontSize: 10, color: "#7a7990" }}>
+                            {leader.porcentaje.toFixed(1)}%
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ fontSize: 10, color: "#5a596a" }}>
+                          Sin votos
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
+
+                {chartData.length > 0 && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#f0eff8",
+                        marginBottom: 10,
+                      }}
+                    >
+                      Distribución de preferencias
+                    </div>
+                    <ResponsiveContainer
+                      width="100%"
+                      height={Math.max(80, chartData.length * 32)}
+                    >
+                      <BarChart
+                        data={chartData}
+                        layout="vertical"
+                        margin={{ left: 8, right: 44, top: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="rgba(255,255,255,0.04)"
+                          horizontal={false}
+                        />
+                        <XAxis
+                          type="number"
+                          stroke="rgba(255,255,255,0.15)"
+                          fontSize={10}
+                          tick={{ fill: "#7a7990" }}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          stroke="transparent"
+                          fontSize={10}
+                          width={110}
+                          tick={{ fill: "#c0bfd8" }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "#18181f",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: 8,
+                            fontSize: 11,
+                          }}
+                          formatter={(v: any, _: any, p: any) => [
+                            `${v} votos (${p.payload.porcentaje?.toFixed(1)}%)`,
+                            "Preferencia",
+                          ]}
+                        />
+                        <Bar
+                          dataKey="votos"
+                          radius={[0, 5, 5, 0]}
+                          label={{
+                            position: "right",
+                            fontSize: 10,
+                            fill: "#7a7990",
+                            formatter: (v: number) => (v > 0 ? v : ""),
+                          }}
+                        >
+                          {chartData.map((_, i) => (
+                            <Cell
+                              key={i}
+                              fill={color}
+                              fillOpacity={Math.max(0.4, 0.9 - i * 0.07)}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    {extraPrefs.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          padding: "10px 12px",
+                          background: "rgba(255,255,255,0.02)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                          borderRadius: 9,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 10,
+                            color: "#5a596a",
+                            fontWeight: 700,
+                            marginBottom: 6,
+                          }}
+                        >
+                          Otros mencionados:
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {extraPrefs.map((ep) => (
+                            <span
+                              key={ep.lider_preferido}
+                              style={{
+                                fontSize: 10,
+                                padding: "2px 9px",
+                                borderRadius: 100,
+                                background: `${color}12`,
+                                border: `1px solid ${color}35`,
+                                color,
+                              }}
+                            >
+                              {ep.lider_preferido} · {ep.votos}v
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </>
       )}
+
+      {showGobModal && (
+        <GobiernoModal
+          onClose={() => setShowGobModal(false)}
+          leaders={allLeadersForGov}
+          partyMeta={partyMeta}
+          logoPresidenciaB64={logoB64}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Valoraciones por partido ────────────────────────────────────────────────
+
+interface LeadersByPartyAvgProps {
+  leaderRatings: LeaderRating[];
+  generalStats: PartyStats[];
+  generalPartyMap: Record<string, PartyMeta>;
+}
+
+export function LeadersByPartyAvg({
+  leaderRatings,
+  generalStats,
+  generalPartyMap,
+}: LeadersByPartyAvgProps) {
+  const [partyAvgs, setPartyAvgs] = useState<
+    {
+      partyName: string;
+      color: string;
+      logo: string;
+      ratings: { name: string; avg: number }[];
+    }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAndProcess = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("respuestas")
+          .select(
+            `voto_generales, val_feijoo, val_sanchez, val_abascal, val_alvise, 
+             val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade`
+          )
+          .not("voto_generales", "is", null);
+
+        if (error) throw error;
+
+        if (!data?.length) {
+          setLoading(false);
+          return;
+        }
+
+        const fields = Object.keys(LEADER_MAP);
+        const byParty: Record<
+          string,
+          { sums: Record<string, number>; counts: Record<string, number> }
+        > = {};
+
+        data.forEach((row: any) => {
+          const p = row.voto_generales;
+          if (!p) return;
+          if (!byParty[p]) byParty[p] = { sums: {}, counts: {} };
+
+          fields.forEach((f) => {
+            if (row[f] != null) {
+              byParty[p].sums[f] = (byParty[p].sums[f] || 0) + row[f];
+              byParty[p].counts[f] = (byParty[p].counts[f] || 0) + 1;
+            }
+          });
+        });
+
+        const result = Object.entries(byParty)
+          .filter(([, d]) => Object.keys(d.sums).length > 0)
+          .map(([partyName, d]) => {
+            const pm = Object.values(generalPartyMap).find(
+              (p) => p.name === partyName || p.key === partyName
+            );
+            return {
+              partyName,
+              color: pm?.color || "#e8465a",
+              logo: pm?.logo || "",
+              ratings: fields
+                .map((f) => ({
+                  name: LEADER_MAP[f]?.name || f,
+                  avg:
+                    d.counts[f] > 0
+                      ? Math.round((d.sums[f] / d.counts[f]) * 10) / 10
+                      : 0,
+                }))
+                .sort((a, b) => b.avg - a.avg),
+            };
+          })
+          .sort((a, b) => {
+            const as_ = generalStats.find((s) => s.nombre === a.partyName);
+            const bs_ = generalStats.find((s) => s.nombre === b.partyName);
+            return (bs_?.votos || 0) - (as_?.votos || 0);
+          })
+          .slice(0, 8);
+
+        setPartyAvgs(result);
+      } catch (err) {
+        console.error("Error cargando valoraciones:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAndProcess();
+  }, [generalStats, generalPartyMap]);
+
+  if (loading) {
+    return (
+      <div className="r-loader">
+        <div className="r-spin" />
+      </div>
+    );
+  }
+
+  if (!partyAvgs.length) return null;
+
+  const shortNames = [
+    "Feijóo",
+    "Sánchez",
+    "Abascal",
+    "Álvise",
+    "Y. Díaz",
+    "I. Montero",
+    "Ayuso",
+    "Buxadé",
+  ];
+
+  return (
+    <div className="r-section">
+      <div className="r-section-title">Media valoraciones por partido</div>
+      <p className="r-section-sub">
+        ¿Cómo valoran los votantes de cada partido a los líderes?
+      </p>
+      <div style={{ overflowX: "auto" }}>
+        <table className="r-lxp-table">
+          <thead>
+            <tr>
+              <th style={{ minWidth: 110 }}>Partido</th>
+              {shortNames.map((n) => (
+                <th key={n} style={{ textAlign: "center", minWidth: 60 }}>
+                  {n}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {partyAvgs.map((p) => (
+              <tr key={p.partyName}>
+                <td>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <PartyLogoImg
+                      src={p.logo}
+                      name={p.partyName}
+                      color={p.color}
+                      size={18}
+                    />
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: p.color,
+                        fontSize: 11,
+                      }}
+                    >
+                      {p.partyName}
+                    </span>
+                  </div>
+                </td>
+                {Object.values(LEADER_MAP).map((leader, idx) => {
+                  const r = p.ratings.find((r) => r.name === leader.name);
+                  const avg = r?.avg ?? 0;
+                  const color =
+                    avg >= 7
+                      ? "#22c55e"
+                      : avg >= 4
+                        ? "#f59e0b"
+                        : avg >= 1
+                          ? "#e8465a"
+                          : "#5a596a";
+
+                  return (
+                    <td key={idx} style={{ textAlign: "center" }}>
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color,
+                        }}
+                      >
+                        {avg > 0 ? avg.toFixed(1) : "—"}
+                      </span>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
