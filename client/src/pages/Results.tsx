@@ -36,6 +36,8 @@ import PreguntasVariasSection from "@/components/results/PreguntasVariasSection"
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
 import { AIAnalysisModal } from "@/components/AIAnalysisModal";
+import GovernmentBuilder from "@/components/GovernmentBuilder";
+import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 
@@ -1581,6 +1583,9 @@ export default function Results() {
             </button>
             <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
               <Image size={12} /><span>Infografía</span>
+            </button>
+            <button className="r-hbtn r-hbtn-pdf" onClick={() => downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null)}>
+              <FileText size={12} /><span>PDF</span>
             </button>
             <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
             <ShareResultsModern stats={generalStats} youthStats={youthStats} totalResponses={totalResponses} cooldownMinutes={15} />
