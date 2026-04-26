@@ -408,7 +408,7 @@ function GobiernoModal({
   const [generando, setGenerando] = useState(false);
 
   const partyLeaders = leaders.filter(l => l.party_key === selectedParty);
-  const partyKeys = [...new Set(leaders.map(l => l.party_key))];
+  const partyKeys = Array.from(new Set(leaders.map(l => l.party_key)));
 
   const updateMin = (id: string, val: string) => {
     setMinisterios(prev => ({ ...prev, [id]: val }));
@@ -439,7 +439,7 @@ function GobiernoModal({
         const img = new window.Image();
         await new Promise<void>((resolve) => {
           img.onload = () => { ctx.drawImage(img, 40, 20, 320, 80); resolve(); };
-          img.onerror = resolve;
+          img.onerror = () => resolve();
           img.src = logoPresidenciaB64;
         });
       }
@@ -692,9 +692,9 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           const cnt: Record<string, Record<string, number>> = {};
           pd.forEach((r: any) => { if (!cnt[r.partido]) cnt[r.partido] = {}; cnt[r.partido][r.lider_preferido] = (cnt[r.partido][r.lider_preferido] || 0) + 1; });
           const arr: LiderPreferido[] = [];
-          Object.entries(cnt).forEach(([partido, lids]) => {
+          Object.entries(cnt).forEach(([partido, lids]: [string, Record<string, number>]) => {
             const tot = Object.values(lids).reduce((a, b) => a + b, 0);
-            Object.entries(lids).forEach(([lider, votos]) => {
+            Object.entries(lids).forEach(([lider, votos]: [string, number]) => {
               const li = mapped.find(l => l.party_key === partido && l.leader_name === lider);
               const pi = mapped.find(l => l.party_key === partido);
               arr.push({ partido, lider_preferido: lider, votos, porcentaje: tot > 0 ? (votos / tot) * 100 : 0, photo_url: li?.photo_url, color: pi?.color, display_name: pi?.display_name ?? partido, logo_url: pi?.logo_url });

@@ -324,7 +324,7 @@ export const partiesRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        let query = db.select().from(partyLogoHistoryUpdated);
+        let query: any = db.select().from(partyLogoHistoryUpdated);
         
         if (input.partyKey) {
           query = query.where(eq(partyLogoHistoryUpdated.partyKey, input.partyKey));

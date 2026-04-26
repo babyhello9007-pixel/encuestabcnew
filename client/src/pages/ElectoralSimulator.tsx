@@ -91,8 +91,8 @@ export default function ElectoralSimulator({ generalStats, generalPartyMap, voto
   const simulatorStats = useMemo(() => {
     const escanosTotales: Record<string, number> = {};
     Object.values(simulatorEscanosByProvince).forEach(pe => {
-      Object.entries(pe).forEach(([p, e]) => {
-        escanosTotales[p] = (escanosTotales[p] || 0) + e;
+      Object.entries(pe).forEach(([p, e]: [string, any]) => {
+        escanosTotales[p] = (escanosTotales[p] || 0) + (e as number);
       });
     });
 

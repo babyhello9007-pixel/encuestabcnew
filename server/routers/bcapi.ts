@@ -8,7 +8,7 @@ const submitResponseSchema = z.object({
   questionId: z.string().min(1, 'Question ID requerido'),
   responseValue: z.union([z.string(), z.number(), z.boolean()]),
   userIp: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const bcapiRouter = router({
