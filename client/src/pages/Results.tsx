@@ -773,16 +773,6 @@ interface ChartDataItem {
 }
 
 // Mapeo de campos de valoración a nombres de líderes
-const LEADER_MAP: Record<string, { name: string; field: string }> = {
-  val_feijoo: { name: "Alberto Feijóo", field: "val_feijoo" },
-  val_sanchez: { name: "Pedro Sánchez", field: "val_sanchez" },
-  val_abascal: { name: "Santiago Abascal", field: "val_abascal" },
-  val_alvise: { name: "Álvise Pérez", field: "val_alvise" },
-  val_yolanda_diaz: { name: "Yolanda Díaz", field: "val_yolanda_diaz" },
-  val_irene_montero: { name: "Irene Montero", field: "val_irene_montero" },
-  val_ayuso: { name: "Isabel Díaz Ayuso", field: "val_ayuso" },
-  val_buxade: { name: "Jorge Buxadé", field: "val_buxade" },
-};
 
 // ─── Componentes Helper ───────────────────────────────────────────────────────
 
@@ -793,45 +783,7 @@ interface PartyLogoImgProps {
   size: number;
 }
 
-function PartyLogoImg({ src, name, color, size }: PartyLogoImgProps) {
-  const [hasError, setHasError] = useState(false);
 
-  if (!src || hasError) {
-    return (
-      <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: "50%",
-          background: color,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: size * 0.5,
-          fontWeight: 800,
-          color: "#fff",
-        }}
-      >
-        {name.charAt(0).toUpperCase()}
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={name}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        objectFit: "cover",
-        border: `2px solid ${color}`,
-      }}
-      onError={() => setHasError(true)}
-    />
-  );
-}
 
 interface GobiernoModalProps {
   onClose: () => void;
@@ -839,101 +791,6 @@ interface GobiernoModalProps {
   partyMeta: Record<string, PartyMeta>;
   logoPresidenciaB64: string;
 }
-
-function GobiernoModal({
-  onClose,
-  leaders,
-  partyMeta,
-  logoPresidenciaB64,
-}: GobiernoModalProps) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.7)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          background: "#18181f",
-          borderRadius: 12,
-          padding: 24,
-          maxWidth: 700,
-          maxHeight: "80vh",
-          overflow: "auto",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 style={{ color: "#f0eff8", marginBottom: 16, fontSize: 20, fontWeight: 700 }}>
-          Constructor de Gobierno
-        </h3>
-        <p style={{ color: "#7a7990", marginBottom: 20, fontSize: 14 }}>
-          Selecciona ministros de diferentes partidos para construir tu gobierno ideal.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-          {leaders.map((leader) => {
-            const pm = partyMeta[leader.party_key];
-            const color = pm?.color || leader.color;
-            return (
-              <div
-                key={leader.id}
-                style={{
-                  padding: 12,
-                  border: `1px solid ${color}40`,
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = `${color}10`;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
-                }}
-              >
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <PartyLogoImg src={leader.photo_url} name={leader.leader_name} color={color} size={40} />
-                  <div>
-                    <div style={{ color: "#f0eff8", fontWeight: 700, fontSize: 12 }}>
-                      {leader.leader_name}
-                    </div>
-                    <div style={{ color, fontSize: 10, fontWeight: 600 }}>{leader.display_name}</div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <button
-          onClick={onClose}
-          style={{
-            marginTop: 20,
-            padding: "10px 20px",
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            borderRadius: 6,
-            color: "#f0eff8",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          Cerrar
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Líderes por partido ─────────────────────────────────────────────────────
 
 interface LideresDePartidosSectionProps {
