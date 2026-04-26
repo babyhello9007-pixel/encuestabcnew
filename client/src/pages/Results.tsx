@@ -1221,7 +1221,8 @@ async function generarInfografiaPNG(
   edadPromedio: number | null,
   ideologiaPromedio: number | null,
   type: "general" | "party" | "other",
-  partyName?: string
+  partyName?: string,
+  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -1320,26 +1321,56 @@ async function generarInfografiaPNG(
     }
   }
 
-  // Hemiciclo visual simplificado (semicírculo con datos)
-  const hx = 1000, hy = 480, hr = 200;
-  ctx.fillStyle = "rgba(255,255,255,0.03)";
-  ctx.beginPath(); ctx.arc(hx, hy, hr + 20, Math.PI, 0); ctx.fill();
-  const sortedBySeats = [...stats].sort((a, b) => b.escanos - a.escanos).filter(s => s.escanos > 0);
-  const totalSeats = sortedBySeats.reduce((a, s) => a + s.escanos, 0) || 350;
-  let angle = Math.PI;
-  sortedBySeats.forEach(party => {
-    const span = (party.escanos / totalSeats) * Math.PI;
-    ctx.beginPath(); ctx.moveTo(hx, hy);
-    ctx.arc(hx, hy, hr, angle, angle + span);
-    ctx.closePath(); ctx.fillStyle = party.color || "#e8465a"; ctx.fill();
-    angle += span;
-  });
-  ctx.fillStyle = "#0a0a1a"; ctx.beginPath(); ctx.arc(hx, hy, hr * 0.55, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#fff"; ctx.font = "bold 26px Georgia, serif"; ctx.textAlign = "center";
-  ctx.fillText("350", hx, hy - 10);
-  ctx.fillStyle = "#7a7990"; ctx.font = "12px monospace";
-  ctx.fillText("ESCAÑOS", hx, hy + 14);
-  ctx.textAlign = "left";
+  // Mostrar TOP 10 líderes si type es "other", sino hemiciclo
+  if (type === "other" && topLeaders && topLeaders.length > 0) {
+    // TOP 10 LÍDERES MÁS VOTADOS
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(40, 230, 1120, 520, 12); ctx.fill();
+    
+    ctx.fillStyle = "#C41E3A";
+    ctx.font = "bold 18px Georgia, serif";
+    ctx.fillText("TOP 10 LÍDERES MÁS VOTADOS", 60, 265);
+    
+    const maxVotes = Math.max(...topLeaders.map(l => l.votes));
+    topLeaders.slice(0, 10).forEach((leader, i) => {
+      const y = 300 + i * 38;
+      const barWidth = (leader.votes / maxVotes) * 800;
+      
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 13px 'DM Sans', sans-serif";
+      ctx.fillText(`${i + 1}. ${leader.name}`, 60, y);
+      ctx.fillStyle = leader.color;
+      ctx.font = "11px monospace";
+      ctx.fillText(leader.party, 500, y);
+      
+      ctx.fillStyle = leader.color + "40";
+      ctx.beginPath(); ctx.roundRect(620, y - 12, barWidth, 16, 4); ctx.fill();
+      ctx.fillStyle = leader.color;
+      ctx.font = "bold 11px monospace";
+      ctx.fillText(leader.votes.toString(), 630 + barWidth, y);
+    });
+  } else {
+    // Hemiciclo visual simplificado (semicírculo con datos)
+    const hx = 1000, hy = 480, hr = 200;
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.beginPath(); ctx.arc(hx, hy, hr + 20, Math.PI, 0); ctx.fill();
+    const sortedBySeats = [...stats].sort((a, b) => b.escanos - a.escanos).filter(s => s.escanos > 0);
+    const totalSeats = sortedBySeats.reduce((a, s) => a + s.escanos, 0) || 350;
+    let angle = Math.PI;
+    sortedBySeats.forEach(party => {
+      const span = (party.escanos / totalSeats) * Math.PI;
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      ctx.arc(hx, hy, hr, angle, angle + span);
+      ctx.closePath(); ctx.fillStyle = party.color || "#e8465a"; ctx.fill();
+      angle += span;
+    });
+    ctx.fillStyle = "#0a0a1a"; ctx.beginPath(); ctx.arc(hx, hy, hr * 0.55, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 26px Georgia, serif"; ctx.textAlign = "center";
+    ctx.fillText("350", hx, hy - 10);
+    ctx.fillStyle = "#7a7990"; ctx.font = "12px monospace";
+    ctx.fillText("ESCAÑOS", hx, hy + 14);
+    ctx.textAlign = "left";
+  }
 
   // Footer
   ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(0, 762, 1200, 1);
@@ -1558,6 +1589,7 @@ export default function Results() {
   }, [generalPartyMap, youthPartyMap]);
 
   const handleGenerarInfografia = async (type: "general" | "party" | "other", party?: string) => {
+    // TODO: Pasar datos de líderes desde LideresDePartidosSection
     await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party);
   };
 
