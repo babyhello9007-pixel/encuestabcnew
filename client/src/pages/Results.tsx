@@ -280,7 +280,23 @@ const RESULTS_CSS = `
 }
 `;
 
-// ─── Tab navigation ──────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface PartyStats {
+  id: string; nombre: string; votos: number; porcentaje: number;
+  escanos: number; logo: string; color?: string;
+}
+interface LeaderRating { name: string; fieldName: string; average: number; count: number; }
+interface CustomSimulatorParty { key: string; name: string; color: string; }
+interface PartyLeader {
+  id: number; party_key: string; leader_name: string; photo_url: string;
+  is_active: boolean; display_name: string; color: string; logo_url: string;
+}
+interface LiderPreferido {
+  partido: string; lider_preferido: string; votos: number; porcentaje: number;
+  photo_url?: string; color?: string; display_name?: string; logo_url?: string;
+}
+
+// ─── Tab navigation types ─────────────────────────────────────────────────────
 type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
@@ -290,68 +306,101 @@ type TabKey =
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
 const TAB_GROUPS: TabGroup[] = [
-  { label: "Elecciones", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
-    { key: "general", label: "Resultados Generales" },
-    { key: "mapa-hemiciclo", label: "Mapa y Hemiciclo" },
-    { key: "simulador-electoral", label: "Simulador" },
-    { key: "encuestadoras-externas", label: "Encuestadoras" },
-  ]},
-  { label: "Territorio", icon: <MapPin className="w-3.5 h-3.5" />, tabs: [
-    { key: "ccaa", label: "Comunidades Autónomas" },
-    { key: "provincias", label: "Provincias" },
-    { key: "comparacion-ccaa", label: "Comparar CCAA" },
-  ]},
-  { label: "Juventud", icon: <Users className="w-3.5 h-3.5" />, tabs: [
-    { key: "youth", label: "Asociaciones Juveniles" },
-    { key: "asoc-juv-mapa-hemiciclo", label: "Mapa Juvenil" },
-  ]},
-  { label: "Líderes", icon: <Star className="w-3.5 h-3.5" />, tabs: [
-    { key: "lideres-partidos", label: "Líderes por Partido" },
-    { key: "leaders", label: "Valoración" },
-    { key: "lideres-preferidos", label: "Preferidos" },
-  ]},
-  { label: "Análisis", icon: <BarChart2 className="w-3.5 h-3.5" />, tabs: [
-    { key: "tendencias", label: "Tendencias" },
-    { key: "preguntas-varias", label: "Preguntas Varias" },
-  ]},
+  {
+    label: "Elecciones", icon: <Vote className="w-4 h-4" />, tabs: [
+      { key: "general", label: "Resultados Generales" },
+      { key: "mapa-hemiciclo", label: "Mapa y Hemiciclo" },
+      { key: "simulador-electoral", label: "Simulador Electoral" },
+      { key: "encuestadoras-externas", label: "Encuestadoras" },
+    ],
+  },
+  {
+    label: "Territorio", icon: <MapPin className="w-4 h-4" />, tabs: [
+      { key: "ccaa", label: "Comunidades Autónomas" },
+      { key: "provincias", label: "Provincias" },
+      { key: "comparacion-ccaa", label: "Comparar CCAA" },
+    ],
+  },
+  {
+    label: "Juventud", icon: <Users className="w-4 h-4" />, tabs: [
+      { key: "youth", label: "Asociaciones Juveniles" },
+      { key: "asoc-juv-mapa-hemiciclo", label: "Mapa y Hemiciclo Juvenil" },
+    ],
+  },
+  {
+    label: "Líderes", icon: <Star className="w-4 h-4" />, tabs: [
+      { key: "lideres-partidos", label: "Líderes por Partido" },
+      { key: "leaders", label: "Valoración de Líderes" },
+      { key: "lideres-preferidos", label: "Líderes Preferidos" },
+    ],
+  },
+  {
+    label: "Análisis", icon: <BarChart2 className="w-4 h-4" />, tabs: [
+      { key: "tendencias", label: "Tendencias por Día" },
+      { key: "preguntas-varias", label: "Preguntas Varias" },
+    ],
+  },
 ];
 
-// ─── NavBar ───────────────────────────────────────────────────────────────────
-function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
+// ─── NavBar con dropdowns ─────────────────────────────────────────────────────
+function ResultsNavBar({ activeTab, onTabChange }: {
+  activeTab: TabKey; onTabChange: (t: TabKey) => void;
+}) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   return (
-    <div ref={ref} className="r-subnav">
-      <div className="r-subnav-inner">
-        {TAB_GROUPS.map(group => {
-          const active = group.tabs.find(t => t.key === activeTab);
-          const isOpen = openGroup === group.label;
-          return (
-            <div key={group.label} className="r-nav-group">
-              <button className={`r-nav-group-btn${active ? " active" : ""}`} onClick={() => setOpenGroup(isOpen ? null : group.label)}>
-                {group.icon}
-                <span>{active ? active.label : group.label}</span>
-                <ChevronDown size={11} style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "", transition: "transform 0.2s" }} />
-              </button>
-              {isOpen && (
-                <div className="r-dropdown">
-                  {group.tabs.map(tab => (
-                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? " active" : ""}`}
-                      onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+    <div ref={ref} className="sticky top-14 z-40 w-full border-b border-slate-200/60 bg-white/85 backdrop-blur-xl shadow-sm overflow-visible">
+      <div className="container overflow-visible">
+        <nav className="flex items-center gap-0.5 py-0.5 overflow-visible">
+          {TAB_GROUPS.map((group) => {
+            const activeTabInGroup = group.tabs.find((t) => t.key === activeTab);
+            const isGroupActive = !!activeTabInGroup;
+            const isOpen = openGroup === group.label;
+            return (
+              <div key={group.label} className="relative flex-shrink-0">
+                <button
+                  onClick={() => setOpenGroup(isOpen ? null : group.label)}
+                  className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold rounded-t-lg transition-all duration-150 whitespace-nowrap border-b-2
+                    ${isGroupActive
+                      ? "text-[#C41E3A] border-[#C41E3A] bg-red-50/60"
+                      : "text-slate-500 border-transparent hover:text-slate-800 hover:bg-slate-100/60"
+                    }`}
+                >
+                  {group.icon}
+                  <span>{activeTabInGroup ? activeTabInGroup.label : group.label}</span>
+                  <ChevronDown className={`w-3 h-3 opacity-60 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isOpen && (
+                  <div className="absolute top-full left-0 mt-0 min-w-[210px] bg-white rounded-b-xl rounded-tr-xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                    {group.tabs.map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-l-2
+                          ${activeTab === tab.key
+                            ? "bg-red-50 text-[#C41E3A] font-semibold border-[#C41E3A]"
+                            : "text-slate-600 hover:bg-slate-50 font-medium border-transparent hover:border-slate-200"
+                          }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
       </div>
     </div>
   );
