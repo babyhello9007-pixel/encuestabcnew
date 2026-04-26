@@ -142,11 +142,6 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "/assets/icons/FrenteObrero.png",
     displayName: "Frente Obrero"
   },
-  "Se Acabó La Fiesta": {
-    color: "#FF1493",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/pVOVNQaSxYeSVYyR.png",
-    displayName: "Se Acabó La Fiesta"
-  },
   "SALF": {
     color: "#FF1493",
     logo: "/assets/icons/SeAcabóLaFiesta.png",
@@ -232,17 +227,7 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/OxYlERpqIvuYLNIC.png",
     displayName: "PCTE"
   },
-  "Partido Comunista de los Trabajadores de España": {
-    color: "#CC0000",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/OxYlERpqIvuYLNIC.png",
-    displayName: "PCTE"
-  },
   "UPL": {
-    color: "#0066FF",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/mwmmLxCMDbZacPQT.png",
-    displayName: "UPL"
-  },
-  "Unión del Pueblo Leonés": {
     color: "#0066FF",
     logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/mwmmLxCMDbZacPQT.png",
     displayName: "UPL"
