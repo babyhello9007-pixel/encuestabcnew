@@ -839,9 +839,9 @@ function GobiernoModal({
 // ─── InfografiaModal mejorada ─────────────────────────────────────────────────
 function InfografiaModal({ parties, onClose, onGenerate }: {
   parties: PartyStats[]; onClose: () => void;
-  onGenerate: (type: "general" | "party" | "other", party?: string) => void;
+  onGenerate: (type: "general" | "party", party?: string) => void;
 }) {
-  const [type, setType] = useState<"general" | "party" | "other">("general");
+  const [type, setType] = useState<"general" | "party">("general");
   const [selectedParty, setSelectedParty] = useState("");
   return (
     <div className="r-infog-backdrop" onClick={onClose}>
@@ -855,7 +855,6 @@ function InfografiaModal({ parties, onClose, onGenerate }: {
           {[
             { t: "general" as const, icon: <BarChart2 size={20} color="#e8465a" />, bg: "rgba(232,70,90,0.15)", label: "General", desc: "Resultados globales" },
             { t: "party" as const, icon: <Award size={20} color="#818cf8" />, bg: "rgba(99,102,241,0.15)", label: "Por Partido", desc: "Perfil detallado" },
-            { t: "other" as const, icon: <Image size={20} color="#22c55e" />, bg: "rgba(34,197,94,0.15)", label: "Otros", desc: "Líderes y demografía" },
           ].map(opt => (
             <button key={opt.t} className={`r-infog-option${type === opt.t ? " selected" : ""}`} onClick={() => setType(opt.t)}>
               <div className="r-infog-option-icon" style={{ background: opt.bg }}>{opt.icon}</div>
@@ -1566,7 +1565,7 @@ async function generarInfografiaPNG(
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null,
-  type: "general" | "party" | "other",
+  type: "general" | "party",
   partyName?: string,
   topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>,
   topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
@@ -1676,49 +1675,58 @@ async function generarInfografiaPNG(
   } else if (type === "party" && partyName) {
     const party = stats.find(s => s.nombre === partyName);
     if (party) {
+      // Sección izquierda: Resultados principales
       ctx.fillStyle = "rgba(255,255,255,0.04)";
-      ctx.beginPath(); ctx.roundRect(40, 230, 720, 520, 12); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(40, 230, 350, 520, 12); ctx.fill();
       ctx.fillStyle = party.color || "#C41E3A";
-      ctx.font = "bold 52px Georgia, serif"; ctx.fillText(party.porcentaje.toFixed(1) + "%", 60, 320);
-      ctx.fillStyle = "#fff"; ctx.font = "18px 'DM Sans', sans-serif";
-      ctx.fillText(`${party.votos.toLocaleString("es-ES")} votos`, 60, 360);
-      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 72px Georgia, serif";
-      ctx.fillText(String(party.escanos), 60, 460);
-      ctx.fillStyle = "#7a7990"; ctx.font = "16px 'DM Sans', sans-serif";
-      ctx.fillText("escaños", 60, 490);
+      ctx.font = "bold 48px Georgia, serif"; ctx.fillText(party.porcentaje.toFixed(1) + "%", 60, 310);
+      ctx.fillStyle = "#fff"; ctx.font = "14px 'DM Sans', sans-serif";
+      ctx.fillText(`${party.votos.toLocaleString("es-ES")} votos`, 60, 345);
+      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 56px Georgia, serif";
+      ctx.fillText(String(party.escanos), 60, 430);
+      ctx.fillStyle = "#7a7990"; ctx.font = "14px 'DM Sans', sans-serif";
+      ctx.fillText("escaños", 60, 460);
+      
+      // Sección derecha: TOP 5 líderes
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.beginPath(); ctx.roundRect(410, 230, 350, 520, 12); ctx.fill();
+      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("TOP 5 LÍDERES", 430, 260);
+      ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(430, 268, 310, 1);
+      // Placeholder para TOP 5 (se llenarían con datos reales)
+      for (let i = 0; i < 5; i++) {
+        const y = 295 + i * 38;
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
+        ctx.fillText(`${i + 1}. Líder ${i + 1}`, 430, y);
+        ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
+        ctx.fillText("XX%", 650, y);
+      }
+      
+      // Sección inferior: Preguntas Varias
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.beginPath(); ctx.roundRect(780, 230, 380, 520, 12); ctx.fill();
+      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("PREGUNTAS VARIAS", 800, 260);
+      ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(800, 268, 340, 1);
+      // Placeholder para preguntas varias
+      const preguntas = [
+        { q: "Monarquía", a: "Preferencia" },
+        { q: "Defensa", a: "Aumentar" },
+        { q: "Economía", a: "Reformas" },
+        { q: "Educación", a: "Inversión" },
+        { q: "Sanidad", a: "Mejora" }
+      ];
+      preguntas.forEach((p, i) => {
+        const y = 295 + i * 38;
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
+        ctx.fillText(p.q, 800, y);
+        ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "10px 'DM Sans', sans-serif";
+        ctx.fillText(p.a, 900, y);
+      });
     }
   }
 
-  // Mostrar TOP 10 líderes si type es "other", sino hemiciclo
-  if (type === "other" && topLeaders && topLeaders.length > 0) {
-    // TOP 10 LÍDERES MÁS VOTADOS
-    ctx.fillStyle = "rgba(255,255,255,0.04)";
-    ctx.beginPath(); ctx.roundRect(40, 230, 1120, 520, 12); ctx.fill();
-    
-    ctx.fillStyle = "#C41E3A";
-    ctx.font = "bold 18px Georgia, serif";
-    ctx.fillText("TOP 10 LÍDERES MÁS VOTADOS", 60, 265);
-    
-    const maxVotes = Math.max(...topLeaders.map(l => l.votes));
-    topLeaders.slice(0, 10).forEach((leader, i) => {
-      const y = 300 + i * 38;
-      const barWidth = (leader.votes / maxVotes) * 800;
-      
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 13px 'DM Sans', sans-serif";
-      ctx.fillText(`${i + 1}. ${leader.name}`, 60, y);
-      ctx.fillStyle = leader.color;
-      ctx.font = "11px monospace";
-      ctx.fillText(leader.party, 500, y);
-      
-      ctx.fillStyle = leader.color + "40";
-      ctx.beginPath(); ctx.roundRect(620, y - 12, barWidth, 16, 4); ctx.fill();
-      ctx.fillStyle = leader.color;
-      ctx.font = "bold 11px monospace";
-      ctx.fillText(leader.votes.toString(), 630 + barWidth, y);
-    });
-  } else {
-    // Hemiciclo visual simplificado (semicírculo con datos)
+  // Hemiciclo visual simplificado
+  // Hemiciclo visual simplificado (para infografía general)
+  if (type === "general") {
     const hx = 1020, hy = 218, hr = 120;
     ctx.fillStyle = "rgba(255,255,255,0.03)";
     ctx.beginPath(); ctx.arc(hx, hy, hr + 20, Math.PI, 0); ctx.fill();
@@ -2021,7 +2029,7 @@ export default function Results() {
     });
   }, [historicoElecciones, generalStats]);
 
-  const handleGenerarInfografia = async (type: "general" | "party" | "other", party?: string) => {
+  const handleGenerarInfografia = async (type: "general" | "party", party?: string) => {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
     let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
     try {
