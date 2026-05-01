@@ -77,6 +77,10 @@ interface VotoHistorico {
   partido: string; tipo: string; snapshot_at: string;
   votos: number; porcentaje: number;
 }
+interface NocheElectoralRow {
+  election_date: string; region_name: string; region_flag_url: string | null;
+  estimate_bc: number; final_result: number | null; close_at: string;
+}
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const RESULTS_CSS = `
@@ -305,7 +309,7 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico";
+  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral";
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
@@ -333,6 +337,7 @@ const TAB_GROUPS: TabGroup[] = [
     { key: "tendencias", label: "Tendencias" },
     { key: "analisis-avanzado", label: "Coherencia y Visualizaciones" },
     { key: "contexto-historico", label: "Contexto Histórico" },
+    { key: "noche-electoral", label: "Modo Directo: Noche Electoral" },
     { key: "preguntas-varias", label: "Preguntas Varias" },
   ]},
 ];
@@ -1170,7 +1175,9 @@ function AnalisisAvanzadoSection({
   return (
     <div style={{ display: "grid", gap: 14 }}>
       <div className="r-section"><div className="r-section-title">Coherencia de voto</div>
-        <div style={{ display: "grid", gap: 8 }}>{coherenciaRows.slice(0, 8).map((r: any) => <div key={r.partido_votado} style={{ fontSize: 12, color: "#c9c8d9" }}>{r.partido_votado}: {r.total_votantes} votantes · incoherencias: {(r.pp_valora_sanchez || 0) + (r.psoe_valora_feijoo || 0) + (r.vox_valora_sanchez || 0) + (r.psoe_valora_abascal || 0)}</div>)}</div>
+        <div style={{ display: "grid", gap: 8 }}>{coherenciaRows.slice(0, 8).map((r: any) => <div key={r.partido_votado} style={{ fontSize: 12, color: "#c9c8d9" }}>
+          {r.partido_votado}: {r.total_votantes} votantes · Incoherencias detectadas → PP valora Sánchez: {r.pp_valora_sanchez || 0}, PSOE valora Feijóo: {r.psoe_valora_feijoo || 0}, VOX valora Sánchez: {r.vox_valora_sanchez || 0}, PSOE valora Abascal: {r.psoe_valora_abascal || 0}.
+        </div>)}</div>
       </div>
       <div className="r-section">
         <div className="r-section-title">Sankey: flujo generales → autonómicas</div>
@@ -1719,6 +1726,7 @@ export default function Results() {
   const [correlacionRows, setCorrelacionRows] = useState<any[]>([]);
   const [historicoRows, setHistoricoRows] = useState<any[]>([]);
   const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
+  const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1877,6 +1885,7 @@ export default function Results() {
         try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
         try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
         try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
+        try { const { data } = await supabase.from("noche_electoral_directo").select("*").order("close_at", { ascending: true }); setNocheElectoralRows((data || []) as NocheElectoralRow[]); } catch {}
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -1896,6 +1905,23 @@ export default function Results() {
     });
     return m;
   }, [generalPartyMap, youthPartyMap]);
+  const historicoPorPartido = useMemo(() => {
+    const years = Array.from(new Set(historicoElecciones.map(h => h.año))).sort((a, b) => a - b);
+    const map: Record<string, any> = {};
+    years.forEach(y => { map[y] = { año: y }; });
+    historicoElecciones.forEach((h) => {
+      if (!map[h.año]) map[h.año] = { año: h.año };
+      map[h.año][h.partido] = Number(h.porcentaje || 0);
+    });
+    return Object.values(map).sort((a: any, b: any) => a.año - b.año);
+  }, [historicoElecciones]);
+  const comparativa2023VsActual = useMemo(() => {
+    const r2023 = historicoElecciones.filter(r => r.año === 2023);
+    return r2023.map(r => {
+      const current = generalStats.find(g => g.nombre === r.partido || g.id === r.partido)?.escanos || 0;
+      return { partido: r.partido, escanos_2023: Number(r.escanos || 0), escanos_actuales: current };
+    });
+  }, [historicoElecciones, generalStats]);
 
   const handleGenerarInfografia = async (type: "general" | "party" | "other", party?: string) => {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
@@ -2049,18 +2075,58 @@ export default function Results() {
                 />
               )}
               {activeTab === "contexto-historico" && (
-                <div className="r-section">
-                  <div className="r-section-title">Contexto histórico y ciclos electorales</div>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={historicoElecciones}>
+                <div style={{ display: "grid", gap: 14 }}>
+                  <div className="r-section">
+                    <div className="r-section-title">Contexto histórico y ciclos electorales (por partido)</div>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <LineChart data={historicoPorPartido}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis dataKey="año" tick={{ fill: "#7a7990" }} />
+                        <YAxis tick={{ fill: "#7a7990" }} />
+                        <Tooltip />
+                        <Legend />
+                        {["PP", "PSOE", "VOX", "Sumar", "Unidas Podemos", "Ciudadanos"].map((p) => (
+                          <Line key={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} dot={false} connectNulls />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="r-section">
+                    <div className="r-section-title">Comparativa 2023 vs escaños actuales (Encuesta BC)</div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={comparativa2023VsActual}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                      <XAxis dataKey="año" tick={{ fill: "#7a7990" }} />
+                      <XAxis dataKey="partido" tick={{ fill: "#7a7990" }} />
                       <YAxis tick={{ fill: "#7a7990" }} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="porcentaje" stroke="#e8465a" dot={false} />
-                    </LineChart>
+                      <Bar dataKey="escanos_2023" fill="#60a5fa" name="2023" />
+                      <Bar dataKey="escanos_actuales" fill="#e8465a" name="Actual BC" />
+                    </BarChart>
                   </ResponsiveContainer>
+                </div>
+                </div>
+              )}
+              {activeTab === "noche-electoral" && (
+                <div className="r-section">
+                  <div className="r-section-title">Modo Directo: Noche Electoral</div>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {nocheElectoralRows.length === 0 && <div style={{ fontSize: 12, color: "#7a7990" }}>Sin datos en tiempo real todavía.</div>}
+                    {nocheElectoralRows.map((r, i) => {
+                      const seconds = Math.max(0, Math.floor((new Date(r.close_at).getTime() - Date.now()) / 1000));
+                      const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
+                      const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+                      const ss = String(seconds % 60).padStart(2, "0");
+                      return <div key={`${r.region_name}-${i}`} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 10, display: "grid", gap: 4 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {r.region_flag_url ? <img src={r.region_flag_url} alt={r.region_name} style={{ width: 20, height: 14, objectFit: "cover" }} /> : null}
+                          <strong>{r.region_name}</strong>
+                          <span style={{ marginLeft: "auto", color: "#7a7990", fontSize: 12 }}>Cierre: {hh}:{mm}:{ss}</span>
+                        </div>
+                        <div style={{ fontSize: 12 }}>Estimado BC: <b>{Number(r.estimate_bc || 0).toFixed(2)}%</b> · Resultado final: <b>{r.final_result == null ? "Pendiente" : `${Number(r.final_result).toFixed(2)}%`}</b></div>
+                      </div>;
+                    })}
+                  </div>
                 </div>
               )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
@@ -2068,7 +2134,7 @@ export default function Results() {
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />}
+              {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa tipoEncuesta="generales" generalStats={generalStats} totalResponses={totalResponses} />}
               {activeTab === "lideres-partidos" && <LideresDePartidosSection partyMeta={generalPartyMetaLookup} />}
 
               {activeTab === "leaders" && (

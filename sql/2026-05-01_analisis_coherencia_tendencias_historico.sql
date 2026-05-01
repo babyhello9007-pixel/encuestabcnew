@@ -201,3 +201,16 @@ select
 from ranked
 where rn = 1
 order by votos_lider_top desc, partido asc;
+
+create table if not exists public.noche_electoral_directo (
+  id bigserial primary key,
+  election_date date not null,
+  region_name text not null,
+  region_flag_url text,
+  estimate_bc numeric(5,2) not null default 0,
+  final_result numeric(5,2),
+  close_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists noche_electoral_directo_close_idx on public.noche_electoral_directo(close_at);
