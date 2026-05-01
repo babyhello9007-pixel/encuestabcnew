@@ -338,30 +338,49 @@ const TAB_GROUPS: TabGroup[] = [
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
+  const handleGroupClick = (label: string, e: React.MouseEvent) => {
+    const btn = buttonRefs.current[label];
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom - ref.current?.getBoundingClientRect().top! + 4,
+        left: rect.left - ref.current?.getBoundingClientRect().left!
+      });
+    }
+    setOpenGroup(openGroup === label ? null : label);
+  };
+
   return (
-    <div ref={ref} className="r-subnav">
+    <div ref={ref} className="r-subnav" style={{ position: "relative" }}>
       <div className="r-subnav-inner">
         {TAB_GROUPS.map(group => {
           const active = group.tabs.find(t => t.key === activeTab);
           const isOpen = openGroup === group.label;
           return (
-            <div key={group.label} className="r-nav-group">
-              <button className={`r-nav-group-btn${active ? " active" : ""}`} onClick={() => setOpenGroup(isOpen ? null : group.label)}>
+            <div key={group.label} className="r-nav-group" style={{ position: "relative" }}>
+              <button
+                ref={(el) => { buttonRefs.current[group.label] = el; }}
+                className={`r-nav-group-btn${active ? " active" : ""}`}
+                onClick={(e) => handleGroupClick(group.label, e)}
+              >
                 {group.icon}
                 <span>{active ? active.label : group.label}</span>
                 <ChevronDown size={11} style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "", transition: "transform 0.2s" }} />
               </button>
               {isOpen && (
-                <div className="r-dropdown">
+                <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top + 58}px`, left: `${dropdownPos.left}px`, zIndex: 9999 }}>
                   {group.tabs.map(tab => (
-                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? " active" : ""}`}
+                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
                       onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
                       {tab.label}
                     </button>
