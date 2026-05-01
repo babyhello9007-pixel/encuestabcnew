@@ -528,16 +528,54 @@ function GobiernoModal({
     if (leaderParty && leaderParty !== selectedParty) setSelectedParty(leaderParty);
   }, [selectedLeader, selectedParty, leaders]);
 
+
+  const buildImageCandidates = (src?: string) => {
+    if (!src) return [] as string[];
+    const clean = String(src).trim();
+    if (!clean) return [] as string[];
+    const noProto = clean.replace(/^https?:\/\//, "");
+    return [
+      clean,
+      `https://images.weserv.nl/?url=${encodeURIComponent(noProto)}`,
+      `https://proxy.cors.sh/${clean}`,
+    ];
+  };
+
+  const openPreviewTab = () => {
+    const preview = window.open("", "_blank", "noopener,noreferrer");
+    if (!preview) return;
+    const cards = ministerios.map((m) => {
+      const leader = leaders.find(l => l.leader_name === m.ministro);
+      const pKey = m.partido || leader?.party_key || "";
+      const meta = partyMeta[pKey];
+      const image = m.foto || leader?.photo_url || "";
+      return `<article style="border:1px solid rgba(255,255,255,.18);background:linear-gradient(160deg,rgba(255,255,255,.20),rgba(255,255,255,.06));backdrop-filter:blur(12px);border-radius:16px;padding:12px;color:#fff;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <img src="${image}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:${meta?.color || '#444'}" onerror="this.style.display='none'"/>
+          <div><div style="font-weight:700">${m.titulo || 'Ministerio'}</div><div style="font-size:12px;opacity:.85">${m.ministro || 'Sin asignar'}</div></div>
+        </div>
+      </article>`;
+    }).join('');
+    preview.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview Gobierno</title></head><body style="margin:0;padding:20px;background:#0c0f1a;font-family:Inter,system-ui"><h1 style="color:#fff">${nombreGobierno}</h1><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${cards}</div><div style="margin-top:16px"><button onclick="window.print()" style="padding:10px 14px;border-radius:10px;border:0;background:#C41E3A;color:#fff">Capturar / Guardar (Imprimir)</button></div></body></html>`);
+    preview.document.close();
+  };
+
   const generarInfografia = async () => {
     setGenerando(true);
     try {
       const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
-        if (!src) return resolve(null);
-        const img = new window.Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = src;
+        const candidates = buildImageCandidates(src);
+        if (!candidates.length) return resolve(null);
+        const tryNext = (idx: number) => {
+          if (idx >= candidates.length) return resolve(null);
+          const img = new window.Image();
+          img.crossOrigin = "anonymous";
+          img.referrerPolicy = "no-referrer";
+          img.onload = () => resolve(img);
+          img.onerror = () => tryNext(idx + 1);
+          img.src = candidates[idx];
+        };
+        tryNext(0);
       });
       // Crear canvas con el gobierno
       const canvas = document.createElement("canvas");
@@ -676,7 +714,7 @@ function GobiernoModal({
 
   return (
     <div className="r-infog-backdrop" onClick={onClose}>
-      <div className="r-gov-modal" onClick={e => e.stopPropagation()}>
+      <div className="r-gov-modal" onClick={e => e.stopPropagation()} style={{ background: "linear-gradient(165deg, rgba(25,29,46,.92), rgba(14,16,28,.88))", backdropFilter: "blur(16px) saturate(145%)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
             <div className="r-infog-title">🏛️ Constructor de Gobierno</div>
@@ -750,9 +788,9 @@ function GobiernoModal({
         </div>
 
         <div style={{ marginTop: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", marginBottom: 8 }}>Previsualización instantánea</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", marginBottom: 8 }}>Previsualización (todos los ministerios)</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
-            {ministerios.slice(0, 8).map(min => {
+            {ministerios.map(min => {
               const leader = leaders.find(l => l.leader_name === min.ministro);
               const pKey = min.partido || leader?.party_key || "";
               const pMeta = partyMeta[pKey];
@@ -786,6 +824,7 @@ function GobiernoModal({
             <Download size={13} />
             {generando ? "Generando…" : "Generar Infografía PNG"}
           </button>
+          <button className="r-infog-cancel" onClick={openPreviewTab}>Abrir preview en pestaña</button>
         </div>
       </div>
     </div>
