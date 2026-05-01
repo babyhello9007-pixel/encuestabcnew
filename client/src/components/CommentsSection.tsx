@@ -33,13 +33,24 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
       setLoading(true);
       setError(null);
       
-      const { data, error: fetchError } = await supabase
+      let { data, error: fetchError } = await supabase
         .from("comentarios_resultados")
         .select("*")
         .eq("tab", activeTab)
         .eq("estado", "aprobado")
         .order("created_at", { ascending: false })
         .limit(20);
+
+      if (fetchError && String(fetchError.message || "").toLowerCase().includes("estado")) {
+        const fallback = await supabase
+          .from("comentarios_resultados")
+          .select("*")
+          .eq("tab", activeTab)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        data = fallback.data;
+        fetchError = fallback.error;
+      }
 
       if (fetchError) {
         console.error("Error loading comments:", fetchError);
@@ -69,7 +80,7 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
       setSubmitting(true);
       setError(null);
 
-      const { error: insertError } = await supabase
+      let { error: insertError } = await supabase
         .from("comentarios_resultados")
         .insert([
           {
@@ -80,6 +91,20 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
             estado: "aprobado",
           },
         ]);
+
+      if (insertError && String(insertError.message || "").toLowerCase().includes("estado")) {
+        const fallbackInsert = await supabase
+          .from("comentarios_resultados")
+          .insert([
+            {
+              nombre: userName.trim() || "Anónimo",
+              texto: newComment.trim(),
+              tab: activeTab,
+              likes: 0,
+            },
+          ]);
+        insertError = fallbackInsert.error;
+      }
 
       if (insertError) {
         console.error("Error inserting comment:", insertError);

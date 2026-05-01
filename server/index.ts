@@ -3,6 +3,9 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { appRouter } from "./routers.js";
+import { createContext } from "./_core/context.js";
 import { registerSurveysRoutes } from "./routes/surveys.js";
 import { registerMiscSurveysRoutes } from "./routes/misc-surveys.js";
 
@@ -87,6 +90,15 @@ async function startServer() {
     }
   });
 
+  // tRPC API
+  app.use(
+    "/api/trpc",
+    createExpressMiddleware({
+      router: appRouter,
+      createContext,
+    })
+  );
+
   // Middleware: Serve static files with proper headers
   app.use((req, res, next) => {
     // Check if the request is for a static file
@@ -126,4 +138,3 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
-

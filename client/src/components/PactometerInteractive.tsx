@@ -88,7 +88,7 @@ export default function PactometerInteractive({
   const getPartyColor = (party: PartyStats): string => party.color || "#9CA3AF";
 
   return (
-    <div className="flex gap-6 relative">
+    <div className="flex flex-col xl:flex-row gap-6 relative w-full max-w-full overflow-hidden">
       {/* Contenido principal a la izquierda */}
       <div className="flex-1 space-y-6">
         {/* Título */}
@@ -210,7 +210,7 @@ export default function PactometerInteractive({
       </div>
 
       {/* Tarjeta de resumen anclada a la derecha - ocupa toda la altura */}
-      <div className="w-96 flex-shrink-0 sticky top-0 h-screen flex flex-col">
+      <div className="w-full xl:w-96 max-w-full flex-shrink-0 xl:sticky xl:top-0 xl:h-screen flex flex-col">
         <CoalitionSummaryCard
           selectedParties={selectedPartiesData}
           totalSeats={totalSeats}
