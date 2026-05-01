@@ -530,6 +530,21 @@ function GobiernoModal({
     localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
   }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
+
   const generarInfografia = async () => {
     setGenerando(true);
     try {
@@ -568,31 +583,31 @@ function GobiernoModal({
         });
       }
 
-      // Título gobierno
+      // Título gobierno (más arriba)
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 28px 'DM Sans', sans-serif";
-      ctx.fillText(nombreGobierno, 400, 52);
+      ctx.font = "bold 30px 'DM Sans', sans-serif";
+      ctx.fillText(nombreGobierno, 400, 44);
       ctx.font = "16px 'DM Sans', sans-serif";
       ctx.fillStyle = "rgba(255,255,255,0.5)";
-      ctx.fillText(new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long" }), 400, 78);
+      ctx.fillText(new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long" }), 400, 68);
 
       // Divider
       ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.fillRect(40, 110, 1520, 1);
+      ctx.fillRect(40, 96, 1520, 1);
 
       // Partido y presidente
       const pm = partyMeta[selectedParty];
       if (pm) {
         ctx.fillStyle = pm.color || "#e8465a";
         ctx.beginPath();
-        ctx.roundRect(40, 130, 300, 60, 10);
+        ctx.roundRect(40, 112, 300, 64, 10);
         ctx.fill();
         ctx.fillStyle = "#fff";
         ctx.font = "bold 18px 'DM Sans', sans-serif";
-        ctx.fillText(pm.name || selectedParty, 60, 155);
+        ctx.fillText(pm.name || selectedParty, 60, 140);
         ctx.font = "13px 'DM Sans', sans-serif";
         ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.fillText(`Presidente: ${selectedLeader || "—"}`, 60, 178);
+        ctx.fillText(`Presidente: ${selectedLeader || "—"}`, 60, 162);
       }
 
       // Grid ministerios (mismo estilo que previsualización instantánea)
@@ -600,11 +615,12 @@ function GobiernoModal({
       const boxW = 360;
       const boxH = 150;
       const startX = 40;
-      const startY = 220;
+      const startY = 200;
       const gapX = 20;
       const gapY = 16;
 
-      ministerios.forEach((min, i) => {
+      for (let i = 0; i < ministerios.length; i++) {
+        const min = ministerios[i];
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = startX + col * (boxW + gapX);
@@ -623,9 +639,19 @@ function GobiernoModal({
         const avatarX = x + 14, avatarY = y + 16, avatarS = 36;
         ctx.fillStyle = pMeta?.color || "#444";
         ctx.beginPath(); ctx.arc(avatarX + avatarS / 2, avatarY + avatarS / 2, avatarS / 2, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 14px 'DM Sans', sans-serif";
-        ctx.fillText((titular || "I").charAt(0).toUpperCase(), avatarX + 12, avatarY + 24);
+        const avatarImg = await loadImage(min.foto || leader?.photo_url);
+        if (avatarImg) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(avatarX + avatarS / 2, avatarY + avatarS / 2, avatarS / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(avatarImg, avatarX, avatarY, avatarS, avatarS);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 14px 'DM Sans', sans-serif";
+          ctx.fillText((titular || "I").charAt(0).toUpperCase(), avatarX + 12, avatarY + 24);
+        }
 
         // texts
         ctx.fillStyle = "#f0eff8"; ctx.font = "bold 13px 'DM Sans', sans-serif";
@@ -635,17 +661,18 @@ function GobiernoModal({
 
         // party tag + logo
         ctx.fillStyle = "rgba(255,255,255,0.2)";
-        ctx.beginPath(); ctx.roundRect(x + 14, y + 82, 60, 20, 10); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(x + 14, y + 82, 94, 20, 10); ctx.fill();
         ctx.fillStyle = "#fff"; ctx.font = "bold 10px monospace";
-        ctx.fillText((pMeta?.name || pKey || "IND").slice(0, 8), x + 20, y + 96);
-
-        const logoImg = pMeta?.logo ? null : null; // keep layout identical fallback
-        if (!logoImg) {
+        ctx.fillText((pMeta?.name || pKey || "IND").slice(0, 12), x + 20, y + 96);
+        const logoImg = await loadImage(pMeta?.logo);
+        if (logoImg) {
+          ctx.drawImage(logoImg, x + boxW - 44, y + 84, 24, 24);
+        } else {
           ctx.fillStyle = "rgba(255,255,255,0.45)";
           ctx.font = "10px monospace";
-          ctx.fillText(pMeta?.logo ? "" : "IND", x + 84, y + 96);
+          ctx.fillText("IND", x + boxW - 44, y + 98);
         }
-      });
+      }
 
       // Footer
       ctx.fillStyle = "rgba(255,255,255,0.15)";
