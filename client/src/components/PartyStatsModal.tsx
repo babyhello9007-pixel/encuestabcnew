@@ -9,6 +9,7 @@ interface PartyStatsModalProps {
   partyType: "general" | "youth";
   accentColor?: string;
   partyLogo?: string;
+  partyKey?: string;
 }
 
 interface PartyMetricsData {
@@ -17,9 +18,10 @@ interface PartyMetricsData {
   total_votos: number;
 }
 
-export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentColor = "#C41E3A", partyLogo }: PartyStatsModalProps) {
+export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentColor = "#C41E3A", partyLogo, partyKey }: PartyStatsModalProps) {
   const [metrics, setMetrics] = useState<PartyMetricsData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [topLeaders, setTopLeaders] = useState<Array<{ name: string; votes: number; pct: number; photo?: string }>>([]);
 
   useEffect(() => {
     if (!isOpen || !partyName) return;
@@ -60,7 +62,8 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
     };
 
     fetchMetrics();
-  }, [isOpen, partyName, partyType]);
+    fetchTopLeaders();
+  }, [isOpen, partyName, partyType, partyKey]);
 
   if (!isOpen) return null;
 
@@ -141,6 +144,24 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
             </div>
           )}
         </div>
+
+        {topLeaders.length > 0 && (
+          <div className="px-6 pb-5">
+            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Top 3 líderes del partido</p>
+            <div className="grid gap-2">
+              {topLeaders.map((l, i) => (
+                <div key={l.name + i} className="flex items-center justify-between rounded-xl border border-white/60 bg-white/70 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500">#{i + 1}</span>
+                    {l.photo ? <img src={l.photo} alt={l.name} className="w-7 h-7 rounded-full object-cover" /> : null}
+                    <span className="text-sm font-semibold text-slate-800">{l.name}</span>
+                  </div>
+                  <span className="text-xs text-slate-600">{l.votes} · {l.pct.toFixed(1)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 flex justify-end">

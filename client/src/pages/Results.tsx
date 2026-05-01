@@ -87,8 +87,8 @@ interface NocheElectoralRow {
 const RESULTS_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
 
-.r-root { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #1f2937 0%, #0a0a0f 45%, #07070b 100%); color: #f0eff8; font-family: 'Plus Jakarta Sans', sans-serif; }
-.r-header { position: sticky; top: 0; z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
+.r-root { --top-anchor: 64px; min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #1f2937 0%, #0a0a0f 45%, #07070b 100%); color: #f0eff8; font-family: 'Plus Jakarta Sans', sans-serif; }
+.r-header { position: sticky; top: var(--top-anchor); z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
 .r-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .r-brand img { height: 28px; width: 28px; }
 .r-brand-title { font-size: 14px; font-weight: 700; color: #f0eff8; line-height: 1.2; }
@@ -107,7 +107,7 @@ const RESULTS_CSS = `
 .r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
 
 /* Subnav */
-.r-subnav { position: sticky; top: 58px; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
+.r-subnav { position: sticky; top: calc(var(--top-anchor) + 58px); z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
 .r-subnav::-webkit-scrollbar { height: 3px; }
 .r-subnav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 .r-subnav-inner { display: flex; align-items: stretch; padding: 0 16px; min-width: max-content; }
@@ -122,7 +122,7 @@ const RESULTS_CSS = `
 .r-dropdown-item.active { color: #e8465a; border-left-color: #e8465a; background: rgba(232,70,90,0.06); font-weight: 700; }
 
 /* Main */
-.r-main { flex: 1; padding: 8px 20px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.r-main { flex: 1; padding: 14px 20px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .r-space { display: flex; flex-direction: column; gap: 18px; }
 
 /* Quick stats */
@@ -2010,7 +2010,7 @@ export default function Results() {
               <FileText size={12} /><span>PDF</span>
             </button>
             <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
-            <ShareResultsModern stats={generalStats} youthStats={youthStats} totalResponses={totalResponses} cooldownMinutes={15} />
+            <ShareResultsModern stats={generalStats} youthStats={youthStats} totalResponses={totalResponses} cooldownMinutes={15} partyMeta={generalPartyMetaLookup} />
             <FollowUsMenu />
           </div>
         </header>
@@ -2348,7 +2348,7 @@ export default function Results() {
           La Encuesta de Batalla Cultural © 2025 · Datos anónimos y públicos
         </footer>
 
-        <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} />
+        <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} partyKey={selectedPartyForStats ? resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup) : undefined} />
         <AIAnalysisModal open={showAIAnalysis} onOpenChange={setShowAIAnalysis} totalResponses={totalResponses} edadPromedio={edadPromedio} ideologiaPromedio={ideologiaPromedio} topParties={[...stats].sort((a, b) => b.votos - a.votos).slice(0, 5)} />
         {showInfografiaModal && <InfografiaModal parties={generalStats} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
       </div>
