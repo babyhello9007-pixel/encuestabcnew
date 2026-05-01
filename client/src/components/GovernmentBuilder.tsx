@@ -8,6 +8,7 @@ interface Ministry {
   id: string;
   name: string;
   minister: string;
+  ministerImageUrl?: string;
   color?: string;
 }
 
@@ -45,6 +46,7 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
       id: `min-${i}`,
       name: m,
       minister: '',
+      ministerImageUrl: '',
       color: partyColor,
     }))
   );
@@ -55,6 +57,9 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
   const updateMinister = (id: string, minister: string) => {
     setMinistries(prev => prev.map(m => m.id === id ? { ...m, minister } : m));
   };
+  const updateMinisterImage = (id: string, ministerImageUrl: string) => {
+    setMinistries(prev => prev.map(m => m.id === id ? { ...m, ministerImageUrl } : m));
+  };
 
   const addMinistry = () => {
     const newId = `min-${Date.now()}`;
@@ -62,6 +67,7 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
       id: newId,
       name: '',
       minister: '',
+      ministerImageUrl: '',
       color: partyColor,
     }]);
   };
@@ -132,7 +138,7 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
 
       // Tabla de ministerios
       const startY = 120;
-      const rowHeight = 40;
+      const rowHeight = 46;
       const colWidth = width / 2;
       const padding = 20;
 
@@ -144,7 +150,7 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
 
       let currentY = startY + rowHeight;
 
-      ministries.forEach((ministry, index) => {
+      for (const [index, ministry] of ministries.entries()) {
         // Línea separadora
         ctx.strokeStyle = '#e0e0e0';
         ctx.lineWidth = 1;
@@ -164,11 +170,31 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
         ctx.font = '12px Arial';
         ctx.fillText(ministry.name, padding + 10, currentY + 25);
 
+        // Avatar ministro por URL (si existe)
+        if (ministry.ministerImageUrl) {
+          const avatar = new window.Image();
+          await new Promise<void>((resolve) => {
+            avatar.onload = () => {
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(padding + colWidth + 18, currentY + 18, 10, 0, Math.PI * 2);
+              ctx.closePath();
+              ctx.clip();
+              ctx.drawImage(avatar, padding + colWidth + 8, currentY + 8, 20, 20);
+              ctx.restore();
+              resolve();
+            };
+            avatar.onerror = () => resolve();
+            avatar.crossOrigin = "anonymous";
+            avatar.src = ministry.ministerImageUrl || "";
+          });
+        }
+
         // Texto ministro
         ctx.fillText(ministry.minister || '-', padding + colWidth + 10, currentY + 25);
 
         currentY += rowHeight;
-      });
+      }
 
       // Pie de página
       ctx.fillStyle = '#999999';
@@ -227,13 +253,14 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
 
       {/* Tabla de ministerios */}
       <div className="space-y-3 max-h-96 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-4 sticky top-0 bg-gray-950 p-3 rounded-lg border border-gray-700">
+        <div className="grid grid-cols-3 gap-4 sticky top-0 bg-gray-950 p-3 rounded-lg border border-gray-700">
           <div className="font-semibold text-gray-300">Ministerio</div>
           <div className="font-semibold text-gray-300">Ministro/a</div>
+          <div className="font-semibold text-gray-300">URL imagen</div>
         </div>
 
         {ministries.map((ministry) => (
-          <div key={ministry.id} className="grid grid-cols-2 gap-4 items-center bg-gray-900 p-3 rounded-lg border border-gray-700 hover:border-gray-600 transition">
+          <div key={ministry.id} className="grid grid-cols-3 gap-4 items-center bg-gray-900 p-3 rounded-lg border border-gray-700 hover:border-gray-600 transition">
             <div className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full flex-shrink-0"
@@ -255,6 +282,12 @@ export default function GovernmentBuilder({ partyName, partyColor, candidateName
                 <X className="w-4 h-4" />
               </button>
             </div>
+            <Input
+              value={ministry.ministerImageUrl || ""}
+              onChange={(e) => updateMinisterImage(ministry.id, e.target.value)}
+              placeholder="https://..."
+              className="bg-gray-800 border-gray-600 text-white text-sm"
+            />
           </div>
         ))}
       </div>
