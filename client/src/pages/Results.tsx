@@ -485,6 +485,35 @@ function GobiernoModal({
       return clone;
     });
   };
+  const addMinistry = () => setMinisterios(prev => [...prev, { id: `custom_${Date.now()}`, titulo: "Nuevo Ministerio", icon: "🏛️", ministro: "", partido: "", foto: "" }]);
+  const removeMinistry = (id: string) => setMinisterios(prev => prev.filter(m => m.id !== id));
+  const moveMinistry = (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    setMinisterios(prev => {
+      const from = prev.findIndex(m => m.id === fromId);
+      const to = prev.findIndex(m => m.id === toId);
+      if (from < 0 || to < 0) return prev;
+      const clone = [...prev];
+      const [item] = clone.splice(from, 1);
+      clone.splice(to, 0, item);
+      return clone;
+    });
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
   useEffect(() => {
     const saved = localStorage.getItem(GOV_STORAGE_KEY);
@@ -504,6 +533,14 @@ function GobiernoModal({
   const generarInfografia = async () => {
     setGenerando(true);
     try {
+      const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
+        if (!src) return resolve(null);
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
       // Crear canvas con el gobierno
       const canvas = document.createElement("canvas");
       canvas.width = 1600;
@@ -558,47 +595,56 @@ function GobiernoModal({
         ctx.fillText(`Presidente: ${selectedLeader || "—"}`, 60, 178);
       }
 
-      // Grid ministerios
+      // Grid ministerios (mismo estilo que previsualización instantánea)
       const cols = 4;
-      const rows = Math.ceil(ministerios.length / cols);
-      const boxW = 350;
-      const boxH = 70;
+      const boxW = 360;
+      const boxH = 150;
       const startX = 40;
       const startY = 220;
-      const gapX = 390;
-      const gapY = 80;
+      const gapX = 20;
+      const gapY = 16;
 
       ministerios.forEach((min, i) => {
         const col = i % cols;
         const row = Math.floor(i / cols);
-        const x = startX + col * gapX;
-        const y = startY + row * gapY;
+        const x = startX + col * (boxW + gapX);
+        const y = startY + row * (boxH + gapY);
+        const leader = leaders.find(l => l.leader_name === min.ministro);
+        const pKey = min.partido || leader?.party_key || "";
+        const pMeta = partyMeta[pKey];
         const titular = min.ministro || "Sin asignar";
 
-        // Box
-        ctx.fillStyle = titular !== "Sin asignar" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)";
-        ctx.beginPath();
-        ctx.roundRect(x, y, boxW, boxH - 6, 8);
-        ctx.fill();
-
-        // Border
-        ctx.strokeStyle = titular !== "Sin asignar" ? (pm?.color || "#e8465a") + "40" : "rgba(255,255,255,0.06)";
-        ctx.lineWidth = 1;
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.beginPath(); ctx.roundRect(x, y, boxW, boxH, 14); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
         ctx.stroke();
 
-        // Text
-        ctx.fillStyle = "rgba(255,255,255,0.4)";
-        ctx.font = "9px monospace";
-        ctx.fillText((min.titulo || "").toUpperCase(), x + 10, y + 18);
-        ctx.fillStyle = "#f0eff8";
-        ctx.font = "bold 13px 'DM Sans', sans-serif";
-        ctx.fillText(titular.length > 38 ? titular.slice(0, 38) + "…" : titular, x + 10, y + 40);
-        ctx.fillStyle = "rgba(255,255,255,0.5)";
-        ctx.font = "9px monospace";
-        ctx.fillText(min.partido || "IND", x + 10, y + 56);
-        ctx.fillStyle = "rgba(255,255,255,0.3)";
-        ctx.font = "16px serif";
-        ctx.fillText(min.icon || "🏛️", x + boxW - 28, y + 38);
+        // avatar
+        const avatarX = x + 14, avatarY = y + 16, avatarS = 36;
+        ctx.fillStyle = pMeta?.color || "#444";
+        ctx.beginPath(); ctx.arc(avatarX + avatarS / 2, avatarY + avatarS / 2, avatarS / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 14px 'DM Sans', sans-serif";
+        ctx.fillText((titular || "I").charAt(0).toUpperCase(), avatarX + 12, avatarY + 24);
+
+        // texts
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 13px 'DM Sans', sans-serif";
+        ctx.fillText(min.titulo || "Ministerio", x + 58, y + 30);
+        ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "12px 'DM Sans', sans-serif";
+        ctx.fillText(titular.length > 32 ? `${titular.slice(0, 32)}…` : titular, x + 14, y + 68);
+
+        // party tag + logo
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.beginPath(); ctx.roundRect(x + 14, y + 82, 60, 20, 10); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "bold 10px monospace";
+        ctx.fillText((pMeta?.name || pKey || "IND").slice(0, 8), x + 20, y + 96);
+
+        const logoImg = pMeta?.logo ? null : null; // keep layout identical fallback
+        if (!logoImg) {
+          ctx.fillStyle = "rgba(255,255,255,0.45)";
+          ctx.font = "10px monospace";
+          ctx.fillText(pMeta?.logo ? "" : "IND", x + 84, y + 96);
+        }
       });
 
       // Footer
