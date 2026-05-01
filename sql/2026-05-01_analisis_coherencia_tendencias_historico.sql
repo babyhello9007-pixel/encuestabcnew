@@ -214,3 +214,49 @@ create table if not exists public.noche_electoral_directo (
 );
 
 create index if not exists noche_electoral_directo_close_idx on public.noche_electoral_directo(close_at);
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
+
+create table if not exists public.electionsdirect (
+  id bigserial primary key,
+  election_date date not null,
+  region_name text not null,
+  region_flag_url text,
+  close_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.electiondirect_results (
+  id bigserial primary key,
+  election_id bigint not null references public.electionsdirect(id) on delete cascade,
+  party_id bigint not null references public.party_configuration(id) on delete restrict,
+  porcentaje_voto numeric(5,2) not null default 0,
+  escanos integer,
+  is_projection boolean not null default true,
+  is_final boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint electiondirect_results_unique unique (election_id, party_id)
+);
+
+alter table public.electiondirect_results add column if not exists proyected_escaños numeric;
+alter table public.electiondirect_results add column if not exists proyected_porcentaje numeric;
+alter table public.electiondirect_results add column if not exists "Candidato" text;
+
+create index if not exists idx_electiondirect_results_election on public.electiondirect_results(election_id);
+create index if not exists idx_electiondirect_results_party on public.electiondirect_results(party_id);
+
+create or replace view public.noche_electoral_directo as
+select
+  e.id,
+  e.election_date,
+  e.region_name,
+  e.region_flag_url,
+  e.close_at,
+  coalesce(sum(case when r.is_projection then r.porcentaje_voto else 0 end), 0)::numeric(5,2) as estimate_bc,
+  nullif(sum(case when r.is_final then r.porcentaje_voto else 0 end), 0)::numeric(5,2) as final_result
+from public.electionsdirect e
+left join public.electiondirect_results r on r.election_id = e.id
+group by e.id, e.election_date, e.region_name, e.region_flag_url, e.close_at;
+=======
+>>>>>>> main

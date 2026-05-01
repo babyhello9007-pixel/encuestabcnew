@@ -78,8 +78,14 @@ interface VotoHistorico {
   votos: number; porcentaje: number;
 }
 interface NocheElectoralRow {
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
+  id: number;
+  election_date: string; region_name: string; region_flag_url: string | null; close_at: string;
+  results: { party_id: number; party_key: string; display_name: string; color: string; logo_url?: string; porcentaje_voto: number; escanos: number | null; proyected_escaños?: number | null; proyected_porcentaje?: number | null; candidato?: string | null; is_projection: boolean; is_final: boolean; }[];
+=======
   election_date: string; region_name: string; region_flag_url: string | null;
   estimate_bc: number; final_result: number | null; close_at: string;
+>>>>>>> main
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
@@ -1727,6 +1733,10 @@ export default function Results() {
   const [historicoRows, setHistoricoRows] = useState<any[]>([]);
   const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
   const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
+  const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
+=======
+>>>>>>> main
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1885,7 +1895,44 @@ export default function Results() {
         try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
         try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
         try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
+        try {
+          const { data } = await supabase
+            .from("electionsdirect")
+            .select("id,election_date,region_name,region_flag_url,close_at,electiondirect_results(porcentaje_voto,escanos,proyected_escaños,proyected_porcentaje,Candidato,is_projection,is_final,party_configuration(id,party_key,display_name,color,logo_url))")
+            .order("close_at", { ascending: true });
+          const normalized = (data || []).map((r: any) => ({
+            id: r.id,
+            election_date: r.election_date,
+            region_name: r.region_name,
+            region_flag_url: r.region_flag_url,
+            close_at: r.close_at,
+            results: (r.electiondirect_results || []).map((x: any) => ({
+              party_id: x.party_configuration?.id,
+              party_key: x.party_configuration?.party_key,
+              display_name: x.party_configuration?.display_name,
+              color: x.party_configuration?.color,
+              logo_url: x.party_configuration?.logo_url,
+              porcentaje_voto: Number(x.porcentaje_voto || 0),
+              escanos: x.escanos,
+              proyected_escaños: x.proyected_escaños,
+              proyected_porcentaje: x.proyected_porcentaje,
+              candidato: x.Candidato,
+              is_projection: !!x.is_projection,
+              is_final: !!x.is_final,
+            })),
+          }));
+          setNocheElectoralRows(normalized as NocheElectoralRow[]);
+        } catch {}
+        try {
+          const { data } = await supabase.from("party_leaders").select("leader_name, photo_url").eq("is_active", true);
+          const map: Record<string, string> = {};
+          (data || []).forEach((l: any) => { if (l.leader_name && l.photo_url) map[String(l.leader_name).trim().toLowerCase()] = l.photo_url; });
+          setLeaderPhotoByName(map);
+        } catch {}
+=======
         try { const { data } = await supabase.from("noche_electoral_directo").select("*").order("close_at", { ascending: true }); setNocheElectoralRows((data || []) as NocheElectoralRow[]); } catch {}
+>>>>>>> main
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -2123,7 +2170,30 @@ export default function Results() {
                           <strong>{r.region_name}</strong>
                           <span style={{ marginLeft: "auto", color: "#7a7990", fontSize: 12 }}>Cierre: {hh}:{mm}:{ss}</span>
                         </div>
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
+                        <div style={{ fontSize: 12, color: "#7a7990" }}>Resultados por partido (desde party_configuration)</div>
+                        <div style={{ display: "grid", gap: 4 }}>
+                          {r.results?.map((pr, idx) => (
+                            <div key={`${pr.party_id}-${idx}`} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                              {pr.logo_url ? <img src={pr.logo_url} alt={pr.display_name} style={{ width: 16, height: 16, objectFit: "contain", borderRadius: 3 }} /> : null}
+                              <span style={{ width: 8, height: 8, borderRadius: 999, background: pr.color || "#999" }} />
+                              <span style={{ minWidth: 120 }}>{pr.display_name}</span>
+                              <b>{(pr.proyected_porcentaje ?? pr.porcentaje_voto).toFixed(2)}%</b>
+                              <span style={{ color: "#7a7990" }}>{pr.escanos ?? "-"} escaños</span>
+                              <span style={{ color: "#7a7990" }}>proj: {pr.proyected_escaños ?? "-"} </span>
+                              {pr.candidato ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  {leaderPhotoByName[String(pr.candidato).trim().toLowerCase()] ? <img src={leaderPhotoByName[String(pr.candidato).trim().toLowerCase()]} alt={pr.candidato || ""} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} /> : null}
+                                  <span>{pr.candidato}</span>
+                                </span>
+                              ) : null}
+                              <span style={{ marginLeft: "auto", color: pr.is_final ? "#22c55e" : "#f59e0b" }}>{pr.is_final ? "Final" : pr.is_projection ? "Proyección" : "Parcial"}</span>
+                            </div>
+                          ))}
+                        </div>
+=======
                         <div style={{ fontSize: 12 }}>Estimado BC: <b>{Number(r.estimate_bc || 0).toFixed(2)}%</b> · Resultado final: <b>{r.final_result == null ? "Pendiente" : `${Number(r.final_result).toFixed(2)}%`}</b></div>
+>>>>>>> main
                       </div>;
                     })}
                   </div>
