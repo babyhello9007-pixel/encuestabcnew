@@ -42,11 +42,24 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: `${window.location.origin}/api/trpc`,
       transformer: superjson,
-      fetch(input, init) {
-        return globalThis.fetch(input, {
+      async fetch(input, init) {
+        const doFetch = (target: RequestInfo | URL) => globalThis.fetch(target, {
           ...(init ?? {}),
           credentials: "include",
         });
+
+        const primary = await doFetch(input);
+        const contentType = primary.headers.get("content-type") || "";
+
+        // Some deployments may route /api/trpc to index.html fallback.
+        // If HTML is returned, retry against /trpc as compatibility fallback.
+        if (contentType.includes("text/html") && typeof window !== "undefined") {
+          const original = typeof input === "string" ? input : (input as Request).url;
+          const retried = original.replace("/api/trpc", "/trpc");
+          if (retried !== original) return doFetch(retried);
+        }
+
+        return primary;
       },
     }),
   ],
