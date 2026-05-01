@@ -15,9 +15,15 @@ import {
   Loader2, Download, Sparkles, Plus, Trash2, RefreshCw,
   Map, Grid3x3, ChevronDown, Users, BarChart2, MapPin,
   Vote, Star, TrendingUp, X, Image, FileText, Award,
-  Building2, Crown, UserCheck,
+  Building2, Crown, UserCheck, AlertTriangle, Activity,
+  History, ArrowRight, Zap, Filter, GitBranch,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Cell, LineChart, Line, Legend,
+  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+  ScatterChart, Scatter, ZAxis, Sankey
+} from "recharts";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { ShareResultsModern } from "@/components/ShareResultsModern";
 import { CommentsSection } from "@/components/CommentsSection";
@@ -59,6 +65,17 @@ interface LiderPreferido {
 interface PartyMeta {
   key: string; name: string; color: string; logo: string;
 }
+interface RankingLiderPartido {
+  partido: string; lider_preferido: string; total_votos: number; porcentaje: number;
+}
+interface HistoricoEleccion {
+  año: number; tipo: string; partido: string;
+  porcentaje: number; escanos: number; votos: number;
+}
+interface VotoHistorico {
+  partido: string; tipo: string; snapshot_at: string;
+  votos: number; porcentaje: number;
+}
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const RESULTS_CSS = `
@@ -80,6 +97,8 @@ const RESULTS_CSS = `
 .r-hbtn-infog:hover { background: rgba(99,102,241,0.25); }
 .r-hbtn-gov { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
 .r-hbtn-gov:hover { background: rgba(16,185,129,0.25); }
+.r-hbtn-pdf { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
+.r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
 
 /* Subnav */
 .r-subnav { position: sticky; top: 58px; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
