@@ -341,10 +341,16 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 220 });
   const ref = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null); };
+    const h = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const insideNav = ref.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideNav && !insideDropdown) setOpenGroup(null);
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
@@ -381,7 +387,7 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
               </button>
               {isOpen && (
                 createPortal(
-                  <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px`, minWidth: `${dropdownPos.width}px`, zIndex: 2147483647 }}>
+                  <div ref={dropdownRef} className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px`, minWidth: `${dropdownPos.width}px`, zIndex: 2147483647 }}>
                     {group.tabs.map(tab => (
                       <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
                         onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
