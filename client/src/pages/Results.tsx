@@ -305,7 +305,7 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias";
+  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico";
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
@@ -331,6 +331,8 @@ const TAB_GROUPS: TabGroup[] = [
   ]},
   { label: "Análisis", icon: <BarChart2 className="w-3.5 h-3.5" />, tabs: [
     { key: "tendencias", label: "Tendencias" },
+    { key: "analisis-avanzado", label: "Coherencia y Visualizaciones" },
+    { key: "contexto-historico", label: "Contexto Histórico" },
     { key: "preguntas-varias", label: "Preguntas Varias" },
   ]},
 ];
@@ -485,6 +487,21 @@ function GobiernoModal({
       return clone;
     });
   };
+
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
   useEffect(() => {
     const saved = localStorage.getItem(GOV_STORAGE_KEY);
@@ -1137,6 +1154,32 @@ function LeadersByPartyAvg({ leaderRatings, generalStats, generalPartyMap }: {
   );
 }
 
+function AnalisisAvanzadoSection({
+  coherenciaRows, flujosRows, ideologiaRows, correlacionRows, historicoRows,
+}: {
+  coherenciaRows: any[]; flujosRows: any[]; ideologiaRows: any[]; correlacionRows: any[]; historicoRows: any[];
+}) {
+  const sankeyData = {
+    nodes: Array.from(new Set([...flujosRows.map(r => r.origen), ...flujosRows.map(r => r.destino)])).map((name) => ({ name })),
+    links: flujosRows.map((r: any) => ({ source: r.origen, target: r.destino, value: r.cantidad })),
+  };
+  const bubbleData = ideologiaRows.map((r: any) => ({ x: Number(r.ideologia_media || 0), y: Number(r.total || 0), z: Number(r.total || 0), partido: r.partido }));
+  const radarData = correlacionRows.slice(0, 6).map((r: any) => ({ partido: r.partido, feijoo: r.avg_feijoo || 0, sanchez: r.avg_sanchez || 0, abascal: r.avg_abascal || 0 }));
+  const tendenciaActual = historicoRows.slice(-5);
+
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div className="r-section"><div className="r-section-title">Coherencia de voto</div>
+        <div style={{ display: "grid", gap: 8 }}>{coherenciaRows.slice(0, 8).map((r: any) => <div key={r.partido_votado} style={{ fontSize: 12, color: "#c9c8d9" }}>{r.partido_votado}: {r.total_votantes} votantes · incoherencias: {(r.pp_valora_sanchez || 0) + (r.psoe_valora_feijoo || 0) + (r.vox_valora_sanchez || 0) + (r.psoe_valora_abascal || 0)}</div>)}</div>
+      </div>
+      <div className="r-section"><div className="r-section-title">Sankey: flujo generales → autonómicas</div><ResponsiveContainer width="100%" height={260}><Sankey data={sankeyData} nodePadding={20} margin={{ left: 20, right: 20, top: 10, bottom: 10 }} link={{ stroke: "#8884d8" }} /></ResponsiveContainer></div>
+      <div className="r-section"><div className="r-section-title">Bubble: tamaño votos / posición ideológica</div><ResponsiveContainer width="100%" height={250}><ScatterChart><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" /><XAxis type="number" dataKey="x" name="Ideología" stroke="#7a7990" /><YAxis type="number" dataKey="y" name="Votos" stroke="#7a7990" /><ZAxis dataKey="z" range={[50, 600]} /><Tooltip cursor={{ strokeDasharray: "3 3" }} /><Scatter data={bubbleData} fill="#e8465a" /></ScatterChart></ResponsiveContainer></div>
+      <div className="r-section"><div className="r-section-title">Radar líderes (promedio por partido)</div><ResponsiveContainer width="100%" height={260}><RadarChart data={radarData}><PolarGrid /><PolarAngleAxis dataKey="partido" /><PolarRadiusAxis angle={30} domain={[0, 10]} /><Radar name="Feijóo" dataKey="feijoo" stroke="#60a5fa" fill="#60a5fa" fillOpacity={0.3} /><Radar name="Sánchez" dataKey="sanchez" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.2} /><Radar name="Abascal" dataKey="abascal" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} /><Legend /></RadarChart></ResponsiveContainer></div>
+      <div className="r-section"><div className="r-section-title">Predicción y tendencia (últimos snapshots)</div><ResponsiveContainer width="100%" height={250}><LineChart data={tendenciaActual}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" /><XAxis dataKey="snapshot_at" tick={{ fill: "#7a7990", fontSize: 10 }} /><YAxis tick={{ fill: "#7a7990", fontSize: 10 }} /><Tooltip /><Line type="monotone" dataKey="porcentaje" stroke="#f59e0b" dot={false} /></LineChart></ResponsiveContainer></div>
+    </div>
+  );
+}
+
 // ─── Simulador Electoral ──────────────────────────────────────────────────────
 interface SimuladorProps {
   generalStats: PartyStats[];
@@ -1661,6 +1704,12 @@ export default function Results() {
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
   const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
   const [leadersSubTab, setLeadersSubTab] = useState<"individual" | "porpartido">("individual");
+  const [coherenciaRows, setCoherenciaRows] = useState<any[]>([]);
+  const [flujosRows, setFlujosRows] = useState<any[]>([]);
+  const [ideologiaRows, setIdeologiaRows] = useState<any[]>([]);
+  const [correlacionRows, setCorrelacionRows] = useState<any[]>([]);
+  const [historicoRows, setHistoricoRows] = useState<any[]>([]);
+  const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1813,6 +1862,12 @@ export default function Results() {
         try { const { data } = await supabase.from("media_nota_ejecutivo").select("nota_media"); if (data?.[0]) setNotaEjecutivo(data[0].nota_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("edad_promedio").select("edad_media"); if (data?.[0]) setEdadPromedio(data[0].edad_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("ideologia_promedio").select("ideologia_media"); if (data?.[0]) setIdeologiaPromedio(data[0].ideologia_media); } catch { /* skip */ }
+        try { const { data } = await supabase.from("coherencia_voto_lider").select("*"); setCoherenciaRows(data || []); } catch {}
+        try { const { data } = await supabase.from("flujos_voto").select("*").limit(40); setFlujosRows(data || []); } catch {}
+        try { const { data } = await supabase.from("ideologia_por_partido").select("*"); setIdeologiaRows(data || []); } catch {}
+        try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
+        try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
+        try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -1975,6 +2030,30 @@ export default function Results() {
 
               {/* Tabs content */}
               {activeTab === "tendencias" && <TrendenciesChart partyColors={partyColorMap} />}
+              {activeTab === "analisis-avanzado" && (
+                <AnalisisAvanzadoSection
+                  coherenciaRows={coherenciaRows}
+                  flujosRows={flujosRows}
+                  ideologiaRows={ideologiaRows}
+                  correlacionRows={correlacionRows}
+                  historicoRows={historicoRows}
+                />
+              )}
+              {activeTab === "contexto-historico" && (
+                <div className="r-section">
+                  <div className="r-section-title">Contexto histórico y ciclos electorales</div>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={historicoElecciones}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                      <XAxis dataKey="año" tick={{ fill: "#7a7990" }} />
+                      <YAxis tick={{ fill: "#7a7990" }} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="porcentaje" stroke="#e8465a" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
               {activeTab === "preguntas-varias" && <PreguntasVariasSection />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
