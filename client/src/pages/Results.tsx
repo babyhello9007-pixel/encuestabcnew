@@ -88,7 +88,7 @@ const RESULTS_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
 
 .r-root { --top-anchor: 64px; min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #1f2937 0%, #0a0a0f 45%, #07070b 100%); color: #f0eff8; font-family: 'Plus Jakarta Sans', sans-serif; }
-.r-header { position: sticky; top: var(--top-anchor); z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
+.r-header { position: relative; top: 0; z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
 .r-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .r-brand img { height: 28px; width: 28px; }
 .r-brand-title { font-size: 14px; font-weight: 700; color: #f0eff8; line-height: 1.2; }
@@ -107,7 +107,7 @@ const RESULTS_CSS = `
 .r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
 
 /* Subnav */
-.r-subnav { position: sticky; top: calc(var(--top-anchor) + 58px); z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
+.r-subnav { position: relative; top: 0; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
 .r-subnav::-webkit-scrollbar { height: 3px; }
 .r-subnav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 .r-subnav-inner { display: flex; align-items: stretch; padding: 0 16px; min-width: max-content; }
@@ -1835,7 +1835,7 @@ export default function Results() {
                 pd.forEach((r: any) => { if (r.provincia && r.partido) { if (!vp[r.provincia]) vp[r.provincia] = {}; vp[r.provincia][resolvePartyKey(String(r.partido), generalPartyMap)] = r.votos; } });
                 setVotosPorProvincia(vp);
                 try {
-                  const { data: md } = await supabase.from("respuestas").select("provincia, edad, posicion_ideologica, voto_generales");
+                  const { data: md } = await supabase.from("respuestas").select("provincia, edad, posicion_ideologica, voto_generales").limit(2500);
                   if (md) {
                     const pc: Record<string, { es: number; is: number; c: number }> = {};
                     const pp: Record<string, { sum: number; count: number }> = {};
