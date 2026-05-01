@@ -2,10 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { TwitterFeed } from "@/components/TwitterFeed";
-import Footer from "@/components/Footer";
-import FollowUsMenu from "@/components/FollowUsMenu";
-import { ArrowRight, BarChart3, Lock, Zap, ChevronDown, X, Menu } from "lucide-react";
+import { ArrowRight, BarChart3, Lock, Zap, ChevronDown, X, Menu, Sparkles } from "lucide-react";
 
 // Animated counter hook
 function useAnimatedCounter(target: number, duration = 1500) {
@@ -65,193 +62,119 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (showEncuestaMenu) setShowEncuestaMenu(false);
-    };
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [showEncuestaMenu]);
-
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--bc-bg)", fontFamily: "'DM Sans', 'Inter', sans-serif" }}>
-
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" style={{ fontFamily: "'DM Sans', 'Inter', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;800&display=swap');
 
-        :root {
-          --bc-bg: #0a0a0f;
-          --bc-surface: #111118;
-          --bc-surface2: #18181f;
-          --bc-border: rgba(255,255,255,0.07);
-          --bc-border2: rgba(255,255,255,0.12);
-          --bc-text: #f0eff8;
-          --bc-muted: #8b8aa0;
-          --bc-accent: #e8465a;
-          --bc-accent2: #ff6b7a;
-          --bc-accent-dim: rgba(232,70,90,0.12);
-          --bc-gold: #c9a96e;
-          --bc-gold-dim: rgba(201,169,110,0.1);
+        * { box-sizing: border-box; }
+
+        .frosted-glass {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+        }
+
+        .liquid-glass {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+          backdrop-filter: blur(30px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 20px;
         }
 
         .bc-header {
           position: sticky;
           top: 0;
           z-index: 50;
-          padding: 0 2rem;
+          padding: 0 1rem;
           height: 64px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          transition: background 0.3s, border-color 0.3s;
+          transition: all 0.3s ease;
         }
+
         .bc-header.scrolled {
-          background: rgba(10,10,15,0.85);
+          background: rgba(15, 23, 42, 0.7);
           backdrop-filter: blur(20px);
-          border-bottom: 1px solid var(--bc-border);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .bc-nav-link {
           font-size: 14px;
           font-weight: 500;
-          color: var(--bc-muted);
+          color: rgba(255, 255, 255, 0.6);
           text-decoration: none;
           transition: color 0.2s;
           cursor: pointer;
           background: none;
           border: none;
-          padding: 0;
+          padding: 8px 12px;
         }
-        .bc-nav-link:hover { color: var(--bc-text); }
 
-        .bc-dropdown {
-          position: absolute;
-          top: calc(100% + 12px);
-          left: 50%;
-          transform: translateX(-50%);
-          width: 220px;
-          background: var(--bc-surface2);
-          border: 1px solid var(--bc-border2);
-          border-radius: 12px;
-          overflow: hidden;
-          animation: dropIn 0.15s ease;
-        }
-        @keyframes dropIn {
-          from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        .bc-dropdown-item {
-          display: block;
-          width: 100%;
-          text-align: left;
-          padding: 12px 16px;
-          font-size: 14px;
-          color: var(--bc-muted);
-          background: none;
-          border: none;
-          cursor: pointer;
-          transition: background 0.15s, color 0.15s;
-          border-bottom: 1px solid var(--bc-border);
-        }
-        .bc-dropdown-item:last-child { border-bottom: none; }
-        .bc-dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--bc-text); }
+        .bc-nav-link:hover { color: rgba(255, 255, 255, 1); }
 
-        /* Hero */
         .bc-hero {
           position: relative;
-          padding: 120px 2rem 100px;
+          padding: 60px 1rem;
           overflow: hidden;
         }
+
+        @media (min-width: 768px) {
+          .bc-hero { padding: 120px 2rem 100px; }
+        }
+
         .bc-hero-grid {
           max-width: 1200px;
           margin: 0 auto;
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 80px;
+          grid-template-columns: 1fr;
+          gap: 40px;
           align-items: center;
         }
-        @media (max-width: 900px) {
-          .bc-hero-grid { grid-template-columns: 1fr; gap: 48px; }
-          .bc-hero { padding: 80px 1.5rem 60px; }
-        }
 
-        /* Background orbs */
-        .bc-orb {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(80px);
-          pointer-events: none;
-          z-index: 0;
-        }
-        .bc-orb-1 {
-          width: 500px; height: 500px;
-          background: radial-gradient(circle, rgba(232,70,90,0.12) 0%, transparent 70%);
-          top: -100px; right: -100px;
-        }
-        .bc-orb-2 {
-          width: 400px; height: 400px;
-          background: radial-gradient(circle, rgba(201,169,110,0.07) 0%, transparent 70%);
-          bottom: -50px; left: -100px;
-        }
-
-        .bc-eyebrow {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: var(--bc-accent-dim);
-          border: 1px solid rgba(232,70,90,0.25);
-          border-radius: 100px;
-          padding: 6px 14px;
-          font-size: 12px;
-          font-weight: 600;
-          color: var(--bc-accent2);
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          margin-bottom: 24px;
-        }
-        .bc-eyebrow-dot {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: var(--bc-accent);
-          animation: pulse 2s ease infinite;
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(0.8); }
+        @media (min-width: 768px) {
+          .bc-hero-grid { grid-template-columns: 1fr 1fr; gap: 80px; }
         }
 
         .bc-headline {
           font-family: 'Playfair Display', Georgia, serif;
-          font-size: clamp(40px, 5vw, 64px);
+          font-size: clamp(32px, 8vw, 64px);
           font-weight: 800;
           line-height: 1.1;
-          color: var(--bc-text);
+          color: rgba(255, 255, 255, 0.95);
           margin: 0 0 20px;
           letter-spacing: -0.02em;
         }
-        .bc-headline-accent { color: var(--bc-accent); }
+
+        .bc-headline-accent { color: #e8465a; }
 
         .bc-subline {
-          font-size: 18px;
+          font-size: clamp(16px, 4vw, 18px);
           line-height: 1.7;
-          color: var(--bc-muted);
+          color: rgba(255, 255, 255, 0.6);
           margin: 0 0 40px;
           max-width: 440px;
         }
 
-        /* CTA Buttons */
         .bc-cta-group {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          max-width: 380px;
+          max-width: 100%;
         }
+
+        @media (min-width: 480px) {
+          .bc-cta-group { max-width: 380px; }
+        }
+
         .bc-btn-primary {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
-          background: var(--bc-accent);
+          background: #e8465a;
           color: #fff;
           border: none;
           border-radius: 10px;
@@ -260,629 +183,263 @@ export default function Home() {
           font-weight: 600;
           font-family: inherit;
           cursor: pointer;
-          transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-          box-shadow: 0 0 0 0 rgba(232,70,90,0);
+          transition: all 0.2s;
+          width: 100%;
         }
+
+        @media (min-width: 480px) {
+          .bc-btn-primary { width: auto; }
+        }
+
         .bc-btn-primary:hover {
-          background: var(--bc-accent2);
-          transform: translateY(-1px);
-          box-shadow: 0 8px 30px rgba(232,70,90,0.3);
+          background: #ff6b7a;
+          transform: translateY(-2px);
+          box-shadow: 0 12px 40px rgba(232, 70, 90, 0.3);
         }
-        .bc-btn-primary:active { transform: translateY(0); }
 
         .bc-btn-secondary {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
-          background: var(--bc-surface2);
-          color: var(--bc-text);
-          border: 1px solid var(--bc-border2);
+          background: rgba(255, 255, 255, 0.08);
+          color: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 10px;
           padding: 14px 28px;
           font-size: 15px;
           font-weight: 500;
           font-family: inherit;
           cursor: pointer;
-          transition: background 0.2s, border-color 0.2s;
+          transition: all 0.2s;
+          width: 100%;
         }
+
+        @media (min-width: 480px) {
+          .bc-btn-secondary { width: auto; }
+        }
+
         .bc-btn-secondary:hover {
-          background: rgba(255,255,255,0.06);
-          border-color: rgba(255,255,255,0.2);
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.25);
         }
 
-        .bc-btn-ghost {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          background: transparent;
-          color: var(--bc-muted);
-          border: 1px solid var(--bc-border);
-          border-radius: 10px;
-          padding: 14px 28px;
-          font-size: 15px;
-          font-weight: 500;
-          font-family: inherit;
-          cursor: pointer;
-          transition: color 0.2s, border-color 0.2s;
-        }
-        .bc-btn-ghost:hover { color: var(--bc-text); border-color: var(--bc-border2); }
-
-        /* Stats card */
-        .bc-stat-card {
-          background: var(--bc-surface);
-          border: 1px solid var(--bc-border2);
-          border-radius: 20px;
-          padding: 40px;
-          position: relative;
-          overflow: hidden;
-        }
-        .bc-stat-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(232,70,90,0.05) 0%, transparent 60%);
-          pointer-events: none;
-        }
-        .bc-stat-label {
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--bc-accent);
-          margin-bottom: 12px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .bc-stat-live {
-          width: 8px; height: 8px;
-          border-radius: 50%;
-          background: var(--bc-accent);
-          animation: pulse 1.5s ease infinite;
-        }
-        .bc-stat-number {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-size: clamp(52px, 8vw, 80px);
-          font-weight: 800;
-          color: var(--bc-text);
-          line-height: 1;
-          letter-spacing: -0.03em;
-          margin-bottom: 8px;
-        }
-        .bc-stat-sub {
-          font-size: 15px;
-          color: var(--bc-muted);
-          line-height: 1.5;
-        }
-
-        .bc-mini-stats {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-          margin-top: 20px;
-        }
-        .bc-mini-stat {
-          background: var(--bc-surface2);
-          border: 1px solid var(--bc-border);
-          border-radius: 12px;
-          padding: 16px;
-        }
-        .bc-mini-stat-num {
-          font-size: 22px;
-          font-weight: 700;
-          color: var(--bc-gold);
-          margin-bottom: 2px;
-        }
-        .bc-mini-stat-label {
-          font-size: 12px;
-          color: var(--bc-muted);
-        }
-
-        /* Section styles */
-        .bc-section {
-          padding: 100px 2rem;
-          position: relative;
-        }
-        .bc-section-alt {
-          background: var(--bc-surface);
-        }
-        .bc-container {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-        .bc-section-header {
-          text-align: center;
-          margin-bottom: 64px;
-        }
-        .bc-section-title {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-size: clamp(32px, 4vw, 48px);
-          font-weight: 700;
-          color: var(--bc-text);
-          margin: 0 0 16px;
-          letter-spacing: -0.02em;
-        }
-        .bc-section-sub {
-          font-size: 17px;
-          color: var(--bc-muted);
-          max-width: 540px;
-          margin: 0 auto;
-          line-height: 1.7;
-        }
-
-        /* Feature cards */
-        .bc-features-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-        }
-        @media (max-width: 768px) {
-          .bc-features-grid { grid-template-columns: 1fr; }
-        }
-        .bc-feature-card {
-          background: var(--bc-surface2);
-          border: 1px solid var(--bc-border);
+        .bc-card {
+          padding: 24px;
           border-radius: 16px;
-          padding: 36px 28px;
-          transition: border-color 0.25s, transform 0.25s;
-          cursor: default;
-        }
-        .bc-feature-card:hover {
-          border-color: var(--bc-border2);
-          transform: translateY(-3px);
-        }
-        .bc-feature-icon {
-          width: 52px; height: 52px;
-          border-radius: 12px;
-          background: var(--bc-accent-dim);
-          border: 1px solid rgba(232,70,90,0.2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 24px;
-          color: var(--bc-accent);
-        }
-        .bc-feature-title {
-          font-size: 18px;
-          font-weight: 600;
-          color: var(--bc-text);
-          margin: 0 0 10px;
-        }
-        .bc-feature-text {
-          font-size: 14px;
-          color: var(--bc-muted);
-          line-height: 1.7;
-          margin: 0;
+          transition: all 0.3s ease;
         }
 
-        /* Stats band */
-        .bc-stats-band {
-          background: var(--bc-bg);
-          border-top: 1px solid var(--bc-border);
-          border-bottom: 1px solid var(--bc-border);
-          padding: 60px 2rem;
-        }
-        .bc-stats-band-inner {
-          max-width: 800px;
-          margin: 0 auto;
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1px;
-          background: var(--bc-border);
-          border-radius: 16px;
-          overflow: hidden;
-        }
-        .bc-stat-cell {
-          background: var(--bc-bg);
-          padding: 48px 40px;
-          text-align: center;
-        }
-        .bc-stat-cell-num {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-size: 52px;
-          font-weight: 800;
-          color: var(--bc-accent);
-          letter-spacing: -0.03em;
-          line-height: 1;
-          margin-bottom: 8px;
-        }
-        .bc-stat-cell-label {
-          font-size: 14px;
-          color: var(--bc-muted);
-          letter-spacing: 0.03em;
-        }
-
-        /* Methodology cards */
-        .bc-method-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
-        }
         @media (max-width: 640px) {
-          .bc-method-grid { grid-template-columns: 1fr; }
-        }
-        .bc-method-card {
-          background: var(--bc-bg);
-          border: 1px solid var(--bc-border);
-          border-radius: 14px;
-          padding: 28px;
-          transition: border-color 0.2s;
-        }
-        .bc-method-card:hover { border-color: var(--bc-border2); }
-        .bc-method-num {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--bc-accent);
-          margin-bottom: 10px;
-        }
-        .bc-method-title {
-          font-size: 16px;
-          font-weight: 600;
-          color: var(--bc-text);
-          margin: 0 0 8px;
-        }
-        .bc-method-text {
-          font-size: 14px;
-          color: var(--bc-muted);
-          line-height: 1.65;
-          margin: 0;
+          .bc-card { padding: 20px; }
         }
 
-        /* CTA Final */
-        .bc-cta-final {
-          padding: 120px 2rem;
-          background: var(--bc-surface);
-          position: relative;
-          overflow: hidden;
+        .bc-stat-card {
           text-align: center;
-        }
-        .bc-cta-final::before {
-          content: '';
-          position: absolute;
-          width: 600px; height: 600px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(232,70,90,0.08) 0%, transparent 70%);
-          top: 50%; left: 50%;
-          transform: translate(-50%, -50%);
-          pointer-events: none;
-        }
-        .bc-cta-headline {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-size: clamp(36px, 5vw, 56px);
-          font-weight: 800;
-          color: var(--bc-text);
-          margin: 0 0 20px;
-          letter-spacing: -0.02em;
-          position: relative;
-        }
-        .bc-cta-sub {
-          font-size: 18px;
-          color: var(--bc-muted);
-          max-width: 520px;
-          margin: 0 auto 48px;
-          line-height: 1.7;
-          position: relative;
-        }
-        .bc-cta-buttons {
-          display: flex;
-          gap: 16px;
-          justify-content: center;
-          flex-wrap: wrap;
-          position: relative;
+          padding: 20px;
         }
 
-        /* Mobile menu */
-        .bc-mobile-menu {
-          position: fixed;
-          inset: 0;
-          background: rgba(10,10,15,0.98);
-          backdrop-filter: blur(20px);
-          z-index: 100;
+        @media (max-width: 640px) {
+          .bc-stat-card { padding: 16px; }
+        }
+
+        .bc-stat-value {
+          font-size: clamp(24px, 6vw, 36px);
+          font-weight: 700;
+          color: #e8465a;
+          margin-bottom: 8px;
+        }
+
+        .bc-stat-label {
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.6);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .bc-feature-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        @media (min-width: 640px) {
+          .bc-feature-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .bc-feature-item {
+          padding: 24px;
+          border-radius: 16px;
           display: flex;
           flex-direction: column;
+          gap: 12px;
+        }
+
+        @media (max-width: 640px) {
+          .bc-feature-item { padding: 20px; }
+        }
+
+        .bc-feature-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          background: rgba(232, 70, 90, 0.15);
+          display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          animation: fadeIn 0.2s ease;
+          color: #e8465a;
         }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .bc-mobile-link {
-          font-size: 24px;
+
+        .bc-feature-title {
+          font-size: 16px;
           font-weight: 600;
-          color: var(--bc-muted);
-          background: none;
-          border: none;
-          font-family: inherit;
-          cursor: pointer;
-          padding: 12px 24px;
-          transition: color 0.2s;
-          text-decoration: none;
-          display: block;
-        }
-        .bc-mobile-link:hover { color: var(--bc-text); }
-
-        .bc-divider {
-          width: 40px; height: 2px;
-          background: var(--bc-accent);
-          border-radius: 2px;
-          margin: 0 0 24px;
+          color: rgba(255, 255, 255, 0.9);
         }
 
-        /* Arrow icon animate */
-        .bc-arrow-icon {
-          transition: transform 0.2s;
-          display: inline-block;
+        .bc-feature-desc {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.6);
+          line-height: 1.6;
         }
-        .bc-btn-primary:hover .bc-arrow-icon { transform: translateX(4px); }
+
+        .bc-footer {
+          margin-top: auto;
+          padding: 40px 1rem 20px;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 14px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        @media (max-width: 640px) {
+          .bc-footer { padding: 30px 1rem 15px; }
+        }
       `}</style>
 
-      {/* Mobile menu overlay */}
-      {mobileMenuOpen && (
-        <div className="bc-mobile-menu">
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", color: "var(--bc-muted)", cursor: "pointer" }}
-          >
-            <X size={28} />
-          </button>
-          <button className="bc-mobile-link" onClick={() => { setLocation("/nano-encuesta"); setMobileMenuOpen(false); }}>
-            NanoEncuesta (5 min)
-          </button>
-          <button className="bc-mobile-link" onClick={() => { setLocation("/encuesta"); setMobileMenuOpen(false); }}>
-            Encuesta Completa
-          </button>
-          <a href="/resultados" className="bc-mobile-link" onClick={() => setMobileMenuOpen(false)}>Resultados</a>
-          <a href="/acerca-de" className="bc-mobile-link" onClick={() => setMobileMenuOpen(false)}>Acerca de</a>
-          <a href="https://batallaperi-avauhaz8.manus.space/" target="_blank" rel="noreferrer" className="bc-mobile-link" onClick={() => setMobileMenuOpen(false)}>Quorum</a>
-        </div>
-      )}
-
       {/* Header */}
-      <header className={`bc-header${scrolled ? " scrolled" : ""}`}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <img src="/favicon.png" alt="BC Logo" style={{ height: 32, width: 32 }} />
-          <span style={{ fontSize: 16, fontWeight: 700, color: "var(--bc-text)", letterSpacing: "-0.01em" }}>
-            Batalla Cultural
-          </span>
+      <header className={`bc-header ${scrolled ? 'scrolled' : ''}`}>
+        <div className="flex items-center gap-3">
+          <img src="/favicon.png" alt="BC" className="h-8 w-8" />
+          <span className="text-lg font-bold text-white hidden sm:inline">Batalla Cultural</span>
         </div>
-
-        {/* Desktop nav */}
-        <nav style={{ display: "flex", gap: 32, alignItems: "center" }} className="hidden md:flex">
-          <div style={{ position: "relative" }}>
-            <button
-              className="bc-nav-link"
-              style={{ display: "flex", alignItems: "center", gap: 4 }}
-              onClick={(e) => { e.stopPropagation(); setShowEncuestaMenu(!showEncuestaMenu); }}
-            >
-              Encuesta <ChevronDown size={14} style={{ transition: "transform 0.2s", transform: showEncuestaMenu ? "rotate(180deg)" : "none" }} />
-            </button>
-            {showEncuestaMenu && (
-              <div className="bc-dropdown" onClick={(e) => e.stopPropagation()}>
-                <button className="bc-dropdown-item" onClick={() => { setLocation("/nano-encuesta"); setShowEncuestaMenu(false); }}>
-                  NanoEncuestaBC <span style={{ fontSize: 12, color: "var(--bc-accent)", marginLeft: 6 }}>5 min</span>
-                </button>
-                <button className="bc-dropdown-item" onClick={() => { setLocation("/encuesta"); setShowEncuestaMenu(false); }}>
-                  Encuesta Completa <span style={{ fontSize: 12, color: "var(--bc-muted)", marginLeft: 6 }}>20 min</span>
-                </button>
-              </div>
-            )}
-          </div>
-          <a href="/resultados" className="bc-nav-link">Resultados</a>
-          <a href="/acerca-de" className="bc-nav-link">Acerca de</a>
-          <a href="https://batallaperi-avauhaz8.manus.space/" target="_blank" rel="noreferrer" className="bc-nav-link">Quorum</a>
-          <FollowUsMenu />
-          <button
-            onClick={() => setLocation("/nano-encuesta")}
-            className="bc-btn-primary"
-            style={{ padding: "10px 20px", fontSize: 14, borderRadius: 8 }}
-          >
+        <nav className="hidden md:flex gap-6">
+          <button className="bc-nav-link" onClick={() => setLocation("/")}>Inicio</button>
+          <button className="bc-nav-link" onClick={() => setLocation("/encuesta")}>Encuesta</button>
+          <button className="bc-nav-link" onClick={() => setLocation("/resultados")}>Resultados</button>
+        </nav>
+        <div className="flex items-center gap-3">
+          <button className="bc-btn-primary" onClick={() => setLocation("/encuesta")}>
             Participar
           </button>
-        </nav>
-
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileMenuOpen(true)}
-          style={{ background: "none", border: "none", color: "var(--bc-muted)", cursor: "pointer" }}
-        >
-          <Menu size={24} />
-        </button>
+          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </header>
 
-      <main style={{ flex: 1 }}>
-
-        {/* Hero */}
+      {/* Main Content */}
+      <main className="flex-1">
+        {/* Hero Section */}
         <section className="bc-hero">
-          <div className="bc-orb bc-orb-1" />
-          <div className="bc-orb bc-orb-2" />
-
-          <div className="bc-hero-grid" style={{ position: "relative", zIndex: 1 }}>
-            {/* Left */}
+          <div className="bc-hero-grid">
+            {/* Left Content */}
             <div>
-              <div className="bc-eyebrow">
-                <span className="bc-eyebrow-dot" />
-                Encuesta en vivo · España 2025
+              <div className="inline-flex items-center gap-2 mb-6 px-3 py-1 frosted-glass w-fit">
+                <Sparkles size={14} className="text-red-400" />
+                <span className="text-xs font-semibold text-red-300 uppercase">En vivo • España 2025</span>
               </div>
               <h1 className="bc-headline">
-                La voz de<br />
-                <span className="bc-headline-accent">España,</span><br />
-                sin filtros
+                La voz de <span className="bc-headline-accent">España</span>, sin filtros
               </h1>
               <p className="bc-subline">
                 Participa en la encuesta política y cultural más importante del año. Tus respuestas construyen el mapa real de la opinión española.
               </p>
               <div className="bc-cta-group">
-                <button
-                  onClick={() => setLocation("/nano-encuesta")}
-                  className="bc-btn-primary"
-                >
-                  Comenzar Encuesta
-                  <span className="bc-arrow-icon"><ArrowRight size={18} /></span>
+                <button className="bc-btn-primary" onClick={() => setLocation("/encuesta")}>
+                  Comenzar Encuesta <ArrowRight size={18} />
                 </button>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <button onClick={() => setLocation("/nano-encuesta")} className="bc-btn-secondary" style={{ fontSize: 14 }}>
-                    Versión rápida · 5 min
-                  </button>
-                  <button onClick={() => setLocation("/resultados")} className="bc-btn-ghost" style={{ fontSize: 14 }}>
-                    Ver resultados
-                  </button>
-                </div>
+                <button className="bc-btn-secondary" onClick={() => setLocation("/resultados")}>
+                  Ver Resultados en Vivo
+                </button>
               </div>
             </div>
 
-            {/* Right — stat card */}
-            <div>
-              <div className="bc-stat-card">
-                <div className="bc-stat-label">
-                  <span className="bc-stat-live" />
-                  Participación en tiempo real
+            {/* Right Stats */}
+            <div className="flex flex-col gap-4">
+              <div className="liquid-glass bc-card">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="bc-stat-value">+{animatedCount.toLocaleString('es-ES')}</div>
+                    <div className="bc-stat-label">Ciudadanos participando</div>
+                  </div>
+                  <BarChart3 size={32} className="text-red-400 opacity-40" />
                 </div>
-                <div className="bc-stat-number">
-                  +{animatedCount.toLocaleString("es-ES")}
-                </div>
-                <p className="bc-stat-sub">ciudadanos han compartido su opinión</p>
+                <p className="text-xs text-white/50">Datos públicos y anónimos • Actualizado en tiempo real</p>
+              </div>
 
-                <div className="bc-mini-stats">
-                  <div className="bc-mini-stat">
-                    <div className="bc-mini-stat-num">100%</div>
-                    <div className="bc-mini-stat-label">Datos públicos</div>
-                  </div>
-                  <div className="bc-mini-stat">
-                    <div className="bc-mini-stat-num">0%</div>
-                    <div className="bc-mini-stat-label">Datos vendidos</div>
-                  </div>
-                  <div className="bc-mini-stat">
-                    <div className="bc-mini-stat-num">5 min</div>
-                    <div className="bc-mini-stat-label">Versión rápida</div>
-                  </div>
-                  <div className="bc-mini-stat">
-                    <div className="bc-mini-stat-num">20 min</div>
-                    <div className="bc-mini-stat-label">Versión completa</div>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="frosted-glass bc-stat-card">
+                  <div className="text-2xl font-bold text-white">61</div>
+                  <div className="bc-stat-label">Preguntas</div>
+                </div>
+                <div className="frosted-glass bc-stat-card">
+                  <div className="text-2xl font-bold text-white">5 min</div>
+                  <div className="bc-stat-label">Tiempo promedio</div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Features */}
-        <section className="bc-section bc-section-alt">
-          <div className="bc-container">
-            <div className="bc-section-header">
-              <div className="bc-divider" style={{ margin: "0 auto 20px" }} />
-              <h2 className="bc-section-title">¿Por qué participar?</h2>
-              <p className="bc-section-sub">
-                Una plataforma transparente, segura y diseñada para capturar la verdadera opinión de los españoles.
-              </p>
+        {/* Features Section */}
+        <section className="px-4 py-16 md:py-24 max-w-6xl mx-auto w-full">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">¿Por qué participar?</h2>
+            <p className="text-white/60 max-w-2xl mx-auto">Transparencia total, privacidad garantizada, análisis profundo</p>
+          </div>
+          <div className="bc-feature-grid">
+            <div className="frosted-glass bc-feature-item">
+              <div className="bc-feature-icon">
+                <Lock size={20} />
+              </div>
+              <div className="bc-feature-title">Privacidad Total</div>
+              <div className="bc-feature-desc">Tus datos son anónimos y públicos. Responde con total libertad.</div>
             </div>
-            <div className="bc-features-grid">
-              <div className="bc-feature-card">
-                <div className="bc-feature-icon"><BarChart3 size={24} /></div>
-                <h3 className="bc-feature-title">Resultados en vivo</h3>
-                <p className="bc-feature-text">
-                  Visualiza los resultados en tiempo real con gráficos interactivos y análisis detallados de cada pregunta.
-                </p>
+            <div className="frosted-glass bc-feature-item">
+              <div className="bc-feature-icon">
+                <BarChart3 size={20} />
               </div>
-              <div className="bc-feature-card">
-                <div className="bc-feature-icon"><Lock size={24} /></div>
-                <h3 className="bc-feature-title">Privacidad total</h3>
-                <p className="bc-feature-text">
-                  Tu información personal nunca se comparte. Responde con total libertad y anonimato garantizado.
-                </p>
+              <div className="bc-feature-title">Resultados en Vivo</div>
+              <div className="bc-feature-desc">Visualiza análisis interactivos actualizados en tiempo real.</div>
+            </div>
+            <div className="frosted-glass bc-feature-item">
+              <div className="bc-feature-icon">
+                <Zap size={20} />
               </div>
-              <div className="bc-feature-card">
-                <div className="bc-feature-icon"><Zap size={24} /></div>
-                <h3 className="bc-feature-title">Rápido y fácil</h3>
-                <p className="bc-feature-text">
-                  Completa la encuesta en solo 5 minutos. Interfaz intuitiva diseñada para tu comodidad.
-                </p>
-              </div>
+              <div className="bc-feature-title">Impacto Real</div>
+              <div className="bc-feature-desc">Tu opinión forma parte del análisis electoral más completo.</div>
             </div>
           </div>
         </section>
 
-        {/* Stats band */}
-        <div className="bc-stats-band">
-          <div className="bc-stats-band-inner">
-            <div className="bc-stat-cell">
-              <div className="bc-stat-cell-num">{animatedCount.toLocaleString("es-ES")}</div>
-              <div className="bc-stat-cell-label">Respuestas registradas</div>
-            </div>
-            <div className="bc-stat-cell">
-              <div className="bc-stat-cell-num">100%</div>
-              <div className="bc-stat-cell-label">Datos públicos y abiertos</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Methodology */}
-        <section className="bc-section bc-section-alt">
-          <div className="bc-container">
-            <div className="bc-section-header">
-              <div className="bc-divider" style={{ margin: "0 auto 20px" }} />
-              <h2 className="bc-section-title">Metodología</h2>
-            </div>
-            <div className="bc-method-grid" style={{ maxWidth: 860, margin: "0 auto" }}>
-              <div className="bc-method-card">
-                <div className="bc-method-num">01</div>
-                <h3 className="bc-method-title">Elecciones Generales</h3>
-                <p className="bc-method-text">350 escaños distribuidos mediante la Ley d'Hondt con un umbral mínimo del 3% de los votos válidos.</p>
-              </div>
-              <div className="bc-method-card">
-                <div className="bc-method-num">02</div>
-                <h3 className="bc-method-title">Asociaciones Juveniles</h3>
-                <p className="bc-method-text">50 escaños distribuidos mediante la Ley d'Hondt con un umbral mínimo del 7% de los votos válidos.</p>
-              </div>
-              <div className="bc-method-card">
-                <div className="bc-method-num">03</div>
-                <h3 className="bc-method-title">Cobertura Completa</h3>
-                <p className="bc-method-text">Incluye preguntas sobre elecciones generales, autonómicas, municipales y europeas.</p>
-              </div>
-              <div className="bc-method-card">
-                <div className="bc-method-num">04</div>
-                <h3 className="bc-method-title">Análisis Profundo</h3>
-                <p className="bc-method-text">Valoraciones de líderes políticos y preguntas sobre políticas clave para el futuro de España.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="bc-cta-final">
-          <h2 className="bc-cta-headline">¿Listo para participar?</h2>
-          <p className="bc-cta-sub">
-            Tu opinión es valiosa. Dedica unos minutos y forma parte de este análisis sobre el futuro político y cultural de España.
-          </p>
-          <div className="bc-cta-buttons">
-            <button
-              onClick={() => setLocation("/nano-encuesta")}
-              className="bc-btn-primary"
-              style={{ fontSize: 16, padding: "16px 32px" }}
-            >
-              Comenzar ahora
-              <span className="bc-arrow-icon"><ArrowRight size={20} /></span>
-            </button>
-            <button
-              onClick={() => setLocation("/resultados")}
-              className="bc-btn-secondary"
-              style={{ fontSize: 16, padding: "16px 32px" }}
-            >
-              Ver resultados
+        {/* CTA Section */}
+        <section className="px-4 py-16 md:py-24 max-w-4xl mx-auto w-full text-center">
+          <div className="liquid-glass bc-card">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">¿Listo para participar?</h3>
+            <p className="text-white/60 mb-8 max-w-2xl mx-auto">
+              Dedica 5 minutos a responder la encuesta y forma parte de este importante análisis sobre el futuro político de España.
+            </p>
+            <button className="bc-btn-primary" onClick={() => setLocation("/encuesta")}>
+              Comenzar Ahora <ArrowRight size={18} />
             </button>
           </div>
         </section>
       </main>
 
-      <TwitterFeed />
-      <Footer />
+      {/* Footer */}
+      <footer className="bc-footer">
+        <p>III Encuesta de Batalla Cultural © 2025 | Todos los datos son anónimos y públicos</p>
+      </footer>
     </div>
   );
 }

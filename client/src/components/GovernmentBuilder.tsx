@@ -1,26 +1,27 @@
+'use client';
+
 import { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { X, Plus, Download, Loader2 } from 'lucide-react';
+import { X, Plus, Download, Eye, Trash2, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface Ministry {
+interface Minister {
   id: string;
+  ministry: string;
   name: string;
-  minister: string;
-  color?: string;
+  party?: string;
 }
 
 interface GovernmentBuilderProps {
   partyName: string;
   partyColor: string;
-  candidateName: string;
+  presidentName: string;
   onClose?: () => void;
 }
 
 const DEFAULT_MINISTRIES = [
   'Presidencia',
-  'Vicepresidencia',
+  'Vicepresidencia Primera',
+  'Vicepresidencia Segunda',
   'Hacienda',
   'Defensa',
   'Interior',
@@ -36,262 +37,276 @@ const DEFAULT_MINISTRIES = [
   'Vivienda',
   'Igualdad',
   'Cultura',
-  'Deporte',
 ];
 
-export default function GovernmentBuilder({ partyName, partyColor, candidateName, onClose }: GovernmentBuilderProps) {
-  const [ministries, setMinistries] = useState<Ministry[]>(
+export default function GovernmentBuilder({ partyName, partyColor, presidentName, onClose }: GovernmentBuilderProps) {
+  const [ministers, setMinisters] = useState<Minister[]>(
     DEFAULT_MINISTRIES.map((m, i) => ({
       id: `min-${i}`,
-      name: m,
-      minister: '',
-      color: partyColor,
+      ministry: m,
+      name: '',
+      party: partyName,
     }))
   );
-  const [governmentName, setGovernmentName] = useState(`Gobierno de ${candidateName}`);
-  const [generating, setGenerating] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [governmentName, setGovernmentName] = useState(`Gobierno de ${presidentName}`);
+  const [showPreview, setShowPreview] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const updateMinister = (id: string, minister: string) => {
-    setMinistries(prev => prev.map(m => m.id === id ? { ...m, minister } : m));
+  const updateMinister = (id: string, field: 'name' | 'party', value: string) => {
+    setMinisters(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
   };
 
   const addMinistry = () => {
     const newId = `min-${Date.now()}`;
-    setMinistries(prev => [...prev, {
+    setMinisters(prev => [...prev, {
       id: newId,
+      ministry: '',
       name: '',
-      minister: '',
-      color: partyColor,
+      party: partyName,
     }]);
   };
 
   const removeMinistry = (id: string) => {
-    setMinistries(prev => prev.filter(m => m.id !== id));
+    setMinisters(prev => prev.filter(m => m.id !== id));
   };
 
-  const generateInfography = async () => {
-    setGenerating(true);
+  const downloadAsImage = async () => {
     try {
-      const canvas = canvasRef.current;
-      if (!canvas) throw new Error('Canvas no disponible');
-
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Contexto de canvas no disponible');
+      if (!ctx) throw new Error('Canvas context unavailable');
 
-      // Dimensiones
-      const width = 1600;
-      const height = 900;
-      canvas.width = width;
-      canvas.height = height;
+      // Fondo gradiente
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#0f172a');
+      gradient.addColorStop(1, '#1e293b');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Fondo blanco
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, height);
-
-      // Franja superior con color del partido
+      // Header
       ctx.fillStyle = partyColor;
-      ctx.fillRect(0, 0, width, 80);
-
-      // Cargar logo presidencia
-      let logoPresidenciaB64 = '';
-      try {
-        const logoResponse = await fetch('/logo-presidencia-blanco.png');
-        const blob = await logoResponse.blob();
-        logoPresidenciaB64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-      } catch (e) {
-        console.warn('Logo presidencia no disponible');
-      }
-
-      // Dibujar logo presidencia
-      if (logoPresidenciaB64) {
-        const img = new window.Image();
-        await new Promise<void>((resolve) => {
-          img.onload = () => {
-            ctx.drawImage(img, 40, 15, 60, 50);
-            resolve();
-          };
-          img.onerror = () => resolve();
-          img.src = logoPresidenciaB64;
-        });
-      }
+      ctx.fillRect(0, 0, canvas.width, 120);
 
       // Título
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 32px Arial';
-      ctx.fillText(governmentName, 120, 55);
+      ctx.font = 'bold 48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(governmentName, canvas.width / 2, 70);
 
-      // Subtítulo
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '16px Arial';
-      ctx.fillText(`Candidato: ${candidateName} | Partido: ${partyName}`, 120, 75);
+      // Presidente
+      ctx.font = '32px Arial';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText(`Presidente: ${presidentName}`, canvas.width / 2, 150);
 
-      // Tabla de ministerios
-      const startY = 120;
-      const rowHeight = 40;
-      const colWidth = width / 2;
-      const padding = 20;
+      // Ministerios
+      const cols = 3;
+      const rows = Math.ceil(ministers.length / cols);
+      const cellWidth = canvas.width / cols;
+      const cellHeight = (canvas.height - 200) / rows;
 
-      ctx.fillStyle = '#f5f5f5';
-      ctx.font = 'bold 14px Arial';
-      ctx.fillStyle = partyColor;
-      ctx.fillText('MINISTERIO', padding, startY + 20);
-      ctx.fillText('MINISTRO/A', padding + colWidth, startY + 20);
+      ministers.forEach((m, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const x = col * cellWidth;
+        const y = 200 + row * cellHeight;
 
-      let currentY = startY + rowHeight;
+        // Card background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.fillRect(x + 10, y + 10, cellWidth - 20, cellHeight - 20);
 
-      ministries.forEach((ministry, index) => {
-        // Línea separadora
-        ctx.strokeStyle = '#e0e0e0';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(padding, currentY);
-        ctx.lineTo(width - padding, currentY);
-        ctx.stroke();
+        // Card border
+        ctx.strokeStyle = partyColor;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 10, y + 10, cellWidth - 20, cellHeight - 20);
 
-        // Fondo alternado
-        if (index % 2 === 0) {
-          ctx.fillStyle = '#f9f9f9';
-          ctx.fillRect(padding, currentY, width - padding * 2, rowHeight);
-        }
+        // Ministry name
+        ctx.fillStyle = partyColor;
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(m.ministry, x + 20, y + 40);
 
-        // Texto ministerio
-        ctx.fillStyle = '#333333';
+        // Minister name
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px Arial';
+        ctx.fillText(m.name || '(Vacante)', x + 20, y + 70);
+
+        // Party
+        ctx.fillStyle = '#94a3b8';
         ctx.font = '12px Arial';
-        ctx.fillText(ministry.name, padding + 10, currentY + 25);
-
-        // Texto ministro
-        ctx.fillText(ministry.minister || '-', padding + colWidth + 10, currentY + 25);
-
-        currentY += rowHeight;
+        ctx.fillText(m.party || partyName, x + 20, y + 95);
       });
 
-      // Pie de página
-      ctx.fillStyle = '#999999';
-      ctx.font = '10px Arial';
-      ctx.fillText(`Generado por Batalla Cultural - ${new Date().toLocaleDateString('es-ES')}`, padding, height - 20);
-
-      // Descargar
       canvas.toBlob(blob => {
         if (blob) {
-          const url = window.URL.createObjectURL(blob);
+          const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `gobierno-${candidateName.replace(/\s+/g, '-')}.png`;
-          document.body.appendChild(a);
+          a.download = `${governmentName}.png`;
           a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-          toast.success('Infografía descargada correctamente');
+          URL.revokeObjectURL(url);
+          toast.success('Gobierno descargado como imagen');
         }
-      }, 'image/png');
-    } catch (error) {
-      console.error('Error generando infografía:', error);
-      toast.error('Error al generar la infografía');
-    } finally {
-      setGenerating(false);
+      });
+    } catch (err) {
+      toast.error('Error al descargar imagen');
+      console.error(err);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Encabezado */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-2xl font-bold text-white">Constructor de Gobierno</h3>
-          <p className="text-sm text-gray-400 mt-1">
-            {partyName} - Candidato: {candidateName}
-          </p>
-        </div>
-        {onClose && (
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <X className="w-6 h-6" />
-          </button>
-        )}
-      </div>
+  if (showPreview) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-slate-900 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-auto border border-white/10">
+          {/* Preview Header */}
+          <div className="sticky top-0 bg-slate-800 border-b border-white/10 p-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">{governmentName}</h2>
+            <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-white/10 rounded-lg">
+              <X size={24} className="text-white" />
+            </button>
+          </div>
 
-      {/* Nombre del gobierno */}
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Nombre del Gobierno</label>
-        <Input
-          value={governmentName}
-          onChange={(e) => setGovernmentName(e.target.value)}
-          className="bg-gray-900 border-gray-700 text-white"
-          placeholder="Ej: Gobierno de España"
-        />
-      </div>
-
-      {/* Tabla de ministerios */}
-      <div className="space-y-3 max-h-96 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-4 sticky top-0 bg-gray-950 p-3 rounded-lg border border-gray-700">
-          <div className="font-semibold text-gray-300">Ministerio</div>
-          <div className="font-semibold text-gray-300">Ministro/a</div>
-        </div>
-
-        {ministries.map((ministry) => (
-          <div key={ministry.id} className="grid grid-cols-2 gap-4 items-center bg-gray-900 p-3 rounded-lg border border-gray-700 hover:border-gray-600 transition">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: ministry.color }}
-              />
-              <span className="text-sm text-gray-300">{ministry.name}</span>
+          {/* Preview Content */}
+          <div className="p-8">
+            <div className="mb-8 pb-8 border-b border-white/10">
+              <p className="text-lg text-white/80">
+                <span className="font-semibold text-white">Presidente:</span> {presidentName}
+              </p>
+              <p className="text-lg text-white/80">
+                <span className="font-semibold text-white">Partido:</span> {partyName}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Input
-                value={ministry.minister}
-                onChange={(e) => updateMinister(ministry.id, e.target.value)}
-                placeholder="Nombre del ministro/a"
-                className="bg-gray-800 border-gray-600 text-white text-sm"
-              />
-              <button
-                onClick={() => removeMinistry(ministry.id)}
-                className="text-red-400 hover:text-red-300 flex-shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ministers.map(m => (
+                <div key={m.id} className="frosted-glass p-6 rounded-xl border border-white/10">
+                  <div className="text-sm font-semibold text-white/60 uppercase mb-2">{m.ministry}</div>
+                  <div className="text-lg font-bold text-white mb-1">{m.name || '(Vacante)'}</div>
+                  <div className="text-sm text-white/50">{m.party || partyName}</div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+
+          {/* Preview Actions */}
+          <div className="sticky bottom-0 bg-slate-800 border-t border-white/10 p-6 flex gap-3">
+            <button
+              onClick={downloadAsImage}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition"
+            >
+              <Download size={20} />
+              Descargar como imagen
+            </button>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 rounded-lg transition"
+            >
+              Volver a editar
+            </button>
+          </div>
+        </div>
       </div>
+    );
+  }
 
-      {/* Botón agregar ministerio */}
-      <Button
-        onClick={addMinistry}
-        variant="outline"
-        className="w-full border-gray-700 text-gray-300 hover:text-white hover:bg-gray-900"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Agregar Ministerio
-      </Button>
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-auto border border-white/10">
+        {/* Header */}
+        <div className="sticky top-0 bg-slate-800 border-b border-white/10 p-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Constructor de Gobierno</h2>
+            <p className="text-sm text-white/60 mt-1">Diseña tu gabinete ministerial ideal</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg">
+            <X size={24} className="text-white" />
+          </button>
+        </div>
 
-      {/* Botones de acción */}
-      <div className="flex gap-3">
-        <Button
-          onClick={generateInfography}
-          disabled={generating}
-          className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-        >
-          {generating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generando...
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 mr-2" />
-              Descargar Infografía PNG
-            </>
-          )}
-        </Button>
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Government Name */}
+          <div>
+            <label className="block text-sm font-semibold text-white mb-2">Nombre del Gobierno</label>
+            <input
+              type="text"
+              value={governmentName}
+              onChange={(e) => setGovernmentName(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-white/30"
+              placeholder="Ej: Gobierno de..."
+            />
+          </div>
+
+          {/* Ministers List */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <label className="block text-sm font-semibold text-white">Ministerios ({ministers.length})</label>
+              <button
+                onClick={addMinistry}
+                className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition"
+              >
+                <Plus size={16} />
+                Agregar
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {ministers.map(m => (
+                <div key={m.id} className="flex gap-3 items-start p-4 bg-white/5 rounded-lg border border-white/10 hover:border-white/20 transition">
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={m.ministry}
+                      onChange={(e) => updateMinister(m.id, 'ministry', e.target.value)}
+                      placeholder="Nombre del ministerio"
+                      className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-sm placeholder-white/40 focus:outline-none focus:border-white/30"
+                    />
+                    <input
+                      type="text"
+                      value={m.name}
+                      onChange={(e) => updateMinister(m.id, 'name', e.target.value)}
+                      placeholder="Nombre del ministro (opcional)"
+                      className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-sm placeholder-white/40 focus:outline-none focus:border-white/30"
+                    />
+                    <input
+                      type="text"
+                      value={m.party}
+                      onChange={(e) => updateMinister(m.id, 'party', e.target.value)}
+                      placeholder="Partido (opcional)"
+                      className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-white text-sm placeholder-white/40 focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                  <button
+                    onClick={() => removeMinistry(m.id)}
+                    className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="sticky bottom-0 bg-slate-800 border-t border-white/10 p-6 flex gap-3">
+          <button
+            onClick={() => setShowPreview(true)}
+            className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition"
+          >
+            <Eye size={20} />
+            Vista previa
+          </button>
+          <button
+            onClick={downloadAsImage}
+            className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition"
+          >
+            <Download size={20} />
+            Descargar
+          </button>
+        </div>
       </div>
-
-      {/* Canvas oculto */}
-      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }
