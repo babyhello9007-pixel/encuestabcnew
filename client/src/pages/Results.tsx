@@ -78,21 +78,16 @@ interface VotoHistorico {
   votos: number; porcentaje: number;
 }
 interface NocheElectoralRow {
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
   id: number;
-  election_date: string; region_name: string; region_flag_url: string | null; close_at: string;
+  election_date: string; region_name: string; region_flag_url: string | null; close_at: string; escrutado?: number | null;
   results: { party_id: number; party_key: string; display_name: string; color: string; logo_url?: string; porcentaje_voto: number; escanos: number | null; proyected_escaños?: number | null; proyected_porcentaje?: number | null; candidato?: string | null; is_projection: boolean; is_final: boolean; }[];
-=======
-  election_date: string; region_name: string; region_flag_url: string | null;
-  estimate_bc: number; final_result: number | null; close_at: string;
->>>>>>> main
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const RESULTS_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800&display=swap');
 
-.r-root { min-height: 100vh; display: flex; flex-direction: column; background: #0a0a0f; color: #f0eff8; font-family: 'DM Sans', sans-serif; }
+.r-root { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #1f2937 0%, #0a0a0f 45%, #07070b 100%); color: #f0eff8; font-family: 'DM Sans', sans-serif; }
 .r-header { position: sticky; top: 0; z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
 .r-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .r-brand img { height: 28px; width: 28px; }
@@ -132,7 +127,7 @@ const RESULTS_CSS = `
 
 /* Quick stats */
 .r-quickstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.r-stat-card { background: #111118; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px 14px; text-align: center; }
+.r-stat-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(22px) saturate(165%); -webkit-backdrop-filter: blur(22px) saturate(165%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 14px 38px rgba(5,8,20,0.38); border-radius: 14px; padding: 16px 14px; text-align: center; }
 .r-stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7a7990; margin-bottom: 4px; }
 .r-stat-value { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; color: #f0eff8; line-height: 1; }
 .r-stat-value.accent { color: #e8465a; }
@@ -145,7 +140,7 @@ const RESULTS_CSS = `
 .r-sort-hint { margin-left: auto; font-size: 11px; color: #5a596a; }
 
 /* Party cards */
-.r-party-card { background: #111118; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
+.r-party-card { background: rgba(255,255,255,0.045); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
 .r-party-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .r-party-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .r-party-logo-wrap { width: 40px; height: 40px; border-radius: 9px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -162,9 +157,18 @@ const RESULTS_CSS = `
 .r-party-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
 
 /* Section card */
-.r-section { background: #111118; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px; }
+.r-section { background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 20px 48px rgba(1,6,18,0.45); border-radius: 16px; padding: 20px; }
 .r-section-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
 .r-section-sub { font-size: 12px; color: #7a7990; margin: 0 0 16px; }
+
+
+.r-direct-grid { display: grid; gap: 12px; }
+.r-direct-card { background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 18px 44px rgba(0,0,0,0.35); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); }
+.r-direct-header { display:flex; align-items:center; gap:10px; }
+.r-direct-meta { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.r-direct-pill { font-size:11px; border:1px solid rgba(255,255,255,0.18); border-radius:999px; padding:4px 10px; color:#d8dbea; background: rgba(255,255,255,0.08); }
+.r-direct-list { display:grid; gap:6px; margin-top:8px; }
+.r-direct-row { display:flex; align-items:center; gap:8px; font-size:12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 10px; }
 
 /* Leader cards */
 .r-leader-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
@@ -1733,10 +1737,7 @@ export default function Results() {
   const [historicoRows, setHistoricoRows] = useState<any[]>([]);
   const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
   const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
   const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
-=======
->>>>>>> main
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1895,11 +1896,10 @@ export default function Results() {
         try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
         try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
         try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
         try {
           const { data } = await supabase
             .from("electionsdirect")
-            .select("id,election_date,region_name,region_flag_url,close_at,electiondirect_results(porcentaje_voto,escanos,proyected_escaños,proyected_porcentaje,Candidato,is_projection,is_final,party_configuration(id,party_key,display_name,color,logo_url))")
+            .select("id,election_date,region_name,region_flag_url,close_at,escrutado,electiondirect_results(porcentaje_voto,escanos,proyected_escaños,proyected_porcentaje,Candidato,is_projection,is_final,party_configuration(id,party_key,display_name,color,logo_url))")
             .order("close_at", { ascending: true });
           const normalized = (data || []).map((r: any) => ({
             id: r.id,
@@ -1907,6 +1907,7 @@ export default function Results() {
             region_name: r.region_name,
             region_flag_url: r.region_flag_url,
             close_at: r.close_at,
+            escrutado: r.escrutado,
             results: (r.electiondirect_results || []).map((x: any) => ({
               party_id: x.party_configuration?.id,
               party_key: x.party_configuration?.party_key,
@@ -1930,9 +1931,6 @@ export default function Results() {
           (data || []).forEach((l: any) => { if (l.leader_name && l.photo_url) map[String(l.leader_name).trim().toLowerCase()] = l.photo_url; });
           setLeaderPhotoByName(map);
         } catch {}
-=======
-        try { const { data } = await supabase.from("noche_electoral_directo").select("*").order("close_at", { ascending: true }); setNocheElectoralRows((data || []) as NocheElectoralRow[]); } catch {}
->>>>>>> main
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -2157,24 +2155,23 @@ export default function Results() {
               {activeTab === "noche-electoral" && (
                 <div className="r-section">
                   <div className="r-section-title">Modo Directo: Noche Electoral</div>
-                  <div style={{ display: "grid", gap: 10 }}>
+                  <div className="r-direct-grid">
                     {nocheElectoralRows.length === 0 && <div style={{ fontSize: 12, color: "#7a7990" }}>Sin datos en tiempo real todavía.</div>}
                     {nocheElectoralRows.map((r, i) => {
                       const seconds = Math.max(0, Math.floor((new Date(r.close_at).getTime() - Date.now()) / 1000));
                       const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
                       const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
                       const ss = String(seconds % 60).padStart(2, "0");
-                      return <div key={`${r.region_name}-${i}`} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 10, display: "grid", gap: 4 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      return <div key={`${r.region_name}-${i}`} className="r-direct-card">
+                        <div className="r-direct-header">
                           {r.region_flag_url ? <img src={r.region_flag_url} alt={r.region_name} style={{ width: 20, height: 14, objectFit: "cover" }} /> : null}
                           <strong>{r.region_name}</strong>
-                          <span style={{ marginLeft: "auto", color: "#7a7990", fontSize: 12 }}>Cierre: {hh}:{mm}:{ss}</span>
+                          <div className="r-direct-meta"><span className="r-direct-pill">Cierre: {hh}:{mm}:{ss}</span><span className="r-direct-pill">Escrutado: {r.escrutado == null ? "—" : `${Number(r.escrutado).toFixed(1)}%`}</span></div>
                         </div>
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
                         <div style={{ fontSize: 12, color: "#7a7990" }}>Resultados por partido (desde party_configuration)</div>
-                        <div style={{ display: "grid", gap: 4 }}>
+                        <div className="r-direct-list">
                           {r.results?.map((pr, idx) => (
-                            <div key={`${pr.party_id}-${idx}`} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                            <div key={`${pr.party_id}-${idx}`} className="r-direct-row">
                               {pr.logo_url ? <img src={pr.logo_url} alt={pr.display_name} style={{ width: 16, height: 16, objectFit: "contain", borderRadius: 3 }} /> : null}
                               <span style={{ width: 8, height: 8, borderRadius: 999, background: pr.color || "#999" }} />
                               <span style={{ minWidth: 120 }}>{pr.display_name}</span>
@@ -2191,9 +2188,6 @@ export default function Results() {
                             </div>
                           ))}
                         </div>
-=======
-                        <div style={{ fontSize: 12 }}>Estimado BC: <b>{Number(r.estimate_bc || 0).toFixed(2)}%</b> · Resultado final: <b>{r.final_result == null ? "Pendiente" : `${Number(r.final_result).toFixed(2)}%`}</b></div>
->>>>>>> main
                       </div>;
                     })}
                   </div>
