@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -338,12 +339,18 @@ const TAB_GROUPS: TabGroup[] = [
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 220 });
   const ref = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null); };
+    const h = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const insideNav = ref.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideNav && !insideDropdown) setOpenGroup(null);
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
@@ -353,8 +360,9 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
     if (btn) {
       const rect = btn.getBoundingClientRect();
       setDropdownPos({
-        top: rect.bottom - ref.current?.getBoundingClientRect().top! + 4,
-        left: rect.left - ref.current?.getBoundingClientRect().left!
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: Math.max(220, rect.width + 48),
       });
     }
     setOpenGroup(openGroup === label ? null : label);
@@ -378,14 +386,17 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
                 <ChevronDown size={11} style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "", transition: "transform 0.2s" }} />
               </button>
               {isOpen && (
-                <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top + 58}px`, left: `${dropdownPos.left}px`, zIndex: 9999 }}>
-                  {group.tabs.map(tab => (
-                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
-                      onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+                createPortal(
+                  <div ref={dropdownRef} className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px`, minWidth: `${dropdownPos.width}px`, zIndex: 2147483647 }}>
+                    {group.tabs.map(tab => (
+                      <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
+                        onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>,
+                  document.body
+                )
               )}
             </div>
           );
@@ -432,14 +443,15 @@ const MINISTERIOS = [
 
 // ─── Government Builder Modal ─────────────────────────────────────────────────
 function GobiernoModal({
-  onClose, leaders, partyMeta, logoPresidenciaB64
+  onClose, leaders, partyMeta, logoPresidenciaB64, initialParty
 }: {
   onClose: () => void;
   leaders: PartyLeader[];
   partyMeta: Record<string, PartyMeta>;
   logoPresidenciaB64: string;
+  initialParty?: string | null;
 }) {
-  const [selectedParty, setSelectedParty] = useState("");
+  const [selectedParty, setSelectedParty] = useState(initialParty || "");
   const [selectedLeader, setSelectedLeader] = useState("");
   const [ministerios, setMinisterios] = useState<Record<string, string>>(
     Object.fromEntries(MINISTERIOS.map(m => [m.id, ""]))
@@ -449,6 +461,10 @@ function GobiernoModal({
 
   const partyLeaders = leaders.filter(l => l.party_key === selectedParty);
   const partyKeys = Array.from(new Set(leaders.map(l => l.party_key)));
+
+  useEffect(() => {
+    if (initialParty) setSelectedParty(initialParty);
+  }, [initialParty]);
 
   const updateMin = (id: string, val: string) => {
     setMinisterios(prev => ({ ...prev, [id]: val }));
@@ -727,18 +743,21 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           logo_url: row.party_configuration?.logo_url ?? "",
         }));
         setLeaders(mapped);
-        const { data: pd } = await supabase.from("lideres_preferidos").select("partido, lider_preferido");
+        const { data: pd } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje");
         if (pd?.length) {
-          const cnt: Record<string, Record<string, number>> = {};
-          pd.forEach((r: any) => { if (!cnt[r.partido]) cnt[r.partido] = {}; cnt[r.partido][r.lider_preferido] = (cnt[r.partido][r.lider_preferido] || 0) + 1; });
-          const arr: LiderPreferido[] = [];
-          Object.entries(cnt).forEach(([partido, lids]: [string, Record<string, number>]) => {
-            const tot = Object.values(lids).reduce((a, b) => a + b, 0);
-            Object.entries(lids).forEach(([lider, votos]: [string, number]) => {
-              const li = mapped.find(l => l.party_key === partido && l.leader_name === lider);
-              const pi = mapped.find(l => l.party_key === partido);
-              arr.push({ partido, lider_preferido: lider, votos, porcentaje: tot > 0 ? (votos / tot) * 100 : 0, photo_url: li?.photo_url, color: pi?.color, display_name: pi?.display_name ?? partido, logo_url: pi?.logo_url });
-            });
+          const arr: LiderPreferido[] = pd.map((r: any) => {
+            const li = mapped.find(l => l.party_key === r.partido && l.leader_name === r.lider_preferido);
+            const pi = mapped.find(l => l.party_key === r.partido);
+            return {
+              partido: r.partido,
+              lider_preferido: r.lider_preferido,
+              votos: Number(r.total_votos || 0),
+              porcentaje: Number(r.porcentaje || 0),
+              photo_url: li?.photo_url,
+              color: pi?.color,
+              display_name: pi?.display_name ?? r.partido,
+              logo_url: pi?.logo_url
+            };
           });
           setLideresPreferidos(arr);
         }
@@ -921,6 +940,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           leaders={allLeadersForGov}
           partyMeta={partyMeta}
           logoPresidenciaB64={logoB64}
+          initialParty={selectedParty}
         />
       )}
     </div>
@@ -1042,10 +1062,25 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     return m;
   }, [generalPartyMap, customParties]);
 
+  useEffect(() => {
+    if (!Object.keys(votosPorProvincia).length) return;
+    setProvinciaVotes(prev => {
+      if (Object.keys(prev).length) return prev;
+      const seeded: Record<string, Record<string, number>> = {};
+      Object.entries(votosPorProvincia).forEach(([prov, votes]) => {
+        seeded[prov] = { ...votes };
+      });
+      return seeded;
+    });
+  }, [votosPorProvincia]);
+
   const effectiveVotesByProvince = useMemo(() => {
     if (!Object.keys(votosPorProvincia).length) return {};
     const totalNac = Object.values(simulatorVotes).reduce((a, v) => a + Math.max(0, v || 0), 0);
-    if (totalNac === 0) return {};
+    if (totalNac === 0) {
+      if (Object.keys(provinciaVotes).length) return { ...provinciaVotes };
+      return {};
+    }
     const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [p, v]) => { acc[p] = Math.max(0, v || 0) / totalNac; return acc; }, {});
     const result: Record<string, Record<string, number>> = {};
     Object.entries(votosPorProvincia).forEach(([prov, realVotes]) => {
@@ -1064,11 +1099,18 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     const escanos: Record<string, number> = {};
     Object.values(simulatorEscanosByProvince).forEach(pe => { Object.entries(pe).forEach(([p, e]) => { escanos[p] = (escanos[p] || 0) + e; }); });
     const nv: Record<string, number> = {};
-    Object.entries(simulatorVotes).forEach(([k, v]) => { nv[k] = Math.max(0, Math.floor(v || 0)); });
+    Object.values(effectiveVotesByProvince).forEach((provVotes) => {
+      Object.entries(provVotes).forEach(([k, v]) => {
+        nv[k] = (nv[k] || 0) + Math.max(0, Math.floor(v || 0));
+      });
+    });
+    if (!Object.keys(nv).length) {
+      Object.entries(simulatorVotes).forEach(([k, v]) => { nv[k] = Math.max(0, Math.floor(v || 0)); });
+    }
     const nombres: Record<string, string> = {}; const logos: Record<string, string> = {};
     Object.entries(simulatorPartyMap).forEach(([k, p]) => { nombres[k] = p.name; logos[k] = p.logo; });
     return obtenerEstadisticas(nv, escanos, nombres, logos).map(s => ({ ...s, color: simulatorPartyMap[s.id]?.color || "#e8465a" }));
-  }, [simulatorEscanosByProvince, simulatorVotes, simulatorPartyMap]);
+  }, [simulatorEscanosByProvince, simulatorVotes, simulatorPartyMap, effectiveVotesByProvince]);
 
   const addCustomParty = () => {
     const name = newPartyName.trim(); if (!name) return;
@@ -1260,7 +1302,9 @@ async function generarInfografiaPNG(
   ideologiaPromedio: number | null,
   type: "general" | "party" | "other",
   partyName?: string,
-  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>
+  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>,
+  topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
+  topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -1343,6 +1387,26 @@ async function generarInfografiaPNG(
       ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
       ctx.fillText(`${party.escanos} esc.`, 700, y + 25);
     });
+    const topLeaderRows = (topLiderPorPartido || []).slice(0, 5);
+    const topRegionRows = (topRegionPorPartido || []).slice(0, 5);
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 230, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#C41E3A"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
+    topLeaderRows.forEach((row, i) => {
+      const y = 290 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.lider, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(`${row.porcentaje.toFixed(1)}%`, 1110, y);
+    });
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 500, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#3b82f6"; ctx.font = "bold 12px monospace"; ctx.fillText("REGIÓN TOP POR PARTIDO", 800, 526);
+    topRegionRows.forEach((row, i) => {
+      const y = 560 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.region, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(String(row.votos), 1110, y);
+    });
   } else if (type === "party" && partyName) {
     const party = stats.find(s => s.nombre === partyName);
     if (party) {
@@ -1389,7 +1453,7 @@ async function generarInfografiaPNG(
     });
   } else {
     // Hemiciclo visual simplificado (semicírculo con datos)
-    const hx = 1000, hy = 480, hr = 200;
+    const hx = 980, hy = 240, hr = 120;
     ctx.fillStyle = "rgba(255,255,255,0.03)";
     ctx.beginPath(); ctx.arc(hx, hy, hr + 20, Math.PI, 0); ctx.fill();
     const sortedBySeats = [...stats].sort((a, b) => b.escanos - a.escanos).filter(s => s.escanos > 0);
@@ -1627,8 +1691,18 @@ export default function Results() {
   }, [generalPartyMap, youthPartyMap]);
 
   const handleGenerarInfografia = async (type: "general" | "party" | "other", party?: string) => {
-    // TODO: Pasar datos de líderes desde LideresDePartidosSection
-    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party);
+    let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
+    let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
+    try {
+      const { data: topLeaderRows } = await supabase.from("top_lider_por_partido").select("partido, lider_top, votos_lider_top, porcentaje_lider_top");
+      if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
+
+      const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
+      if (topRegionRows?.length) topRegionPorPartido = topRegionRows.map((r: any) => ({ partido: r.partido, region: r.region_top, votos: Number(r.votos_region_top || 0) }));
+    } catch (e) {
+      console.error("Error cargando datos extendidos para infografía:", e);
+    }
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, undefined, top1PorPartido, topRegionPorPartido);
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";
