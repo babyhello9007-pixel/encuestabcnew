@@ -15,15 +15,9 @@ import {
   Loader2, Download, Sparkles, Plus, Trash2, RefreshCw,
   Map, Grid3x3, ChevronDown, Users, BarChart2, MapPin,
   Vote, Star, TrendingUp, X, Image, FileText, Award,
-  Building2, Crown, UserCheck, AlertTriangle, Activity,
-  History, ArrowRight, Zap, Filter, GitBranch,
+  Building2, Crown, UserCheck,
 } from "lucide-react";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, LineChart, Line, Legend,
-  RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  ScatterChart, Scatter, ZAxis, Sankey
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { ShareResultsModern } from "@/components/ShareResultsModern";
 import { CommentsSection } from "@/components/CommentsSection";
@@ -46,7 +40,7 @@ import GovernmentBuilder from "@/components/GovernmentBuilder";
 import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
- 
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
   id: string; nombre: string; votos: number; porcentaje: number;
@@ -65,22 +59,11 @@ interface LiderPreferido {
 interface PartyMeta {
   key: string; name: string; color: string; logo: string;
 }
-interface RankingLiderPartido {
-  partido: string; lider_preferido: string; total_votos: number; porcentaje: number;
-}
-interface HistoricoEleccion {
-  año: number; tipo: string; partido: string;
-  porcentaje: number; escanos: number; votos: number;
-}
-interface VotoHistorico {
-  partido: string; tipo: string; snapshot_at: string;
-  votos: number; porcentaje: number;
-}
- 
+
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const RESULTS_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800&display=swap');
- 
+
 .r-root { min-height: 100vh; display: flex; flex-direction: column; background: #0a0a0f; color: #f0eff8; font-family: 'DM Sans', sans-serif; }
 .r-header { position: sticky; top: 0; z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
 .r-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -97,9 +80,7 @@ const RESULTS_CSS = `
 .r-hbtn-infog:hover { background: rgba(99,102,241,0.25); }
 .r-hbtn-gov { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
 .r-hbtn-gov:hover { background: rgba(16,185,129,0.25); }
-.r-hbtn-pdf { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
-.r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
- 
+
 /* Subnav */
 .r-subnav { position: sticky; top: 58px; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
 .r-subnav::-webkit-scrollbar { height: 3px; }
@@ -114,11 +95,11 @@ const RESULTS_CSS = `
 .r-dropdown-item { display: block; width: 100%; text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; background: none; border: none; color: #7a7990; border-left: 2px solid transparent; transition: all 0.15s; }
 .r-dropdown-item:hover { background: rgba(255,255,255,0.04); color: #f0eff8; }
 .r-dropdown-item.active { color: #e8465a; border-left-color: #e8465a; background: rgba(232,70,90,0.06); font-weight: 700; }
- 
+
 /* Main */
 .r-main { flex: 1; padding: 24px 20px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .r-space { display: flex; flex-direction: column; gap: 18px; }
- 
+
 /* Quick stats */
 .r-quickstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .r-stat-card { background: #111118; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px 14px; text-align: center; }
@@ -126,13 +107,13 @@ const RESULTS_CSS = `
 .r-stat-value { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; color: #f0eff8; line-height: 1; }
 .r-stat-value.accent { color: #e8465a; }
 .r-stat-suffix { font-size: 10px; color: #7a7990; margin-top: 2px; }
- 
+
 /* Sort bar */
 .r-sort-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .r-sort-btn { padding: 5px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; transition: all 0.18s; }
 .r-sort-btn.active { background: #e8465a; border-color: #e8465a; color: #fff; }
 .r-sort-hint { margin-left: auto; font-size: 11px; color: #5a596a; }
- 
+
 /* Party cards */
 .r-party-card { background: #111118; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
 .r-party-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
@@ -149,12 +130,12 @@ const RESULTS_CSS = `
 .r-party-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: #5a596a; }
 .r-party-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
 .r-party-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
- 
+
 /* Section card */
 .r-section { background: #111118; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px; }
 .r-section-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
 .r-section-sub { font-size: 12px; color: #7a7990; margin: 0 0 16px; }
- 
+
 /* Leader cards */
 .r-leader-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .r-leader-card { background: #18181f; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 16px 12px; text-align: center; transition: all 0.2s; }
@@ -166,20 +147,20 @@ const RESULTS_CSS = `
 .r-leader-bar-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
 .r-leader-bar-fill { height: 100%; border-radius: 2px; }
 .r-leader-count { font-size: 10px; color: #5a596a; }
- 
+
 /* Subtabs */
 .r-subtab-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
 .r-subtab-btn { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: transparent; color: #7a7990; transition: all 0.18s; }
 .r-subtab-btn:hover { border-color: rgba(255,255,255,0.16); color: #f0eff8; }
 .r-subtab-btn.active { color: #fff; border-color: transparent; }
- 
+
 /* Leader valoracion por partido */
 .r-lxp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .r-lxp-table th { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5a596a; padding: 8px 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
 .r-lxp-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #f0eff8; vertical-align: middle; }
 .r-lxp-table tr:last-child td { border-bottom: none; }
 .r-lxp-table tr:hover td { background: rgba(255,255,255,0.02); }
- 
+
 /* Simulator */
 .r-sim-wrap { background: #0d0d14; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
 .r-sim-header { padding: 20px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
@@ -213,12 +194,12 @@ const RESULTS_CSS = `
 .r-sim-add-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .r-sim-add-input { flex: 1; min-width: 120px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: #f0eff8; font-family: inherit; outline: none; }
 .r-sim-add-btn { display: flex; align-items: center; gap: 4px; padding: 7px 14px; background: #e8465a; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; color: #fff; font-family: inherit; cursor: pointer; }
- 
+
 /* Map */
 .r-map-toggle { display: flex; gap: 4px; }
 .r-map-btn { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 7px; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; transition: all 0.18s; }
 .r-map-btn.active { background: #e8465a; border-color: #e8465a; color: #fff; }
- 
+
 /* Infog modal */
 .r-infog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .r-infog-modal { background: #111118; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 28px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; }
@@ -234,46 +215,21 @@ const RESULTS_CSS = `
 .r-infog-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 .r-infog-cancel { padding: 9px 18px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
 .r-infog-generate { padding: 9px 22px; border-radius: 9px; border: none; background: #e8465a; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
- 
-/* Government builder - NUEVO DISEÑO */
-.r-gov-modal { background: #0d0d14; border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 0; max-width: 900px; width: 100%; max-height: 94vh; overflow-y: auto; display: flex; flex-direction: column; }
-.r-gov-header { padding: 24px 28px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(99,102,241,0.05) 100%); }
-.r-gov-body { padding: 20px 28px 28px; }
-.r-gov-party-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 16px; }
-.r-gov-party-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.08); background: #18181f; cursor: pointer; transition: all 0.18s; font-family: inherit; text-align: center; }
-.r-gov-party-btn:hover { transform: translateY(-2px); }
-.r-gov-party-btn.selected { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-.r-gov-ministry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
-.r-gov-ministry { background: #18181f; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px; transition: border-color 0.2s; }
+
+/* Government builder */
+.r-gov-modal { background: #111118; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 28px; max-width: 780px; width: 100%; max-height: 92vh; overflow-y: auto; }
+.r-gov-ministry { background: #18181f; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px 16px; transition: border-color 0.2s; }
 .r-gov-ministry:hover { border-color: rgba(255,255,255,0.14); }
-.r-gov-ministry-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.r-gov-ministry-icon { font-size: 18px; }
-.r-gov-ministry-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #5a596a; flex: 1; }
-.r-gov-minister-photo { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
-.r-gov-minister-initials { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; flex-shrink: 0; }
-.r-gov-minister-info { flex: 1; min-width: 0; }
-.r-gov-minister-name { font-size: 13px; font-weight: 600; color: #f0eff8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.r-gov-minister-party { font-size: 10px; color: #7a7990; }
-.r-gov-ministry-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 6px 10px; font-size: 12px; color: #f0eff8; font-family: inherit; outline: none; transition: border-color 0.18s; box-sizing: border-box; }
-.r-gov-ministry-input:focus { border-color: #10b981; }
-.r-gov-file-btn { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; padding: 5px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 6px; background: transparent; font-size: 10px; color: #5a596a; font-family: inherit; cursor: pointer; margin-top: 4px; transition: all 0.18s; }
-.r-gov-file-btn:hover { border-color: rgba(255,255,255,0.25); color: #f0eff8; }
- 
-/* Coherencia / Análisis nuevos */
-.r-analysis-card { background: #111118; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 18px; }
-.r-incoherencia-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 100px; font-size: 10px; font-weight: 700; }
-.r-badge-warn { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
-.r-badge-ok { background: rgba(34,197,94,0.12); color: #22c55e; border: 1px solid rgba(34,197,94,0.25); }
-.r-badge-danger { background: rgba(232,70,90,0.12); color: #e8465a; border: 1px solid rgba(232,70,90,0.25); }
-.r-historico-line { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-.r-historico-line:last-child { border-bottom: none; }
-.r-bubble-chart-wrap { position: relative; background: rgba(255,255,255,0.02); border-radius: 12px; overflow: hidden; }
- 
+.r-gov-ministry-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #5a596a; margin-bottom: 6px; }
+.r-gov-ministry-name { font-size: 13px; font-weight: 600; color: #f0eff8; margin-bottom: 4px; }
+.r-gov-ministry-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 6px 10px; font-size: 12px; color: #f0eff8; font-family: inherit; outline: none; margin-top: 4px; transition: border-color 0.18s; }
+.r-gov-ministry-input:focus { border-color: #e8465a; }
+
 /* Methodology */
 .r-method { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .r-method-key { font-size: 11px; font-weight: 700; color: #f0eff8; margin-bottom: 3px; }
 .r-method-val { font-size: 11px; color: #7a7990; line-height: 1.5; }
- 
+
 /* Select */
 .r-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; padding: 9px 12px; font-size: 13px; color: #f0eff8; font-family: inherit; outline: none; appearance: none; transition: border-color 0.18s; }
 .r-select:focus { border-color: #e8465a; }
@@ -282,18 +238,18 @@ const RESULTS_CSS = `
 .r-empty-circ { text-align: center; padding: 36px 20px; color: #5a596a; }
 .r-trash-btn { background: none; border: none; color: #5a596a; cursor: pointer; padding: 4px; transition: color 0.18s; }
 .r-trash-btn:hover { color: #e8465a; }
- 
+
 /* CTA */
 .r-cta { text-align: center; padding: 20px; }
 .r-cta-text { font-size: 13px; color: #7a7990; margin-bottom: 10px; }
 .r-cta-btn { padding: 9px 24px; border-radius: 9px; background: #e8465a; border: none; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
 .r-cta-btn:hover { background: #ff6b7a; }
- 
+
 /* Helpers */
 .r-loader { display: flex; align-items: center; justify-content: center; padding: 60px 20px; }
 .r-spin { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.08); border-top-color: #e8465a; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
- 
+
 /* ── MOBILE ── */
 @media (max-width: 768px) {
   .r-header { padding: 0 12px; height: 52px; }
@@ -315,9 +271,7 @@ const RESULTS_CSS = `
   .r-infog-grid { grid-template-columns: 1fr; }
   .r-sim-header { padding: 14px 16px; }
   .r-sim-body { padding: 14px; }
-  .r-gov-modal { border-radius: 14px; }
-  .r-gov-body { padding: 16px; }
-  .r-gov-header { padding: 16px; }
+  .r-gov-modal { padding: 20px 16px; }
 }
 @media (max-width: 480px) {
   .r-quickstats { grid-template-columns: repeat(2, 1fr); }
@@ -331,11 +285,10 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias" | "simulador-electoral"
-  | "coherencia-analisis" | "predicciones" | "contexto-historico";
- 
+  | "preguntas-varias" | "simulador-electoral";
+
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
- 
+
 const TAB_GROUPS: TabGroup[] = [
   { label: "Elecciones", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
     { key: "general", label: "Resultados Generales" },
@@ -360,11 +313,6 @@ const TAB_GROUPS: TabGroup[] = [
   { label: "Análisis", icon: <BarChart2 className="w-3.5 h-3.5" />, tabs: [
     { key: "tendencias", label: "Tendencias" },
     { key: "preguntas-varias", label: "Preguntas Varias" },
-    { key: "coherencia-analisis", label: "Coherencia" },
-    { key: "predicciones", label: "Predicciones" },
-  ]},
-  { label: "Histórico", icon: <History className="w-3.5 h-3.5" />, tabs: [
-    { key: "contexto-historico", label: "Contexto Histórico" },
   ]},
 ];
 
