@@ -26,6 +26,49 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
   useEffect(() => {
     if (!isOpen || !partyName) return;
 
+    const fetchTopLeaders = async () => {
+      try {
+        const normalizedParty = (partyKey || partyName || "").trim();
+        if (!normalizedParty) {
+          setTopLeaders([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("ranking_lideres_por_partido")
+          .select("lider_preferido, total_votos, porcentaje")
+          .eq("partido", normalizedParty)
+          .order("total_votos", { ascending: false })
+          .limit(3);
+
+        if (error || !data?.length) {
+          if (error) console.error("Error fetching top leaders:", error);
+          setTopLeaders([]);
+          return;
+        }
+
+        const leaderNames = data.map((row) => row.lider_preferido).filter(Boolean);
+        const { data: leaderPhotos } = await supabase
+          .from("party_leaders")
+          .select("leader_name, photo_url")
+          .in("leader_name", leaderNames);
+
+        const photosByName = new Map((leaderPhotos || []).map((leader) => [leader.leader_name, leader.photo_url]));
+
+        setTopLeaders(
+          data.map((row) => ({
+            name: row.lider_preferido,
+            votes: Number(row.total_votos || 0),
+            pct: Number(row.porcentaje || 0),
+            photo: photosByName.get(row.lider_preferido),
+          })),
+        );
+      } catch (err) {
+        console.error("Error loading top leaders:", err);
+        setTopLeaders([]);
+      }
+    };
+
     const fetchMetrics = async () => {
       setLoading(true);
       try {
@@ -176,4 +219,3 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
     </div>
   );
 }
-
