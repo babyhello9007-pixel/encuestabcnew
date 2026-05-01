@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -338,7 +339,7 @@ const TAB_GROUPS: TabGroup[] = [
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 220 });
   const ref = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -353,8 +354,9 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
     if (btn) {
       const rect = btn.getBoundingClientRect();
       setDropdownPos({
-        top: rect.bottom - ref.current?.getBoundingClientRect().top! + 4,
-        left: rect.left - ref.current?.getBoundingClientRect().left!
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: Math.max(220, rect.width + 48),
       });
     }
     setOpenGroup(openGroup === label ? null : label);
@@ -378,14 +380,17 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
                 <ChevronDown size={11} style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "", transition: "transform 0.2s" }} />
               </button>
               {isOpen && (
-                <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top + 58}px`, left: `${dropdownPos.left}px`, zIndex: 9999 }}>
-                  {group.tabs.map(tab => (
-                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
-                      onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+                createPortal(
+                  <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px`, minWidth: `${dropdownPos.width}px`, zIndex: 2147483647 }}>
+                    {group.tabs.map(tab => (
+                      <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
+                        onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>,
+                  document.body
+                )
               )}
             </div>
           );
@@ -732,18 +737,21 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           logo_url: row.party_configuration?.logo_url ?? "",
         }));
         setLeaders(mapped);
-        const { data: pd } = await supabase.from("lideres_preferidos").select("partido, lider_preferido");
+        const { data: pd } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje");
         if (pd?.length) {
-          const cnt: Record<string, Record<string, number>> = {};
-          pd.forEach((r: any) => { if (!cnt[r.partido]) cnt[r.partido] = {}; cnt[r.partido][r.lider_preferido] = (cnt[r.partido][r.lider_preferido] || 0) + 1; });
-          const arr: LiderPreferido[] = [];
-          Object.entries(cnt).forEach(([partido, lids]: [string, Record<string, number>]) => {
-            const tot = Object.values(lids).reduce((a, b) => a + b, 0);
-            Object.entries(lids).forEach(([lider, votos]: [string, number]) => {
-              const li = mapped.find(l => l.party_key === partido && l.leader_name === lider);
-              const pi = mapped.find(l => l.party_key === partido);
-              arr.push({ partido, lider_preferido: lider, votos, porcentaje: tot > 0 ? (votos / tot) * 100 : 0, photo_url: li?.photo_url, color: pi?.color, display_name: pi?.display_name ?? partido, logo_url: pi?.logo_url });
-            });
+          const arr: LiderPreferido[] = pd.map((r: any) => {
+            const li = mapped.find(l => l.party_key === r.partido && l.leader_name === r.lider_preferido);
+            const pi = mapped.find(l => l.party_key === r.partido);
+            return {
+              partido: r.partido,
+              lider_preferido: r.lider_preferido,
+              votos: Number(r.total_votos || 0),
+              porcentaje: Number(r.porcentaje || 0),
+              photo_url: li?.photo_url,
+              color: pi?.color,
+              display_name: pi?.display_name ?? r.partido,
+              logo_url: pi?.logo_url
+            };
           });
           setLideresPreferidos(arr);
         }
@@ -1278,7 +1286,9 @@ async function generarInfografiaPNG(
   ideologiaPromedio: number | null,
   type: "general" | "party" | "other",
   partyName?: string,
-  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>
+  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>,
+  topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
+  topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -1360,6 +1370,26 @@ async function generarInfografiaPNG(
       // Seats
       ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
       ctx.fillText(`${party.escanos} esc.`, 700, y + 25);
+    });
+    const topLeaderRows = (topLiderPorPartido || []).slice(0, 5);
+    const topRegionRows = (topRegionPorPartido || []).slice(0, 5);
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 230, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#C41E3A"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
+    topLeaderRows.forEach((row, i) => {
+      const y = 290 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.lider, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(`${row.porcentaje.toFixed(1)}%`, 1110, y);
+    });
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 500, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#3b82f6"; ctx.font = "bold 12px monospace"; ctx.fillText("REGIÓN TOP POR PARTIDO", 800, 526);
+    topRegionRows.forEach((row, i) => {
+      const y = 560 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.region, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(String(row.votos), 1110, y);
     });
   } else if (type === "party" && partyName) {
     const party = stats.find(s => s.nombre === partyName);
@@ -1645,8 +1675,28 @@ export default function Results() {
   }, [generalPartyMap, youthPartyMap]);
 
   const handleGenerarInfografia = async (type: "general" | "party" | "other", party?: string) => {
-    // TODO: Pasar datos de líderes desde LideresDePartidosSection
-    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party);
+    let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
+    let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
+    try {
+      const { data: rankRows } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje");
+      if (rankRows?.length) {
+        const topMap = new Map<string, any>();
+        rankRows.forEach((r: any) => { if (!topMap.has(r.partido)) topMap.set(r.partido, r); });
+        top1PorPartido = Array.from(topMap.values()).map((r: any) => ({ partido: r.partido, lider: r.lider_preferido, votos: Number(r.total_votos || 0), porcentaje: Number(r.porcentaje || 0) }));
+      }
+      const { data: provRows } = await supabase.from("votos_por_provincia_view").select("provincia, partido, votos");
+      if (provRows?.length) {
+        const best: Record<string, { region: string; votos: number }> = {};
+        provRows.forEach((r: any) => {
+          if (!r.partido || !r.provincia) return;
+          if (!best[r.partido] || r.votos > best[r.partido].votos) best[r.partido] = { region: r.provincia, votos: Number(r.votos || 0) };
+        });
+        topRegionPorPartido = Object.entries(best).map(([partido, v]) => ({ partido, region: v.region, votos: v.votos }));
+      }
+    } catch (e) {
+      console.error("Error cargando datos extendidos para infografía:", e);
+    }
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, undefined, top1PorPartido, topRegionPorPartido);
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";

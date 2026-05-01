@@ -103,6 +103,35 @@ create table if not exists public.elecciones_historicas (
   created_at    timestamptz not null default now()
 );
 
+insert into public.elecciones_historicas (año, tipo, partido, porcentaje, escanos, votos) values
+(2023, 'generales', 'PP',    33.05, 137, 8091840),
+(2023, 'generales', 'PSOE',  31.70, 122, 7760970),
+(2023, 'generales', 'VOX',   12.39,  33, 3033744),
+(2023, 'generales', 'Sumar', 12.31,  31, 3014006),
+(2023, 'generales', 'Junts',  1.63,   7,  392634),
+(2023, 'generales', 'ERC',    1.68,   7,  462883),
+(2023, 'generales', 'Bildu',  1.44,   6,  333362),
+(2023, 'generales', 'PNV',    1.38,   5,  275782),
+(2019, 'generales', 'PSOE',  28.00, 120, 6792199),
+(2019, 'generales', 'PP',    20.82,  89, 5047040),
+(2019, 'generales', 'VOX',   15.09,  52, 3656979),
+(2019, 'generales', 'Unidas Podemos', 12.84, 35, 3120222),
+(2019, 'generales', 'Ciudadanos', 6.77, 10, 1650318),
+(2019, 'generales', 'ERC',   3.60,  13,  869116),
+(2019, 'generales', 'JxCat', 1.86,   8,  450297),
+(2016, 'generales', 'PP',    33.01, 137, 7906185),
+(2016, 'generales', 'PSOE',  22.66,  85, 5443846),
+(2016, 'generales', 'Unidos Podemos', 21.15, 71, 5087538),
+(2016, 'generales', 'Ciudadanos', 13.05, 32, 3141570),
+(2016, 'generales', 'ERC',   2.64,   9,  632234),
+(2016, 'generales', 'PDC',   2.01,   8,  483488),
+(2015, 'generales', 'PP',    28.72, 123, 7215530),
+(2015, 'generales', 'PSOE',  22.01,  90, 5530528),
+(2015, 'generales', 'Podemos', 20.68, 69, 5189333),
+(2015, 'generales', 'Ciudadanos', 13.93, 40, 3498200),
+(2015, 'generales', 'ERC',   2.39,   9,  599289)
+on conflict do nothing;
+
 create or replace function public.guardar_snapshot_votos()
 returns void language plpgsql as $$
 declare
