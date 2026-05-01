@@ -119,6 +119,27 @@ export default function Home() {
           position: relative;
           padding: 60px 1rem;
           overflow: hidden;
+          animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-30px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(30px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         @media (min-width: 768px) {
@@ -146,6 +167,7 @@ export default function Home() {
           color: rgba(255, 255, 255, 0.95);
           margin: 0 0 20px;
           letter-spacing: -0.02em;
+          animation: slideInLeft 0.8s ease-out 0.2s both;
         }
 
         .bc-headline-accent { color: #e8465a; }
@@ -156,6 +178,7 @@ export default function Home() {
           color: rgba(255, 255, 255, 0.6);
           margin: 0 0 40px;
           max-width: 440px;
+          animation: slideInLeft 0.8s ease-out 0.4s both;
         }
 
         .bc-cta-group {
@@ -163,6 +186,7 @@ export default function Home() {
           flex-direction: column;
           gap: 12px;
           max-width: 100%;
+          animation: slideInLeft 0.8s ease-out 0.6s both;
         }
 
         @media (min-width: 480px) {
@@ -261,7 +285,16 @@ export default function Home() {
           display: grid;
           grid-template-columns: 1fr;
           gap: 16px;
+          animation: fadeIn 0.8s ease-out;
         }
+
+        .bc-feature-item {
+          animation: slideInUp 0.6s ease-out;
+        }
+
+        .bc-feature-item:nth-child(1) { animation-delay: 0.1s; }
+        .bc-feature-item:nth-child(2) { animation-delay: 0.2s; }
+        .bc-feature-item:nth-child(3) { animation-delay: 0.3s; }
 
         @media (min-width: 640px) {
           .bc-feature-grid { grid-template-columns: repeat(3, 1fr); }
@@ -332,7 +365,7 @@ export default function Home() {
             Participar
           </button>
           <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
           </button>
         </div>
       </header>
@@ -355,7 +388,7 @@ export default function Home() {
                 Participa en la encuesta política y cultural más importante del año. Tus respuestas construyen el mapa real de la opinión española.
               </p>
               <div className="bc-cta-group">
-                <button className="bc-btn-primary" onClick={() => setLocation("/encuesta")}>
+                <button className="bc-btn-primary" onClick={() => setLocation("/nano-encuesta")}>
                   Comenzar Encuesta <ArrowRight size={18} />
                 </button>
                 <button className="bc-btn-secondary" onClick={() => setLocation("/resultados")}>
@@ -429,8 +462,8 @@ export default function Home() {
             <p className="text-white/60 mb-8 max-w-2xl mx-auto">
               Dedica 5 minutos a responder la encuesta y forma parte de este importante análisis sobre el futuro político de España.
             </p>
-            <button className="bc-btn-primary" onClick={() => setLocation("/encuesta")}>
-              Comenzar Ahora <ArrowRight size={18} />
+            <button className="bc-btn-primary" onClick={() => setLocation("/nano-encuesta")}>
+              Comenzar Encuesta <ArrowRight size={18} />
             </button>
           </div>
         </section>
