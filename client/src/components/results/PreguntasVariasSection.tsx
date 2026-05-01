@@ -117,7 +117,7 @@ const loadData = async (
   }
 };
 
-export default function PreguntasVariasSection() {
+export default function PreguntasVariasSection({ partyMeta = {} }: { partyMeta?: Record<string, { color?: string; logo?: string }> }) {
   const [monarquia, setMonarquia] = useState<QuestionData[]>([]);
   const [division, setDivision] = useState<QuestionData[]>([]);
   const [pensiones, setPensiones] = useState<QuestionData[]>([]);
@@ -179,7 +179,12 @@ export default function PreguntasVariasSection() {
   }, []);
 
   const getBreakdownKey = (questionKey: string, label: string) => `${questionKey}::${label}`;
-  const getPartyStyle = (party: string) => partyBranding[party.trim().toUpperCase()] || { color: '#9CA3AF', logo: '' };
+  const getPartyStyle = (party: string) => {
+  const key = party.trim().toUpperCase();
+  const fromMeta = partyMeta[key];
+  if (fromMeta?.color || fromMeta?.logo) return { color: fromMeta.color || "#9CA3AF", logo: fromMeta.logo || "" };
+  return partyBranding[key] || { color: "#9CA3AF", logo: "" };
+};
 
   if (loading) {
     return <div className="text-center py-8">Cargando...</div>;
