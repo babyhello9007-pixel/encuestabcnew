@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -338,7 +339,7 @@ const TAB_GROUPS: TabGroup[] = [
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 220 });
   const ref = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -353,8 +354,9 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
     if (btn) {
       const rect = btn.getBoundingClientRect();
       setDropdownPos({
-        top: rect.bottom - ref.current?.getBoundingClientRect().top! + 4,
-        left: rect.left - ref.current?.getBoundingClientRect().left!
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: Math.max(220, rect.width + 48),
       });
     }
     setOpenGroup(openGroup === label ? null : label);
@@ -378,14 +380,17 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
                 <ChevronDown size={11} style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "", transition: "transform 0.2s" }} />
               </button>
               {isOpen && (
-                <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top + 58}px`, left: `${dropdownPos.left}px`, zIndex: 9999 }}>
-                  {group.tabs.map(tab => (
-                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
-                      onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+                createPortal(
+                  <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px`, minWidth: `${dropdownPos.width}px`, zIndex: 2147483647 }}>
+                    {group.tabs.map(tab => (
+                      <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
+                        onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>,
+                  document.body
+                )
               )}
             </div>
           );
@@ -432,14 +437,15 @@ const MINISTERIOS = [
 
 // ─── Government Builder Modal ─────────────────────────────────────────────────
 function GobiernoModal({
-  onClose, leaders, partyMeta, logoPresidenciaB64
+  onClose, leaders, partyMeta, logoPresidenciaB64, initialParty
 }: {
   onClose: () => void;
   leaders: PartyLeader[];
   partyMeta: Record<string, PartyMeta>;
   logoPresidenciaB64: string;
+  initialParty?: string | null;
 }) {
-  const [selectedParty, setSelectedParty] = useState("");
+  const [selectedParty, setSelectedParty] = useState(initialParty || "");
   const [selectedLeader, setSelectedLeader] = useState("");
   const [ministerios, setMinisterios] = useState<Record<string, string>>(
     Object.fromEntries(MINISTERIOS.map(m => [m.id, ""]))
@@ -449,6 +455,10 @@ function GobiernoModal({
 
   const partyLeaders = leaders.filter(l => l.party_key === selectedParty);
   const partyKeys = Array.from(new Set(leaders.map(l => l.party_key)));
+
+  useEffect(() => {
+    if (initialParty) setSelectedParty(initialParty);
+  }, [initialParty]);
 
   const updateMin = (id: string, val: string) => {
     setMinisterios(prev => ({ ...prev, [id]: val }));
@@ -921,6 +931,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           leaders={allLeadersForGov}
           partyMeta={partyMeta}
           logoPresidenciaB64={logoB64}
+          initialParty={selectedParty}
         />
       )}
     </div>
@@ -1041,6 +1052,18 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     customParties.forEach(p => { m[p.key] = { key: p.key, name: p.name, color: p.color, logo: "" }; });
     return m;
   }, [generalPartyMap, customParties]);
+
+  useEffect(() => {
+    if (!Object.keys(votosPorProvincia).length) return;
+    setProvinciaVotes(prev => {
+      if (Object.keys(prev).length) return prev;
+      const seeded: Record<string, Record<string, number>> = {};
+      Object.entries(votosPorProvincia).forEach(([prov, votes]) => {
+        seeded[prov] = { ...votes };
+      });
+      return seeded;
+    });
+  }, [votosPorProvincia]);
 
   const effectiveVotesByProvince = useMemo(() => {
     if (!Object.keys(votosPorProvincia).length) return {};
