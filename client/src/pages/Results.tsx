@@ -2032,16 +2032,51 @@ export default function Results() {
   const handleGenerarInfografia = async (type: "general" | "party", party?: string) => {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
     let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
+    let top5LideresPorPartido: Record<string, Array<{ nombre: string; votos: number; porcentaje: number }>> = {};
+    let preguntasVarias: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }> = {};
+    let partyLogos: Record<string, string> = {};
+    
     try {
       const { data: topLeaderRows } = await supabase.from("top_lider_por_partido").select("partido, lider_top, votos_lider_top, porcentaje_lider_top");
       if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
+
+      const { data: top5Rows } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje").order("total_votos", { ascending: false });
+      if (top5Rows?.length) {
+        top5Rows.forEach((r: any) => {
+          if (!top5LideresPorPartido[r.partido]) top5LideresPorPartido[r.partido] = [];
+          if (top5LideresPorPartido[r.partido].length < 5) {
+            top5LideresPorPartido[r.partido].push({ nombre: r.lider_preferido, votos: Number(r.total_votos || 0), porcentaje: Number(r.porcentaje || 0) });
+          }
+        });
+      }
+
+      if (party) {
+        const { data: respuestasData } = await supabase.from("respuestas").select("division_territorial, monarquia_republica, sistema_pensiones").eq("voto_generales", party).limit(1000);
+        if (respuestasData?.length) {
+          const countMap = (arr: any[], field: string) => {
+            const counts: Record<string, number> = {};
+            arr.forEach(r => { const val = r[field]; if (val) counts[val] = (counts[val] || 0) + 1; });
+            return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+          };
+          preguntasVarias[party] = {
+            division_territorial: countMap(respuestasData, "division_territorial"),
+            monarquia_republica: countMap(respuestasData, "monarquia_republica"),
+            sistema_pensiones: countMap(respuestasData, "sistema_pensiones")
+          };
+        }
+      }
+
+      const { data: partyConfig } = await supabase.from("party_configuration").select("party_key, logo_url");
+      if (partyConfig?.length) {
+        partyConfig.forEach((p: any) => { partyLogos[p.party_key] = p.logo_url || ""; });
+      }
 
       const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
       if (topRegionRows?.length) topRegionPorPartido = topRegionRows.map((r: any) => ({ partido: r.partido, region: r.region_top, votos: Number(r.votos_region_top || 0) }));
     } catch (e) {
       console.error("Error cargando datos extendidos para infografía:", e);
     }
-    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, undefined, top1PorPartido, topRegionPorPartido);
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, undefined, top1PorPartido, topRegionPorPartido, top5LideresPorPartido, preguntasVarias, partyLogos);
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";
