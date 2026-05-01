@@ -1807,6 +1807,7 @@ export default function Results() {
     return d;
   }, [partyConfigData]);
 
+<<<<<<< Updated upstream
   const resolvePartyKey = (value: string, metaMap: Record<string, PartyMeta>) => {
     if (metaMap[value]) return value;
     const n = normalizePartyKey(value);
@@ -1814,6 +1815,24 @@ export default function Results() {
       Object.entries(metaMap).find(([, p]) => normalizePartyKey(String(p?.name || "")) === n)?.[0] ||
       value;
   };
+=======
+        if (generalData) {
+          const votos: Record<string, number> = {};
+          generalData.forEach(r => {
+            votos[r.voto_generales] = (votos[r.voto_generales] || 0) + 1;
+          });
+          const escanos = calcularEscanosGenerales(votos);
+          const partyNames: Record<string, string> = {};
+          const partyLogos: Record<string, string> = {};
+          Object.entries(generalPartyMap).forEach(([key, meta]) => {
+            partyNames[key] = meta.name;
+            partyLogos[key] = meta.logo;
+          });
+          const stats = obtenerEstadisticas(votos, escanos, partyNames, partyLogos);
+          setGeneralStats(stats);
+          setTotalResponses(generalData.length);
+        }
+>>>>>>> Stashed changes
 
   const buildLookup = (map: Record<string, PartyMeta>): Record<string, PartyMeta> => {
     const lookup: Record<string, PartyMeta> = {};
