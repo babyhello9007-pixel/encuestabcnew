@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -75,6 +76,11 @@ interface HistoricoEleccion {
 interface VotoHistorico {
   partido: string; tipo: string; snapshot_at: string;
   votos: number; porcentaje: number;
+}
+interface NocheElectoralRow {
+  id: number;
+  election_date: string; region_name: string; region_flag_url: string | null; close_at: string;
+  results: { party_id: number; party_key: string; display_name: string; color: string; logo_url?: string; porcentaje_voto: number; escanos: number | null; proyected_escaños?: number | null; proyected_porcentaje?: number | null; candidato?: string | null; is_projection: boolean; is_final: boolean; }[];
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
@@ -304,7 +310,7 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias" | "simulador-electoral";
+  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral";
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
@@ -312,7 +318,6 @@ const TAB_GROUPS: TabGroup[] = [
   { label: "Elecciones", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
     { key: "general", label: "Resultados Generales" },
     { key: "mapa-hemiciclo", label: "Mapa y Hemiciclo" },
-    { key: "simulador-electoral", label: "Simulador" },
     { key: "encuestadoras-externas", label: "Encuestadoras" },
   ]},
   { label: "Territorio", icon: <MapPin className="w-3.5 h-3.5" />, tabs: [
@@ -331,6 +336,9 @@ const TAB_GROUPS: TabGroup[] = [
   ]},
   { label: "Análisis", icon: <BarChart2 className="w-3.5 h-3.5" />, tabs: [
     { key: "tendencias", label: "Tendencias" },
+    { key: "analisis-avanzado", label: "Coherencia y Visualizaciones" },
+    { key: "contexto-historico", label: "Contexto Histórico" },
+    { key: "noche-electoral", label: "Modo Directo: Noche Electoral" },
     { key: "preguntas-varias", label: "Preguntas Varias" },
   ]},
 ];
@@ -338,12 +346,18 @@ const TAB_GROUPS: TabGroup[] = [
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (t: TabKey) => void }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 220 });
   const ref = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null); };
+    const h = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const insideNav = ref.current?.contains(target);
+      const insideDropdown = dropdownRef.current?.contains(target);
+      if (!insideNav && !insideDropdown) setOpenGroup(null);
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
@@ -353,8 +367,9 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
     if (btn) {
       const rect = btn.getBoundingClientRect();
       setDropdownPos({
-        top: rect.bottom - ref.current?.getBoundingClientRect().top! + 4,
-        left: rect.left - ref.current?.getBoundingClientRect().left!
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: Math.max(220, rect.width + 48),
       });
     }
     setOpenGroup(openGroup === label ? null : label);
@@ -378,14 +393,17 @@ function ResultsNavBar({ activeTab, onTabChange }: { activeTab: TabKey; onTabCha
                 <ChevronDown size={11} style={{ opacity: 0.5, transform: isOpen ? "rotate(180deg)" : "", transition: "transform 0.2s" }} />
               </button>
               {isOpen && (
-                <div className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top + 58}px`, left: `${dropdownPos.left}px`, zIndex: 9999 }}>
-                  {group.tabs.map(tab => (
-                    <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
-                      onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+                createPortal(
+                  <div ref={dropdownRef} className="r-dropdown" style={{ position: "fixed", top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px`, minWidth: `${dropdownPos.width}px`, zIndex: 2147483647 }}>
+                    {group.tabs.map(tab => (
+                      <button key={tab.key} className={`r-dropdown-item${activeTab === tab.key ? ' active' : ''}`}
+                        onClick={() => { onTabChange(tab.key); setOpenGroup(null); }}>
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>,
+                  document.body
+                )
               )}
             </div>
           );
@@ -429,34 +447,79 @@ const MINISTERIOS = [
   { id: "ciencia", titulo: "Ciencia e Innovación", icon: "🔬" },
   { id: "inclusion", titulo: "Inclusión y Seguridad Social", icon: "🤝" },
 ];
+type MinisterioEditable = { id: string; titulo: string; icon: string; ministro: string; partido: string; foto: string };
 
 // ─── Government Builder Modal ─────────────────────────────────────────────────
 function GobiernoModal({
-  onClose, leaders, partyMeta, logoPresidenciaB64
+  onClose, leaders, partyMeta, logoPresidenciaB64, initialParty
 }: {
   onClose: () => void;
   leaders: PartyLeader[];
   partyMeta: Record<string, PartyMeta>;
   logoPresidenciaB64: string;
+  initialParty?: string | null;
 }) {
-  const [selectedParty, setSelectedParty] = useState("");
+  const GOV_STORAGE_KEY = "bc_gobierno_builder_state_v1";
+  const [selectedParty, setSelectedParty] = useState(initialParty || "");
   const [selectedLeader, setSelectedLeader] = useState("");
-  const [ministerios, setMinisterios] = useState<Record<string, string>>(
-    Object.fromEntries(MINISTERIOS.map(m => [m.id, ""]))
+  const [ministerios, setMinisterios] = useState<MinisterioEditable[]>(
+    MINISTERIOS.map(m => ({ id: m.id, titulo: m.titulo, icon: m.icon, ministro: "", partido: "", foto: "" }))
   );
   const [nombreGobierno, setNombreGobierno] = useState("Gobierno de España");
   const [generando, setGenerando] = useState(false);
+  const [dragMinistryId, setDragMinistryId] = useState<string | null>(null);
 
   const partyLeaders = leaders.filter(l => l.party_key === selectedParty);
   const partyKeys = Array.from(new Set(leaders.map(l => l.party_key)));
 
-  const updateMin = (id: string, val: string) => {
-    setMinisterios(prev => ({ ...prev, [id]: val }));
+  useEffect(() => {
+    if (initialParty) setSelectedParty(initialParty);
+  }, [initialParty]);
+
+  const updateMin = (id: string, patch: Partial<MinisterioEditable>) => {
+    setMinisterios(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
   };
+  const handleAddMinistry = () => setMinisterios(prev => [...prev, { id: `custom_${Date.now()}`, titulo: "Nuevo Ministerio", icon: "🏛️", ministro: "", partido: "", foto: "" }]);
+  const handleRemoveMinistry = (id: string) => setMinisterios(prev => prev.filter(m => m.id !== id));
+  const handleMoveMinistry = (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    setMinisterios(prev => {
+      const from = prev.findIndex(m => m.id === fromId);
+      const to = prev.findIndex(m => m.id === toId);
+      if (from < 0 || to < 0) return prev;
+      const clone = [...prev];
+      const [item] = clone.splice(from, 1);
+      clone.splice(to, 0, item);
+      return clone;
+    });
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
   const generarInfografia = async () => {
     setGenerando(true);
     try {
+      const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
+        if (!src) return resolve(null);
+        const img = new window.Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
       // Crear canvas con el gobierno
       const canvas = document.createElement("canvas");
       canvas.width = 1600;
@@ -484,72 +547,96 @@ function GobiernoModal({
         });
       }
 
-      // Título gobierno
+      // Título gobierno (más arriba)
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 28px 'DM Sans', sans-serif";
-      ctx.fillText(nombreGobierno, 400, 52);
+      ctx.font = "bold 30px 'DM Sans', sans-serif";
+      ctx.fillText(nombreGobierno, 400, 44);
       ctx.font = "16px 'DM Sans', sans-serif";
       ctx.fillStyle = "rgba(255,255,255,0.5)";
-      ctx.fillText(new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long" }), 400, 78);
+      ctx.fillText(new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long" }), 400, 68);
 
       // Divider
       ctx.fillStyle = "rgba(255,255,255,0.08)";
-      ctx.fillRect(40, 110, 1520, 1);
+      ctx.fillRect(40, 96, 1520, 1);
 
       // Partido y presidente
       const pm = partyMeta[selectedParty];
       if (pm) {
         ctx.fillStyle = pm.color || "#e8465a";
         ctx.beginPath();
-        ctx.roundRect(40, 130, 300, 60, 10);
+        ctx.roundRect(40, 112, 300, 64, 10);
         ctx.fill();
         ctx.fillStyle = "#fff";
         ctx.font = "bold 18px 'DM Sans', sans-serif";
-        ctx.fillText(pm.name || selectedParty, 60, 155);
+        ctx.fillText(pm.name || selectedParty, 60, 140);
         ctx.font = "13px 'DM Sans', sans-serif";
         ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.fillText(`Presidente: ${selectedLeader}`, 60, 178);
+        ctx.fillText(`Presidente: ${selectedLeader || "—"}`, 60, 162);
       }
 
-      // Grid ministerios
+      // Grid ministerios (mismo estilo que previsualización instantánea)
       const cols = 4;
-      const rows = Math.ceil(MINISTERIOS.length / cols);
-      const boxW = 350;
-      const boxH = 70;
+      const boxW = 360;
+      const boxH = 150;
       const startX = 40;
-      const startY = 220;
-      const gapX = 390;
-      const gapY = 80;
+      const startY = 200;
+      const gapX = 20;
+      const gapY = 16;
 
-      MINISTERIOS.forEach((min, i) => {
+      for (let i = 0; i < ministerios.length; i++) {
+        const min = ministerios[i];
         const col = i % cols;
         const row = Math.floor(i / cols);
-        const x = startX + col * gapX;
-        const y = startY + row * gapY;
-        const titular = ministerios[min.id] || "Sin asignar";
+        const x = startX + col * (boxW + gapX);
+        const y = startY + row * (boxH + gapY);
+        const leader = leaders.find(l => l.leader_name === min.ministro);
+        const pKey = min.partido || leader?.party_key || "";
+        const pMeta = partyMeta[pKey];
+        const titular = min.ministro || "Sin asignar";
 
-        // Box
-        ctx.fillStyle = titular !== "Sin asignar" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)";
-        ctx.beginPath();
-        ctx.roundRect(x, y, boxW, boxH - 6, 8);
-        ctx.fill();
-
-        // Border
-        ctx.strokeStyle = titular !== "Sin asignar" ? (pm?.color || "#e8465a") + "40" : "rgba(255,255,255,0.06)";
-        ctx.lineWidth = 1;
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.beginPath(); ctx.roundRect(x, y, boxW, boxH, 14); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
         ctx.stroke();
 
-        // Text
-        ctx.fillStyle = "rgba(255,255,255,0.4)";
-        ctx.font = "9px monospace";
-        ctx.fillText(min.titulo.toUpperCase(), x + 10, y + 18);
-        ctx.fillStyle = "#f0eff8";
-        ctx.font = "bold 13px 'DM Sans', sans-serif";
-        ctx.fillText(titular.length > 38 ? titular.slice(0, 38) + "…" : titular, x + 10, y + 40);
-        ctx.fillStyle = "rgba(255,255,255,0.3)";
-        ctx.font = "16px serif";
-        ctx.fillText(min.icon, x + boxW - 28, y + 38);
-      });
+        // avatar
+        const avatarX = x + 14, avatarY = y + 16, avatarS = 36;
+        ctx.fillStyle = pMeta?.color || "#444";
+        ctx.beginPath(); ctx.arc(avatarX + avatarS / 2, avatarY + avatarS / 2, avatarS / 2, 0, Math.PI * 2); ctx.fill();
+        const avatarImg = await loadImage(min.foto || leader?.photo_url);
+        if (avatarImg) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(avatarX + avatarS / 2, avatarY + avatarS / 2, avatarS / 2, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(avatarImg, avatarX, avatarY, avatarS, avatarS);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 14px 'DM Sans', sans-serif";
+          ctx.fillText((titular || "I").charAt(0).toUpperCase(), avatarX + 12, avatarY + 24);
+        }
+
+        // texts
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 13px 'DM Sans', sans-serif";
+        ctx.fillText(min.titulo || "Ministerio", x + 58, y + 30);
+        ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "12px 'DM Sans', sans-serif";
+        ctx.fillText(titular.length > 32 ? `${titular.slice(0, 32)}…` : titular, x + 14, y + 68);
+
+        // party tag + logo
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.beginPath(); ctx.roundRect(x + 14, y + 82, 94, 20, 10); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "bold 10px monospace";
+        ctx.fillText((pMeta?.name || pKey || "IND").slice(0, 12), x + 20, y + 96);
+        const logoImg = await loadImage(pMeta?.logo);
+        if (logoImg) {
+          ctx.drawImage(logoImg, x + boxW - 44, y + 84, 24, 24);
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.45)";
+          ctx.font = "10px monospace";
+          ctx.fillText("IND", x + boxW - 44, y + 98);
+        }
+      }
 
       // Footer
       ctx.fillStyle = "rgba(255,255,255,0.15)";
@@ -579,20 +666,26 @@ function GobiernoModal({
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#7a7990", cursor: "pointer" }}><X size={18} /></button>
         </div>
 
-        {/* Partido y presidente */}
+        {/* Partido y presidencia */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
           <div>
             <label style={{ fontSize: 11, color: "#7a7990", display: "block", marginBottom: 6 }}>Partido gobernante</label>
-            <select className="r-select" value={selectedParty} onChange={e => { setSelectedParty(e.target.value); setSelectedLeader(""); }}>
+            <select className="r-select" value={selectedParty} onChange={e => {
+              const partyKey = e.target.value;
+              setSelectedParty(partyKey);
+              const firstLeader = leaders.find(l => l.party_key === partyKey);
+              if (firstLeader) setSelectedLeader(firstLeader.leader_name);
+            }}>
               <option value="">Seleccionar partido…</option>
               {partyKeys.map(pk => <option key={pk} value={pk}>{partyMeta[pk]?.name || pk}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: "#7a7990", display: "block", marginBottom: 6 }}>Presidente del Gobierno</label>
-            <select className="r-select" value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} disabled={!selectedParty}>
-              <option value="">Seleccionar líder…</option>
-              {partyLeaders.map(l => <option key={l.id} value={l.leader_name}>{l.leader_name}</option>)}
+            <label style={{ fontSize: 11, color: "#7a7990", display: "block", marginBottom: 6 }}>Candidato/a a presidencia (auto-presidente)</label>
+            <select className="r-select" value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)}>
+              <option value="">Seleccionar candidato…</option>
+              {leaders.map(l => <option key={l.id} value={l.leader_name}>{l.leader_name} ({l.party_key})</option>)}
+              <option value="Independiente">Independiente (IND)</option>
             </select>
           </div>
         </div>
@@ -602,19 +695,65 @@ function GobiernoModal({
           <input className="r-gov-ministry-input" style={{ borderRadius: 9, padding: "9px 12px", fontSize: 13 }} value={nombreGobierno} onChange={e => setNombreGobierno(e.target.value)} placeholder="Gobierno de España" />
         </div>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>Ministerios</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 8, maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
-          {MINISTERIOS.map(min => (
-            <div key={min.id} className="r-gov-ministry">
-              <div className="r-gov-ministry-title">{min.icon} {min.titulo}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", textTransform: "uppercase", letterSpacing: "0.06em" }}>Ministerios</div>
+          <button className="r-infog-generate" style={{ padding: "6px 10px", fontSize: 11 }} onClick={handleAddMinistry}><Plus size={12} />Añadir</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10, maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
+          {ministerios.map(min => (
+            <div
+              key={min.id}
+              className="r-gov-ministry"
+              draggable
+              onDragStart={() => setDragMinistryId(min.id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => { if (dragMinistryId) handleMoveMinistry(dragMinistryId, min.id); setDragMinistryId(null); }}
+              style={{ transition: "all .2s ease", borderColor: dragMinistryId === min.id ? "#e8465a" : undefined }}
+            >
+              <div className="r-gov-ministry-title">{min.icon || "🏛️"} {min.titulo}</div>
+              <input className="r-gov-ministry-input" placeholder="Título del ministerio…" value={min.titulo} onChange={e => updateMin(min.id, { titulo: e.target.value })} />
+              <select className="r-select" value={min.ministro} onChange={e => updateMin(min.id, { ministro: e.target.value })}>
+                <option value="">Candidato predefinido…</option>
+                {leaders.map(l => <option key={l.id} value={l.leader_name}>{l.leader_name} ({l.party_key})</option>)}
+                <option value="Independiente">Independiente</option>
+              </select>
               <input
                 className="r-gov-ministry-input"
                 placeholder="Nombre del ministro/a…"
-                value={ministerios[min.id] || ""}
-                onChange={e => updateMin(min.id, e.target.value)}
+                value={min.ministro || ""}
+                onChange={e => updateMin(min.id, { ministro: e.target.value })}
               />
+              <input className="r-gov-ministry-input" placeholder="Partido (opcional)" value={min.partido || ""} onChange={e => updateMin(min.id, { partido: e.target.value })} />
+              <input className="r-gov-ministry-input" placeholder="URL imagen ministro (opcional)" value={min.foto || ""} onChange={e => updateMin(min.id, { foto: e.target.value })} />
+              <button className="r-trash-btn" onClick={() => handleRemoveMinistry(min.id)}><Trash2 size={12} /></button>
             </div>
           ))}
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", marginBottom: 8 }}>Previsualización instantánea</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
+            {ministerios.slice(0, 8).map(min => {
+              const leader = leaders.find(l => l.leader_name === min.ministro);
+              const pKey = min.partido || leader?.party_key || "";
+              const pMeta = partyMeta[pKey];
+              return (
+                <div key={`preview_${min.id}`} style={{ border: "1px solid rgba(255,255,255,.08)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,.02)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    {leader?.photo_url
+                      ? <img src={leader.photo_url} alt={min.ministro} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                      : <div style={{ width: 28, height: 28, borderRadius: "50%", background: pMeta?.color || "#444", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>{(min.ministro || "IND").charAt(0)}</div>}
+                    <div style={{ fontSize: 12, fontWeight: 700 }}>{min.titulo}</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#f0eff8" }}>{min.ministro || "Sin asignar"}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#7a7990", marginTop: 4 }}>
+                    {pMeta?.logo ? <img src={pMeta.logo} alt={pKey} style={{ width: 14, height: 14, objectFit: "contain" }} /> : <span style={{ padding: "1px 5px", border: "1px solid rgba(255,255,255,.2)", borderRadius: 10 }}>IND</span>}
+                    <span>{pMeta?.name || pKey || "IND"}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="r-infog-footer">
@@ -727,18 +866,21 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           logo_url: row.party_configuration?.logo_url ?? "",
         }));
         setLeaders(mapped);
-        const { data: pd } = await supabase.from("lideres_preferidos").select("partido, lider_preferido");
+        const { data: pd } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje");
         if (pd?.length) {
-          const cnt: Record<string, Record<string, number>> = {};
-          pd.forEach((r: any) => { if (!cnt[r.partido]) cnt[r.partido] = {}; cnt[r.partido][r.lider_preferido] = (cnt[r.partido][r.lider_preferido] || 0) + 1; });
-          const arr: LiderPreferido[] = [];
-          Object.entries(cnt).forEach(([partido, lids]: [string, Record<string, number>]) => {
-            const tot = Object.values(lids).reduce((a, b) => a + b, 0);
-            Object.entries(lids).forEach(([lider, votos]: [string, number]) => {
-              const li = mapped.find(l => l.party_key === partido && l.leader_name === lider);
-              const pi = mapped.find(l => l.party_key === partido);
-              arr.push({ partido, lider_preferido: lider, votos, porcentaje: tot > 0 ? (votos / tot) * 100 : 0, photo_url: li?.photo_url, color: pi?.color, display_name: pi?.display_name ?? partido, logo_url: pi?.logo_url });
-            });
+          const arr: LiderPreferido[] = pd.map((r: any) => {
+            const li = mapped.find(l => l.party_key === r.partido && l.leader_name === r.lider_preferido);
+            const pi = mapped.find(l => l.party_key === r.partido);
+            return {
+              partido: r.partido,
+              lider_preferido: r.lider_preferido,
+              votos: Number(r.total_votos || 0),
+              porcentaje: Number(r.porcentaje || 0),
+              photo_url: li?.photo_url,
+              color: pi?.color,
+              display_name: pi?.display_name ?? r.partido,
+              logo_url: pi?.logo_url
+            };
           });
           setLideresPreferidos(arr);
         }
@@ -921,6 +1063,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           leaders={allLeadersForGov}
           partyMeta={partyMeta}
           logoPresidenciaB64={logoB64}
+          initialParty={selectedParty}
         />
       )}
     </div>
@@ -1002,6 +1145,58 @@ function LeadersByPartyAvg({ leaderRatings, generalStats, generalPartyMap }: {
   );
 }
 
+function AnalisisAvanzadoSection({
+  coherenciaRows, flujosRows, ideologiaRows, correlacionRows, historicoRows,
+}: {
+  coherenciaRows: any[]; flujosRows: any[]; ideologiaRows: any[]; correlacionRows: any[]; historicoRows: any[];
+}) {
+  const sankeyNodes = Array.from(
+    new Set(
+      flujosRows
+        .flatMap((r: any) => [r?.origen, r?.destino])
+        .filter((v: any) => typeof v === "string" && v.trim().length > 0)
+    )
+  );
+  const nodeIndex: Record<string, number> = {};
+  sankeyNodes.forEach((name, idx) => { nodeIndex[name] = idx; });
+  const sankeyData = {
+    nodes: sankeyNodes.map((name) => ({ name })),
+    links: flujosRows
+      .map((r: any) => ({
+        source: nodeIndex[String(r?.origen ?? "")],
+        target: nodeIndex[String(r?.destino ?? "")],
+        value: Number(r?.cantidad ?? 0),
+      }))
+      .filter((l: any) => Number.isInteger(l.source) && Number.isInteger(l.target) && l.value > 0),
+  };
+  const bubbleData = ideologiaRows.map((r: any) => ({ x: Number(r.ideologia_media || 0), y: Number(r.total || 0), z: Number(r.total || 0), partido: r.partido }));
+  const radarData = correlacionRows.slice(0, 6).map((r: any) => ({ partido: r.partido, feijoo: r.avg_feijoo || 0, sanchez: r.avg_sanchez || 0, abascal: r.avg_abascal || 0 }));
+  const tendenciaActual = historicoRows.slice(-5);
+
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div className="r-section"><div className="r-section-title">Coherencia de voto</div>
+        <div style={{ display: "grid", gap: 8 }}>{coherenciaRows.slice(0, 8).map((r: any) => <div key={r.partido_votado} style={{ fontSize: 12, color: "#c9c8d9" }}>
+          {r.partido_votado}: {r.total_votantes} votantes · Incoherencias detectadas → PP valora Sánchez: {r.pp_valora_sanchez || 0}, PSOE valora Feijóo: {r.psoe_valora_feijoo || 0}, VOX valora Sánchez: {r.vox_valora_sanchez || 0}, PSOE valora Abascal: {r.psoe_valora_abascal || 0}.
+        </div>)}</div>
+      </div>
+      <div className="r-section">
+        <div className="r-section-title">Sankey: flujo generales → autonómicas</div>
+        {sankeyData.nodes.length > 0 && sankeyData.links.length > 0 ? (
+          <ResponsiveContainer width="100%" height={260}>
+            <Sankey data={sankeyData} nodePadding={20} margin={{ left: 20, right: 20, top: 10, bottom: 10 }} link={{ stroke: "#8884d8" }} />
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ fontSize: 12, color: "#7a7990" }}>Sin datos suficientes para flujo de voto.</div>
+        )}
+      </div>
+      <div className="r-section"><div className="r-section-title">Bubble: tamaño votos / posición ideológica</div><ResponsiveContainer width="100%" height={250}><ScatterChart><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" /><XAxis type="number" dataKey="x" name="Ideología" stroke="#7a7990" /><YAxis type="number" dataKey="y" name="Votos" stroke="#7a7990" /><ZAxis dataKey="z" range={[50, 600]} /><Tooltip cursor={{ strokeDasharray: "3 3" }} /><Scatter data={bubbleData} fill="#e8465a" /></ScatterChart></ResponsiveContainer></div>
+      <div className="r-section"><div className="r-section-title">Radar líderes (promedio por partido)</div><ResponsiveContainer width="100%" height={260}><RadarChart data={radarData}><PolarGrid /><PolarAngleAxis dataKey="partido" /><PolarRadiusAxis angle={30} domain={[0, 10]} /><Radar name="Feijóo" dataKey="feijoo" stroke="#60a5fa" fill="#60a5fa" fillOpacity={0.3} /><Radar name="Sánchez" dataKey="sanchez" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.2} /><Radar name="Abascal" dataKey="abascal" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} /><Legend /></RadarChart></ResponsiveContainer></div>
+      <div className="r-section"><div className="r-section-title">Predicción y tendencia (últimos snapshots)</div><ResponsiveContainer width="100%" height={250}><LineChart data={tendenciaActual}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" /><XAxis dataKey="snapshot_at" tick={{ fill: "#7a7990", fontSize: 10 }} /><YAxis tick={{ fill: "#7a7990", fontSize: 10 }} /><Tooltip /><Line type="monotone" dataKey="porcentaje" stroke="#f59e0b" dot={false} /></LineChart></ResponsiveContainer></div>
+    </div>
+  );
+}
+
 // ─── Simulador Electoral ──────────────────────────────────────────────────────
 interface SimuladorProps {
   generalStats: PartyStats[];
@@ -1023,9 +1218,21 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
   const [simEscanosProvincia, setSimEscanosProvincia] = useState<Record<string, number>>({});
   const [provinciaVotes, setProvinciaVotes] = useState<Record<string, Record<string, number>>>({});
   const [initialized, setInitialized] = useState(false);
+  const SIM_STORAGE_KEY = "bc_simulador_v2";
 
   useEffect(() => {
     if (generalStats.length > 0 && !initialized) {
+      const saved = localStorage.getItem(SIM_STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed?.simulatorVotes) setSimulatorVotes(parsed.simulatorVotes);
+          if (parsed?.provinciaVotes) setProvinciaVotes(parsed.provinciaVotes);
+          if (Array.isArray(parsed?.customParties)) setCustomParties(parsed.customParties);
+          setInitialized(true);
+          return;
+        } catch { /* ignore */ }
+      }
       const base: Record<string, number> = {};
       generalStats.forEach(p => { base[p.id] = p.votos; });
       setSimulatorVotes(base);
@@ -1036,16 +1243,36 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     }
   }, [generalStats, votosPorProvincia, initialized]);
 
+  useEffect(() => {
+    if (!initialized) return;
+    localStorage.setItem(SIM_STORAGE_KEY, JSON.stringify({ simulatorVotes, provinciaVotes, customParties }));
+  }, [initialized, simulatorVotes, provinciaVotes, customParties]);
+
   const simulatorPartyMap = useMemo(() => {
     const m = { ...generalPartyMap };
     customParties.forEach(p => { m[p.key] = { key: p.key, name: p.name, color: p.color, logo: "" }; });
     return m;
   }, [generalPartyMap, customParties]);
 
+  useEffect(() => {
+    if (!Object.keys(votosPorProvincia).length) return;
+    setProvinciaVotes(prev => {
+      if (Object.keys(prev).length) return prev;
+      const seeded: Record<string, Record<string, number>> = {};
+      Object.entries(votosPorProvincia).forEach(([prov, votes]) => {
+        seeded[prov] = { ...votes };
+      });
+      return seeded;
+    });
+  }, [votosPorProvincia]);
+
   const effectiveVotesByProvince = useMemo(() => {
     if (!Object.keys(votosPorProvincia).length) return {};
     const totalNac = Object.values(simulatorVotes).reduce((a, v) => a + Math.max(0, v || 0), 0);
-    if (totalNac === 0) return {};
+    if (totalNac === 0) {
+      if (Object.keys(provinciaVotes).length) return { ...provinciaVotes };
+      return {};
+    }
     const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [p, v]) => { acc[p] = Math.max(0, v || 0) / totalNac; return acc; }, {});
     const result: Record<string, Record<string, number>> = {};
     Object.entries(votosPorProvincia).forEach(([prov, realVotes]) => {
@@ -1064,11 +1291,18 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     const escanos: Record<string, number> = {};
     Object.values(simulatorEscanosByProvince).forEach(pe => { Object.entries(pe).forEach(([p, e]) => { escanos[p] = (escanos[p] || 0) + e; }); });
     const nv: Record<string, number> = {};
-    Object.entries(simulatorVotes).forEach(([k, v]) => { nv[k] = Math.max(0, Math.floor(v || 0)); });
+    Object.values(effectiveVotesByProvince).forEach((provVotes) => {
+      Object.entries(provVotes).forEach(([k, v]) => {
+        nv[k] = (nv[k] || 0) + Math.max(0, Math.floor(v || 0));
+      });
+    });
+    if (!Object.keys(nv).length) {
+      Object.entries(simulatorVotes).forEach(([k, v]) => { nv[k] = Math.max(0, Math.floor(v || 0)); });
+    }
     const nombres: Record<string, string> = {}; const logos: Record<string, string> = {};
     Object.entries(simulatorPartyMap).forEach(([k, p]) => { nombres[k] = p.name; logos[k] = p.logo; });
     return obtenerEstadisticas(nv, escanos, nombres, logos).map(s => ({ ...s, color: simulatorPartyMap[s.id]?.color || "#e8465a" }));
-  }, [simulatorEscanosByProvince, simulatorVotes, simulatorPartyMap]);
+  }, [simulatorEscanosByProvince, simulatorVotes, simulatorPartyMap, effectiveVotesByProvince]);
 
   const addCustomParty = () => {
     const name = newPartyName.trim(); if (!name) return;
@@ -1105,6 +1339,17 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
   const updateProvVote = useCallback((prov: string, key: string, val: number) => {
     setProvinciaVotes(prev => ({ ...prev, [prov]: { ...(prev[prov] || {}), [key]: Math.max(0, val) } }));
   }, []);
+
+  useEffect(() => {
+    if (!Object.keys(provinciaVotes).length) return;
+    const totals: Record<string, number> = {};
+    Object.values(provinciaVotes).forEach((pv) => {
+      Object.entries(pv).forEach(([partyKey, votes]) => {
+        totals[partyKey] = (totals[partyKey] || 0) + Math.max(0, Number(votes || 0));
+      });
+    });
+    if (Object.keys(totals).length) setSimulatorVotes(prev => ({ ...prev, ...totals }));
+  }, [provinciaVotes]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1260,7 +1505,9 @@ async function generarInfografiaPNG(
   ideologiaPromedio: number | null,
   type: "general" | "party" | "other",
   partyName?: string,
-  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>
+  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>,
+  topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
+  topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>
 ) {
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
@@ -1343,6 +1590,26 @@ async function generarInfografiaPNG(
       ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
       ctx.fillText(`${party.escanos} esc.`, 700, y + 25);
     });
+    const topLeaderRows = (topLiderPorPartido || []).slice(0, 5);
+    const topRegionRows = (topRegionPorPartido || []).slice(0, 5);
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 230, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#C41E3A"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
+    topLeaderRows.forEach((row, i) => {
+      const y = 290 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.lider, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(`${row.porcentaje.toFixed(1)}%`, 1110, y);
+    });
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 500, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#3b82f6"; ctx.font = "bold 12px monospace"; ctx.fillText("REGIÓN TOP POR PARTIDO", 800, 526);
+    topRegionRows.forEach((row, i) => {
+      const y = 560 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.region, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(String(row.votos), 1110, y);
+    });
   } else if (type === "party" && partyName) {
     const party = stats.find(s => s.nombre === partyName);
     if (party) {
@@ -1389,7 +1656,7 @@ async function generarInfografiaPNG(
     });
   } else {
     // Hemiciclo visual simplificado (semicírculo con datos)
-    const hx = 1000, hy = 480, hr = 200;
+    const hx = 1020, hy = 218, hr = 120;
     ctx.fillStyle = "rgba(255,255,255,0.03)";
     ctx.beginPath(); ctx.arc(hx, hy, hr + 20, Math.PI, 0); ctx.fill();
     const sortedBySeats = [...stats].sort((a, b) => b.escanos - a.escanos).filter(s => s.escanos > 0);
@@ -1454,6 +1721,14 @@ export default function Results() {
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
   const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
   const [leadersSubTab, setLeadersSubTab] = useState<"individual" | "porpartido">("individual");
+  const [coherenciaRows, setCoherenciaRows] = useState<any[]>([]);
+  const [flujosRows, setFlujosRows] = useState<any[]>([]);
+  const [ideologiaRows, setIdeologiaRows] = useState<any[]>([]);
+  const [correlacionRows, setCorrelacionRows] = useState<any[]>([]);
+  const [historicoRows, setHistoricoRows] = useState<any[]>([]);
+  const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
+  const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
+  const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1606,6 +1881,46 @@ export default function Results() {
         try { const { data } = await supabase.from("media_nota_ejecutivo").select("nota_media"); if (data?.[0]) setNotaEjecutivo(data[0].nota_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("edad_promedio").select("edad_media"); if (data?.[0]) setEdadPromedio(data[0].edad_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("ideologia_promedio").select("ideologia_media"); if (data?.[0]) setIdeologiaPromedio(data[0].ideologia_media); } catch { /* skip */ }
+        try { const { data } = await supabase.from("coherencia_voto_lider").select("*"); setCoherenciaRows(data || []); } catch {}
+        try { const { data } = await supabase.from("flujos_voto").select("*").limit(40); setFlujosRows(data || []); } catch {}
+        try { const { data } = await supabase.from("ideologia_por_partido").select("*"); setIdeologiaRows(data || []); } catch {}
+        try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
+        try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
+        try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
+        try {
+          const { data } = await supabase
+            .from("electionsdirect")
+            .select("id,election_date,region_name,region_flag_url,close_at,electiondirect_results(porcentaje_voto,escanos,proyected_escaños,proyected_porcentaje,Candidato,is_projection,is_final,party_configuration(id,party_key,display_name,color,logo_url))")
+            .order("close_at", { ascending: true });
+          const normalized = (data || []).map((r: any) => ({
+            id: r.id,
+            election_date: r.election_date,
+            region_name: r.region_name,
+            region_flag_url: r.region_flag_url,
+            close_at: r.close_at,
+            results: (r.electiondirect_results || []).map((x: any) => ({
+              party_id: x.party_configuration?.id,
+              party_key: x.party_configuration?.party_key,
+              display_name: x.party_configuration?.display_name,
+              color: x.party_configuration?.color,
+              logo_url: x.party_configuration?.logo_url,
+              porcentaje_voto: Number(x.porcentaje_voto || 0),
+              escanos: x.escanos,
+              proyected_escaños: x.proyected_escaños,
+              proyected_porcentaje: x.proyected_porcentaje,
+              candidato: x.Candidato,
+              is_projection: !!x.is_projection,
+              is_final: !!x.is_final,
+            })),
+          }));
+          setNocheElectoralRows(normalized as NocheElectoralRow[]);
+        } catch {}
+        try {
+          const { data } = await supabase.from("party_leaders").select("leader_name, photo_url").eq("is_active", true);
+          const map: Record<string, string> = {};
+          (data || []).forEach((l: any) => { if (l.leader_name && l.photo_url) map[String(l.leader_name).trim().toLowerCase()] = l.photo_url; });
+          setLeaderPhotoByName(map);
+        } catch {}
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -1625,10 +1940,37 @@ export default function Results() {
     });
     return m;
   }, [generalPartyMap, youthPartyMap]);
+  const historicoPorPartido = useMemo(() => {
+    const years = Array.from(new Set(historicoElecciones.map(h => h.año))).sort((a, b) => a - b);
+    const map: Record<string, any> = {};
+    years.forEach(y => { map[y] = { año: y }; });
+    historicoElecciones.forEach((h) => {
+      if (!map[h.año]) map[h.año] = { año: h.año };
+      map[h.año][h.partido] = Number(h.porcentaje || 0);
+    });
+    return Object.values(map).sort((a: any, b: any) => a.año - b.año);
+  }, [historicoElecciones]);
+  const comparativa2023VsActual = useMemo(() => {
+    const r2023 = historicoElecciones.filter(r => r.año === 2023);
+    return r2023.map(r => {
+      const current = generalStats.find(g => g.nombre === r.partido || g.id === r.partido)?.escanos || 0;
+      return { partido: r.partido, escanos_2023: Number(r.escanos || 0), escanos_actuales: current };
+    });
+  }, [historicoElecciones, generalStats]);
 
   const handleGenerarInfografia = async (type: "general" | "party" | "other", party?: string) => {
-    // TODO: Pasar datos de líderes desde LideresDePartidosSection
-    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party);
+    let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
+    let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
+    try {
+      const { data: topLeaderRows } = await supabase.from("top_lider_por_partido").select("partido, lider_top, votos_lider_top, porcentaje_lider_top");
+      if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
+
+      const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
+      if (topRegionRows?.length) topRegionPorPartido = topRegionRows.map((r: any) => ({ partido: r.partido, region: r.region_top, votos: Number(r.votos_region_top || 0) }));
+    } catch (e) {
+      console.error("Error cargando datos extendidos para infografía:", e);
+    }
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, undefined, top1PorPartido, topRegionPorPartido);
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";
@@ -1758,21 +2100,96 @@ export default function Results() {
 
               {/* Tabs content */}
               {activeTab === "tendencias" && <TrendenciesChart partyColors={partyColorMap} />}
+              {activeTab === "analisis-avanzado" && (
+                <AnalisisAvanzadoSection
+                  coherenciaRows={coherenciaRows}
+                  flujosRows={flujosRows}
+                  ideologiaRows={ideologiaRows}
+                  correlacionRows={correlacionRows}
+                  historicoRows={historicoRows}
+                />
+              )}
+              {activeTab === "contexto-historico" && (
+                <div style={{ display: "grid", gap: 14 }}>
+                  <div className="r-section">
+                    <div className="r-section-title">Contexto histórico y ciclos electorales (por partido)</div>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <LineChart data={historicoPorPartido}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis dataKey="año" tick={{ fill: "#7a7990" }} />
+                        <YAxis tick={{ fill: "#7a7990" }} />
+                        <Tooltip />
+                        <Legend />
+                        {["PP", "PSOE", "VOX", "Sumar", "Unidas Podemos", "Ciudadanos"].map((p) => (
+                          <Line key={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} dot={false} connectNulls />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="r-section">
+                    <div className="r-section-title">Comparativa 2023 vs escaños actuales (Encuesta BC)</div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={comparativa2023VsActual}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                      <XAxis dataKey="partido" tick={{ fill: "#7a7990" }} />
+                      <YAxis tick={{ fill: "#7a7990" }} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="escanos_2023" fill="#60a5fa" name="2023" />
+                      <Bar dataKey="escanos_actuales" fill="#e8465a" name="Actual BC" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                </div>
+              )}
+              {activeTab === "noche-electoral" && (
+                <div className="r-section">
+                  <div className="r-section-title">Modo Directo: Noche Electoral</div>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {nocheElectoralRows.length === 0 && <div style={{ fontSize: 12, color: "#7a7990" }}>Sin datos en tiempo real todavía.</div>}
+                    {nocheElectoralRows.map((r, i) => {
+                      const seconds = Math.max(0, Math.floor((new Date(r.close_at).getTime() - Date.now()) / 1000));
+                      const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
+                      const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+                      const ss = String(seconds % 60).padStart(2, "0");
+                      return <div key={`${r.region_name}-${i}`} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 10, display: "grid", gap: 4 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {r.region_flag_url ? <img src={r.region_flag_url} alt={r.region_name} style={{ width: 20, height: 14, objectFit: "cover" }} /> : null}
+                          <strong>{r.region_name}</strong>
+                          <span style={{ marginLeft: "auto", color: "#7a7990", fontSize: 12 }}>Cierre: {hh}:{mm}:{ss}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#7a7990" }}>Resultados por partido (desde party_configuration)</div>
+                        <div style={{ display: "grid", gap: 4 }}>
+                          {r.results?.map((pr, idx) => (
+                            <div key={`${pr.party_id}-${idx}`} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                              {pr.logo_url ? <img src={pr.logo_url} alt={pr.display_name} style={{ width: 16, height: 16, objectFit: "contain", borderRadius: 3 }} /> : null}
+                              <span style={{ width: 8, height: 8, borderRadius: 999, background: pr.color || "#999" }} />
+                              <span style={{ minWidth: 120 }}>{pr.display_name}</span>
+                              <b>{(pr.proyected_porcentaje ?? pr.porcentaje_voto).toFixed(2)}%</b>
+                              <span style={{ color: "#7a7990" }}>{pr.escanos ?? "-"} escaños</span>
+                              <span style={{ color: "#7a7990" }}>proj: {pr.proyected_escaños ?? "-"} </span>
+                              {pr.candidato ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  {leaderPhotoByName[String(pr.candidato).trim().toLowerCase()] ? <img src={leaderPhotoByName[String(pr.candidato).trim().toLowerCase()]} alt={pr.candidato || ""} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} /> : null}
+                                  <span>{pr.candidato}</span>
+                                </span>
+                              ) : null}
+                              <span style={{ marginLeft: "auto", color: pr.is_final ? "#22c55e" : "#f59e0b" }}>{pr.is_final ? "Final" : pr.is_projection ? "Proyección" : "Parcial"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>;
+                    })}
+                  </div>
+                </div>
+              )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
               {activeTab === "preguntas-varias" && <PreguntasVariasSection />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />}
+              {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa tipoEncuesta="generales" generalStats={generalStats} totalResponses={totalResponses} />}
               {activeTab === "lideres-partidos" && <LideresDePartidosSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "simulador-electoral" && (
-                <SimuladorElectoral
-                  generalStats={generalStats}
-                  generalPartyMap={generalPartyMap}
-                  votosPorProvincia={votosPorProvincia}
-                  provinciaMetricsMap={provinciaMetricsMap}
-                />
-              )}
 
               {activeTab === "leaders" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1896,7 +2313,7 @@ export default function Results() {
               )}
 
               {/* Metodología */}
-              {!["simulador-electoral", "lideres-partidos", "encuestadoras-externas"].includes(activeTab) && (
+              {!["lideres-partidos", "encuestadoras-externas"].includes(activeTab) && (
                 <div className="r-section">
                   <div className="r-section-title" style={{ fontSize: 13, marginBottom: 12 }}>Metodología</div>
                   <div className="r-method">

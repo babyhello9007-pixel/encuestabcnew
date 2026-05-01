@@ -138,7 +138,7 @@ export function ShareResultsModern({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2 bg-[#0f172a] hover:bg-[#1e293b] text-white">
-          <Share2 className="h-4 w-4" /> Generar Infografía para Compartir
+          <Share2 className="h-4 w-4" /> Compartir resultados
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
