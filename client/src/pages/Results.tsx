@@ -13,7 +13,7 @@ import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
 import {
-  Loader2, Download, Sparkles, Plus, Trash2, RefreshCw,
+  Loader2, Download, Plus, Trash2, RefreshCw,
   Map, Grid3x3, ChevronDown, Users, BarChart2, MapPin,
   Vote, Star, TrendingUp, X, Image, FileText, Award,
   Building2, Crown, UserCheck, AlertTriangle, Activity,
@@ -26,7 +26,6 @@ import {
   ScatterChart, Scatter, ZAxis, Sankey
 } from "recharts";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
-import { ShareResultsModern } from "@/components/ShareResultsModern";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
@@ -42,7 +41,6 @@ import EncuestadorasComparativa from "@/components/results/EncuestadorasComparat
 import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
-import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import GovernmentBuilder from "@/components/GovernmentBuilder";
 import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
 import { usePartySync } from "@/hooks/usePartySync";
@@ -517,6 +515,18 @@ function GobiernoModal({
   useEffect(() => {
     localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
   }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
+
+  useEffect(() => {
+    if (!selectedLeader) return;
+    const matched = leaders.find((l) => l.leader_name === selectedLeader);
+    const leaderParty = matched?.party_key || selectedParty || "";
+
+    setMinisterios((prev) => prev.map((m) => m.id === "presidencia"
+      ? { ...m, ministro: selectedLeader, partido: leaderParty, foto: m.foto || matched?.photo_url || "" }
+      : m));
+
+    if (leaderParty && leaderParty !== selectedParty) setSelectedParty(leaderParty);
+  }, [selectedLeader, selectedParty, leaders]);
 
   const generarInfografia = async () => {
     setGenerando(true);
@@ -1018,7 +1028,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                     <div key={leader.id} style={{ textAlign: "center" }}>
                       <div style={{ position: "relative", width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto 8px" }}>
                         {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
-                        {leader.votos > 0 && <div style={{ position: "absolute", bottom: 0, right: 0, background: color, color: "#fff", fontSize: 8, fontWeight: 800, padding: "1px 3px", borderRadius: 100 }}>{leader.votos}</div>}
+                        {leader.votos > 0 && <div style={{ position: "absolute", top: -7, left: "50%", transform: "translateX(-50%)", background: color, color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 999, boxShadow: "0 6px 12px rgba(0,0,0,.28)" }}>{leader.votos}</div>}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#f0eff8", marginBottom: 4, lineHeight: 1.3 }}>{leader.leader_name}</div>
                       {leader.votos > 0 ? (
@@ -1725,7 +1735,6 @@ export default function Results() {
   const [votosPorPartidoProvinciaJuveniles, setVotosPorPartidoProvinciaJuveniles] = useState<Record<string, number>>({});
   const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
-  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [showInfografiaModal, setShowInfografiaModal] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
   const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
@@ -2000,9 +2009,6 @@ export default function Results() {
             </div>
           </div>
           <div className="r-header-actions">
-            <button className="r-hbtn r-hbtn-ai" onClick={() => setShowAIAnalysis(true)}>
-              <Sparkles size={12} /><span>Análisis IA</span>
-            </button>
             <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
               <Image size={12} /><span>Infografía</span>
             </button>
@@ -2010,7 +2016,6 @@ export default function Results() {
               <FileText size={12} /><span>PDF</span>
             </button>
             <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
-            <ShareResultsModern stats={generalStats} youthStats={youthStats} totalResponses={totalResponses} cooldownMinutes={15} partyMeta={generalPartyMetaLookup} />
             <FollowUsMenu />
           </div>
         </header>
@@ -2349,7 +2354,6 @@ export default function Results() {
         </footer>
 
         <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} partyKey={selectedPartyForStats ? resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup) : undefined} />
-        <AIAnalysisModal open={showAIAnalysis} onOpenChange={setShowAIAnalysis} totalResponses={totalResponses} edadPromedio={edadPromedio} ideologiaPromedio={ideologiaPromedio} topParties={[...stats].sort((a, b) => b.votos - a.votos).slice(0, 5)} />
         {showInfografiaModal && <InfografiaModal parties={generalStats} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
       </div>
     </>
