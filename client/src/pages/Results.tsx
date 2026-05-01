@@ -2067,13 +2067,10 @@ export default function Results() {
         {/* NavBar */}
         <ResultsNavBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <main className="r-main">
-          {loading ? (
-            <LoadingAnimation />
-          ) : (
-            <div className="r-space">
+        <main className="r-main" style={{ animation: 'fadeIn 0.6s ease-out' }}>
+          <div className="r-space" style={{ animation: 'slideInUp 0.8s ease-out 0.2s both' }}>
               {/* Quick stats */}
-              <div className="r-quickstats">
+              <div className="r-quickstats" style={{ animation: 'slideInUp 0.6s ease-out' }}>
                 <div className="r-stat-card">
                   <div className="r-stat-label">Respuestas</div>
                   <div className="r-stat-value accent">{totalResponses.toLocaleString("es-ES")}</div>
@@ -2390,7 +2387,6 @@ export default function Results() {
                 <button className="r-cta-btn" onClick={() => setLocation("/encuesta")}>Responder Encuesta</button>
               </div>
             </div>
-          )}
         </main>
 
         <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.8)", padding: "16px 20px", textAlign: "center", fontSize: 11, color: "#5a596a" }}>
