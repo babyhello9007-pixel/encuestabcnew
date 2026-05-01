@@ -485,6 +485,50 @@ function GobiernoModal({
       return clone;
     });
   };
+  const addMinistry = () => setMinisterios(prev => [...prev, { id: `custom_${Date.now()}`, titulo: "Nuevo Ministerio", icon: "🏛️", ministro: "", partido: "", foto: "" }]);
+  const removeMinistry = (id: string) => setMinisterios(prev => prev.filter(m => m.id !== id));
+  const moveMinistry = (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    setMinisterios(prev => {
+      const from = prev.findIndex(m => m.id === fromId);
+      const to = prev.findIndex(m => m.id === toId);
+      if (from < 0 || to < 0) return prev;
+      const clone = [...prev];
+      const [item] = clone.splice(from, 1);
+      clone.splice(to, 0, item);
+      return clone;
+    });
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
   useEffect(() => {
     const saved = localStorage.getItem(GOV_STORAGE_KEY);
