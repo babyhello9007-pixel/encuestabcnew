@@ -503,6 +503,21 @@ function GobiernoModal({
     localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
   }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
+
   const generarInfografia = async () => {
     setGenerando(true);
     try {
