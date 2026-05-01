@@ -13,7 +13,7 @@ import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
 import {
-  Loader2, Download, Sparkles, Plus, Trash2, RefreshCw,
+  Loader2, Download, Plus, Trash2, RefreshCw,
   Map, Grid3x3, ChevronDown, Users, BarChart2, MapPin,
   Vote, Star, TrendingUp, X, Image, FileText, Award,
   Building2, Crown, UserCheck, AlertTriangle, Activity,
@@ -26,7 +26,6 @@ import {
   ScatterChart, Scatter, ZAxis, Sankey
 } from "recharts";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
-import { ShareResultsModern } from "@/components/ShareResultsModern";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
@@ -42,7 +41,6 @@ import EncuestadorasComparativa from "@/components/results/EncuestadorasComparat
 import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
-import { AIAnalysisModal } from "@/components/AIAnalysisModal";
 import GovernmentBuilder from "@/components/GovernmentBuilder";
 import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
 import { usePartySync } from "@/hooks/usePartySync";
@@ -78,22 +76,17 @@ interface VotoHistorico {
   votos: number; porcentaje: number;
 }
 interface NocheElectoralRow {
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
   id: number;
-  election_date: string; region_name: string; region_flag_url: string | null; close_at: string;
+  election_date: string; region_name: string; region_flag_url: string | null; close_at: string; escrutado?: number | null;
   results: { party_id: number; party_key: string; display_name: string; color: string; logo_url?: string; porcentaje_voto: number; escanos: number | null; proyected_escaños?: number | null; proyected_porcentaje?: number | null; candidato?: string | null; is_projection: boolean; is_final: boolean; }[];
-=======
-  election_date: string; region_name: string; region_flag_url: string | null;
-  estimate_bc: number; final_result: number | null; close_at: string;
->>>>>>> main
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const RESULTS_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
 
-.r-root { min-height: 100vh; display: flex; flex-direction: column; background: #0a0a0f; color: #f0eff8; font-family: 'DM Sans', sans-serif; }
-.r-header { position: sticky; top: 0; z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
+.r-root { --top-anchor: 64px; min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #1f2937 0%, #0a0a0f 45%, #07070b 100%); color: #f0eff8; font-family: 'Plus Jakarta Sans', sans-serif; }
+.r-header { position: relative; top: 0; z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
 .r-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .r-brand img { height: 28px; width: 28px; }
 .r-brand-title { font-size: 14px; font-weight: 700; color: #f0eff8; line-height: 1.2; }
@@ -112,7 +105,7 @@ const RESULTS_CSS = `
 .r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
 
 /* Subnav */
-.r-subnav { position: sticky; top: 58px; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
+.r-subnav { position: relative; top: 0; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
 .r-subnav::-webkit-scrollbar { height: 3px; }
 .r-subnav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 .r-subnav-inner { display: flex; align-items: stretch; padding: 0 16px; min-width: max-content; }
@@ -127,14 +120,14 @@ const RESULTS_CSS = `
 .r-dropdown-item.active { color: #e8465a; border-left-color: #e8465a; background: rgba(232,70,90,0.06); font-weight: 700; }
 
 /* Main */
-.r-main { flex: 1; padding: 24px 20px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+.r-main { flex: 1; padding: 14px 20px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .r-space { display: flex; flex-direction: column; gap: 18px; }
 
 /* Quick stats */
 .r-quickstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.r-stat-card { background: #111118; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px 14px; text-align: center; }
+.r-stat-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(22px) saturate(165%); -webkit-backdrop-filter: blur(22px) saturate(165%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 14px 38px rgba(5,8,20,0.38); border-radius: 14px; padding: 16px 14px; text-align: center; }
 .r-stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7a7990; margin-bottom: 4px; }
-.r-stat-value { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; color: #f0eff8; line-height: 1; }
+.r-stat-value { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; color: #f0eff8; line-height: 1; }
 .r-stat-value.accent { color: #e8465a; }
 .r-stat-suffix { font-size: 10px; color: #7a7990; margin-top: 2px; }
 
@@ -145,8 +138,8 @@ const RESULTS_CSS = `
 .r-sort-hint { margin-left: auto; font-size: 11px; color: #5a596a; }
 
 /* Party cards */
-.r-party-card { background: #111118; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
-.r-party-card:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.r-party-card { --party-accent: #e8465a; background: linear-gradient(160deg, color-mix(in srgb, var(--party-accent) 12%, transparent), rgba(255,255,255,0.03)); backdrop-filter: blur(20px) saturate(175%); -webkit-backdrop-filter: blur(20px) saturate(175%); border: 1px solid color-mix(in srgb, var(--party-accent) 38%, rgba(255,255,255,0.16)); border-radius: 16px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
+.r-party-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px color-mix(in srgb, var(--party-accent) 35%, rgba(0,0,0,0.32)); }
 .r-party-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .r-party-logo-wrap { width: 40px; height: 40px; border-radius: 9px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .r-party-info { flex: 1; min-width: 0; }
@@ -154,7 +147,7 @@ const RESULTS_CSS = `
 .r-party-votes { font-size: 11px; color: #7a7990; margin-top: 1px; }
 .r-party-edad { font-size: 10px; color: #c9a96e; margin-top: 1px; display: flex; align-items: center; gap: 4px; }
 .r-party-seats { text-align: right; flex-shrink: 0; }
-.r-party-seats-num { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 800; line-height: 1; }
+.r-party-seats-num { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; line-height: 1; }
 .r-party-seats-label { font-size: 9px; color: #7a7990; }
 .r-party-bar-wrap { display: flex; flex-direction: column; gap: 3px; }
 .r-party-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: #5a596a; }
@@ -162,18 +155,27 @@ const RESULTS_CSS = `
 .r-party-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
 
 /* Section card */
-.r-section { background: #111118; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px; }
-.r-section-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
+.r-section { background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 20px 48px rgba(1,6,18,0.45); border-radius: 16px; padding: 20px; }
+.r-section-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
 .r-section-sub { font-size: 12px; color: #7a7990; margin: 0 0 16px; }
+
+
+.r-direct-grid { display: grid; gap: 12px; }
+.r-direct-card { background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 18px 44px rgba(0,0,0,0.35); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); }
+.r-direct-header { display:flex; align-items:center; gap:10px; }
+.r-direct-meta { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.r-direct-pill { font-size:11px; border:1px solid rgba(255,255,255,0.18); border-radius:999px; padding:4px 10px; color:#d8dbea; background: rgba(255,255,255,0.08); }
+.r-direct-list { display:grid; gap:6px; margin-top:8px; }
+.r-direct-row { display:flex; align-items:center; gap:8px; font-size:12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 10px; }
 
 /* Leader cards */
 .r-leader-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-.r-leader-card { background: #18181f; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 16px 12px; text-align: center; transition: all 0.2s; }
+.r-leader-card { background: linear-gradient(155deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px 12px; text-align: center; transition: all 0.2s; }
 .r-leader-card:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-2px); }
 .r-leader-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px; display: block; }
 .r-leader-img-placeholder { width: 72px; height: 72px; border-radius: 50%; background: #18181f; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #7a7990; margin: 0 auto 10px; }
 .r-leader-name { font-size: 12px; font-weight: 700; color: #f0eff8; margin-bottom: 8px; line-height: 1.3; }
-.r-leader-score { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: #e8465a; line-height: 1; margin-bottom: 4px; }
+.r-leader-score { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 800; color: #e8465a; line-height: 1; margin-bottom: 4px; }
 .r-leader-bar-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
 .r-leader-bar-fill { height: 100%; border-radius: 2px; }
 .r-leader-count { font-size: 10px; color: #5a596a; }
@@ -194,7 +196,7 @@ const RESULTS_CSS = `
 /* Simulator */
 .r-sim-wrap { background: #0d0d14; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
 .r-sim-header { padding: 20px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.r-sim-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: #f0eff8; margin: 0 0 2px; }
+.r-sim-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; margin: 0 0 2px; }
 .r-sim-sub { font-size: 11px; color: #7a7990; margin: 0; }
 .r-sim-body { padding: 20px; }
 .r-mode-tabs { display: flex; gap: 2px; padding: 3px; background: rgba(255,255,255,0.05); border-radius: 10px; width: fit-content; margin-bottom: 16px; }
@@ -217,7 +219,7 @@ const RESULTS_CSS = `
 .r-sim-row-bar { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; position: relative; }
 .r-sim-row-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
 .r-sim-row-majority { position: absolute; top: 0; height: 100%; width: 1px; background: rgba(245,158,11,0.6); }
-.r-sim-row-seats { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 800; min-width: 28px; text-align: right; }
+.r-sim-row-seats { font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 800; min-width: 28px; text-align: right; }
 .r-sim-row-pct { font-size: 10px; color: #5a596a; min-width: 34px; text-align: right; }
 .r-sim-add { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.12); border-radius: 10px; padding: 14px 16px; margin-top: 14px; }
 .r-sim-add-title { font-size: 11px; font-weight: 700; color: #5a596a; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
@@ -233,7 +235,7 @@ const RESULTS_CSS = `
 /* Infog modal */
 .r-infog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .r-infog-modal { background: #111118; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 28px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; }
-.r-infog-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: #f0eff8; margin: 0 0 6px; }
+.r-infog-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 800; color: #f0eff8; margin: 0 0 6px; }
 .r-infog-sub { font-size: 13px; color: #7a7990; margin: 0 0 20px; }
 .r-infog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
 .r-infog-option { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 10px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.08); background: #18181f; cursor: pointer; transition: all 0.18s; text-align: center; }
@@ -513,6 +515,18 @@ function GobiernoModal({
   useEffect(() => {
     localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
   }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
+
+  useEffect(() => {
+    if (!selectedLeader) return;
+    const matched = leaders.find((l) => l.leader_name === selectedLeader);
+    const leaderParty = matched?.party_key || selectedParty || "";
+
+    setMinisterios((prev) => prev.map((m) => m.id === "presidencia"
+      ? { ...m, ministro: selectedLeader, partido: leaderParty, foto: m.foto || matched?.photo_url || "" }
+      : m));
+
+    if (leaderParty && leaderParty !== selectedParty) setSelectedParty(leaderParty);
+  }, [selectedLeader, selectedParty, leaders]);
 
   const generarInfografia = async () => {
     setGenerando(true);
@@ -915,7 +929,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Líderes por Partido</h2>
+        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Líderes por Partido</h2>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <div className="r-mode-tabs" style={{ marginBottom: 0 }}>
             <button className={`r-mode-tab${subTab === "candidatos" ? " active" : ""}`} onClick={() => setSubTab("candidatos")}>Candidatos</button>
@@ -1005,7 +1019,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                   <PartyLogoImg src={logo} name={name} color={color} size={34} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 16, fontWeight: 800, color }}>{name}</div>
+                    <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 800, color }}>{name}</div>
                     <div style={{ fontSize: 11, color: "#7a7990" }}>{partyLeaders.length} candidato{partyLeaders.length !== 1 ? "s" : ""} · {tot > 0 ? `${tot} votos` : "Sin votos aún"}</div>
                   </div>
                 </div>
@@ -1014,7 +1028,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                     <div key={leader.id} style={{ textAlign: "center" }}>
                       <div style={{ position: "relative", width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto 8px" }}>
                         {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
-                        {leader.votos > 0 && <div style={{ position: "absolute", bottom: 0, right: 0, background: color, color: "#fff", fontSize: 8, fontWeight: 800, padding: "1px 3px", borderRadius: 100 }}>{leader.votos}</div>}
+                        {leader.votos > 0 && <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", background: color, color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 999, boxShadow: "0 6px 12px rgba(0,0,0,.28)" }}>{leader.votos}</div>}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#f0eff8", marginBottom: 4, lineHeight: 1.3 }}>{leader.leader_name}</div>
                       {leader.votos > 0 ? (
@@ -1721,7 +1735,6 @@ export default function Results() {
   const [votosPorPartidoProvinciaJuveniles, setVotosPorPartidoProvinciaJuveniles] = useState<Record<string, number>>({});
   const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
-  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [showInfografiaModal, setShowInfografiaModal] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
   const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
@@ -1733,10 +1746,7 @@ export default function Results() {
   const [historicoRows, setHistoricoRows] = useState<any[]>([]);
   const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
   const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
   const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
-=======
->>>>>>> main
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1834,7 +1844,7 @@ export default function Results() {
                 pd.forEach((r: any) => { if (r.provincia && r.partido) { if (!vp[r.provincia]) vp[r.provincia] = {}; vp[r.provincia][resolvePartyKey(String(r.partido), generalPartyMap)] = r.votos; } });
                 setVotosPorProvincia(vp);
                 try {
-                  const { data: md } = await supabase.from("respuestas").select("provincia, edad, posicion_ideologica, voto_generales");
+                  const { data: md } = await supabase.from("respuestas").select("provincia, edad, posicion_ideologica, voto_generales").limit(2500);
                   if (md) {
                     const pc: Record<string, { es: number; is: number; c: number }> = {};
                     const pp: Record<string, { sum: number; count: number }> = {};
@@ -1895,11 +1905,10 @@ export default function Results() {
         try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
         try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
         try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
         try {
           const { data } = await supabase
             .from("electionsdirect")
-            .select("id,election_date,region_name,region_flag_url,close_at,electiondirect_results(porcentaje_voto,escanos,proyected_escaños,proyected_porcentaje,Candidato,is_projection,is_final,party_configuration(id,party_key,display_name,color,logo_url))")
+            .select("id,election_date,region_name,region_flag_url,close_at,escrutado,electiondirect_results(porcentaje_voto,escanos,proyected_escaños,proyected_porcentaje,Candidato,is_projection,is_final,party_configuration(id,party_key,display_name,color,logo_url))")
             .order("close_at", { ascending: true });
           const normalized = (data || []).map((r: any) => ({
             id: r.id,
@@ -1907,6 +1916,7 @@ export default function Results() {
             region_name: r.region_name,
             region_flag_url: r.region_flag_url,
             close_at: r.close_at,
+            escrutado: r.escrutado,
             results: (r.electiondirect_results || []).map((x: any) => ({
               party_id: x.party_configuration?.id,
               party_key: x.party_configuration?.party_key,
@@ -1930,9 +1940,6 @@ export default function Results() {
           (data || []).forEach((l: any) => { if (l.leader_name && l.photo_url) map[String(l.leader_name).trim().toLowerCase()] = l.photo_url; });
           setLeaderPhotoByName(map);
         } catch {}
-=======
-        try { const { data } = await supabase.from("noche_electoral_directo").select("*").order("close_at", { ascending: true }); setNocheElectoralRows((data || []) as NocheElectoralRow[]); } catch {}
->>>>>>> main
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -2002,9 +2009,6 @@ export default function Results() {
             </div>
           </div>
           <div className="r-header-actions">
-            <button className="r-hbtn r-hbtn-ai" onClick={() => setShowAIAnalysis(true)}>
-              <Sparkles size={12} /><span>Análisis IA</span>
-            </button>
             <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
               <Image size={12} /><span>Infografía</span>
             </button>
@@ -2012,8 +2016,7 @@ export default function Results() {
               <FileText size={12} /><span>PDF</span>
             </button>
             <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
-            <ShareResultsModern stats={generalStats} youthStats={youthStats} totalResponses={totalResponses} cooldownMinutes={15} />
-            <FollowUsMenu />
+            <div className="hidden md:block"><FollowUsMenu /></div>
           </div>
         </header>
 
@@ -2075,7 +2078,7 @@ export default function Results() {
                     const partyColor = lookup[rk]?.color || party.color || "#e8465a";
                     const edadMedia = edadMediaPorPartido[party.nombre] || edadMediaPorPartido[party.id];
                     return (
-                      <div key={party.id} className="r-party-card" style={{ borderColor: `${partyColor}20` }} onClick={() => setSelectedPartyForStats(party.nombre)}>
+                      <div key={party.id} className="r-party-card" style={{ borderColor: `${partyColor}45`, ["--party-accent" as any]: partyColor }} onClick={() => setSelectedPartyForStats(party.nombre)}>
                         <div className="r-party-card-top">
                           <div className="r-party-logo-wrap" style={{ background: `${partyColor}18` }}>
                             <PartyLogoImg src={logoUrl} name={party.nombre} color={partyColor} size={34} />
@@ -2157,24 +2160,23 @@ export default function Results() {
               {activeTab === "noche-electoral" && (
                 <div className="r-section">
                   <div className="r-section-title">Modo Directo: Noche Electoral</div>
-                  <div style={{ display: "grid", gap: 10 }}>
+                  <div className="r-direct-grid">
                     {nocheElectoralRows.length === 0 && <div style={{ fontSize: 12, color: "#7a7990" }}>Sin datos en tiempo real todavía.</div>}
                     {nocheElectoralRows.map((r, i) => {
                       const seconds = Math.max(0, Math.floor((new Date(r.close_at).getTime() - Date.now()) / 1000));
                       const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
                       const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
                       const ss = String(seconds % 60).padStart(2, "0");
-                      return <div key={`${r.region_name}-${i}`} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: 10, display: "grid", gap: 4 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      return <div key={`${r.region_name}-${i}`} className="r-direct-card">
+                        <div className="r-direct-header">
                           {r.region_flag_url ? <img src={r.region_flag_url} alt={r.region_name} style={{ width: 20, height: 14, objectFit: "cover" }} /> : null}
                           <strong>{r.region_name}</strong>
-                          <span style={{ marginLeft: "auto", color: "#7a7990", fontSize: 12 }}>Cierre: {hh}:{mm}:{ss}</span>
+                          <div className="r-direct-meta"><span className="r-direct-pill">Cierre: {hh}:{mm}:{ss}</span><span className="r-direct-pill">Escrutado: {r.escrutado == null ? "—" : `${Number(r.escrutado).toFixed(1)}%`}</span></div>
                         </div>
-<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
                         <div style={{ fontSize: 12, color: "#7a7990" }}>Resultados por partido (desde party_configuration)</div>
-                        <div style={{ display: "grid", gap: 4 }}>
+                        <div className="r-direct-list">
                           {r.results?.map((pr, idx) => (
-                            <div key={`${pr.party_id}-${idx}`} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                            <div key={`${pr.party_id}-${idx}`} className="r-direct-row">
                               {pr.logo_url ? <img src={pr.logo_url} alt={pr.display_name} style={{ width: 16, height: 16, objectFit: "contain", borderRadius: 3 }} /> : null}
                               <span style={{ width: 8, height: 8, borderRadius: 999, background: pr.color || "#999" }} />
                               <span style={{ minWidth: 120 }}>{pr.display_name}</span>
@@ -2191,16 +2193,13 @@ export default function Results() {
                             </div>
                           ))}
                         </div>
-=======
-                        <div style={{ fontSize: 12 }}>Estimado BC: <b>{Number(r.estimate_bc || 0).toFixed(2)}%</b> · Resultado final: <b>{r.final_result == null ? "Pendiente" : `${Number(r.final_result).toFixed(2)}%`}</b></div>
->>>>>>> main
                       </div>;
                     })}
                   </div>
                 </div>
               )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
-              {activeTab === "preguntas-varias" && <PreguntasVariasSection />}
+              {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup} />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
@@ -2210,7 +2209,7 @@ export default function Results() {
               {activeTab === "leaders" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-                    <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Valoración de Líderes</h2>
+                    <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Valoración de Líderes</h2>
                     <div className="r-mode-tabs" style={{ marginBottom: 0 }}>
                       <button className={`r-mode-tab${leadersSubTab === "individual" ? " active" : ""}`} onClick={() => setLeadersSubTab("individual")}>Individual</button>
                       <button className={`r-mode-tab${leadersSubTab === "porpartido" ? " active" : ""}`} onClick={() => setLeadersSubTab("porpartido")}>Por Partido</button>
@@ -2354,8 +2353,7 @@ export default function Results() {
           La Encuesta de Batalla Cultural © 2025 · Datos anónimos y públicos
         </footer>
 
-        <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} />
-        <AIAnalysisModal open={showAIAnalysis} onOpenChange={setShowAIAnalysis} totalResponses={totalResponses} edadPromedio={edadPromedio} ideologiaPromedio={ideologiaPromedio} topParties={[...stats].sort((a, b) => b.votos - a.votos).slice(0, 5)} />
+        <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} partyKey={selectedPartyForStats ? resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup) : undefined} />
         {showInfografiaModal && <InfografiaModal parties={generalStats} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
       </div>
     </>

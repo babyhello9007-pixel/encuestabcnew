@@ -640,7 +640,7 @@ export default function Home() {
           </button>
           <a href="/resultados" className="bc-mobile-link" onClick={() => setMobileMenuOpen(false)}>Resultados</a>
           <a href="/acerca-de" className="bc-mobile-link" onClick={() => setMobileMenuOpen(false)}>Acerca de</a>
-          <a href="/blog" className="bc-mobile-link" onClick={() => setMobileMenuOpen(false)}>Blog</a>
+          <a href="https://batallaperi-avauhaz8.manus.space/" target="_blank" rel="noreferrer" className="bc-mobile-link" onClick={() => setMobileMenuOpen(false)}>Quorum</a>
         </div>
       )}
 
@@ -676,7 +676,7 @@ export default function Home() {
           </div>
           <a href="/resultados" className="bc-nav-link">Resultados</a>
           <a href="/acerca-de" className="bc-nav-link">Acerca de</a>
-          <a href="/blog" className="bc-nav-link">Blog</a>
+          <a href="https://batallaperi-avauhaz8.manus.space/" target="_blank" rel="noreferrer" className="bc-nav-link">Quorum</a>
           <FollowUsMenu />
           <button
             onClick={() => setLocation("/nano-encuesta")}
