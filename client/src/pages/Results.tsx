@@ -1077,7 +1077,10 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
   const effectiveVotesByProvince = useMemo(() => {
     if (!Object.keys(votosPorProvincia).length) return {};
     const totalNac = Object.values(simulatorVotes).reduce((a, v) => a + Math.max(0, v || 0), 0);
-    if (totalNac === 0) return {};
+    if (totalNac === 0) {
+      if (Object.keys(provinciaVotes).length) return { ...provinciaVotes };
+      return {};
+    }
     const shares = Object.entries(simulatorVotes).reduce<Record<string, number>>((acc, [p, v]) => { acc[p] = Math.max(0, v || 0) / totalNac; return acc; }, {});
     const result: Record<string, Record<string, number>> = {};
     Object.entries(votosPorProvincia).forEach(([prov, realVotes]) => {
@@ -1096,11 +1099,18 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     const escanos: Record<string, number> = {};
     Object.values(simulatorEscanosByProvince).forEach(pe => { Object.entries(pe).forEach(([p, e]) => { escanos[p] = (escanos[p] || 0) + e; }); });
     const nv: Record<string, number> = {};
-    Object.entries(simulatorVotes).forEach(([k, v]) => { nv[k] = Math.max(0, Math.floor(v || 0)); });
+    Object.values(effectiveVotesByProvince).forEach((provVotes) => {
+      Object.entries(provVotes).forEach(([k, v]) => {
+        nv[k] = (nv[k] || 0) + Math.max(0, Math.floor(v || 0));
+      });
+    });
+    if (!Object.keys(nv).length) {
+      Object.entries(simulatorVotes).forEach(([k, v]) => { nv[k] = Math.max(0, Math.floor(v || 0)); });
+    }
     const nombres: Record<string, string> = {}; const logos: Record<string, string> = {};
     Object.entries(simulatorPartyMap).forEach(([k, p]) => { nombres[k] = p.name; logos[k] = p.logo; });
     return obtenerEstadisticas(nv, escanos, nombres, logos).map(s => ({ ...s, color: simulatorPartyMap[s.id]?.color || "#e8465a" }));
-  }, [simulatorEscanosByProvince, simulatorVotes, simulatorPartyMap]);
+  }, [simulatorEscanosByProvince, simulatorVotes, simulatorPartyMap, effectiveVotesByProvince]);
 
   const addCustomParty = () => {
     const name = newPartyName.trim(); if (!name) return;
@@ -1443,7 +1453,7 @@ async function generarInfografiaPNG(
     });
   } else {
     // Hemiciclo visual simplificado (semicírculo con datos)
-    const hx = 1000, hy = 480, hr = 200;
+    const hx = 980, hy = 240, hr = 120;
     ctx.fillStyle = "rgba(255,255,255,0.03)";
     ctx.beginPath(); ctx.arc(hx, hy, hr + 20, Math.PI, 0); ctx.fill();
     const sortedBySeats = [...stats].sort((a, b) => b.escanos - a.escanos).filter(s => s.escanos > 0);
