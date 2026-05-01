@@ -1684,21 +1684,11 @@ export default function Results() {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
     let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
     try {
-      const { data: rankRows } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje");
-      if (rankRows?.length) {
-        const topMap = new Map<string, any>();
-        rankRows.forEach((r: any) => { if (!topMap.has(r.partido)) topMap.set(r.partido, r); });
-        top1PorPartido = Array.from(topMap.values()).map((r: any) => ({ partido: r.partido, lider: r.lider_preferido, votos: Number(r.total_votos || 0), porcentaje: Number(r.porcentaje || 0) }));
-      }
-      const { data: provRows } = await supabase.from("votos_por_provincia_view").select("provincia, partido, votos");
-      if (provRows?.length) {
-        const best: Record<string, { region: string; votos: number }> = {};
-        provRows.forEach((r: any) => {
-          if (!r.partido || !r.provincia) return;
-          if (!best[r.partido] || r.votos > best[r.partido].votos) best[r.partido] = { region: r.provincia, votos: Number(r.votos || 0) };
-        });
-        topRegionPorPartido = Object.entries(best).map(([partido, v]) => ({ partido, region: v.region, votos: v.votos }));
-      }
+      const { data: topLeaderRows } = await supabase.from("top_lider_por_partido").select("partido, lider_top, votos_lider_top, porcentaje_lider_top");
+      if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
+
+      const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
+      if (topRegionRows?.length) topRegionPorPartido = topRegionRows.map((r: any) => ({ partido: r.partido, region: r.region_top, votos: Number(r.votos_region_top || 0) }));
     } catch (e) {
       console.error("Error cargando datos extendidos para infografía:", e);
     }

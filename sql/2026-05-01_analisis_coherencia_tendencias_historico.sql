@@ -165,3 +165,39 @@ select
 from public.lideres_preferidos
 group by partido, lider_preferido
 order by partido, count(*) desc;
+
+create or replace view public.top_region_por_partido as
+with ranked as (
+  select
+    partido,
+    provincia,
+    votos,
+    row_number() over (partition by partido order by votos desc, provincia asc) as rn
+  from public.votos_por_provincia_view
+)
+select
+  partido,
+  provincia as region_top,
+  votos as votos_region_top
+from ranked
+where rn = 1
+order by votos_region_top desc, partido asc;
+
+create or replace view public.top_lider_por_partido as
+with ranked as (
+  select
+    partido,
+    lider_preferido,
+    total_votos,
+    porcentaje,
+    row_number() over (partition by partido order by total_votos desc, lider_preferido asc) as rn
+  from public.ranking_lideres_por_partido
+)
+select
+  partido,
+  lider_preferido as lider_top,
+  total_votos as votos_lider_top,
+  porcentaje as porcentaje_lider_top
+from ranked
+where rn = 1
+order by votos_lider_top desc, partido asc;
