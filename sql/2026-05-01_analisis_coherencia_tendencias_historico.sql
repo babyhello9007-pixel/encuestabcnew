@@ -214,6 +214,7 @@ create table if not exists public.noche_electoral_directo (
 );
 
 create index if not exists noche_electoral_directo_close_idx on public.noche_electoral_directo(close_at);
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
 
 create table if not exists public.electionsdirect (
   id bigserial primary key,
@@ -257,3 +258,5 @@ select
 from public.electionsdirect e
 left join public.electiondirect_results r on r.election_id = e.id
 group by e.id, e.election_date, e.region_name, e.region_flag_url, e.close_at;
+=======
+>>>>>>> main

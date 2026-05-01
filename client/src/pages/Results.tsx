@@ -78,9 +78,14 @@ interface VotoHistorico {
   votos: number; porcentaje: number;
 }
 interface NocheElectoralRow {
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
   id: number;
   election_date: string; region_name: string; region_flag_url: string | null; close_at: string;
   results: { party_id: number; party_key: string; display_name: string; color: string; logo_url?: string; porcentaje_voto: number; escanos: number | null; proyected_escaños?: number | null; proyected_porcentaje?: number | null; candidato?: string | null; is_projection: boolean; is_final: boolean; }[];
+=======
+  election_date: string; region_name: string; region_flag_url: string | null;
+  estimate_bc: number; final_result: number | null; close_at: string;
+>>>>>>> main
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
@@ -1728,7 +1733,10 @@ export default function Results() {
   const [historicoRows, setHistoricoRows] = useState<any[]>([]);
   const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
   const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
   const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
+=======
+>>>>>>> main
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1887,6 +1895,7 @@ export default function Results() {
         try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
         try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
         try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
         try {
           const { data } = await supabase
             .from("electionsdirect")
@@ -1921,6 +1930,9 @@ export default function Results() {
           (data || []).forEach((l: any) => { if (l.leader_name && l.photo_url) map[String(l.leader_name).trim().toLowerCase()] = l.photo_url; });
           setLeaderPhotoByName(map);
         } catch {}
+=======
+        try { const { data } = await supabase.from("noche_electoral_directo").select("*").order("close_at", { ascending: true }); setNocheElectoralRows((data || []) as NocheElectoralRow[]); } catch {}
+>>>>>>> main
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
@@ -2158,6 +2170,7 @@ export default function Results() {
                           <strong>{r.region_name}</strong>
                           <span style={{ marginLeft: "auto", color: "#7a7990", fontSize: 12 }}>Cierre: {hh}:{mm}:{ss}</span>
                         </div>
+<<<<<<< codex/fix-synchronization-issues-in-leaders-by-party-ft0j1g
                         <div style={{ fontSize: 12, color: "#7a7990" }}>Resultados por partido (desde party_configuration)</div>
                         <div style={{ display: "grid", gap: 4 }}>
                           {r.results?.map((pr, idx) => (
@@ -2178,6 +2191,9 @@ export default function Results() {
                             </div>
                           ))}
                         </div>
+=======
+                        <div style={{ fontSize: 12 }}>Estimado BC: <b>{Number(r.estimate_bc || 0).toFixed(2)}%</b> · Resultado final: <b>{r.final_result == null ? "Pendiente" : `${Number(r.final_result).toFixed(2)}%`}</b></div>
+>>>>>>> main
                       </div>;
                     })}
                   </div>
