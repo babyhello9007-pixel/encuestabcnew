@@ -7,6 +7,9 @@ interface PartyStatsModalProps {
   onClose: () => void;
   partyName: string;
   partyType: "general" | "youth";
+  accentColor?: string;
+  partyLogo?: string;
+  partyKey?: string;
 }
 
 interface PartyMetricsData {
@@ -15,12 +18,56 @@ interface PartyMetricsData {
   total_votos: number;
 }
 
-export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: PartyStatsModalProps) {
+export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentColor = "#C41E3A", partyLogo, partyKey }: PartyStatsModalProps) {
   const [metrics, setMetrics] = useState<PartyMetricsData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [topLeaders, setTopLeaders] = useState<Array<{ name: string; votes: number; pct: number; photo?: string }>>([]);
 
   useEffect(() => {
     if (!isOpen || !partyName) return;
+
+    const fetchTopLeaders = async () => {
+      try {
+        const normalizedParty = (partyKey || partyName || "").trim();
+        if (!normalizedParty) {
+          setTopLeaders([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("ranking_lideres_por_partido")
+          .select("lider_preferido, total_votos, porcentaje")
+          .eq("partido", normalizedParty)
+          .order("total_votos", { ascending: false })
+          .limit(3);
+
+        if (error || !data?.length) {
+          if (error) console.error("Error fetching top leaders:", error);
+          setTopLeaders([]);
+          return;
+        }
+
+        const leaderNames = data.map((row) => row.lider_preferido).filter(Boolean);
+        const { data: leaderPhotos } = await supabase
+          .from("party_leaders")
+          .select("leader_name, photo_url")
+          .in("leader_name", leaderNames);
+
+        const photosByName = new Map((leaderPhotos || []).map((leader) => [leader.leader_name, leader.photo_url]));
+
+        setTopLeaders(
+          data.map((row) => ({
+            name: row.lider_preferido,
+            votes: Number(row.total_votos || 0),
+            pct: Number(row.porcentaje || 0),
+            photo: photosByName.get(row.lider_preferido),
+          })),
+        );
+      } catch (err) {
+        console.error("Error loading top leaders:", err);
+        setTopLeaders([]);
+      }
+    };
 
     const fetchMetrics = async () => {
       setLoading(true);
@@ -58,16 +105,17 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
     };
 
     fetchMetrics();
-  }, [isOpen, partyName, partyType]);
+    fetchTopLeaders();
+  }, [isOpen, partyName, partyType, partyKey]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div style={{ ["--accent" as any]: accentColor }} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95 border border-white/60">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">{partyName}</h2>
+        <div className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">{partyLogo ? <img src={partyLogo} alt={partyName} className="w-6 h-6 rounded object-contain bg-white/15 p-0.5" /> : null}{partyName}</h2>
           <button
             onClick={onClose}
             className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-all"
@@ -80,7 +128,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
         <div className="p-6 space-y-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C41E3A]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
             </div>
           ) : metrics ? (
             <>
@@ -88,13 +136,13 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#2D2D2D]">Edad Promedio</label>
-                  <span className="text-2xl font-bold text-[#C41E3A]">
+                  <span className="text-2xl font-bold text-[var(--accent)]">
                     {metrics.edad_promedio.toFixed(1)} años
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] h-2 rounded-full transition-all"
+                    className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
                     style={{ width: `${Math.min((metrics.edad_promedio / 80) * 100, 100)}%` }}
                   ></div>
                 </div>
@@ -104,7 +152,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#2D2D2D]">Posición Ideológica</label>
-                  <span className="text-2xl font-bold text-[#C41E3A]">
+                  <span className="text-2xl font-bold text-[var(--accent)]">
                     {metrics.ideologia_promedio.toFixed(1)}/10
                   </span>
                 </div>
@@ -112,7 +160,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
                   <span className="text-xs text-[#666666]">Izquierda</span>
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] h-2 rounded-full transition-all"
+                      className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
                       style={{ width: `${(metrics.ideologia_promedio / 10) * 100}%` }}
                     ></div>
                   </div>
@@ -140,11 +188,29 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
           )}
         </div>
 
+        {topLeaders.length > 0 && (
+          <div className="px-6 pb-5">
+            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Top 3 líderes del partido</p>
+            <div className="grid gap-2">
+              {topLeaders.map((l, i) => (
+                <div key={l.name + i} className="flex items-center justify-between rounded-xl border border-white/60 bg-white/70 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500">#{i + 1}</span>
+                    {l.photo ? <img src={l.photo} alt={l.name} className="w-7 h-7 rounded-full object-cover" /> : null}
+                    <span className="text-sm font-semibold text-slate-800">{l.name}</span>
+                  </div>
+                  <span className="text-xs text-slate-600">{l.votes} · {l.pct.toFixed(1)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-[#C41E3A] text-white rounded-lg font-semibold hover:bg-[#A01830] transition-colors"
+            className="px-6 py-2 bg-[var(--accent)] text-white rounded-lg font-semibold transition-colors"
           >
             Cerrar
           </button>
@@ -153,4 +219,3 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
     </div>
   );
 }
-

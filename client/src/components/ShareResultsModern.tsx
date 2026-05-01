@@ -17,6 +17,7 @@ interface PartyStats {
 }
 
 interface ShareResultsModernProps {
+  partyMeta?: Record<string, { logo?: string; color?: string; name?: string }>;
   stats: PartyStats[];
   youthStats: PartyStats[];
   totalResponses: number;
@@ -36,6 +37,7 @@ export function ShareResultsModern({
   youthStats,
   totalResponses,
   cooldownMinutes = 15,
+  partyMeta = {},
 }: ShareResultsModernProps) {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [busy, setBusy] = useState<null | 'png' | 'pdf'>(null);
@@ -43,8 +45,8 @@ export function ShareResultsModern({
   const [open, setOpen] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
 
-  const topGeneral = useMemo(() => [...stats].sort((a, b) => b.votos - a.votos).slice(0, 5), [stats]);
-  const topYouth = useMemo(() => [...youthStats].sort((a, b) => b.votos - a.votos).slice(0, 5), [youthStats]);
+  const topGeneral = useMemo(() => [...stats].map((p) => ({ ...p, logo: partyMeta[p.id]?.logo || p.logo, color: partyMeta[p.id]?.color || p.color })).sort((a, b) => b.votos - a.votos).slice(0, 5), [stats, partyMeta]);
+  const topYouth = useMemo(() => [...youthStats].map((p) => ({ ...p, logo: partyMeta[p.id]?.logo || p.logo, color: partyMeta[p.id]?.color || p.color })).sort((a, b) => b.votos - a.votos).slice(0, 5), [youthStats, partyMeta]);
   const canShare = secondsLeft <= 0;
 
   useEffect(() => {
