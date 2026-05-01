@@ -305,7 +305,7 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias" | "simulador-electoral";
+  | "preguntas-varias";
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
@@ -313,7 +313,6 @@ const TAB_GROUPS: TabGroup[] = [
   { label: "Elecciones", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
     { key: "general", label: "Resultados Generales" },
     { key: "mapa-hemiciclo", label: "Mapa y Hemiciclo" },
-    { key: "simulador-electoral", label: "Simulador" },
     { key: "encuestadoras-externas", label: "Encuestadoras" },
   ]},
   { label: "Territorio", icon: <MapPin className="w-3.5 h-3.5" />, tabs: [
@@ -440,6 +439,7 @@ const MINISTERIOS = [
   { id: "ciencia", titulo: "Ciencia e Innovación", icon: "🔬" },
   { id: "inclusion", titulo: "Inclusión y Seguridad Social", icon: "🤝" },
 ];
+type MinisterioEditable = { id: string; titulo: string; icon: string; ministro: string; partido: string; foto: string };
 
 // ─── Government Builder Modal ─────────────────────────────────────────────────
 function GobiernoModal({
@@ -451,13 +451,15 @@ function GobiernoModal({
   logoPresidenciaB64: string;
   initialParty?: string | null;
 }) {
+  const GOV_STORAGE_KEY = "bc_gobierno_builder_state_v1";
   const [selectedParty, setSelectedParty] = useState(initialParty || "");
   const [selectedLeader, setSelectedLeader] = useState("");
-  const [ministerios, setMinisterios] = useState<Record<string, string>>(
-    Object.fromEntries(MINISTERIOS.map(m => [m.id, ""]))
+  const [ministerios, setMinisterios] = useState<MinisterioEditable[]>(
+    MINISTERIOS.map(m => ({ id: m.id, titulo: m.titulo, icon: m.icon, ministro: "", partido: "", foto: "" }))
   );
   const [nombreGobierno, setNombreGobierno] = useState("Gobierno de España");
   const [generando, setGenerando] = useState(false);
+  const [dragMinistryId, setDragMinistryId] = useState<string | null>(null);
 
   const partyLeaders = leaders.filter(l => l.party_key === selectedParty);
   const partyKeys = Array.from(new Set(leaders.map(l => l.party_key)));
@@ -466,9 +468,38 @@ function GobiernoModal({
     if (initialParty) setSelectedParty(initialParty);
   }, [initialParty]);
 
-  const updateMin = (id: string, val: string) => {
-    setMinisterios(prev => ({ ...prev, [id]: val }));
+  const updateMin = (id: string, patch: Partial<MinisterioEditable>) => {
+    setMinisterios(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
   };
+  const addMinistry = () => setMinisterios(prev => [...prev, { id: `custom_${Date.now()}`, titulo: "Nuevo Ministerio", icon: "🏛️", ministro: "", partido: "", foto: "" }]);
+  const removeMinistry = (id: string) => setMinisterios(prev => prev.filter(m => m.id !== id));
+  const moveMinistry = (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    setMinisterios(prev => {
+      const from = prev.findIndex(m => m.id === fromId);
+      const to = prev.findIndex(m => m.id === toId);
+      if (from < 0 || to < 0) return prev;
+      const clone = [...prev];
+      const [item] = clone.splice(from, 1);
+      clone.splice(to, 0, item);
+      return clone;
+    });
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem(GOV_STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
+      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
+      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
+      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
+  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
   const generarInfografia = async () => {
     setGenerando(true);
@@ -524,12 +555,12 @@ function GobiernoModal({
         ctx.fillText(pm.name || selectedParty, 60, 155);
         ctx.font = "13px 'DM Sans', sans-serif";
         ctx.fillStyle = "rgba(255,255,255,0.8)";
-        ctx.fillText(`Presidente: ${selectedLeader}`, 60, 178);
+        ctx.fillText(`Presidente: ${selectedLeader || "—"}`, 60, 178);
       }
 
       // Grid ministerios
       const cols = 4;
-      const rows = Math.ceil(MINISTERIOS.length / cols);
+      const rows = Math.ceil(ministerios.length / cols);
       const boxW = 350;
       const boxH = 70;
       const startX = 40;
@@ -537,12 +568,12 @@ function GobiernoModal({
       const gapX = 390;
       const gapY = 80;
 
-      MINISTERIOS.forEach((min, i) => {
+      ministerios.forEach((min, i) => {
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = startX + col * gapX;
         const y = startY + row * gapY;
-        const titular = ministerios[min.id] || "Sin asignar";
+        const titular = min.ministro || "Sin asignar";
 
         // Box
         ctx.fillStyle = titular !== "Sin asignar" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)";
@@ -558,13 +589,16 @@ function GobiernoModal({
         // Text
         ctx.fillStyle = "rgba(255,255,255,0.4)";
         ctx.font = "9px monospace";
-        ctx.fillText(min.titulo.toUpperCase(), x + 10, y + 18);
+        ctx.fillText((min.titulo || "").toUpperCase(), x + 10, y + 18);
         ctx.fillStyle = "#f0eff8";
         ctx.font = "bold 13px 'DM Sans', sans-serif";
         ctx.fillText(titular.length > 38 ? titular.slice(0, 38) + "…" : titular, x + 10, y + 40);
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.font = "9px monospace";
+        ctx.fillText(min.partido || "IND", x + 10, y + 56);
         ctx.fillStyle = "rgba(255,255,255,0.3)";
         ctx.font = "16px serif";
-        ctx.fillText(min.icon, x + boxW - 28, y + 38);
+        ctx.fillText(min.icon || "🏛️", x + boxW - 28, y + 38);
       });
 
       // Footer
@@ -595,20 +629,26 @@ function GobiernoModal({
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#7a7990", cursor: "pointer" }}><X size={18} /></button>
         </div>
 
-        {/* Partido y presidente */}
+        {/* Partido y presidencia */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
           <div>
             <label style={{ fontSize: 11, color: "#7a7990", display: "block", marginBottom: 6 }}>Partido gobernante</label>
-            <select className="r-select" value={selectedParty} onChange={e => { setSelectedParty(e.target.value); setSelectedLeader(""); }}>
+            <select className="r-select" value={selectedParty} onChange={e => {
+              const partyKey = e.target.value;
+              setSelectedParty(partyKey);
+              const firstLeader = leaders.find(l => l.party_key === partyKey);
+              if (firstLeader) setSelectedLeader(firstLeader.leader_name);
+            }}>
               <option value="">Seleccionar partido…</option>
               {partyKeys.map(pk => <option key={pk} value={pk}>{partyMeta[pk]?.name || pk}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: "#7a7990", display: "block", marginBottom: 6 }}>Presidente del Gobierno</label>
-            <select className="r-select" value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)} disabled={!selectedParty}>
-              <option value="">Seleccionar líder…</option>
-              {partyLeaders.map(l => <option key={l.id} value={l.leader_name}>{l.leader_name}</option>)}
+            <label style={{ fontSize: 11, color: "#7a7990", display: "block", marginBottom: 6 }}>Candidato/a a presidencia (auto-presidente)</label>
+            <select className="r-select" value={selectedLeader} onChange={e => setSelectedLeader(e.target.value)}>
+              <option value="">Seleccionar candidato…</option>
+              {leaders.map(l => <option key={l.id} value={l.leader_name}>{l.leader_name} ({l.party_key})</option>)}
+              <option value="Independiente">Independiente (IND)</option>
             </select>
           </div>
         </div>
@@ -618,19 +658,65 @@ function GobiernoModal({
           <input className="r-gov-ministry-input" style={{ borderRadius: 9, padding: "9px 12px", fontSize: 13 }} value={nombreGobierno} onChange={e => setNombreGobierno(e.target.value)} placeholder="Gobierno de España" />
         </div>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>Ministerios</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 8, maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
-          {MINISTERIOS.map(min => (
-            <div key={min.id} className="r-gov-ministry">
-              <div className="r-gov-ministry-title">{min.icon} {min.titulo}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", textTransform: "uppercase", letterSpacing: "0.06em" }}>Ministerios</div>
+          <button className="r-infog-generate" style={{ padding: "6px 10px", fontSize: 11 }} onClick={addMinistry}><Plus size={12} />Añadir</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10, maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
+          {ministerios.map(min => (
+            <div
+              key={min.id}
+              className="r-gov-ministry"
+              draggable
+              onDragStart={() => setDragMinistryId(min.id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => { if (dragMinistryId) moveMinistry(dragMinistryId, min.id); setDragMinistryId(null); }}
+              style={{ transition: "all .2s ease", borderColor: dragMinistryId === min.id ? "#e8465a" : undefined }}
+            >
+              <div className="r-gov-ministry-title">{min.icon || "🏛️"} {min.titulo}</div>
+              <input className="r-gov-ministry-input" placeholder="Título del ministerio…" value={min.titulo} onChange={e => updateMin(min.id, { titulo: e.target.value })} />
+              <select className="r-select" value={min.ministro} onChange={e => updateMin(min.id, { ministro: e.target.value })}>
+                <option value="">Candidato predefinido…</option>
+                {leaders.map(l => <option key={l.id} value={l.leader_name}>{l.leader_name} ({l.party_key})</option>)}
+                <option value="Independiente">Independiente</option>
+              </select>
               <input
                 className="r-gov-ministry-input"
                 placeholder="Nombre del ministro/a…"
-                value={ministerios[min.id] || ""}
-                onChange={e => updateMin(min.id, e.target.value)}
+                value={min.ministro || ""}
+                onChange={e => updateMin(min.id, { ministro: e.target.value })}
               />
+              <input className="r-gov-ministry-input" placeholder="Partido (opcional)" value={min.partido || ""} onChange={e => updateMin(min.id, { partido: e.target.value })} />
+              <input className="r-gov-ministry-input" placeholder="URL imagen ministro (opcional)" value={min.foto || ""} onChange={e => updateMin(min.id, { foto: e.target.value })} />
+              <button className="r-trash-btn" onClick={() => removeMinistry(min.id)}><Trash2 size={12} /></button>
             </div>
           ))}
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", marginBottom: 8 }}>Previsualización instantánea</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
+            {ministerios.slice(0, 8).map(min => {
+              const leader = leaders.find(l => l.leader_name === min.ministro);
+              const pKey = min.partido || leader?.party_key || "";
+              const pMeta = partyMeta[pKey];
+              return (
+                <div key={`preview_${min.id}`} style={{ border: "1px solid rgba(255,255,255,.08)", borderRadius: 10, padding: 10, background: "rgba(255,255,255,.02)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    {leader?.photo_url
+                      ? <img src={leader.photo_url} alt={min.ministro} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                      : <div style={{ width: 28, height: 28, borderRadius: "50%", background: pMeta?.color || "#444", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>{(min.ministro || "IND").charAt(0)}</div>}
+                    <div style={{ fontSize: 12, fontWeight: 700 }}>{min.titulo}</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#f0eff8" }}>{min.ministro || "Sin asignar"}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: "#7a7990", marginTop: 4 }}>
+                    {pMeta?.logo ? <img src={pMeta.logo} alt={pKey} style={{ width: 14, height: 14, objectFit: "contain" }} /> : <span style={{ padding: "1px 5px", border: "1px solid rgba(255,255,255,.2)", borderRadius: 10 }}>IND</span>}
+                    <span>{pMeta?.name || pKey || "IND"}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="r-infog-footer">
@@ -1867,14 +1953,6 @@ export default function Results() {
               {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa generalStats={generalStats} totalResponses={totalResponses} />}
               {activeTab === "lideres-partidos" && <LideresDePartidosSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "simulador-electoral" && (
-                <SimuladorElectoral
-                  generalStats={generalStats}
-                  generalPartyMap={generalPartyMap}
-                  votosPorProvincia={votosPorProvincia}
-                  provinciaMetricsMap={provinciaMetricsMap}
-                />
-              )}
 
               {activeTab === "leaders" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1998,7 +2076,7 @@ export default function Results() {
               )}
 
               {/* Metodología */}
-              {!["simulador-electoral", "lideres-partidos", "encuestadoras-externas"].includes(activeTab) && (
+              {!["lideres-partidos", "encuestadoras-externas"].includes(activeTab) && (
                 <div className="r-section">
                   <div className="r-section-title" style={{ fontSize: 13, marginBottom: 12 }}>Metodología</div>
                   <div className="r-method">
