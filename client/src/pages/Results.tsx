@@ -1028,7 +1028,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                     <div key={leader.id} style={{ textAlign: "center" }}>
                       <div style={{ position: "relative", width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto 8px" }}>
                         {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
-                        {leader.votos > 0 && <div style={{ position: "absolute", top: -7, left: "50%", transform: "translateX(-50%)", background: color, color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 999, boxShadow: "0 6px 12px rgba(0,0,0,.28)" }}>{leader.votos}</div>}
+                        {leader.votos > 0 && <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", background: color, color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 999, boxShadow: "0 6px 12px rgba(0,0,0,.28)" }}>{leader.votos}</div>}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#f0eff8", marginBottom: 4, lineHeight: 1.3 }}>{leader.leader_name}</div>
                       {leader.votos > 0 ? (
@@ -2016,7 +2016,7 @@ export default function Results() {
               <FileText size={12} /><span>PDF</span>
             </button>
             <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
-            <FollowUsMenu />
+            <div className="hidden md:block"><FollowUsMenu /></div>
           </div>
         </header>
 
