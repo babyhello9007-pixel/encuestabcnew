@@ -471,9 +471,9 @@ function GobiernoModal({
   const updateMin = (id: string, patch: Partial<MinisterioEditable>) => {
     setMinisterios(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
   };
-  const addMinistry = () => setMinisterios(prev => [...prev, { id: `custom_${Date.now()}`, titulo: "Nuevo Ministerio", icon: "🏛️", ministro: "", partido: "", foto: "" }]);
-  const removeMinistry = (id: string) => setMinisterios(prev => prev.filter(m => m.id !== id));
-  const moveMinistry = (fromId: string, toId: string) => {
+  const handleAddMinistry = () => setMinisterios(prev => [...prev, { id: `custom_${Date.now()}`, titulo: "Nuevo Ministerio", icon: "🏛️", ministro: "", partido: "", foto: "" }]);
+  const handleRemoveMinistry = (id: string) => setMinisterios(prev => prev.filter(m => m.id !== id));
+  const handleMoveMinistry = (fromId: string, toId: string) => {
     if (fromId === toId) return;
     setMinisterios(prev => {
       const from = prev.findIndex(m => m.id === fromId);
@@ -485,50 +485,6 @@ function GobiernoModal({
       return clone;
     });
   };
-  const addMinistry = () => setMinisterios(prev => [...prev, { id: `custom_${Date.now()}`, titulo: "Nuevo Ministerio", icon: "🏛️", ministro: "", partido: "", foto: "" }]);
-  const removeMinistry = (id: string) => setMinisterios(prev => prev.filter(m => m.id !== id));
-  const moveMinistry = (fromId: string, toId: string) => {
-    if (fromId === toId) return;
-    setMinisterios(prev => {
-      const from = prev.findIndex(m => m.id === fromId);
-      const to = prev.findIndex(m => m.id === toId);
-      if (from < 0 || to < 0) return prev;
-      const clone = [...prev];
-      const [item] = clone.splice(from, 1);
-      clone.splice(to, 0, item);
-      return clone;
-    });
-  };
-
-  useEffect(() => {
-    const saved = localStorage.getItem(GOV_STORAGE_KEY);
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved);
-      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
-      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
-      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
-      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
-    } catch { /* ignore */ }
-  }, []);
-  useEffect(() => {
-    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
-  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(GOV_STORAGE_KEY);
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved);
-      if (parsed?.selectedParty) setSelectedParty(parsed.selectedParty);
-      if (parsed?.selectedLeader) setSelectedLeader(parsed.selectedLeader);
-      if (parsed?.nombreGobierno) setNombreGobierno(parsed.nombreGobierno);
-      if (Array.isArray(parsed?.ministerios)) setMinisterios(parsed.ministerios);
-    } catch { /* ignore */ }
-  }, []);
-  useEffect(() => {
-    localStorage.setItem(GOV_STORAGE_KEY, JSON.stringify({ selectedParty, selectedLeader, nombreGobierno, ministerios }));
-  }, [selectedParty, selectedLeader, nombreGobierno, ministerios]);
 
   useEffect(() => {
     const saved = localStorage.getItem(GOV_STORAGE_KEY);
@@ -733,7 +689,7 @@ function GobiernoModal({
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#7a7990", textTransform: "uppercase", letterSpacing: "0.06em" }}>Ministerios</div>
-          <button className="r-infog-generate" style={{ padding: "6px 10px", fontSize: 11 }} onClick={addMinistry}><Plus size={12} />Añadir</button>
+          <button className="r-infog-generate" style={{ padding: "6px 10px", fontSize: 11 }} onClick={handleAddMinistry}><Plus size={12} />Añadir</button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10, maxHeight: 420, overflowY: "auto", paddingRight: 4 }}>
           {ministerios.map(min => (
@@ -743,7 +699,7 @@ function GobiernoModal({
               draggable
               onDragStart={() => setDragMinistryId(min.id)}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={() => { if (dragMinistryId) moveMinistry(dragMinistryId, min.id); setDragMinistryId(null); }}
+              onDrop={() => { if (dragMinistryId) handleMoveMinistry(dragMinistryId, min.id); setDragMinistryId(null); }}
               style={{ transition: "all .2s ease", borderColor: dragMinistryId === min.id ? "#e8465a" : undefined }}
             >
               <div className="r-gov-ministry-title">{min.icon || "🏛️"} {min.titulo}</div>
@@ -761,7 +717,7 @@ function GobiernoModal({
               />
               <input className="r-gov-ministry-input" placeholder="Partido (opcional)" value={min.partido || ""} onChange={e => updateMin(min.id, { partido: e.target.value })} />
               <input className="r-gov-ministry-input" placeholder="URL imagen ministro (opcional)" value={min.foto || ""} onChange={e => updateMin(min.id, { foto: e.target.value })} />
-              <button className="r-trash-btn" onClick={() => removeMinistry(min.id)}><Trash2 size={12} /></button>
+              <button className="r-trash-btn" onClick={() => handleRemoveMinistry(min.id)}><Trash2 size={12} /></button>
             </div>
           ))}
         </div>
