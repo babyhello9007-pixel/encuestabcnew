@@ -2132,7 +2132,7 @@ export default function Results() {
                         <YAxis tick={{ fill: "#7a7990" }} />
                         <Tooltip />
                         <Legend />
-                        {["PP", "PSOE", "VOX", "Sumar", "Unidas Podemos", "Ciudadanos"].map((p) => (
+                        {["PP", "PSOE", "VOX", "SUMAR", "PODEMOS", "Ciudadanos", "ERC", "JUNTS"].map((p) => (
                           <Line key={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} dot={false} connectNulls />
                         ))}
                       </LineChart>
