@@ -1569,8 +1569,20 @@ async function generarInfografiaPNG(
   partyName?: string,
   topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>,
   topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
-  topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>
+  topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>,
+  top5LideresPorPartido?: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>>,
+  preguntasVariasPorPartido?: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }>,
+  partyLogos?: Record<string, string>
 ) {
+  const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
   canvas.height = 800;
@@ -1602,6 +1614,10 @@ async function generarInfografiaPNG(
   ctx.font = "bold 42px Georgia, serif";
   const title = type === "general" ? "Resultados de la Encuesta" : type === "party" ? `Análisis: ${partyName}` : "Análisis de Líderes";
   ctx.fillText(title, 40, 100);
+  if (type === "party" && partyName) {
+    const logo = await loadImage((partyLogos || {})[partyName]);
+    if (logo) ctx.drawImage(logo, 1085, 28, 72, 72);
+  }
 
   // Stats principales
   const statBoxes = [
@@ -1687,18 +1703,34 @@ async function generarInfografiaPNG(
       ctx.fillStyle = "#7a7990"; ctx.font = "14px 'DM Sans', sans-serif";
       ctx.fillText("escaños", 60, 460);
       
+      const top5 = (top5LideresPorPartido?.[partyName] || []).slice(0, 5);
+      const preguntas = preguntasVariasPorPartido?.[partyName] || {};
       // Sección derecha: TOP 5 líderes
       ctx.fillStyle = "rgba(255,255,255,0.04)";
       ctx.beginPath(); ctx.roundRect(410, 230, 350, 520, 12); ctx.fill();
       ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("TOP 5 LÍDERES", 430, 260);
       ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(430, 268, 310, 1);
-      // Placeholder para TOP 5 (se llenarían con datos reales)
       for (let i = 0; i < 5; i++) {
         const y = 295 + i * 38;
+        const row = top5[i];
+        const initial = (row?.nombre || "—").charAt(0).toUpperCase();
+        const leaderImg = await loadImage(row?.photo_url);
+        if (leaderImg) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(442, y - 5, 12, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(leaderImg, 430, y - 17, 24, 24);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.15)";
+          ctx.beginPath(); ctx.arc(442, y - 5, 12, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#fff"; ctx.font = "bold 10px 'DM Sans', sans-serif"; ctx.fillText(initial, 438, y - 1);
+        }
         ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
-        ctx.fillText(`${i + 1}. Líder ${i + 1}`, 430, y);
+        ctx.fillText(`${i + 1}. ${row?.nombre || "Sin dato"}`, 460, y);
         ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
-        ctx.fillText("XX%", 650, y);
+        ctx.fillText(`${row ? row.porcentaje.toFixed(1) : "0.0"}%`, 685, y);
       }
       
       // Sección inferior: Preguntas Varias
@@ -1706,20 +1738,17 @@ async function generarInfografiaPNG(
       ctx.beginPath(); ctx.roundRect(780, 230, 380, 520, 12); ctx.fill();
       ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("PREGUNTAS VARIAS", 800, 260);
       ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(800, 268, 340, 1);
-      // Placeholder para preguntas varias
-      const preguntas = [
-        { q: "Monarquía", a: "Preferencia" },
-        { q: "Defensa", a: "Aumentar" },
-        { q: "Economía", a: "Reformas" },
-        { q: "Educación", a: "Inversión" },
-        { q: "Sanidad", a: "Mejora" }
+      const preguntasRows = [
+        { q: "División territorial", a: preguntas.division_territorial || "—" },
+        { q: "Monarquía/República", a: preguntas.monarquia_republica || "—" },
+        { q: "Sistema pensiones", a: preguntas.sistema_pensiones || "—" }
       ];
-      preguntas.forEach((p, i) => {
-        const y = 295 + i * 38;
+      preguntasRows.forEach((p, i) => {
+        const y = 310 + i * 72;
         ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
         ctx.fillText(p.q, 800, y);
         ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "10px 'DM Sans', sans-serif";
-        ctx.fillText(p.a, 900, y);
+        ctx.fillText(String(p.a).slice(0, 28), 800, y + 24);
       });
     }
   }
@@ -2032,43 +2061,73 @@ export default function Results() {
   const handleGenerarInfografia = async (type: "general" | "party", party?: string) => {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
     let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
-    let top5LideresPorPartido: Record<string, Array<{ nombre: string; votos: number; porcentaje: number }>> = {};
+    let top5LideresPorPartido: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>> = {};
     let preguntasVarias: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }> = {};
     let partyLogos: Record<string, string> = {};
     
     try {
+      const { data: partyConfig } = await supabase.from("party_configuration").select("party_key, display_name, logo_url");
+      const byAnyName: Record<string, { key: string; display: string; logo_url?: string }> = {};
+      (partyConfig || []).forEach((p: any) => {
+        const key = String(p.party_key || "").trim();
+        const display = String(p.display_name || "").trim();
+        if (!key) return;
+        byAnyName[key.toLowerCase()] = { key, display, logo_url: p.logo_url || "" };
+        if (display) byAnyName[display.toLowerCase()] = { key, display, logo_url: p.logo_url || "" };
+        if (p.logo_url) {
+          partyLogos[key] = p.logo_url;
+          if (display) partyLogos[display] = p.logo_url;
+        }
+      });
+      const selectedPartyCanonical = party ? byAnyName[String(party).trim().toLowerCase()] : undefined;
+
       const { data: topLeaderRows } = await supabase.from("top_lider_por_partido").select("partido, lider_top, votos_lider_top, porcentaje_lider_top");
       if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
 
-      const { data: top5Rows } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje").order("total_votos", { ascending: false });
+      const { data: leaderPhotosRows } = await supabase.from("party_leaders").select("leader_name, photo_url").eq("is_active", true);
+      const photoByLeader: Record<string, string> = {};
+      (leaderPhotosRows || []).forEach((l: any) => {
+        if (l?.leader_name && l?.photo_url) photoByLeader[String(l.leader_name).trim().toLowerCase()] = l.photo_url;
+      });
+      const { data: top5Rows } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje").order("partido", { ascending: true }).order("total_votos", { ascending: false });
       if (top5Rows?.length) {
         top5Rows.forEach((r: any) => {
-          if (!top5LideresPorPartido[r.partido]) top5LideresPorPartido[r.partido] = [];
-          if (top5LideresPorPartido[r.partido].length < 5) {
-            top5LideresPorPartido[r.partido].push({ nombre: r.lider_preferido, votos: Number(r.total_votos || 0), porcentaje: Number(r.porcentaje || 0) });
+          const rawPartido = String(r.partido || "").trim();
+          const canonical = byAnyName[rawPartido.toLowerCase()];
+          const keys = [rawPartido, canonical?.key, canonical?.display].filter(Boolean) as string[];
+          const targetKey = keys[0];
+          if (!top5LideresPorPartido[targetKey]) top5LideresPorPartido[targetKey] = [];
+          if (top5LideresPorPartido[targetKey].length < 5) {
+            const payload = {
+              nombre: r.lider_preferido,
+              votos: Number(r.total_votos || 0),
+              porcentaje: Number(r.porcentaje || 0),
+              photo_url: photoByLeader[String(r.lider_preferido || "").trim().toLowerCase()]
+            };
+            keys.forEach((k) => {
+              if (!top5LideresPorPartido[k]) top5LideresPorPartido[k] = [];
+              if (top5LideresPorPartido[k].length < 5) top5LideresPorPartido[k].push(payload);
+            });
           }
         });
       }
 
       if (party) {
-        const { data: respuestasData } = await supabase.from("respuestas").select("division_territorial, monarquia_republica, sistema_pensiones").eq("voto_generales", party).limit(1000);
+        const filterParty = selectedPartyCanonical?.display || selectedPartyCanonical?.key || party;
+        const { data: respuestasData } = await supabase.from("respuestas").select("division_territorial, monarquia_republica, sistema_pensiones").eq("voto_generales", filterParty).limit(1000);
         if (respuestasData?.length) {
           const countMap = (arr: any[], field: string) => {
             const counts: Record<string, number> = {};
             arr.forEach(r => { const val = r[field]; if (val) counts[val] = (counts[val] || 0) + 1; });
             return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
           };
-          preguntasVarias[party] = {
+          const payload = {
             division_territorial: countMap(respuestasData, "division_territorial"),
             monarquia_republica: countMap(respuestasData, "monarquia_republica"),
             sistema_pensiones: countMap(respuestasData, "sistema_pensiones")
           };
+          [party, selectedPartyCanonical?.key, selectedPartyCanonical?.display].filter(Boolean).forEach((k: any) => { preguntasVarias[k] = payload; });
         }
-      }
-
-      const { data: partyConfig } = await supabase.from("party_configuration").select("party_key, logo_url");
-      if (partyConfig?.length) {
-        partyConfig.forEach((p: any) => { partyLogos[p.party_key] = p.logo_url || ""; });
       }
 
       const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
