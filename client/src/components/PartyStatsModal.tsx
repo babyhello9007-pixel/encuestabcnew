@@ -7,6 +7,8 @@ interface PartyStatsModalProps {
   onClose: () => void;
   partyName: string;
   partyType: "general" | "youth";
+  accentColor?: string;
+  partyLogo?: string;
 }
 
 interface PartyMetricsData {
@@ -15,7 +17,7 @@ interface PartyMetricsData {
   total_votos: number;
 }
 
-export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: PartyStatsModalProps) {
+export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentColor = "#C41E3A", partyLogo }: PartyStatsModalProps) {
   const [metrics, setMetrics] = useState<PartyMetricsData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -63,11 +65,11 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div style={{ ["--accent" as any]: accentColor }} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95 border border-white/60">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">{partyName}</h2>
+        <div className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">{partyLogo ? <img src={partyLogo} alt={partyName} className="w-6 h-6 rounded object-contain bg-white/15 p-0.5" /> : null}{partyName}</h2>
           <button
             onClick={onClose}
             className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-all"
@@ -80,7 +82,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
         <div className="p-6 space-y-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C41E3A]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
             </div>
           ) : metrics ? (
             <>
@@ -88,13 +90,13 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#2D2D2D]">Edad Promedio</label>
-                  <span className="text-2xl font-bold text-[#C41E3A]">
+                  <span className="text-2xl font-bold text-[var(--accent)]">
                     {metrics.edad_promedio.toFixed(1)} años
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] h-2 rounded-full transition-all"
+                    className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
                     style={{ width: `${Math.min((metrics.edad_promedio / 80) * 100, 100)}%` }}
                   ></div>
                 </div>
@@ -104,7 +106,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#2D2D2D]">Posición Ideológica</label>
-                  <span className="text-2xl font-bold text-[#C41E3A]">
+                  <span className="text-2xl font-bold text-[var(--accent)]">
                     {metrics.ideologia_promedio.toFixed(1)}/10
                   </span>
                 </div>
@@ -112,7 +114,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
                   <span className="text-xs text-[#666666]">Izquierda</span>
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] h-2 rounded-full transition-all"
+                      className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
                       style={{ width: `${(metrics.ideologia_promedio / 10) * 100}%` }}
                     ></div>
                   </div>
@@ -144,7 +146,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType }: Party
         <div className="bg-gray-50 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-[#C41E3A] text-white rounded-lg font-semibold hover:bg-[#A01830] transition-colors"
+            className="px-6 py-2 bg-[var(--accent)] text-white rounded-lg font-semibold transition-colors"
           >
             Cerrar
           </button>
