@@ -2066,6 +2066,21 @@ export default function Results() {
     let partyLogos: Record<string, string> = {};
     
     try {
+      const { data: partyConfig } = await supabase.from("party_configuration").select("party_key, display_name, logo_url");
+      const byAnyName: Record<string, { key: string; display: string; logo_url?: string }> = {};
+      (partyConfig || []).forEach((p: any) => {
+        const key = String(p.party_key || "").trim();
+        const display = String(p.display_name || "").trim();
+        if (!key) return;
+        byAnyName[key.toLowerCase()] = { key, display, logo_url: p.logo_url || "" };
+        if (display) byAnyName[display.toLowerCase()] = { key, display, logo_url: p.logo_url || "" };
+        if (p.logo_url) {
+          partyLogos[key] = p.logo_url;
+          if (display) partyLogos[display] = p.logo_url;
+        }
+      });
+      const selectedPartyCanonical = party ? byAnyName[String(party).trim().toLowerCase()] : undefined;
+
       const { data: topLeaderRows } = await supabase.from("top_lider_por_partido").select("partido, lider_top, votos_lider_top, porcentaje_lider_top");
       if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
 
@@ -2077,37 +2092,42 @@ export default function Results() {
       const { data: top5Rows } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje").order("partido", { ascending: true }).order("total_votos", { ascending: false });
       if (top5Rows?.length) {
         top5Rows.forEach((r: any) => {
-          if (!top5LideresPorPartido[r.partido]) top5LideresPorPartido[r.partido] = [];
-          if (top5LideresPorPartido[r.partido].length < 5) {
-            top5LideresPorPartido[r.partido].push({
+          const rawPartido = String(r.partido || "").trim();
+          const canonical = byAnyName[rawPartido.toLowerCase()];
+          const keys = [rawPartido, canonical?.key, canonical?.display].filter(Boolean) as string[];
+          const targetKey = keys[0];
+          if (!top5LideresPorPartido[targetKey]) top5LideresPorPartido[targetKey] = [];
+          if (top5LideresPorPartido[targetKey].length < 5) {
+            const payload = {
               nombre: r.lider_preferido,
               votos: Number(r.total_votos || 0),
               porcentaje: Number(r.porcentaje || 0),
               photo_url: photoByLeader[String(r.lider_preferido || "").trim().toLowerCase()]
+            };
+            keys.forEach((k) => {
+              if (!top5LideresPorPartido[k]) top5LideresPorPartido[k] = [];
+              if (top5LideresPorPartido[k].length < 5) top5LideresPorPartido[k].push(payload);
             });
           }
         });
       }
 
       if (party) {
-        const { data: respuestasData } = await supabase.from("respuestas").select("division_territorial, monarquia_republica, sistema_pensiones").eq("voto_generales", party).limit(1000);
+        const filterParty = selectedPartyCanonical?.display || selectedPartyCanonical?.key || party;
+        const { data: respuestasData } = await supabase.from("respuestas").select("division_territorial, monarquia_republica, sistema_pensiones").eq("voto_generales", filterParty).limit(1000);
         if (respuestasData?.length) {
           const countMap = (arr: any[], field: string) => {
             const counts: Record<string, number> = {};
             arr.forEach(r => { const val = r[field]; if (val) counts[val] = (counts[val] || 0) + 1; });
             return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
           };
-          preguntasVarias[party] = {
+          const payload = {
             division_territorial: countMap(respuestasData, "division_territorial"),
             monarquia_republica: countMap(respuestasData, "monarquia_republica"),
             sistema_pensiones: countMap(respuestasData, "sistema_pensiones")
           };
+          [party, selectedPartyCanonical?.key, selectedPartyCanonical?.display].filter(Boolean).forEach((k: any) => { preguntasVarias[k] = payload; });
         }
-      }
-
-      const { data: partyConfig } = await supabase.from("party_configuration").select("party_key, logo_url");
-      if (partyConfig?.length) {
-        partyConfig.forEach((p: any) => { partyLogos[p.party_key] = p.logo_url || ""; });
       }
 
       const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
