@@ -1,4 +1,6 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { useLocation } from "wouter";
 
 type Party = { key: string; name: string; color: string };
@@ -73,9 +75,42 @@ function natCalc(simData: Record<string, ProvinceModel>) {
   return { votos: votosNacionales, escanos: escanosNacionales };
 }
 
+const PROV_COORDS: Record<string, [number, number]> = {
+  Madrid: [40.4168, -3.7038], Barcelona: [41.3874, 2.1686], Valencia: [39.4699, -0.3763],
+  Sevilla: [37.3891, -5.9845], Málaga: [36.7213, -4.4214], Alicante: [38.3452, -0.4810],
+};
+
 const MapView = memo(function MapView({ winners, onSelect, selected }: { winners: Record<string, string>; onSelect: (p: string) => void; selected: string }) {
-  const provinces = Object.keys(PROV23);
-  return <div className="grid grid-cols-2 gap-2 md:grid-cols-3">{provinces.map((p) => <button key={p} onClick={() => onSelect(p)} className={`rounded border p-2 text-left text-xs ${selected === p ? "border-indigo-400" : "border-slate-700"}`} style={{ background: winners[p] ? `${winners[p]}20` : "#0f172a" }}>{p}</button>)}</div>;
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const leafletRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current || leafletRef.current) return;
+    const map = L.map(mapRef.current).setView([40.2, -3.7], 5.7);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+    leafletRef.current = map;
+    markersRef.current = L.layerGroup().addTo(map);
+    return () => { map.remove(); leafletRef.current = null; };
+  }, []);
+
+  useEffect(() => {
+    if (!markersRef.current) return;
+    markersRef.current.clearLayers();
+    Object.keys(PROV23).forEach((prov) => {
+      const coords = PROV_COORDS[prov];
+      if (!coords) return;
+      const color = winners[prov] || "#64748b";
+      const m = L.circleMarker(coords, { radius: selected === prov ? 10 : 8, color, fillColor: color, fillOpacity: 0.7, weight: 2 });
+      m.bindTooltip(prov);
+      m.on("click", () => onSelect(prov));
+      m.addTo(markersRef.current!);
+    });
+  }, [winners, onSelect, selected]);
+
+  return <div><div ref={mapRef} className="h-80 w-full rounded" /><div className="mt-1 text-[11px] text-slate-400">Leaflet | © OpenStreetMap contributors</div></div>;
 });
 
 function Hemicycle({ seats, colors, onToggle, selected }: { seats: Record<string, number>; colors: Record<string, string>; onToggle: (p: string) => void; selected: Set<string> }) {
