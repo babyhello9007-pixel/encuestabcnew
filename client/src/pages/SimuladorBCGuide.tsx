@@ -145,7 +145,7 @@ function NightModeSimulation({ onApply }: { onApply: (progress: number) => void 
     }, 900);
     return () => clearInterval(id);
   }, [running, onApply]);
-  return <div className="rounded border border-slate-700 p-3"><div className="mb-2 text-sm font-semibold">Modo noche electoral</div><div className="mb-2 text-xs text-slate-400">{headline}</div><div className="mb-2 h-2 rounded bg-slate-800"><div className="h-2 rounded bg-emerald-500" style={{ width: `${progress}%` }} /></div><button onClick={() => { setProgress(0); setRunning(true); }} className="rounded bg-emerald-700 px-3 py-1 text-xs">Iniciar simulación</button></div>;
+  return <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] "><div className="mb-2 text-sm font-semibold">Modo noche electoral</div><div className="mb-2 text-xs text-slate-400">{headline}</div><div className="mb-2 h-2 rounded bg-slate-800"><div className="h-2 rounded bg-emerald-500" style={{ width: `${progress}%` }} /></div><button onClick={() => { setProgress(0); setRunning(true); }} className="rounded bg-emerald-700 px-3 py-1 text-xs">Iniciar simulación</button></div>;
 }
 
 export default function SimuladorBCGuide() {
@@ -187,19 +187,19 @@ export default function SimuladorBCGuide() {
     URL.revokeObjectURL(url);
   };
 
-  return <div className={dark ? "min-h-screen bg-slate-950 text-slate-100" : "min-h-screen bg-slate-100 text-slate-900"}>
+  return <div className={dark ? "min-h-screen text-slate-100" : "min-h-screen text-slate-900"} style={{ background: dark ? "radial-gradient(circle at 20% 10%, #1e293b 0%, #020617 50%, #02030a 100%)" : "radial-gradient(circle at 20% 10%, #ffffff 0%, #e2e8f0 55%, #cbd5e1 100%)" }}>
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-extrabold">Simulador BC · Elecciones Generales y autonómicas</h1>
-        <div className="flex gap-2">
-          <button onClick={() => setDark((d) => !d)} className="rounded border border-slate-600 px-3 py-1 text-sm">{dark ? "Tema claro" : "Tema oscuro"}</button>
-          <button onClick={() => exportData("json")} className="rounded border border-slate-600 px-3 py-1 text-sm">Exportar JSON</button>
-          <button onClick={() => exportData("csv")} className="rounded border border-slate-600 px-3 py-1 text-sm">Exportar CSV</button>
-          <button onClick={() => setLocation("/resultados")} className="rounded border border-slate-600 px-3 py-1 text-sm">Volver</button>
-        </div>
-      </div>
+          <button onClick={() => setDark((d) => !d)} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">{dark ? "Tema claro" : "Tema oscuro"}</button>
+          <button onClick={() => exportData("json")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Exportar JSON</button>
+          <button onClick={() => exportData("csv")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Exportar CSV</button>
+          <button onClick={() => setLocation("/resultados")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Volver</button>
+        <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] lg:col-span-2">
+        <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] ">
+            <input value={newParty.key} onChange={(e) => setNewParty((n) => ({ ...n, key: e.target.value }))} placeholder="Nuevo partido" className="rounded-xl border border-white/25 bg-white/10 px-2 py-1 backdrop-blur"/>
+            <button onClick={addParty} className="rounded-xl bg-indigo-600/80 px-2 backdrop-blur">Añadir partido</button>
 
-      <p className="mb-4 text-sm opacity-90">Herramienta educativa y de análisis político sin valor predictivo oficial.</p>
+        <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] ">
 
       <div className="mb-4 grid gap-4 lg:grid-cols-3">
         <div className="rounded border border-slate-700 p-3 lg:col-span-2">
