@@ -201,12 +201,12 @@ export default function SimuladorBCGuide() {
   const [dark, setDark] = useState(true);
   const [arena, setArena] = useState<Arena>("generales");
   const [simData, setSimData] = useState<Record<string, ProvinceModel>>(PROV23);
+  const [selectedCCAA, setSelectedCCAA] = useState("Andalucía");
   const currentSeats = useMemo(() => {
     if (arena === "generales") return SEATS;
     if (arena === "ayuntamientos") return MUNICIPAL_SEATS;
     return AUTONOMIC_SEATS[selectedCCAA] || AUTONOMIC_SEATS["Andalucía"];
   }, [arena, selectedCCAA]);
-  const [selectedCCAA, setSelectedCCAA] = useState("Andalucía");
   useEffect(() => {
     const seatsSource = arena === "generales" ? SEATS : arena === "ayuntamientos" ? MUNICIPAL_SEATS : (AUTONOMIC_SEATS[selectedCCAA] || AUTONOMIC_SEATS["Andalucía"]);
     setSimData(buildSimData(seatsSource));
