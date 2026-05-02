@@ -2161,6 +2161,7 @@ export default function Results() {
             <button className="r-hbtn r-hbtn-pdf" onClick={() => downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null)}>
               <FileText size={12} /><span>PDF</span>
             </button>
+            <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/simulador-bc-guia")}>Guía Simulador BC</button>
             <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
             <div className="hidden md:block"><FollowUsMenu /></div>
           </div>
