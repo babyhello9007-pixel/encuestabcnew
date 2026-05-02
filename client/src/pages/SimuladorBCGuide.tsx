@@ -28,12 +28,29 @@ const SEATS: Record<string, number> = {
   Ceuta: 1, Melilla: 1,
 };
 
-const PROV23: Record<string, ProvinceModel> = {
-  Madrid: { census: 5400000, validVotes: 3900000, p: { PP: 1470000, PSOE: 1070000, VOX: 740000, SUMAR: 620000, ERC: 1000, JUNTS: 1000, OTROS: 20000 } },
-  Barcelona: { census: 4100000, validVotes: 3050000, p: { PP: 470000, PSOE: 830000, VOX: 220000, SUMAR: 640000, ERC: 450000, JUNTS: 390000, OTROS: 50000 } },
-  Valencia: { census: 1900000, validVotes: 1400000, p: { PP: 640000, PSOE: 480000, VOX: 260000, SUMAR: 210000, ERC: 1000, JUNTS: 1000, OTROS: 18000 } },
-  Sevilla: { census: 1500000, validVotes: 1120000, p: { PP: 340000, PSOE: 460000, VOX: 140000, SUMAR: 180000, ERC: 400, JUNTS: 400, OTROS: 12000 } },
-  Málaga: { census: 1300000, validVotes: 980000, p: { PP: 390000, PSOE: 290000, VOX: 170000, SUMAR: 130000, ERC: 300, JUNTS: 300, OTROS: 9000 } },
+
+const AUTONOMIC_SEATS: Record<string, Record<string, number>> = {
+  Andalucía: { Sevilla: 18, Málaga: 17, Cádiz: 15, Granada: 13, Almería: 12, Córdoba: 12, Huelva: 11, Jaén: 11 },
+  Aragón: { Zaragoza: 35, Huesca: 18, Teruel: 14 }, Asturias: { Central: 34, Occidental: 6, Oriental: 5 },
+  Baleares: { Mallorca: 33, Menorca: 13, Ibiza: 12, Formentera: 1 }, Canarias: { Tenerife: 15, "Gran Canaria": 15, Lanzarote: 8, Fuerteventura: 8, "La Palma": 8, "La Gomera": 4, "El Hierro": 3, Regional: 9 },
+  Cantabria: { Cantabria: 35 }, "Castilla-La Mancha": { Toledo: 9, Albacete: 7, "Ciudad Real": 7, Cuenca: 5, Guadalajara: 5 },
+  "Castilla y León": { Valladolid: 15, León: 13, Burgos: 11, Salamanca: 10, Ávila: 7, Palencia: 7, Zamora: 7, Segovia: 6, Soria: 5 },
+  Cataluña: { Barcelona: 85, Tarragona: 18, Girona: 17, Lleida: 15 }, Extremadura: { Badajoz: 36, Cáceres: 29 },
+  Galicia: { "A Coruña": 25, Pontevedra: 22, Lugo: 14, Ourense: 14 }, Madrid: { Madrid: 135 }, Murcia: { Murcia: 45 },
+  Navarra: { Navarra: 50 }, "País Vasco": { Álava: 25, Guipúzcoa: 25, Vizcaya: 25 }, "La Rioja": { "La Rioja": 33 },
+  "C. Valenciana": { Valencia: 40, Alicante: 35, Castellón: 24 }, Ceuta: { Ceuta: 25 }, Melilla: { Melilla: 25 },
+};
+const MUNICIPAL_SEATS: Record<string, number> = { Madrid:57, Bilbao:29, Barcelona:41, Alicante:29, Valencia:33, Córdoba:29, Sevilla:31, Valladolid:27, Zaragoza:31, "Vitoria-Gasteiz":27, Málaga:31, "A Coruña":27, Murcia:29, Granada:27, Palma:29, Oviedo:27, "Las Palmas de G.C.":29, "S.C. de Tenerife":27, Pamplona:27, Almería:27, Santander:27, "San Sebastián":27, Burgos:27, "Castellón de la Plana":27, Albacete:27, Salamanca:27, Logroño:27, Huelva:27, Badajoz:27, Cádiz:27, León:27, Jaén:27, Ourense:27, Lleida:27, Tarragona:27, Girona:27, Lugo:25, Cáceres:25, Guadalajara:25, Toledo:25, Pontevedra:25, "Ciudad Real":25, Zamora:25, Palencia:25, Ávila:25, Cuenca:25, Segovia:25, Huesca:25, Soria:21, Teruel:21, Ceuta:25, Melilla:25 };
+
+type Arena = "generales" | "autonomicas" | "ayuntamientos";
+
+const buildSimData = (seatsMap: Record<string, number>): Record<string, ProvinceModel> => Object.fromEntries(Object.entries(seatsMap).map(([prov, seats]) => {
+  const validVotes = Math.max(60000, seats * 85000);
+const PROV23: Record<string, ProvinceModel> = buildSimData(SEATS);
+function calcProv(provincia: string, simData: Record<string, ProvinceModel>, seatsMap: Record<string, number>) {
+  const escaniosProvincia = seatsMap[provincia] || 0;
+function natCalc(simData: Record<string, ProvinceModel>, seatsMap: Record<string, number>) {
+    const { sa } = calcProv(prov, simData, seatsMap);
   Alicante: { census: 1400000, validVotes: 970000, p: { PP: 390000, PSOE: 300000, VOX: 190000, SUMAR: 120000, ERC: 300, JUNTS: 300, OTROS: 12000 } },
 };
 
@@ -151,16 +168,28 @@ function NightModeSimulation({ onApply }: { onApply: (progress: number) => void 
 export default function SimuladorBCGuide() {
   const [, setLocation] = useLocation();
   const [dark, setDark] = useState(true);
+  const [arena, setArena] = useState<Arena>("generales");
   const [simData, setSimData] = useState<Record<string, ProvinceModel>>(PROV23);
+  const currentSeats = useMemo(() => {
+    if (arena === "generales") return SEATS;
+    if (arena === "ayuntamientos") return MUNICIPAL_SEATS;
+    return AUTONOMIC_SEATS["Andalucía"];
+  }, [arena]);
+  const [selectedCCAA, setSelectedCCAA] = useState("Andalucía");
+  useEffect(() => {
+    const seatsSource = arena === "generales" ? SEATS : arena === "ayuntamientos" ? MUNICIPAL_SEATS : (AUTONOMIC_SEATS[selectedCCAA] || AUTONOMIC_SEATS["Andalucía"]);
+    setSimData(buildSimData(seatsSource));
+    setSelectedProv(Object.keys(seatsSource)[0]);
+  }, [arena, selectedCCAA]);
   const [selectedProv, setSelectedProv] = useState(Object.keys(PROV23)[0]);
   const [selectedCoalition, setSelectedCoalition] = useState<Set<string>>(new Set());
   const [parties, setParties] = useState<Party[]>(BASE_PARTIES);
   const [newParty, setNewParty] = useState({ key: "", color: "#9333ea" });
 
   const colors = useMemo(() => Object.fromEntries(parties.map((p) => [p.key, p.color])), [parties]);
-  const nat = useMemo(() => natCalc(simData), [simData]);
+  const nat = useMemo(() => natCalc(simData, currentSeats), [simData, currentSeats]);
   const winners = useMemo(() => Object.fromEntries(Object.keys(simData).map((prov) => {
-    const sa = calcProv(prov, simData).sa;
+    const sa = calcProv(prov, simData, currentSeats).sa;
     const winner = Object.entries(sa).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
     return [prov, colors[winner] || "#64748b"];
   })), [simData, colors]);
@@ -194,6 +223,10 @@ export default function SimuladorBCGuide() {
           <button onClick={() => exportData("json")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Exportar JSON</button>
           <button onClick={() => exportData("csv")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Exportar CSV</button>
           <button onClick={() => setLocation("/resultados")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Volver</button>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {(["generales","autonomicas","ayuntamientos"] as Arena[]).map((m) => <button key={m} onClick={() => setArena(m)} className={`rounded-xl px-3 py-1 text-sm border ${arena===m?"bg-indigo-600/80 border-indigo-300":"border-white/25 bg-white/10"}`}>{m}</button>)}
+        {arena === "autonomicas" && <select value={selectedCCAA} onChange={(e) => setSelectedCCAA(e.target.value)} className="rounded-xl border border-white/25 bg-white/10 px-2 py-1 text-sm">{Object.keys(AUTONOMIC_SEATS).map((c)=><option key={c} value={c}>{c}</option>)}</select>}
+      </div>
         <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] lg:col-span-2">
         <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] ">
             <input value={newParty.key} onChange={(e) => setNewParty((n) => ({ ...n, key: e.target.value }))} placeholder="Nuevo partido" className="rounded-xl border border-white/25 bg-white/10 px-2 py-1 backdrop-blur"/>
