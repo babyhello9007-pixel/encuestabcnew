@@ -39,6 +39,7 @@ import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import EncuestadorasComparativa from "@/components/results/EncuestadorasComparativa";
 import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
+import { PrimariasResultsSection } from "@/components/results/PrimariasResultsSection";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
 import GovernmentBuilder from "@/components/GovernmentBuilder";
@@ -322,7 +323,7 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral";
+  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "primarias";
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
@@ -352,6 +353,9 @@ const TAB_GROUPS: TabGroup[] = [
     { key: "contexto-historico", label: "Contexto Histórico" },
     { key: "noche-electoral", label: "Modo Directo: Noche Electoral" },
     { key: "preguntas-varias", label: "Preguntas Varias" },
+  ]},
+  { label: "Primarias", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
+    { key: "primarias", label: "Resultados Primarias" },
   ]},
 ];
 
@@ -2344,6 +2348,7 @@ export default function Results() {
               )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
               {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup} />}
+              {activeTab === "primarias" && <PrimariasResultsSection />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
