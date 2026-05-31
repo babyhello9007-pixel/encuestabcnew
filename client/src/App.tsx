@@ -24,11 +24,8 @@ import CoalitionsComparison from "./pages/CoalitionsComparison";
 import PartiesDocumentation from "./pages/PartiesDocumentation";
 import AdminParties from "./pages/AdminParties";
 import AdminStatistics from "./pages/AdminStatistics";
-<<<<<<< Updated upstream
 import SimuladorBCGuide from "./pages/SimuladorBCGuide";
-=======
 import Primarias from "./pages/Primarias";
->>>>>>> Stashed changes
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
