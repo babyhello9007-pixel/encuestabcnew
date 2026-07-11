@@ -1984,11 +1984,41 @@ export default function Results() {
         try { const { data } = await supabase.from("media_nota_ejecutivo").select("nota_media"); if (data?.[0]) setNotaEjecutivo(data[0].nota_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("edad_promedio").select("edad_media"); if (data?.[0]) setEdadPromedio(data[0].edad_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("ideologia_promedio").select("ideologia_media"); if (data?.[0]) setIdeologiaPromedio(data[0].ideologia_media); } catch { /* skip */ }
-        try { const { data } = await supabase.from("coherencia_voto_lider").select("*"); setCoherenciaRows(data || []); } catch {}
-        try { const { data } = await supabase.from("flujos_voto").select("*").limit(40); setFlujosRows(data || []); } catch {}
-        try { const { data } = await supabase.from("ideologia_por_partido").select("*"); setIdeologiaRows(data || []); } catch {}
-        try { const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); setCorrelacionRows(data || []); } catch {}
-        try { const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); setHistoricoRows(data || []); } catch {}
+        try { 
+          const { data } = await supabase.from("coherencia_voto_lider_view").select("*"); 
+          setCoherenciaRows(data || []);
+        } catch (e) {
+          console.warn("Error loading coherencia:", e);
+          setCoherenciaRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("flujos_voto_view").select("*").limit(40); 
+          setFlujosRows(data || []);
+        } catch (e) {
+          console.warn("Error loading flujos:", e);
+          setFlujosRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("ideologia_por_partido").select("*"); 
+          setIdeologiaRows(data || []);
+        } catch (e) {
+          console.warn("Error loading ideologia:", e);
+          setIdeologiaRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); 
+          setCorrelacionRows(data || []);
+        } catch (e) {
+          console.warn("Error loading correlacion:", e);
+          setCorrelacionRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); 
+          setHistoricoRows(data || []);
+        } catch (e) {
+          console.warn("Error loading historico:", e);
+          setHistoricoRows([]);
+        }
         try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
         try {
           const { data } = await supabase
@@ -2045,20 +2075,31 @@ export default function Results() {
     return m;
   }, [generalPartyMap, youthPartyMap]);
   const historicoPorPartido = useMemo(() => {
-    const years = Array.from(new Set(historicoElecciones.map(h => h.año))).sort((a, b) => a - b);
-    const map: Record<string, any> = {};
-    years.forEach(y => { map[y] = { año: y }; });
-    historicoElecciones.forEach((h) => {
-      if (!map[h.año]) map[h.año] = { año: h.año };
-      map[h.año][h.partido] = Number(h.porcentaje || 0);
-    });
-    return Object.values(map).sort((a: any, b: any) => a.año - b.año);
+    if (!historicoElecciones || historicoElecciones.length === 0) return [];
+    
+    return historicoElecciones.map((h: any) => ({
+      año: h.año,
+      PP: h.pp || 0,
+      PSOE: h.psoe || 0,
+      VOX: h.vox || 0,
+      SUMAR: h.sumar || 0,
+      PODEMOS: h.podemos || 0,
+      Ciudadanos: h.ciudadanos || 0,
+      ERC: h.erc || 0,
+      JUNTS: h.junts || 0,
+    })).sort((a: any, b: any) => a.año - b.año);
   }, [historicoElecciones]);
   const comparativa2023VsActual = useMemo(() => {
-    const r2023 = historicoElecciones.filter(r => r.año === 2023);
-    return r2023.map(r => {
-      const current = generalStats.find(g => g.nombre === r.partido || g.id === r.partido)?.escanos || 0;
-      return { partido: r.partido, escanos_2023: Number(r.escanos || 0), escanos_actuales: current };
+    if (!historicoElecciones || historicoElecciones.length === 0) return [];
+    
+    const r2023 = historicoElecciones.find((h: any) => h.año === 2023);
+    if (!r2023) return [];
+    
+    const parties = ['PP', 'PSOE', 'VOX', 'SUMAR', 'PODEMOS', 'Ciudadanos', 'ERC', 'JUNTS'];
+    return parties.map(p => {
+      const current = generalStats.find(g => g.nombre === p || g.id === p)?.escanos || 0;
+      const key = p.toLowerCase();
+      return { partido: p, escanos_2023: Number((r2023 as any)[key] || 0), escanos_actuales: current };
     });
   }, [historicoElecciones, generalStats]);
 
