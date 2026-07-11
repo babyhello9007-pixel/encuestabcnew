@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 
 type Party = { key: string; name: string; color: string };
 type ProvinceModel = { census: number; validVotes: number; p: Record<string, number> };
+type Arena = "generales" | "autonomicas" | "ayuntamientos";
 
 const NO_SEATS_PARTIES = new Set(["Voto en blanco", "Votos nulos", "OTROS", "Abstención"]);
 const ABS_MAJORITY = 176;
@@ -28,7 +29,6 @@ const SEATS: Record<string, number> = {
   Ceuta: 1, Melilla: 1,
 };
 
-
 const AUTONOMIC_SEATS: Record<string, Record<string, number>> = {
   Andalucía: { Sevilla: 18, Málaga: 17, Cádiz: 15, Granada: 13, Almería: 12, Córdoba: 12, Huelva: 11, Jaén: 11 },
   Aragón: { Zaragoza: 35, Huesca: 18, Teruel: 14 }, Asturias: { Central: 34, Occidental: 6, Oriental: 5 },
@@ -40,28 +40,33 @@ const AUTONOMIC_SEATS: Record<string, Record<string, number>> = {
   Navarra: { Navarra: 50 }, "País Vasco": { Álava: 25, Guipúzcoa: 25, Vizcaya: 25 }, "La Rioja": { "La Rioja": 33 },
   "C. Valenciana": { Valencia: 40, Alicante: 35, Castellón: 24 }, Ceuta: { Ceuta: 25 }, Melilla: { Melilla: 25 },
 };
+
 const MUNICIPAL_SEATS: Record<string, number> = { Madrid:57, Bilbao:29, Barcelona:41, Alicante:29, Valencia:33, Córdoba:29, Sevilla:31, Valladolid:27, Zaragoza:31, "Vitoria-Gasteiz":27, Málaga:31, "A Coruña":27, Murcia:29, Granada:27, Palma:29, Oviedo:27, "Las Palmas de G.C.":29, "S.C. de Tenerife":27, Pamplona:27, Almería:27, Santander:27, "San Sebastián":27, Burgos:27, "Castellón de la Plana":27, Albacete:27, Salamanca:27, Logroño:27, Huelva:27, Badajoz:27, Cádiz:27, León:27, Jaén:27, Ourense:27, Lleida:27, Tarragona:27, Girona:27, Lugo:25, Cáceres:25, Guadalajara:25, Toledo:25, Pontevedra:25, "Ciudad Real":25, Zamora:25, Palencia:25, Ávila:25, Cuenca:25, Segovia:25, Huesca:25, Soria:21, Teruel:21, Ceuta:25, Melilla:25 };
 
-type Arena = "generales" | "autonomicas" | "ayuntamientos";
+const PROV_COORDS: Record<string, [number, number]> = {
+  Madrid: [40.4168, -3.7038], Barcelona: [41.3874, 2.1686], Valencia: [39.4699, -0.3763],
+  Sevilla: [37.3891, -5.9845], Málaga: [36.7213, -4.4214], Alicante: [38.3452, -0.4810],
+};
 
-const buildSimData = (seatsMap: Record<string, number>): Record<string, ProvinceModel> => Object.fromEntries(Object.entries(seatsMap).map(([prov, seats]) => {
-  const validVotes = Math.max(60000, seats * 85000);
-  return [prov, {
-    census: validVotes * 1.3,
-    validVotes,
-    p: {
-      PP: validVotes * 0.28,
-      PSOE: validVotes * 0.22,
-      VOX: validVotes * 0.15,
-      SUMAR: validVotes * 0.12,
-      ERC: validVotes * 0.08,
-      JUNTS: validVotes * 0.06,
-      OTROS: validVotes * 0.09,
-    },
-  }];
-}));
+const buildSimData = (seatsMap: Record<string, number>): Record<string, ProvinceModel> => 
+  Object.fromEntries(Object.entries(seatsMap).map(([prov, seats]) => {
+    const validVotes = Math.max(60000, seats * 85000);
+    return [prov, {
+      census: validVotes * 1.3,
+      validVotes,
+      p: {
+        PP: validVotes * 0.28,
+        PSOE: validVotes * 0.22,
+        VOX: validVotes * 0.15,
+        SUMAR: validVotes * 0.12,
+        ERC: validVotes * 0.08,
+        JUNTS: validVotes * 0.06,
+        OTROS: validVotes * 0.09,
+      },
+    }];
+  }));
 
-const PROV23: Record<string, ProvinceModel> = buildSimData(SEATS);
+const PROV23 = buildSimData(SEATS);
 
 function dhondt(votos: Record<string, number>, escanios: number) {
   if (!escanios || !Object.keys(votos).length) return {};
@@ -76,12 +81,13 @@ function dhondt(votos: Record<string, number>, escanios: number) {
   return resultado;
 }
 
-function calcProv(provincia: string, simData: Record<string, ProvinceModel>) {
+function calcProv(provincia: string, simData: Record<string, ProvinceModel>, seatsMap: Record<string, number>) {
   const datos = simData[provincia];
-  const escaniosProvincia = SEATS[provincia] || 0;
+  const escaniosProvincia = seatsMap[provincia] || 0;
   const totalVotosValidos = Object.values(datos?.p || {}).reduce((a, b) => a + b, 0);
   const elegibles: Record<string, number> = {};
   const excluidos: string[] = [];
+  
   Object.entries(datos?.p || {}).forEach(([p, v]) => {
     if (NO_SEATS_PARTIES.has(p) || v === 0) return;
     if (v >= totalVotosValidos * 0.03) elegibles[p] = v;
@@ -90,23 +96,20 @@ function calcProv(provincia: string, simData: Record<string, ProvinceModel>) {
   return { sa: dhondt(elegibles, escaniosProvincia), excl: excluidos, tv: totalVotosValidos };
 }
 
-function natCalc(simData: Record<string, ProvinceModel>) {
+function natCalc(simData: Record<string, ProvinceModel>, seatsMap: Record<string, number>) {
   const votosNacionales: Record<string, number> = {};
   const escanosNacionales: Record<string, number> = {};
   Object.keys(simData).forEach((prov) => {
-    const { sa } = calcProv(prov, simData);
+    const { sa } = calcProv(prov, simData, seatsMap);
+    if (!simData[prov]) return;
     Object.entries(simData[prov].p).forEach(([p, v]) => (votosNacionales[p] = (votosNacionales[p] || 0) + v));
     Object.entries(sa).forEach(([p, e]) => (escanosNacionales[p] = (escanosNacionales[p] || 0) + e));
   });
   return { votos: votosNacionales, escanos: escanosNacionales };
 }
 
-const PROV_COORDS: Record<string, [number, number]> = {
-  Madrid: [40.4168, -3.7038], Barcelona: [41.3874, 2.1686], Valencia: [39.4699, -0.3763],
-  Sevilla: [37.3891, -5.9845], Málaga: [36.7213, -4.4214], Alicante: [38.3452, -0.4810],
-};
-
-const MapView = memo(function MapView({ winners, onSelect, selected }: { winners: Record<string, string>; onSelect: (p: string) => void; selected: string }) {
+// MapView corregido y optimizado para evitar re-renders masivos
+const MapView = memo(function MapView({ winners, onSelect, selected, simData }: { winners: Record<string, string>; onSelect: (p: string) => void; selected: string; simData: Record<string, ProvinceModel> }) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const leafletRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -125,16 +128,16 @@ const MapView = memo(function MapView({ winners, onSelect, selected }: { winners
   useEffect(() => {
     if (!markersRef.current) return;
     markersRef.current.clearLayers();
-    Object.keys(PROV23).forEach((prov) => {
+    Object.keys(simData).forEach((prov) => {
       const coords = PROV_COORDS[prov];
-      if (!coords) return;
+      if (!coords) return; // Si no hay coordenadas, saltamos de forma segura
       const color = winners[prov] || "#64748b";
       const m = L.circleMarker(coords, { radius: selected === prov ? 10 : 8, color, fillColor: color, fillOpacity: 0.7, weight: 2 });
       m.bindTooltip(prov);
       m.on("click", () => onSelect(prov));
       m.addTo(markersRef.current!);
     });
-  }, [winners, onSelect, selected]);
+  }, [winners, onSelect, selected, simData]);
 
   return <div><div ref={mapRef} className="h-80 w-full rounded" /><div className="mt-1 text-[11px] text-slate-400">Leaflet | © OpenStreetMap contributors</div></div>;
 });
@@ -150,7 +153,7 @@ function Hemicycle({ seats, colors, onToggle, selected }: { seats: Record<string
     const radius = 180 - row * 24;
     const cx = 210 + Math.cos(angle) * radius;
     const cy = 200 - Math.sin(angle) * radius;
-    return <circle key={i} cx={cx} cy={cy} r={5} fill={d.color} opacity={selected.size === 0 || selected.has(d.p) ? 1 : 0.25} onClick={() => onToggle(d.p)} />;
+    return <circle key={i} cx={cx} cy={cy} r={5} fill={d.color} opacity={selected.size === 0 || selected.has(d.p) ? 1 : 0.25} onClick={() => onToggle(d.p)} className="cursor-pointer" />;
   })}<line x1="30" y1="116" x2="390" y2="116" stroke="#f59e0b" strokeDasharray="4 4" /></svg>;
 }
 
@@ -158,6 +161,7 @@ function NightModeSimulation({ onApply }: { onApply: (progress: number) => void 
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [headline, setHeadline] = useState("Preparado para simulación de noche electoral");
+  
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => {
@@ -171,6 +175,7 @@ function NightModeSimulation({ onApply }: { onApply: (progress: number) => void 
     }, 900);
     return () => clearInterval(id);
   }, [running, onApply]);
+  
   return <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] "><div className="mb-2 text-sm font-semibold">Modo noche electoral</div><div className="mb-2 text-xs text-slate-400">{headline}</div><div className="mb-2 h-2 rounded bg-slate-800"><div className="h-2 rounded bg-emerald-500" style={{ width: `${progress}%` }} /></div><button onClick={() => { setProgress(0); setRunning(true); }} className="rounded bg-emerald-700 px-3 py-1 text-xs">Iniciar simulación</button></div>;
 }
 
@@ -178,30 +183,38 @@ export default function SimuladorBCGuide() {
   const [, setLocation] = useLocation();
   const [dark, setDark] = useState(true);
   const [arena, setArena] = useState<Arena>("generales");
+  const [selectedCCAA, setSelectedCCAA] = useState("Andalucía");
   const [simData, setSimData] = useState<Record<string, ProvinceModel>>(PROV23);
+
   const currentSeats = useMemo(() => {
     if (arena === "generales") return SEATS;
     if (arena === "ayuntamientos") return MUNICIPAL_SEATS;
-    return AUTONOMIC_SEATS["Andalucía"];
-  }, [arena]);
-  const [selectedCCAA, setSelectedCCAA] = useState("Andalucía");
+    return AUTONOMIC_SEATS[selectedCCAA] || AUTONOMIC_SEATS["Andalucía"];
+  }, [arena, selectedCCAA]);
+
+  // Provincia seleccionada por defecto dinámica y segura
+  const [selectedProv, setSelectedProv] = useState(Object.keys(PROV23)[0]);
+
   useEffect(() => {
     const seatsSource = arena === "generales" ? SEATS : arena === "ayuntamientos" ? MUNICIPAL_SEATS : (AUTONOMIC_SEATS[selectedCCAA] || AUTONOMIC_SEATS["Andalucía"]);
     setSimData(buildSimData(seatsSource));
-    setSelectedProv(Object.keys(seatsSource)[0]);
+    setSelectedProv(Object.keys(seatsSource)[0]); // Resetea de forma segura al cambiar de pestaña
   }, [arena, selectedCCAA]);
-  const [selectedProv, setSelectedProv] = useState(Object.keys(PROV23)[0]);
+
   const [selectedCoalition, setSelectedCoalition] = useState<Set<string>>(new Set());
   const [parties, setParties] = useState<Party[]>(BASE_PARTIES);
   const [newParty, setNewParty] = useState({ key: "", color: "#9333ea" });
 
   const colors = useMemo(() => Object.fromEntries(parties.map((p) => [p.key, p.color])), [parties]);
+  
+  // Corregido pasándole los escaños activos dinámicamente
   const nat = useMemo(() => natCalc(simData, currentSeats), [simData, currentSeats]);
+  
   const winners = useMemo(() => Object.fromEntries(Object.keys(simData).map((prov) => {
     const sa = calcProv(prov, simData, currentSeats).sa;
     const winner = Object.entries(sa).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
     return [prov, colors[winner] || "#64748b"];
-  })), [simData, colors]);
+  })), [simData, colors, currentSeats]);
 
   const coalitionSeats = Array.from(selectedCoalition).reduce((acc, p) => acc + (nat.escanos[p] || 0), 0);
 
@@ -234,43 +247,65 @@ export default function SimuladorBCGuide() {
           <button onClick={() => exportData("csv")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Exportar CSV</button>
           <button onClick={() => setLocation("/resultados")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Volver</button>
         </div>
+        
         <div className="mb-4 flex flex-wrap gap-2">
-          {(["generales","autonomicas","ayuntamientos"] as Arena[]).map((m) => <button key={m} onClick={() => setArena(m)} className={`rounded-xl px-3 py-1 text-sm border ${arena===m?"bg-indigo-600/80 border-indigo-300":"border-white/25 bg-white/10"}`}>{m}</button>)}
-          {arena === "autonomicas" && <select value={selectedCCAA} onChange={(e) => setSelectedCCAA(e.target.value)} className="rounded-xl border border-white/25 bg-white/10 px-2 py-1 text-sm">{Object.keys(AUTONOMIC_SEATS).map((c)=><option key={c} value={c}>{c}</option>)}</select>}
+          {(["generales","autonomicas","ayuntamientos"] as Arena[]).map((m) => (
+            <button key={m} onClick={() => setArena(m)} className={`rounded-xl px-3 py-1 text-sm border capitalize ${arena===m?"bg-indigo-600/80 border-indigo-300":"border-white/25 bg-white/10"}`}>
+              {m}
+            </button>
+          ))}
+          {arena === "autonomicas" && (
+            <select value={selectedCCAA} onChange={(e) => setSelectedCCAA(e.target.value)} className="rounded-xl border border-white/25 bg-indigo-950 px-2 py-1 text-sm text-white">
+              {Object.keys(AUTONOMIC_SEATS).map((c)=><option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
         </div>
 
-      <div className="mb-4 grid gap-4 lg:grid-cols-3">
-        <div className="rounded border border-slate-700 p-3 lg:col-span-2">
-          <div className="mb-2 text-sm font-semibold">MapView · Mapa electoral por provincias</div>
-          <MapView winners={winners} onSelect={setSelectedProv} selected={selectedProv} />
-        </div>
-        <NightModeSimulation onApply={() => undefined} />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded border border-slate-700 p-3">
-          <div className="mb-2 text-sm font-semibold">ProvinceEditor · {selectedProv}</div>
-          <div className="grid gap-2 md:grid-cols-2">
-            {Object.entries(simData[selectedProv].p).map(([p, v]) => <label key={p} className="flex items-center justify-between rounded bg-black/20 p-2 text-xs"><span>{p}</span><input type="number" value={v} onChange={(e) => setSimData((prev) => ({ ...prev, [selectedProv]: { ...prev[selectedProv], p: { ...prev[selectedProv].p, [p]: Math.max(0, Number(e.target.value || 0)) } } }))} className="w-28 rounded bg-transparent text-right"/></label>)}
+        <div className="mb-4 grid gap-4 lg:grid-cols-3">
+          <div className="rounded border border-slate-700 p-3 lg:col-span-2 bg-black/10">
+            <div className="mb-2 text-sm font-semibold">MapView · Mapa electoral por provincias</div>
+            <MapView winners={winners} onSelect={setSelectedProv} selected={selectedProv} simData={simData} />
           </div>
-          <div className="mt-3 flex gap-2 text-xs">
-            <input value={newParty.key} onChange={(e) => setNewParty((n) => ({ ...n, key: e.target.value }))} placeholder="Nuevo partido" className="rounded border border-slate-600 bg-transparent px-2 py-1"/>
-            <input type="color" value={newParty.color} onChange={(e) => setNewParty((n) => ({ ...n, color: e.target.value }))} />
-            <button onClick={addParty} className="rounded bg-indigo-700 px-2">Añadir partido</button>
+          <NightModeSimulation onApply={() => undefined} />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded border border-slate-700 p-3 bg-black/10">
+            <div className="mb-2 text-sm font-semibold">ProvinceEditor · {selectedProv}</div>
+            <div className="grid gap-2 md:grid-cols-2">
+              {simData[selectedProv]?.p && Object.entries(simData[selectedProv].p).map(([p, v]) => (
+                <label key={p} className="flex items-center justify-between rounded bg-black/20 p-2 text-xs">
+                  <span>{p}</span>
+                  <input type="number" value={v} onChange={(e) => setSimData((prev) => ({ ...prev, [selectedProv]: { ...prev[selectedProv], p: { ...prev[selectedProv].p, [p]: Math.max(0, Number(e.target.value || 0)) } } }))} className="w-28 rounded bg-transparent text-right outline-none focus:ring-1 focus:ring-indigo-500 px-1"/>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex gap-2 text-xs">
+              <input value={newParty.key} onChange={(e) => setNewParty((n) => ({ ...n, key: e.target.value }))} placeholder="Nuevo partido" className="rounded border border-slate-600 bg-transparent px-2 py-1 outline-none"/>
+              <input type="color" value={newParty.color} onChange={(e) => setNewParty((n) => ({ ...n, color: e.target.value }))} className="w-8 h-8 rounded cursor-pointer border-none bg-transparent" />
+              <button onClick={addParty} className="rounded bg-indigo-700 px-3 hover:bg-indigo-600 transition-colors">Añadir partido</button>
+            </div>
+          </div>
+
+          <div className="rounded border border-slate-700 p-3 bg-black/10">
+            <div className="mb-2 text-sm font-semibold">Hemicycle + CoalitionBuilder</div>
+            <Hemicycle seats={nat.escanos} colors={colors} selected={selectedCoalition} onToggle={(p) => setSelectedCoalition((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n; })} />
+            <div className="mt-2 text-sm">Coalición: <b>{coalitionSeats}</b> / {ABS_MAJORITY}</div>
+            <div className={`text-xs font-semibold ${coalitionSeats >= ABS_MAJORITY ? "text-emerald-400" : "text-amber-400"}`}>
+              {coalitionSeats >= ABS_MAJORITY ? "✓ Mayoría absoluta alcanzada" : "⚠ Sin mayoría absoluta"}
+            </div>
           </div>
         </div>
 
-        <div className="rounded border border-slate-700 p-3">
-          <div className="mb-2 text-sm font-semibold">Hemicycle + CoalitionBuilder</div>
-          <Hemicycle seats={nat.escanos} colors={colors} selected={selectedCoalition} onToggle={(p) => setSelectedCoalition((prev) => { const n = new Set(prev); if (n.has(p)) n.delete(p); else n.add(p); return n; })} />
-          <div className="mt-2 text-sm">Coalición: <b>{coalitionSeats}</b> / {ABS_MAJORITY}</div>
-          <div className={`text-xs ${coalitionSeats >= ABS_MAJORITY ? "text-emerald-400" : "text-amber-400"}`}>{coalitionSeats >= ABS_MAJORITY ? "Mayoría absoluta alcanzada" : "Sin mayoría absoluta"}</div>
-        </div>
-      </div>
-
-        <div className="mt-4 rounded border border-slate-700 p-3">
+        <div className="mt-4 rounded border border-slate-700 p-3 bg-black/10">
           <div className="mb-2 text-sm font-semibold">Resultados nacionales</div>
-          <div className="grid gap-2 md:grid-cols-3">{Object.entries(nat.escanos).sort((a, b) => b[1] - a[1]).map(([p, e]) => <div key={p} className="rounded p-2 text-sm" style={{ background: `${colors[p] || "#777"}22` }}>{p}: <b>{e}</b> escaños · {(nat.votos[p] || 0).toLocaleString("es-ES")} votos</div>)}</div>
+          <div className="grid gap-2 md:grid-cols-3">
+            {Object.entries(nat.escanos).sort((a, b) => b[1] - a[1]).map(([p, e]) => (
+              <div key={p} className="rounded p-2 text-sm border border-white/5" style={{ background: `${colors[p] || "#777"}22` }}>
+                <span className="font-bold" style={{ color: colors[p] }}>{p}</span>: <b>{e}</b> escaños · {(nat.votos[p] || 0).toLocaleString("es-ES")} votos
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
