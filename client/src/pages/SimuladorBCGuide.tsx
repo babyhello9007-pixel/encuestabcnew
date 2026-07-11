@@ -46,13 +46,22 @@ type Arena = "generales" | "autonomicas" | "ayuntamientos";
 
 const buildSimData = (seatsMap: Record<string, number>): Record<string, ProvinceModel> => Object.fromEntries(Object.entries(seatsMap).map(([prov, seats]) => {
   const validVotes = Math.max(60000, seats * 85000);
+  return [prov, {
+    census: validVotes * 1.3,
+    validVotes,
+    p: {
+      PP: validVotes * 0.28,
+      PSOE: validVotes * 0.22,
+      VOX: validVotes * 0.15,
+      SUMAR: validVotes * 0.12,
+      ERC: validVotes * 0.08,
+      JUNTS: validVotes * 0.06,
+      OTROS: validVotes * 0.09,
+    },
+  }];
+}));
+
 const PROV23: Record<string, ProvinceModel> = buildSimData(SEATS);
-function calcProv(provincia: string, simData: Record<string, ProvinceModel>, seatsMap: Record<string, number>) {
-  const escaniosProvincia = seatsMap[provincia] || 0;
-function natCalc(simData: Record<string, ProvinceModel>, seatsMap: Record<string, number>) {
-    const { sa } = calcProv(prov, simData, seatsMap);
-  Alicante: { census: 1400000, validVotes: 970000, p: { PP: 390000, PSOE: 300000, VOX: 190000, SUMAR: 120000, ERC: 300, JUNTS: 300, OTROS: 12000 } },
-};
 
 function dhondt(votos: Record<string, number>, escanios: number) {
   if (!escanios || !Object.keys(votos).length) return {};
@@ -216,23 +225,19 @@ export default function SimuladorBCGuide() {
     URL.revokeObjectURL(url);
   };
 
-  return <div className={dark ? "min-h-screen text-slate-100" : "min-h-screen text-slate-900"} style={{ background: dark ? "radial-gradient(circle at 20% 10%, #1e293b 0%, #020617 50%, #02030a 100%)" : "radial-gradient(circle at 20% 10%, #ffffff 0%, #e2e8f0 55%, #cbd5e1 100%)" }}>
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+  return (
+    <div className={dark ? "min-h-screen text-slate-100" : "min-h-screen text-slate-900"} style={{ background: dark ? "radial-gradient(circle at 20% 10%, #1e293b 0%, #020617 50%, #02030a 100%)" : "radial-gradient(circle at 20% 10%, #ffffff 0%, #e2e8f0 55%, #cbd5e1 100%)" }}>
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <button onClick={() => setDark((d) => !d)} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">{dark ? "Tema claro" : "Tema oscuro"}</button>
           <button onClick={() => exportData("json")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Exportar JSON</button>
           <button onClick={() => exportData("csv")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Exportar CSV</button>
           <button onClick={() => setLocation("/resultados")} className="rounded-xl border border-white/25 bg-white/10 px-3 py-1 text-sm backdrop-blur">Volver</button>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {(["generales","autonomicas","ayuntamientos"] as Arena[]).map((m) => <button key={m} onClick={() => setArena(m)} className={`rounded-xl px-3 py-1 text-sm border ${arena===m?"bg-indigo-600/80 border-indigo-300":"border-white/25 bg-white/10"}`}>{m}</button>)}
-        {arena === "autonomicas" && <select value={selectedCCAA} onChange={(e) => setSelectedCCAA(e.target.value)} className="rounded-xl border border-white/25 bg-white/10 px-2 py-1 text-sm">{Object.keys(AUTONOMIC_SEATS).map((c)=><option key={c} value={c}>{c}</option>)}</select>}
-      </div>
-        <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] lg:col-span-2">
-        <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] ">
-            <input value={newParty.key} onChange={(e) => setNewParty((n) => ({ ...n, key: e.target.value }))} placeholder="Nuevo partido" className="rounded-xl border border-white/25 bg-white/10 px-2 py-1 backdrop-blur"/>
-            <button onClick={addParty} className="rounded-xl bg-indigo-600/80 px-2 backdrop-blur">Añadir partido</button>
-
-        <div className="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.25)] ">
+        </div>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {(["generales","autonomicas","ayuntamientos"] as Arena[]).map((m) => <button key={m} onClick={() => setArena(m)} className={`rounded-xl px-3 py-1 text-sm border ${arena===m?"bg-indigo-600/80 border-indigo-300":"border-white/25 bg-white/10"}`}>{m}</button>)}
+          {arena === "autonomicas" && <select value={selectedCCAA} onChange={(e) => setSelectedCCAA(e.target.value)} className="rounded-xl border border-white/25 bg-white/10 px-2 py-1 text-sm">{Object.keys(AUTONOMIC_SEATS).map((c)=><option key={c} value={c}>{c}</option>)}</select>}
+        </div>
 
       <div className="mb-4 grid gap-4 lg:grid-cols-3">
         <div className="rounded border border-slate-700 p-3 lg:col-span-2">
@@ -263,10 +268,11 @@ export default function SimuladorBCGuide() {
         </div>
       </div>
 
-      <div className="mt-4 rounded border border-slate-700 p-3">
-        <div className="mb-2 text-sm font-semibold">Resultados nacionales</div>
-        <div className="grid gap-2 md:grid-cols-3">{Object.entries(nat.escanos).sort((a, b) => b[1] - a[1]).map(([p, e]) => <div key={p} className="rounded p-2 text-sm" style={{ background: `${colors[p] || "#777"}22` }}>{p}: <b>{e}</b> escaños · {(nat.votos[p] || 0).toLocaleString("es-ES")} votos</div>)}</div>
+        <div className="mt-4 rounded border border-slate-700 p-3">
+          <div className="mb-2 text-sm font-semibold">Resultados nacionales</div>
+          <div className="grid gap-2 md:grid-cols-3">{Object.entries(nat.escanos).sort((a, b) => b[1] - a[1]).map(([p, e]) => <div key={p} className="rounded p-2 text-sm" style={{ background: `${colors[p] || "#777"}22` }}>{p}: <b>{e}</b> escaños · {(nat.votos[p] || 0).toLocaleString("es-ES")} votos</div>)}</div>
+        </div>
       </div>
     </div>
-  </div>;
+  );
 }
