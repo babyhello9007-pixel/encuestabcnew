@@ -2347,7 +2347,7 @@ export default function Results() {
                 </div>
               )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
-              {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup} />}
+              {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "primarias" && <PrimariasResultsSection />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}

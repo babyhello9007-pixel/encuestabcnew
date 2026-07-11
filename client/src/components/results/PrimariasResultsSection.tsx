@@ -47,6 +47,8 @@ export function PrimariasResultsSection() {
             grouped[row.primaria_id] = {
               primaria_nombre: row.primaria_nombre,
               partido: row.partido,
+              color_primario: row.color_primario,
+              logo_url: row.logo_url,
               candidatos: [],
               total_votos: 0,
             };
@@ -108,6 +110,17 @@ export function PrimariasResultsSection() {
               {primaria.primaria_nombre}
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              {primaria.logo_url && (
+                <img
+                  src={primaria.logo_url}
+                  alt={primaria.partido}
+                  style={{
+                    height: "32px",
+                    width: "auto",
+                    maxWidth: "80px",
+                  }}
+                />
+              )}
               <span style={{
                 display: "inline-block",
                 padding: "6px 12px",
@@ -207,7 +220,7 @@ export function PrimariasResultsSection() {
                     color: "#7a7990",
                   }}>
                     <span>{candidato.total_votos} votos</span>
-                    <span style={{ color: "#C41E3A", fontWeight: "600" }}>
+                    <span style={{ color: primaria.color_primario || "#C41E3A", fontWeight: "600" }}>
                       {candidato.porcentaje.toFixed(1)}%
                     </span>
                   </div>
@@ -225,7 +238,7 @@ export function PrimariasResultsSection() {
                     style={{
                       height: "100%",
                       width: `${candidato.porcentaje}%`,
-                      backgroundColor: "#C41E3A",
+                      backgroundColor: primaria.color_primario || "#C41E3A",
                       transition: "width 0.3s ease",
                     }}
                   />
