@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,23 @@ export default function Primarias() {
   const [userIP, setUserIP] = useState<string>("");
   const [votosRegistrados, setVotosRegistrados] = useState<Record<number, boolean>>({});
 
+  // Cargar candidatos de una primaria optimizado con useCallback
+  const fetchCandidatos = useCallback(async (primariaId: number) => {
+    try {
+      const { data, error } = await supabase
+        .from("candidatos_primaria")
+        .select("*")
+        .eq("primaria_id", primariaId)
+        .order("orden", { ascending: true });
+
+      if (error) throw error;
+      setCandidatos(data || []);
+    } catch (error) {
+      console.error("Error fetching candidatos:", error);
+      toast.error("Error al cargar los candidatos");
+    }
+  }, []);
+
   // Obtener IP del usuario
   useEffect(() => {
     const getIP = async () => {
@@ -50,20 +67,20 @@ export default function Primarias() {
     getIP();
   }, []);
 
-  // Cargar primarias activas
+  // Cargar primarias activas al montar el componente
   useEffect(() => {
     const fetchPrimarias = async () => {
       try {
         const { data, error } = await supabase
           .from("primarias_activas")
           .select("*");
-        
+
         if (error) throw error;
         setPrimarias(data || []);
-        
+
         if (data && data.length > 0) {
           setSelectedPrimaria(data[0]);
-          fetchCandidatos(data[0].id);
+          await fetchCandidatos(data[0].id);
         }
       } catch (error) {
         console.error("Error fetching primarias:", error);
@@ -74,29 +91,12 @@ export default function Primarias() {
     };
 
     fetchPrimarias();
-  }, []);
-
-  // Cargar candidatos de una primaria
-  const fetchCandidatos = async (primariaId: number) => {
-    try {
-      const { data, error } = await supabase
-        .from("candidatos_primaria")
-        .select("*")
-        .eq("primaria_id", primariaId)
-        .order("orden", { ascending: true });
-      
-      if (error) throw error;
-      setCandidatos(data || []);
-    } catch (error) {
-      console.error("Error fetching candidatos:", error);
-      toast.error("Error al cargar los candidatos");
-    }
-  };
+  }, [fetchCandidatos]);
 
   // Cambiar primaria seleccionada
-  const handleSelectPrimaria = (primaria: Primaria) => {
+  const handleSelectPrimaria = async (primaria: Primaria) => {
     setSelectedPrimaria(primaria);
-    fetchCandidatos(primaria.id);
+    await fetchCandidatos(primaria.id);
   };
 
   // Registrar voto
@@ -106,7 +106,6 @@ export default function Primarias() {
       return;
     }
 
-    // Verificar si ya votó
     if (votosRegistrados[selectedPrimaria.id]) {
       toast.error("Ya has votado en esta primaria");
       return;
@@ -114,23 +113,22 @@ export default function Primarias() {
 
     setVotando(true);
     try {
-      const { data, error } = await supabase
-        .rpc("registrar_voto_primaria", {
-          p_primaria_id: selectedPrimaria.id,
-          p_candidato_id: candidatoId,
-          p_usuario_ip: userIP,
-        });
+      const { data, error } = await supabase.rpc("registrar_voto_primaria", {
+        p_primaria_id: selectedPrimaria.id,
+        p_candidato_id: candidatoId,
+        p_usuario_ip: userIP,
+      });
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data?.success) {
         toast.success("¡Voto registrado correctamente!");
-        setVotosRegistrados({
-          ...votosRegistrados,
+        setVotosRegistrados((prev) => ({
+          ...prev,
           [selectedPrimaria.id]: true,
-        });
+        }));
       } else {
-        toast.error(data.message || "Error al registrar el voto");
+        toast.error(data?.message || "Error al registrar el voto");
       }
     } catch (error) {
       console.error("Error voting:", error);
@@ -144,8 +142,8 @@ export default function Primarias() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C41E3A] mx-auto mb-4"></div>
-          <p className="text-[#2D2D2D]">Cargando primarias...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C41E3A] mx-auto mb-4" />
+          <p className="text-[#A3A3A3]">Cargando primarias...</p>
         </div>
       </div>
     );
@@ -155,10 +153,10 @@ export default function Primarias() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
         <div className="text-center">
-          <p className="text-[#2D2D2D] mb-4">No hay primarias activas en este momento</p>
+          <p className="text-[#A3A3A3] mb-4">No hay primarias activas en este momento</p>
           <Button
             onClick={() => setLocation("/")}
-            className="bg-[#C41E3A] hover:bg-[#A01830] text-white"
+            className="bg-[#C41E3A] hover:bg-[#A01830] text-white transition-colors"
           >
             Volver al inicio
           </Button>
@@ -169,77 +167,89 @@ export default function Primarias() {
 
   const primaryColor = selectedPrimaria.color_primario || "#C41E3A";
   const secondaryColor = selectedPrimaria.color_secundario || "#A01830";
+  const yaVoto = votosRegistrados[selectedPrimaria.id];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
+    <div 
+      className="min-h-screen flex flex-col bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]"
+      style={{ 
+        "--primary": primaryColor, 
+        "--secondary": secondaryColor 
+      } as React.CSSProperties}
+    >
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
-        <div className="container flex items-center justify-between h-16">
+      <header className="sticky top-0 z-50 border-b border-[#E0D5CC]/20 bg-black/50 backdrop-blur-md">
+        <div className="container flex items-center justify-between h-16 px-4 mx-auto">
           <div className="flex items-center gap-3">
             {selectedPrimaria.logo_url && (
-              <img src={selectedPrimaria.logo_url} alt="Party Logo" className="h-8 w-8" />
+              <img src={selectedPrimaria.logo_url} alt="Party Logo" className="h-8 w-8 object-contain" />
             )}
             <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
-            <h1 className="text-xl font-bold" style={{ color: primaryColor }}>
+            <h1 className="text-xl font-bold" style={{ color: "var(--primary)" }}>
               Primarias BC
             </h1>
           </div>
           <Button
             onClick={() => setLocation("/")}
             variant="outline"
-            className="text-[#2D2D2D]"
+            className="text-white border-white/20 hover:bg-white/10"
           >
             Volver
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 container py-12">
+      <main className="flex-1 container py-12 px-4 mx-auto">
         {/* Selector de primarias */}
         {primarias.length > 1 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-[#2D2D2D] mb-4">Selecciona una primaria</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Selecciona una primaria</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {primarias.map((primaria) => (
-                <button
-                  key={primaria.id}
-                  onClick={() => handleSelectPrimaria(primaria)}
-                  className="p-4 rounded-lg transition-all glass-card border-2"
-                  style={{
-                    borderColor: primaria.color_primario || "#C41E3A",
-                    backgroundColor: selectedPrimaria.id === primaria.id 
-                      ? `${primaria.color_primario || "#C41E3A"}20` 
-                      : "transparent"
-                  }}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    {primaria.logo_url && (
-                      <img src={primaria.logo_url} alt="Party Logo" className="h-6 w-6" />
-                    )}
-                    <h3 className="font-semibold text-[#2D2D2D]">{primaria.nombre}</h3>
-                  </div>
-                  <p className="text-sm text-[#666666]">{primaria.partido}</p>
-                </button>
-              ))}
+              {primarias.map((primaria) => {
+                const isCurrent = selectedPrimaria.id === primaria.id;
+                const pColor = primaria.color_primario || "#C41E3A";
+                return (
+                  <button
+                    key={primaria.id}
+                    onClick={() => handleSelectPrimaria(primaria)}
+                    className="p-4 rounded-lg transition-all border-2 text-left bg-white/5 backdrop-blur-sm hover:bg-white/10"
+                    style={{
+                      borderColor: pColor,
+                      backgroundColor: isCurrent ? `${pColor}20` : undefined
+                    }}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      {primaria.logo_url && (
+                        <img src={primaria.logo_url} alt="Party Logo" className="h-6 w-6 object-contain" />
+                      )}
+                      <h3 className="font-semibold text-white">{primaria.nombre}</h3>
+                    </div>
+                    <p className="text-sm text-gray-400">{primaria.partido}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* Información de la primaria */}
         <div className="mb-12">
-          <div className="glass-card p-8 rounded-xl mb-8" style={{ borderColor: primaryColor, borderWidth: "2px" }}>
-            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-2">
+          <div 
+            className="p-8 rounded-xl mb-8 bg-white/5 backdrop-blur-sm border-2" 
+            style={{ borderColor: "var(--primary)" }}
+          >
+            <h2 className="text-3xl font-bold text-white mb-2">
               {selectedPrimaria.nombre}
             </h2>
-            <p className="text-[#666666] mb-4">{selectedPrimaria.descripcion}</p>
+            <p className="text-gray-300 mb-4">{selectedPrimaria.descripcion}</p>
             <div className="flex items-center gap-4">
               <span 
                 className="inline-block px-4 py-2 text-white rounded-lg text-sm font-semibold"
-                style={{ backgroundColor: primaryColor }}
+                style={{ backgroundColor: "var(--primary)" }}
               >
                 {selectedPrimaria.partido}
               </span>
-              <span className="inline-block px-4 py-2 bg-green-500 bg-opacity-10 text-green-600 rounded-lg text-sm font-semibold">
+              <span className="inline-block px-4 py-2 bg-green-500/10 text-green-400 rounded-lg text-sm font-semibold border border-green-500/20">
                 Activa
               </span>
             </div>
@@ -247,55 +257,50 @@ export default function Primarias() {
 
           {/* Candidatos */}
           <div>
-            <h3 className="text-2xl font-bold text-[#2D2D2D] mb-6">Candidatos</h3>
+            <h3 className="text-2xl font-bold text-white mb-6">Candidatos</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {candidatos.map((candidato) => (
                 <div
                   key={candidato.id}
-                  className="glass-card rounded-xl hover:shadow-lg transition-all overflow-hidden"
-                  style={{ borderColor: primaryColor, borderWidth: "2px" }}
+                  className="rounded-xl hover:shadow-2xl transition-all overflow-hidden bg-white/5 backdrop-blur-sm border-2 flex flex-col justify-between"
+                  style={{ borderColor: "var(--primary)" }}
                 >
-                  {/* Imagen del candidato */}
-                  {(candidato.imagen_url || candidato.foto_url) && (
-                    <img
-                      src={candidato.imagen_url || candidato.foto_url}
-                      alt={candidato.nombre}
-                      className="w-full h-56 object-cover"
-                    />
-                  )}
-                  
-                  <div className="p-6">
-                    <h4 className="text-lg font-semibold text-[#2D2D2D] mb-2">
-                      {candidato.nombre}
-                    </h4>
-                    <p className="text-sm text-[#666666] mb-4">
-                      {candidato.descripcion}
-                    </p>
+                  <div>
+                    {(candidato.imagen_url || candidato.foto_url) && (
+                      <img
+                        src={candidato.imagen_url || candidato.foto_url}
+                        alt={candidato.nombre}
+                        className="w-full h-56 object-cover"
+                        loading="lazy"
+                      />
+                    )}
+                    
+                    <div className="p-6">
+                      <h4 className="text-lg font-semibold text-white mb-2">
+                        {candidato.nombre}
+                      </h4>
+                      <p className="text-sm text-gray-400 mb-4">
+                        {candidato.descripcion}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 pt-0">
                     <Button
                       onClick={() => handleVotar(candidato.id)}
-                      disabled={votando || votosRegistrados[selectedPrimaria.id]}
-                      className="w-full text-white font-semibold"
+                      disabled={votando || yaVoto}
+                      className="w-full text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
-                        backgroundColor: votosRegistrados[selectedPrimaria.id] 
-                          ? "#999999" 
-                          : primaryColor,
-                        opacity: votosRegistrados[selectedPrimaria.id] ? 0.6 : 1,
-                        cursor: votosRegistrados[selectedPrimaria.id] ? "not-allowed" : "pointer"
+                        backgroundColor: yaVoto ? "#4B5563" : "var(--primary)",
                       }}
                       onMouseEnter={(e) => {
-                        if (!votosRegistrados[selectedPrimaria.id]) {
-                          (e.target as HTMLElement).style.backgroundColor = secondaryColor;
-                        }
+                        if (!yaVoto) e.currentTarget.style.backgroundColor = "var(--secondary)";
                       }}
                       onMouseLeave={(e) => {
-                        if (!votosRegistrados[selectedPrimaria.id]) {
-                          (e.target as HTMLElement).style.backgroundColor = primaryColor;
-                        }
+                        if (!yaVoto) e.currentTarget.style.backgroundColor = "var(--primary)";
                       }}
                     >
-                      {votosRegistrados[selectedPrimaria.id]
-                        ? "Ya has votado"
-                        : "Votar"}
+                      {votando ? "Procesando..." : yaVoto ? "Ya has votado" : "Votar"}
                     </Button>
                   </div>
                 </div>
@@ -306,9 +311,9 @@ export default function Primarias() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#E0D5CC] bg-white bg-opacity-50 backdrop-blur-sm">
-        <div className="container py-8 text-center text-sm text-[#666666]">
-          <p>Primarias Batalla Cultural © 2025 | Voto anónimo y seguro</p>
+      <footer className="border-t border-white/10 bg-black/40 backdrop-blur-md mt-auto">
+        <div className="container py-6 text-center text-sm text-gray-500 mx-auto px-4">
+          <p>Primarias Batalla Cultural © {new Date().getFullYear()} | Voto anónimo y seguro</p>
         </div>
       </footer>
     </div>
