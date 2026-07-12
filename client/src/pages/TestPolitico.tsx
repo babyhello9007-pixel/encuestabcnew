@@ -692,8 +692,8 @@ export default function TestPoliticoBC() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
               <Card className="bg-white/5 border-white/10 p-5 space-y-2">
                 <Gavel className="w-5 h-5 text-indigo-400" />
-                <h3 className="font-bold text-sm">17 Fuerzas Políticas</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="font-bold text-sm text-white">17 Fuerzas Políticas</h3>
+                <p className="text-xs text-slate-300">
                   Desde partidos mayoritarios hasta identitarios, regionalistas y plataformas digitales.
                 </p>
               </Card>
@@ -731,7 +731,7 @@ export default function TestPoliticoBC() {
         {screen === "quiz" && (
           <section className="max-w-3xl mx-auto w-full space-y-6">
             <div className="space-y-2">
-              <div className="flex justify-between items-center text-xs text-slate-400 font-semibold uppercase tracking-wider">
+              <div className="flex justify-between items-center text-xs text-slate-300 font-semibold uppercase tracking-wider">
                 <span className="bg-white/5 px-3 py-1 rounded-full border border-white/10 text-indigo-400">
                   {currentQuestion.block}
                 </span>
@@ -749,7 +749,7 @@ export default function TestPoliticoBC() {
 
             <Card className="bg-white/5 border-white/10 p-6 sm:p-8 relative overflow-hidden">
               <div className="space-y-6 relative z-10">
-                <h3 className="text-xl sm:text-2xl font-extrabold leading-snug">{currentQuestion.question}</h3>
+                <h3 className="text-xl sm:text-2xl font-extrabold leading-snug text-white">{currentQuestion.question}</h3>
 
                 <div className="space-y-3.5 pt-2">
                   {currentQuestion.options.map((option) => {
@@ -761,7 +761,7 @@ export default function TestPoliticoBC() {
                         className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-4 hover:bg-white/5 ${
                           isSelected
                             ? "border-indigo-500 bg-indigo-500/10 text-white shadow-lg shadow-indigo-500/10"
-                            : "border-white/10 bg-black/20 text-slate-300 hover:border-white/20"
+                            : "border-white/10 bg-black/20 text-white hover:border-white/20"
                         }`}
                       >
                         <div
@@ -771,7 +771,7 @@ export default function TestPoliticoBC() {
                         >
                           {option.key}
                         </div>
-                        <div className="text-sm sm:text-base font-semibold leading-relaxed pt-0.5">{option.text}</div>
+                        <div className="text-sm sm:text-base font-semibold leading-relaxed pt-0.5 text-white">{option.text}</div>
                       </button>
                     );
                   })}
@@ -847,17 +847,17 @@ export default function TestPoliticoBC() {
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-2.5">
                           <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: item.color }} />
-                          <span className="font-extrabold text-lg">{item.name}</span>
+                          <span className="font-extrabold text-lg text-white">{item.name}</span>
                         </div>
                         <span className="text-xs font-bold text-slate-400 bg-white/5 px-2 py-1 rounded-md border border-white/10">
                           Posición #{index + 1}
                         </span>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{item.desc}</p>
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{item.desc}</p>
                     </div>
                     <div className="pt-4 space-y-1.5">
                       <div className="flex justify-between text-xs font-bold">
-                        <span className="text-slate-400">Afinidad ideológica</span>
+                        <span className="text-slate-300">Afinidad ideológica</span>
                         <span style={{ color: item.color }}>{item.percentage}%</span>
                       </div>
                       <div className="w-full bg-black/40 rounded-full h-2 overflow-hidden border border-white/10">
@@ -902,8 +902,8 @@ export default function TestPoliticoBC() {
                       <div className="space-y-3">
                         <div className="flex justify-between items-start">
                           <div className="space-y-0.5">
-                            <h4 className="font-bold text-base">{item.name}</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase">
+                            <h4 className="font-bold text-base text-white">{item.name}</h4>
+                            <p className="text-[10px] text-slate-300 font-semibold tracking-wider uppercase">
                               {item.role}
                               {item.party !== "Ficticio (House of Cards)" ? ` • ${item.party}` : ""}
                             </p>
@@ -912,7 +912,7 @@ export default function TestPoliticoBC() {
                             {item.percentage}%
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
+                        <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
                       </div>
                       <div className="pt-4">
                         <div className="w-full bg-black/40 rounded-full h-1.5 overflow-hidden border border-white/10">
@@ -931,7 +931,7 @@ export default function TestPoliticoBC() {
             {/* Ejes */}
             {activeTab === "axes" && (
               <Card className="max-w-2xl mx-auto bg-white/5 border-white/10 p-6 sm:p-8 space-y-8">
-                <h3 className="text-lg font-bold flex items-center gap-2 border-b border-white/10 pb-3">
+                <h3 className="text-lg font-bold flex items-center gap-2 border-b border-white/10 pb-3 text-white">
                   <Compass className="w-5 h-5 text-indigo-400" /> Distribución del Espectro Ideológico
                 </h3>
                 <div className="space-y-5">
@@ -939,10 +939,10 @@ export default function TestPoliticoBC() {
                     <div key={axis.key} className="space-y-2">
                       <div className="flex justify-between items-end">
                         <div>
-                          <h4 className="font-bold text-sm text-slate-200">{axis.name}</h4>
-                          <p className="text-xs text-slate-400 leading-relaxed mt-0.5">{axis.desc}</p>
+                          <h4 className="font-bold text-sm text-white">{axis.name}</h4>
+                          <p className="text-xs text-slate-300 leading-relaxed mt-0.5">{axis.desc}</p>
                         </div>
-                        <span className="text-base font-extrabold pl-4">{axesResults[axis.key]}%</span>
+                        <span className="text-base font-extrabold pl-4 text-white">{axesResults[axis.key]}%</span>
                       </div>
                       <div className="w-full bg-black/40 rounded-full h-3 overflow-hidden border border-white/10">
                         <div
@@ -969,7 +969,7 @@ export default function TestPoliticoBC() {
         )}
       </main>
 
-      <footer className="border-t border-white/10 py-6 mt-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-white/10 py-6 mt-4 text-center text-xs text-slate-400">
         <div className="max-w-5xl mx-auto px-4 space-y-2">
           <p>© 2026 Test Político BC. Todos los derechos reservados.</p>
           <p className="max-w-2xl mx-auto leading-relaxed">
