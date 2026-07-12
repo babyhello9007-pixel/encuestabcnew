@@ -699,15 +699,15 @@ export default function TestPoliticoBC() {
               </Card>
               <Card className="bg-white/5 border-white/10 p-5 space-y-2">
                 <Users className="w-5 h-5 text-pink-400" />
-                <h3 className="font-bold text-sm">30+ Líderes Analizados</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="font-bold text-sm text-white">30+ Líderes Analizados</h3>
+                <p className="text-xs text-slate-300">
                   2 referentes clave por formación, además de perfiles globales e históricos como Underwood.
                 </p>
               </Card>
               <Card className="bg-white/5 border-white/10 p-5 space-y-2">
                 <Compass className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-bold text-sm">Algoritmo de Precisión</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="font-bold text-sm text-white">Algoritmo de Precisión</h3>
+                <p className="text-xs text-slate-300">
                   Ponderaciones cruzadas por bloque temático para una exactitud sin precedentes.
                 </p>
               </Card>
