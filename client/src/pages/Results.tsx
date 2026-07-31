@@ -25,7 +25,6 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   ScatterChart, Scatter, ZAxis, Sankey
 } from "recharts";
-import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
@@ -1924,15 +1923,7 @@ const syncLoading = syncResult?.loading ?? true;
       setPdfLoading(false);
     }
   };
-
-  if (loading || syncLoading) {
-    return (
-      <div className="r-root" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <style>{RESULTS_CSS}</style>
-        <LoadingAnimation />
-      </div>
-    );
-  }
+ 
 
   return (
     <div className="r-root">
