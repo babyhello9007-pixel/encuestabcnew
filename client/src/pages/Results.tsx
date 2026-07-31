@@ -1627,7 +1627,7 @@ export default function Results() {
 
   // Dynamic Party Config Hook
   // ✅ Protegido contra retornos null
-const { partyConfigs = [], loading: syncLoading = true } = usePartySync() || {};, loading: syncLoading } = usePartySync();
+const { partyConfigs = [], loading: syncLoading = true } = usePartySync() || {};
 
   useEffect(() => {
     fetch("/logo-presidencia-blanco.png").then(r => r.blob()).then(blob => {
