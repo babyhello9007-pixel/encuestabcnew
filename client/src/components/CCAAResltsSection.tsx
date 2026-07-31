@@ -387,7 +387,3 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
     </div>
   );
 }
-      )}
-    </div>
-  );
-}
