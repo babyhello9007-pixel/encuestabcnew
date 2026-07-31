@@ -154,7 +154,8 @@ const RESULTS_CSS = `
 .r-party-name { font-size: 16px; font-weight: 800; color: #f0eff8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r-party-votes { font-size: 13px; color: #7a7990; margin-top: 2px; font-weight: 600; }
 .r-party-edad { font-size: 12px; color: #c9a96e; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
-.r-party-seats { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; min-width: 130px; }
+.r-party-seats { text-align: right; flex-shrink: 0; display: flex; flex-direction: row; gap: 12px; min-width: auto; align-items: center; }
+.r-party-seats > div { flex: 1; min-width: 80px; }
 .r-party-seats-num { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; line-height: 1; }
 .r-party-seats-label { font-size: 9px; color: #7a7990; }
 .r-party-bar-wrap { display: flex; flex-direction: column; gap: 3px; }
@@ -1839,6 +1840,7 @@ export default function Results() {
   const [barometroBC, setBarometroBC] = useState<Record<string, number>>({});
   const [mediaEncuestas, setMediaEncuestas] = useState<Record<string, number>>({});
   const [liderPorPartido, setLiderPorPartido] = useState<Record<string, string>>({});
+  const [porcentajeLiderPorPartido, setPorcentajeLiderPorPartido] = useState<Record<string, number>>({});
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -2031,9 +2033,10 @@ export default function Results() {
         } catch (e) { console.warn("Error loading MediaEncuestas:", e); }
 
         try {
-          const { data: topLideres } = await supabase.from("top_lider_por_partido").select("partido, lider_top");
+          const { data: topLideres } = await supabase.from("top_lider_por_partido").select("partido, lider_top, porcentaje_lider_top");
           if (topLideres?.length) {
             const liderMap: Record<string, string> = {};
+            const porcentajeMap: Record<string, number> = {};
             topLideres.forEach((r: any) => {
               let partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
               if (!generalPartyMap[partyKey]) {
@@ -2043,8 +2046,10 @@ export default function Results() {
                 if (found) partyKey = found[0];
               }
               liderMap[partyKey] = r.lider_top || "N/A";
+              porcentajeMap[partyKey] = parseFloat(r.porcentaje_lider_top || "0") || 0;
             });
             setLiderPorPartido(liderMap);
+            setPorcentajeLiderPorPartido(porcentajeMap);
           }
         } catch (e) { console.warn("Error loading top_lider_por_partido:", e); }
 
@@ -2382,8 +2387,16 @@ export default function Results() {
                               </div>
                             )}
                             {activeTab === "general" && liderPorPartido[party.id] && (
-                              <div style={{ fontSize: 12, color: "#818cf8", marginTop: 4, fontWeight: 600 }}>
-                                Líder: {liderPorPartido[party.id]}
+                              <div style={{ marginTop: 6 }}>
+                                <div style={{ fontSize: 12, color: "#818cf8", fontWeight: 600, marginBottom: 4 }}>
+                                  Líder: {liderPorPartido[party.id]}
+                                </div>
+                                <div style={{ height: 4, background: "rgba(129, 140, 248, 0.15)", borderRadius: 2, overflow: "hidden" }}>
+                                  <div style={{ height: "100%", background: "#818cf8", width: `${Math.min(porcentajeLiderPorPartido[party.id] || 0, 100)}%`, transition: "width 0.5s ease" }} />
+                                </div>
+                                <div style={{ fontSize: 9, color: "#7a7990", marginTop: 2, textAlign: "right" }}>
+                                  {(porcentajeLiderPorPartido[party.id] || 0).toFixed(1)}% apoyo
+                                </div>
                               </div>
                             )}
                           </div>
