@@ -4,7 +4,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Loader2, AlertCircle } from "lucide-react";
 import PartyLogo from "@/components/PartyLogo";
 
-// Interfaces refinadas y alineadas con la BD
 export interface PartyConfig {
   id: number;
   party_key: string;
@@ -18,10 +17,13 @@ export interface PartyConfig {
 export interface CCAAResults {
   ccaa: string;
   partido: string;
+  party_key?: string;
   votos: number;
   porcentaje: number;
   edad_promedio: number;
   ideologia_promedio: number;
+  logo_url?: string;
+  color?: string;
 }
 
 export interface CCAASummary {
@@ -47,7 +49,7 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
   const [viewMode, setViewMode] = useState<"summary" | "detail">("summary");
   const [analysisType, setAnalysisType] = useState<"generales" | "autonomicas">("generales");
 
-  // 1. Cargar la configuración de partidos de la tabla party_configuration
+  // 1. Cargar la configuración de partidos de party_configuration
   useEffect(() => {
     const fetchPartyConfigurations = async () => {
       try {
@@ -61,9 +63,12 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
         if (data) {
           const configMap: Record<string, PartyConfig> = {};
           data.forEach((party: PartyConfig) => {
-            // Indexamos por party_key y por display_name para máxima flexibilidad en coincidencias
-            configMap[party.party_key.toLowerCase()] = party;
-            configMap[party.display_name.toLowerCase()] = party;
+            if (party.party_key) {
+              configMap[party.party_key.toLowerCase().trim()] = party;
+            }
+            if (party.display_name) {
+              configMap[party.display_name.toLowerCase().trim()] = party;
+            }
           });
           setPartyConfigs(configMap);
         }
@@ -75,7 +80,7 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
     fetchPartyConfigurations();
   }, []);
 
-  // 2. Cargar datos de resumen y detalle de las CCAA
+  // 2. Cargar datos según el tipo de análisis (Generales o Autonómicas)
   useEffect(() => {
     const fetchCCAAResults = async () => {
       try {
@@ -90,7 +95,6 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
           ? "votos_generales_por_ccaa"
           : "votos_autonomicas_por_ccaa";
 
-        // Ejecutamos ambas consultas en paralelo para acelerar el renderizado
         const [summaryRes, detailRes] = await Promise.all([
           supabase.from(summaryTable).select("*"),
           supabase.from(detailTable).select("*")
@@ -101,8 +105,14 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
 
         if (summaryRes.data) {
           setCCAASummary(summaryRes.data);
-          if (summaryRes.data.length > 0 && !selectedCCAA) {
-            setSelectedCCAA(summaryRes.data[0].ccaa);
+          // Si la CCAA seleccionada no está en los nuevos datos, seleccionar la primera
+          if (summaryRes.data.length > 0) {
+            const exists = summaryRes.data.some(item => item.ccaa === selectedCCAA);
+            if (!selectedCCAA || !exists) {
+              setSelectedCCAA(summaryRes.data[0].ccaa);
+            }
+          } else {
+            setSelectedCCAA(null);
           }
         }
 
@@ -120,15 +130,18 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
     fetchCCAAResults();
   }, [analysisType]);
 
-  // Helper para resolver el color y el logo del partido usando: DB > partyMeta Prop > Default Fallback
-  const getPartyMeta = (partyName: string) => {
-    const key = partyName.toLowerCase().trim();
-    const dbParty = partyConfigs[key];
+  // Resolutor unificado de logo y color (Prioridad: Vista SQL > Config DB > Props > Fallback)
+  const getPartyMeta = (result: CCAAResults) => {
+    const partyName = result.partido;
+    const key = (result.party_key || partyName).toLowerCase().trim();
+    const nameKey = partyName.toLowerCase().trim();
+    
+    const dbParty = partyConfigs[key] || partyConfigs[nameKey];
 
     return {
-      color: dbParty?.color || partyMeta[partyName]?.color || "#9CA3AF",
-      logo: dbParty?.logo_url || partyMeta[partyName]?.logo || "",
-      displayName: dbParty?.display_name || partyName
+      color: result.color || dbParty?.color || partyMeta[partyName]?.color || "#9CA3AF",
+      logo: result.logo_url || dbParty?.logo_url || partyMeta[partyName]?.logo || "",
+      displayName: dbParty?.display_name || result.partido
     };
   };
 
@@ -138,7 +151,7 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
 
   const chartData = useMemo(() => {
     return selectedCCAAResults.map(r => {
-      const meta = getPartyMeta(r.partido);
+      const meta = getPartyMeta(r);
       return {
         name: meta.displayName,
         votos: r.votos,
@@ -149,7 +162,6 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
     });
   }, [selectedCCAAResults, partyConfigs, partyMeta]);
 
-  // Formateador estándar de números
   const formatNumber = (num: number) => new Intl.NumberFormat("es-ES").format(num);
 
   if (loading) {
@@ -184,7 +196,6 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
 
       {/* Controles y Filtros */}
       <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-slate-200 pb-4">
-        {/* Tipo de Elección */}
         <div className="inline-flex p-1 bg-slate-100 rounded-lg">
           <button
             onClick={() => {
@@ -214,7 +225,6 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
           </button>
         </div>
 
-        {/* Cambiar de Vista */}
         <div className="inline-flex p-1 bg-slate-100 rounded-lg">
           <button
             onClick={() => setViewMode("summary")}
@@ -241,45 +251,50 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
 
       {/* VISTA RESUMEN */}
       {viewMode === "summary" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {ccaaSummary.map((ccaa) => (
-            <div
-              key={ccaa.ccaa}
-              onClick={() => {
-                setSelectedCCAA(ccaa.ccaa);
-                setViewMode("detail");
-              }}
-              className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-red-500 hover:shadow-md cursor-pointer transition-all duration-200"
-            >
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-lg text-slate-900 group-hover:text-red-600 transition-colors">
-                  {ccaa.ccaa}
-                </h3>
-                <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
-                  {ccaa.num_partidos} Partidos
-                </span>
+        ccaaSummary.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ccaaSummary.map((ccaa) => (
+              <div
+                key={ccaa.ccaa}
+                onClick={() => {
+                  setSelectedCCAA(ccaa.ccaa);
+                  setViewMode("detail");
+                }}
+                className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-red-500 hover:shadow-md cursor-pointer transition-all duration-200"
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="font-bold text-lg text-slate-900 group-hover:text-red-600 transition-colors">
+                    {ccaa.ccaa}
+                  </h3>
+                  <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
+                    {ccaa.num_partidos} Partidos
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-xs text-slate-500 font-medium">Total votos</p>
+                    <p className="font-bold text-slate-900 text-base">{formatNumber(ccaa.total_votos)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-medium">Edad Promedio</p>
+                    <p className="font-semibold text-slate-700">{ccaa.edad_promedio} años</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-slate-500 font-medium">Ideología Promedio</p>
+                    <p className="font-semibold text-slate-700">{ccaa.ideologia_promedio} / 10</p>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-slate-500 font-medium">Total votos</p>
-                  <p className="font-bold text-slate-900 text-base">{formatNumber(ccaa.total_votos)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 font-medium">Edad Promedio</p>
-                  <p className="font-semibold text-slate-700">{ccaa.edad_promedio} años</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-xs text-slate-500 font-medium">Ideología Promedio</p>
-                  <p className="font-semibold text-slate-700">{ccaa.ideologia_promedio} / 10</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+            <p className="text-slate-500 font-medium">No se encontraron datos registrados para este tipo de elección.</p>
+          </div>
+        )
       ) : (
         /* VISTA DETALLE */
         <div className="space-y-6">
-          {/* Selector desplegable para cambiar de CCAA dentro del detalle */}
           <div className="flex items-center gap-3">
             <label htmlFor="ccaa-select" className="text-sm font-semibold text-slate-700">Comunidad Autónoma:</label>
             <select
@@ -298,7 +313,6 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
 
           {selectedCCAA && (
             <>
-              {/* Gráfico BarChart */}
               <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                 <h3 className="text-xl font-bold text-slate-900 mb-6">{selectedCCAA} - Distribución de Votos</h3>
                 
@@ -341,7 +355,6 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
                 )}
               </div>
 
-              {/* Tabla de detalles con Logos dinámicos */}
               <div className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-slate-50 border-b border-slate-200">
@@ -354,7 +367,7 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {selectedCCAAResults.map((result, idx) => {
-                      const meta = getPartyMeta(result.partido);
+                      const meta = getPartyMeta(result);
                       return (
                         <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                           <td className="px-6 py-4 text-sm font-medium text-slate-900">
