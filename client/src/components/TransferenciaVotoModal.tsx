@@ -98,8 +98,8 @@ export function TransferenciaVotoModal({
         if (!partyErr && partyData) {
           const configMap: Record<string, PartyConfig> = {};
           partyData.forEach((p) => {
-            if (p.party_key) configMap[p.party_key.toUpperCase()] = p;
-            if (p.display_name) configMap[p.display_name.toUpperCase()] = p;
+            if (p.party_key) configMap[p.party_key.trim().toUpperCase()] = p;
+            if (p.display_name) configMap[p.display_name.trim().toUpperCase()] = p;
           });
           setPartyConfigs(configMap);
         }
@@ -110,18 +110,19 @@ export function TransferenciaVotoModal({
 
         if (error) throw error;
 
+        // NORMALIZACIÓN: Forzamos mayúsculas y trim en las claves de partidos
         const formattedData: TransferenciaVotoData[] = (data || []).map(
           (item: TransferenciaVotoDataRaw) => ({
             origen_partido: (
               item.origen_partido ||
               item.partido_anterior ||
-              "Otros"
-            ).trim(),
+              "OTROS"
+            ).trim().toUpperCase(),
             destino_partido: (
               item.destino_partido ||
               item.partido_nuevo ||
-              "Otros"
-            ).trim(),
+              "OTROS"
+            ).trim().toUpperCase(),
             votos_transferidos: Number(
               item.votos_transferidos ?? item.total_transferencias ?? 0
             ),
@@ -147,8 +148,9 @@ export function TransferenciaVotoModal({
   const getPartyColor = useCallback(
     (partyName: string): string => {
       if (!partyName) return "#818cf8";
-      const key = partyName.toUpperCase();
+      const key = partyName.trim().toUpperCase();
       if (partyConfigs[key]?.color) return partyConfigs[key].color;
+      if (partyColors[key]) return partyColors[key];
       if (partyColors[partyName]) return partyColors[partyName];
       return FALLBACK_COLORS[key] || "#818cf8";
     },
@@ -158,7 +160,7 @@ export function TransferenciaVotoModal({
   const getPartyLogo = useCallback(
     (partyName: string): string | null => {
       if (!partyName) return null;
-      const key = partyName.toUpperCase();
+      const key = partyName.trim().toUpperCase();
       return partyConfigs[key]?.logo_url || null;
     },
     [partyConfigs]
@@ -167,8 +169,8 @@ export function TransferenciaVotoModal({
   const getPartyDisplayName = useCallback(
     (partyName: string): string => {
       if (!partyName) return "";
-      const key = partyName.toUpperCase();
-      return partyConfigs[key]?.display_name || partyName;
+      const key = partyName.trim().toUpperCase();
+      return partyConfigs[key]?.display_name || key;
     },
     [partyConfigs]
   );
@@ -280,7 +282,7 @@ export function TransferenciaVotoModal({
     const image = new Image();
     image.onload = () => {
       const canvas = document.createElement("canvas");
-      const scale = 2; // Alta definición para la descarga
+      const scale = 2;
       const viewBox = svgElement.viewBox.baseVal;
       const width = viewBox ? viewBox.width : svgElement.clientWidth || 950;
       const height = viewBox ? viewBox.height : svgElement.clientHeight || 400;
@@ -291,7 +293,6 @@ export function TransferenciaVotoModal({
       const context = canvas.getContext("2d");
       if (context) {
         context.scale(scale, scale);
-        // Fondo oscuro para mantener coherencia visual con el modal
         context.fillStyle = "#111118";
         context.fillRect(0, 0, width, height);
         context.drawImage(image, 0, 0, width, height);
@@ -397,7 +398,7 @@ export function TransferenciaVotoModal({
                 opacity: filteredData.length === 0 ? 0.5 : 1,
               }}
             >
-              <ImageIcon size={16} /> Descargar Gráfica PNG
+              <ImageIcon size={16} /> Descargar PNG
             </button>
 
             <button
@@ -636,7 +637,7 @@ function PartyBadge({ party, getColor, getLogo, getDisplayName }: { party: strin
 }
 
 // ==========================================
-// SANKEY ENGINE (FIDELIDAD DE IZQUIERDA A DERECHA, MISMO TRATAMIENTO)
+// SANKEY ENGINE (FIDELIDAD DE IZQUIERDA A DERECHA)
 // ==========================================
 interface SankeyChartProps {
   data: TransferenciaVotoData[];
@@ -674,8 +675,8 @@ function SankeyChart({
     let totalVotosGlobal = 0;
 
     data.forEach((d) => {
-      const orig = d.origen_partido.trim();
-      const dest = d.destino_partido.trim();
+      const orig = d.origen_partido.trim().toUpperCase();
+      const dest = d.destino_partido.trim().toUpperCase();
 
       origenesSet.add(orig);
       destinosSet.add(dest);
@@ -719,9 +720,10 @@ function SankeyChart({
     listOrigenes.forEach((o) => (curOffsetsOrig[o] = 0));
     listDestinos.forEach((d) => (curOffsetsDest[d] = 0));
 
+    // Construcción de enlaces
     const computedLinks = data.map((d, index) => {
-      const origKey = d.origen_partido.trim();
-      const destKey = d.destino_partido.trim();
+      const origKey = d.origen_partido.trim().toUpperCase();
+      const destKey = d.destino_partido.trim().toUpperCase();
 
       const oNode = origNodes[origKey];
       const dNode = destNodes[destKey];
@@ -747,9 +749,15 @@ function SankeyChart({
       const mx = (x1 + x2) / 2;
 
       const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+      
+      // ID seguro para los gradientes SVG
+      const safeOrig = origKey.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const safeDest = destKey.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const gradientId = `grad-${safeOrig}-${safeDest}-${index}`;
 
       return {
         id: `link-${index}`,
+        gradientId,
         data: d,
         path,
         thickness,
@@ -784,14 +792,14 @@ function SankeyChart({
       >
         <defs>
           {layout.links.map((link) => link && (
-            <linearGradient key={`grad-${link.id}`} id={`grad-${link.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient key={link.gradientId} id={link.gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.75" : "0.45"} />
               <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.75" : "0.45"} />
             </linearGradient>
           ))}
         </defs>
 
-        {/* Flujos (Tanto Fugas como Fidelidad van de Izq a Dcha) */}
+        {/* Flujos */}
         {layout.links.map((link) => {
           if (!link) return null;
           const isHighlighted =
@@ -804,7 +812,7 @@ function SankeyChart({
               key={link.id}
               d={link.path}
               fill="none"
-              stroke={`url(#grad-${link.id})`}
+              stroke={`url(#${link.gradientId})`}
               strokeWidth={link.thickness}
               strokeOpacity={
                 hoveredNode || activeLink
@@ -818,7 +826,7 @@ function SankeyChart({
           );
         })}
 
-        {/* Nodos Origen (Columna Izquierda) */}
+        {/* Nodos Origen (Izquierda) */}
         {Object.entries(layout.origNodes).map(([party, pos]) => (
           <g key={`orig-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
             <rect
@@ -837,7 +845,7 @@ function SankeyChart({
           </g>
         ))}
 
-        {/* Nodos Destino (Columna Derecha) */}
+        {/* Nodos Destino (Derecha) */}
         {Object.entries(layout.destNodes).map(([party, pos]) => (
           <g key={`dest-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
             <rect
