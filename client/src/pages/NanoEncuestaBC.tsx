@@ -97,7 +97,7 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
           </div>
           <span className="nc-timer-sep" style={{ fontSize: "20px", color: "rgba(255,255,255,0.3)", alignSelf: "center" }}>:</span>
           <div className="nc-timer-block" style={{ background: "rgba(196,30,58,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
-            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#C41E3A", display: "block" }}>{pad(mins)}</span>
+            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color="#C41E3A", display: "block" }}>{pad(mins)}</span>
             <span className="nc-timer-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>min</span>
           </div>
           <span className="nc-timer-sep" style={{ fontSize: "20px", color: "rgba(255,255,255,0.3)", alignSelf: "center" }}>:</span>
@@ -169,6 +169,18 @@ export default function NanoEncuestaBC() {
   const [animKey, setAnimKey] = useState(0);
   const [showCooldown, setShowCooldown] = useState(false);
   const [cooldownMinutes, setCooldownMinutes] = useState(0);
+
+  // Mapeo dinámico e hiper-optimizado de imágenes locales para la sección de valoraciones
+  const LEADER_IMAGES: Record<string, string> = {
+    valoracion_feijoo: "/assets/images/feijoo-nuevo.png",
+    valoracion_sanchez: "/assets/images/PedroSanchez.png",
+    valoracion_abascal: "/assets/images/SantiagoAbascal.png",
+    valoracion_alvise: "/assets/images/AlvisePerez.png",
+    valoracion_yolanda: "/assets/images/YolandaDiaz.png",
+    valoracion_irene: "/assets/images/IreneMontero.png",
+    valoracion_ayuso: "/assets/images/IsabelDiazAyuso.png",
+    valoracion_buxade: "/assets/images/JorgeBuxade.png"
+  };
 
   // Party data from Supabase
   const [parties, setParties] = useState<PartyConfig[]>([]);
@@ -652,6 +664,28 @@ export default function NanoEncuestaBC() {
         }
         .nc-party-otro:hover { opacity: 1; }
 
+        /* Leader Avatar Hero Header */
+        .nc-leader-hero {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 16px 20px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 100%);
+          border: 1px solid var(--nc-border2);
+          border-radius: 12px;
+          margin-bottom: 24px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .nc-leader-hero-img {
+          width: 72px;
+          height: 72px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid var(--nc-accent);
+          box-shadow: 0 4px 14px rgba(232,70,90,0.3);
+          flex-shrink: 0;
+        }
+
         /* Slider (valoraciones) */
         .nc-slider-grid {
           display: grid;
@@ -1059,14 +1093,29 @@ export default function NanoEncuestaBC() {
                 </div>
               )}
 
-              {/* SLIDER (valoraciones 0-10) */}
+              {/* SLIDER (valoraciones 0-10 con fotos mejoradas) */}
               {currentStepData.type === "slider" && (
                 <div>
+                  {/* Hero avatar mejorado si la pregunta corresponde a la valoración de un líder */}
+                  {LEADER_IMAGES[currentStepData.key] && (
+                    <div className="nc-leader-hero">
+                      <img 
+                        src={LEADER_IMAGES[currentStepData.key]} 
+                        alt={currentStepData.title} 
+                        className="nc-leader-hero-img"
+                      />
+                      <div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>{currentStepData.title}</div>
+                        <div style={{ fontSize: 13, color: "var(--nc-muted)" }}>Valoración de liderazgo público</div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="nc-slider-grid">
                     {Array.from({ length: 11 }, (_, i) => i).map(num => {
                       const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === num;
                       const pct = num / 10;
-                      // Color from red→yellow→green
+                      // Color de rojo→amarillo→verde
                       const r = Math.round(pct < 0.5 ? 232 : 232 - (pct - 0.5) * 2 * 180);
                       const g = Math.round(pct < 0.5 ? pct * 2 * 190 : 190);
                       const bg = `rgb(${r},${g},50)`;
@@ -1100,7 +1149,7 @@ export default function NanoEncuestaBC() {
                   <div className="nc-ideology-grid">
                     {Array.from({ length: 10 }, (_, i) => i + 1).map(num => {
                       const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === num;
-                      // Left=red, center=purple, right=blue
+                      // Izquierda=rojo, centro=morao/verde, derecha=azul/púrpura
                       const colors = ["#dc2626","#ea580c","#d97706","#84cc16","#22c55e","#14b8a6","#3b82f6","#6366f1","#8b5cf6","#a855f7"];
                       return (
                         <button
