@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Popup } from 'react-leaflet';
+import React, { useState, useEffect, useCallback } from 'react';
+import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { spanishToGeoJson, geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
-import { ProvincePopup } from './ProvincePopup';
+
+import { geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 import { calcularEscanosProvincia, calcularEscanosJuvenilesProvincia } from '@/lib/dhondtByProvince';
 
 interface ProvinceData {
@@ -17,7 +17,7 @@ interface SpainMapRealisticProps {
   votosPorProvincia: Record<string, Record<string, number>>;
   provinciaMetricsMap?: Record<string, { edad_promedio: number; ideologia_promedio: number }>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
-  isYouthAssociations?: boolean;  // true para Asociaciones Juveniles, false para Elecciones Generales
+  isYouthAssociations?: boolean;
   partyMeta?: Record<string, { color?: string }>;
 }
 
@@ -31,25 +31,25 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
-  const [mapRef, setMapRef] = useState<L.Map | null>(null);
-  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || '#9CA3AF';
 
-  // LAZY LOADING: Cargar GeoJSON solo cuando el componente se monta
+  const getColorForParty = useCallback(
+    (partyId: string) => partyMeta[partyId]?.color || '#6B7280',
+    [partyMeta]
+  );
+
+  // Carga diferida del GeoJSON
   useEffect(() => {
     const loadGeoJson = async () => {
       try {
         setLoading(true);
         const response = await fetch('/data/georef-spain-provincia.geojson');
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         setGeoJsonData(data);
         setError(null);
       } catch (err) {
         console.error('Error cargando GeoJSON:', err);
-        setError('Error al cargar el archivo de provincias');
+        setError('Error al cargar la cartografía de las provincias');
       } finally {
         setLoading(false);
       }
@@ -58,58 +58,53 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     loadGeoJson();
   }, []);
 
-  // Calcular el partido ganador por provincia
-  const getProvinceData = (province: string): ProvinceData => {
-    const votos = votosPorProvincia[province] || {};
-    const totalVotos = Object.values(votos).reduce((a, b) => a + b, 0);
-    
-    let ganador = '';
-    let maxVotos = 0;
-    
-    for (const [partido, votoCount] of Object.entries(votos)) {
-      if (votoCount > maxVotos) {
-        maxVotos = votoCount;
-        ganador = partido;
+  const getProvinceData = useCallback(
+    (province: string): ProvinceData => {
+      const votos = votosPorProvincia[province] || {};
+      const totalVotos = Object.values(votos).reduce((a, b) => a + b, 0);
+
+      let ganador = '';
+      let maxVotos = 0;
+
+      for (const [partido, votoCount] of Object.entries(votos)) {
+        if (votoCount > maxVotos) {
+          maxVotos = votoCount;
+          ganador = partido;
+        }
       }
-    }
 
-    return {
-      name: province,
-      votos,
-      ganador,
-      porcentajeGanador: totalVotos > 0 ? (maxVotos / totalVotos) * 100 : 0,
-    };
-  };
-
-
+      return {
+        name: province,
+        votos,
+        ganador,
+        porcentajeGanador: totalVotos > 0 ? (maxVotos / totalVotos) * 100 : 0,
+      };
+    },
+    [votosPorProvincia]
+  );
 
   const handleProvinceClick = (provinceName: string) => {
     const data = getProvinceData(provinceName);
     const votos = votosPorProvincia[provinceName] || {};
-    // Usar la función correcta según el tipo de elección
-    const escanos = isYouthAssociations 
+    const escanos = isYouthAssociations
       ? calcularEscanosJuvenilesProvincia(provinceName, votos)
       : calcularEscanosProvincia(provinceName, votos);
-    setSelectedProvince(provinceName);
+
     onProvinceClick?.(provinceName, data, votos, escanos);
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
-    // Obtener nombre de provincia del GeoJSON (en valenciano/euskera)
     const geoJsonProvinceName = feature.properties?.prov_name;
     if (!geoJsonProvinceName) return;
 
-    // MAPEO BIDIRECCIONAL: Convertir nombre GeoJSON al nombre en español (Supabase)
     const spanishProvinceName = geoJsonToSpanish(geoJsonProvinceName);
-    
     const hasData = spanishProvinceName in votosPorProvincia;
-    
+
     if (!hasData) {
-      // Provincia sin datos
       (layer as L.Path).setStyle({
-        fillColor: '#CCCCCC',
-        fillOpacity: 0.2,
-        color: '#D5D5D7',
+        fillColor: '#1E293B',
+        fillOpacity: 0.4,
+        color: '#334155',
         weight: 1,
       });
       return;
@@ -120,8 +115,8 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
     (layer as L.Path).setStyle({
       fillColor: color,
-      fillOpacity: 0.8,
-      color: '#D5D5D7',
+      fillOpacity: 0.75,
+      color: '#475569',
       weight: 1,
     });
 
@@ -132,16 +127,16 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     layer.on('mouseover', () => {
       (layer as L.Path).setStyle({
         weight: 2,
-        fillOpacity: 1,
-        color: '#C41E3A',
+        fillOpacity: 0.95,
+        color: '#38BDF8', // Highlight Cyan
       });
     });
 
     layer.on('mouseout', () => {
       (layer as L.Path).setStyle({
         weight: 1,
-        fillOpacity: 0.8,
-        color: '#D5D5D7',
+        fillOpacity: 0.75,
+        color: '#475569',
       });
     });
 
@@ -151,66 +146,66 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
       ? calcularEscanosJuvenilesProvincia(spanishProvinceName, data.votos)
       : calcularEscanosProvincia(spanishProvinceName, data.votos);
 
-    // Crear popup con componente mejorado
-    const popupContent = (
-      <ProvincePopup
-        provinceName={spanishProvinceName}
-        votos={data.votos}
-        escanos={escanos}
-        edadPromedio={metrics?.edad_promedio}
-        ideologiaPromedio={metrics?.ideologia_promedio}
-      />
-    );
-
-    // Crear elemento DOM para el popup
-    const popupDiv = document.createElement('div');
-    const root = document.createElement('div');
-    popupDiv.appendChild(root);
-
-    // Renderizar el componente en el DOM
-    const container = document.createElement('div');
-    container.innerHTML = `
-      <div class="w-80 p-4 bg-white rounded-lg shadow-lg">
-        <h3 class="text-lg font-bold text-gray-900 mb-3 pb-2 border-b-2 border-red-500">${spanishProvinceName}</h3>
-        <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
-          <div class="bg-gray-50 p-2 rounded">
-            <p class="text-gray-600 text-xs font-semibold">TOTAL VOTOS</p>
-            <p class="text-lg font-bold text-gray-900">${totalVotos}</p>
-          </div>
-          ${metrics ? `
-            <div class="bg-gray-50 p-2 rounded">
-              <p class="text-gray-600 text-xs font-semibold">EDAD MEDIA</p>
-              <p class="text-lg font-bold text-gray-900">${metrics.edad_promedio.toFixed(1)}</p>
-            </div>
-            <div class="bg-gray-50 p-2 rounded col-span-2">
-              <p class="text-gray-600 text-xs font-semibold">POSICIÓN IDEOLÓGICA</p>
-              <p class="text-lg font-bold text-gray-900">${metrics.ideologia_promedio.toFixed(1)}/10</p>
-            </div>
-          ` : ''}
+    // Contenido Popup HTML estilizado en Modo Noche con efecto Frosted Glass
+    const popupContentHtml = `
+      <div class="w-80 p-4 bg-slate-900/85 backdrop-blur-md text-slate-100 rounded-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] font-sans">
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+          <h3 class="text-base font-bold tracking-wide text-slate-50 uppercase">${spanishProvinceName}</h3>
+          <span class="text-[10px] font-medium tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase">
+            Activo
+          </span>
         </div>
+
+        <div class="grid grid-cols-2 gap-2 mb-4">
+          <div class="bg-white/5 backdrop-blur-sm border border-white/5 p-2 rounded-xl">
+            <p class="text-slate-400 text-[10px] font-semibold tracking-wider uppercase">Total Votos</p>
+            <p class="text-base font-bold text-white mt-0.5">${totalVotos.toLocaleString()}</p>
+          </div>
+          ${
+            metrics
+              ? `
+            <div class="bg-white/5 backdrop-blur-sm border border-white/5 p-2 rounded-xl">
+              <p class="text-slate-400 text-[10px] font-semibold tracking-wider uppercase">Edad Media</p>
+              <p class="text-base font-bold text-white mt-0.5">${metrics.edad_promedio.toFixed(1)} <span class="text-xs font-normal text-slate-400">años</span></p>
+            </div>
+            <div class="bg-white/5 backdrop-blur-sm border border-white/5 p-2 rounded-xl col-span-2 flex justify-between items-center">
+              <p class="text-slate-400 text-[10px] font-semibold tracking-wider uppercase">Posición Ideológica</p>
+              <p class="text-sm font-bold text-sky-400">${metrics.ideologia_promedio.toFixed(1)} <span class="text-slate-500">/ 10</span></p>
+            </div>
+          `
+              : ''
+          }
+        </div>
+
         <div class="space-y-2">
-          <p class="text-xs font-semibold text-gray-600 uppercase">RESULTADOS POR PARTIDO</p>
-          <div class="max-h-64 overflow-y-auto space-y-2">
+          <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Resultados por Partido</p>
+          <div class="max-h-56 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
             ${Object.entries(data.votos)
               .sort(([, a], [, b]) => b - a)
               .slice(0, 10)
               .map(([partido, votos]) => {
                 const porcentaje = totalVotos > 0 ? ((votos / totalVotos) * 100).toFixed(1) : '0.0';
                 const escanosPartido = escanos[partido] || 0;
+                const partyColor = getColorForParty(partido);
+
                 return `
-                  <div class="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <div class="flex items-center gap-2 p-2 bg-white/5 hover:bg-white/10 transition-colors rounded-xl border border-white/5">
                     <div class="flex-1 min-w-0">
-                      <p class="text-xs font-semibold text-gray-900 truncate">${partido}</p>
-                      <div class="flex items-center gap-1">
-                        <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div class="h-full rounded-full" style="width: ${porcentaje}%; background-color: ${getColorForParty(partido)};"></div>
-                        </div>
-                        <span class="text-xs font-bold text-gray-700 w-10 text-right">${porcentaje}%</span>
+                      <div class="flex justify-between items-center mb-1">
+                        <p class="text-xs font-semibold text-slate-200 truncate">${partido}</p>
+                        <span class="text-xs font-bold text-slate-300">${porcentaje}%</span>
+                      </div>
+                      <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-500" style="width: ${porcentaje}%; background-color: ${partyColor}; border-right: 1px solid rgba(255,255,255,0.4);"></div>
                       </div>
                     </div>
-                    <div class="text-right flex-shrink-0 flex flex-col items-end gap-0.5">
-                      <p class="text-xs font-bold text-gray-900">${votos} votos</p>
-                      ${escanosPartido > 0 ? `<p class="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">${escanosPartido} esc.</p>` : ''}
+                    <div class="text-right flex-shrink-0 flex flex-col items-end pl-1">
+                      <p class="text-[11px] font-medium text-slate-400">${votos.toLocaleString()}</p>
+                      ${
+                        escanosPartido > 0
+                          ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.2 rounded-md mt-0.5">${escanosPartido} esc.</span>`
+                          : ''
+                      }
                     </div>
                   </div>
                 `;
@@ -221,56 +216,90 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
       </div>
     `;
 
+    const container = document.createElement('div');
+    container.innerHTML = popupContentHtml;
+
     layer.bindPopup(container, {
-      maxWidth: 400,
-      className: 'province-popup',
+      maxWidth: 340,
+      className: 'custom-dark-popup',
     });
   };
 
   if (loading) {
     return (
-      <div className="w-full flex items-center justify-center p-8">
-        <p className="text-gray-600">Cargando mapa...</p>
+      <div className="w-full h-[600px] flex flex-col items-center justify-center p-8 bg-slate-950 rounded-2xl border border-slate-800 shadow-2xl">
+        <div class="w-8 h-8 border-4 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-slate-400 text-sm font-medium tracking-wide">Cargando cartografía del mapa...</p>
       </div>
     );
   }
 
   if (error || !geoJsonData) {
     return (
-      <div className="w-full flex items-center justify-center p-8">
-        <p className="text-red-600">{error || 'Error al cargar el mapa'}</p>
+      <div className="w-full h-[600px] flex items-center justify-center p-8 bg-slate-950 rounded-2xl border border-red-900/30">
+        <p className="text-red-400 text-sm font-medium">{error || 'Error al cargar el mapa'}</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-2">
-      {/* Cartel de versión funcional */}
-      <div className="w-full p-3 bg-green-50 border-2 border-green-400 rounded-lg">
-        <p className="text-green-800 font-semibold text-center text-sm">
-          ✓ Versión Funcional. El mapa realista muestra los resultados de la encuesta por provincia.
+    <div className="w-full space-y-4 font-sans">
+      {/* Banner de Estado (Frosted Glass Dark Mode) */}
+      <div className="w-full p-4 bg-emerald-950/30 backdrop-blur-md border border-emerald-500/20 rounded-2xl shadow-[0_4px_20px_0_rgba(0,0,0,0.3)] flex items-center gap-3">
+        <span className="flex h-2.5 w-2.5 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <p className="text-emerald-300 font-medium text-xs md:text-sm tracking-wide">
+          <strong className="font-semibold text-emerald-200">Mapa en tiempo real:</strong> Mostrando los datos y proyecciones de escasos por provincia.
         </p>
       </div>
 
-      {/* Mapa con Leaflet - LAZY LOADED */}
-      <div className="w-full h-[600px] bg-gray-900 rounded-lg overflow-hidden">
+      {/* Contenedor del Mapa con diseño Modo Noche / Liquid Edge */}
+      <div className="relative w-full h-[600px] bg-slate-950 rounded-3xl overflow-hidden border border-slate-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
         <MapContainer
           center={[40, -3.5]}
           zoom={6}
-          style={{ height: '100%', width: '100%' }}
-          ref={setMapRef}
+          style={{ height: '100%', width: '100%', background: '#020617' }}
         >
+          {/* CartoDB Dark Matter Tiles para una estética Noche / Dark Mode limpia */}
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-            {...({} as any)}
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
-          <GeoJSON data={geoJsonData} {...({ onEachFeature } as any)} />
+          <GeoJSON data={geoJsonData} onEachFeature={onEachFeature} />
         </MapContainer>
       </div>
 
-
+      {/* Estilos inyectados para Leaflet Popups oscuros */}
+      <style jsx global>{`
+        .leaflet-popup-content-wrapper {
+          background: transparent !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        .leaflet-popup-tip-container {
+          display: none !important;
+        }
+        .leaflet-popup-content {
+          margin: 0 !important;
+        }
+        /* Custom scrollbar para los resultados */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.4);
+        }
+      `}</style>
     </div>
   );
 };
-  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || '#9CA3AF';
