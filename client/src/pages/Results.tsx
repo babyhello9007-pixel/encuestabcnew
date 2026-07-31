@@ -1836,6 +1836,8 @@ export default function Results() {
   const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
   const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
   const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
+  const [barometroBC, setBarometroBC] = useState<Record<string, number>>({});
+  const [mediaEncuestas, setMediaEncuestas] = useState<Record<string, number>>({});
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -1988,6 +1990,30 @@ export default function Results() {
         try { const { data } = await supabase.from("media_nota_ejecutivo").select("nota_media"); if (data?.[0]) setNotaEjecutivo(data[0].nota_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("edad_promedio").select("edad_media"); if (data?.[0]) setEdadPromedio(data[0].edad_media); } catch { /* skip */ }
         try { const { data } = await supabase.from("ideologia_promedio").select("ideologia_media"); if (data?.[0]) setIdeologiaPromedio(data[0].ideologia_media); } catch { /* skip */ }
+
+        try {
+          const { data: bc } = await supabase.from("BarómetroBC").select("partido, escaños");
+          if (bc?.length) {
+            const bcMap: Record<string, number> = {};
+            bc.forEach((r: any) => {
+              const partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
+              bcMap[partyKey] = parseInt(r.escaños || "0", 10) || 0;
+            });
+            setBarometroBC(bcMap);
+          }
+        } catch (e) { console.warn("Error loading BarómetroBC:", e); }
+
+        try {
+          const { data: me } = await supabase.from("MediaEncuestas").select("partido, escaños");
+          if (me?.length) {
+            const meMap: Record<string, number> = {};
+            me.forEach((r: any) => {
+              const partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
+              meMap[partyKey] = parseInt(r.escaños || "0", 10) || 0;
+            });
+            setMediaEncuestas(meMap);
+          }
+        } catch (e) { console.warn("Error loading MediaEncuestas:", e); }
         try { 
           const { data } = await supabase.from("coherencia_voto_lider_view").select("*"); 
           setCoherenciaRows(data || []);
@@ -2313,8 +2339,20 @@ export default function Results() {
                             )}
                           </div>
                           <div className="r-party-seats">
-                            <div className="r-party-seats-num" style={{ color: partyColor }}>{party.escanos}</div>
-                            <div className="r-party-seats-label">escaños</div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                              <div style={{ textAlign: "center" }}>
+                                <div className="r-party-seats-num" style={{ color: partyColor }}>{party.escanos}</div>
+                                <div className="r-party-seats-label">Encuesta</div>
+                              </div>
+                              <div style={{ textAlign: "center", fontSize: 11 }}>
+                                <div style={{ color: "#818cf8", fontWeight: 700 }}>{barometroBC[party.id] ?? 0}</div>
+                                <div style={{ color: "#7a7990", fontSize: 10 }}>BarómetroBC</div>
+                              </div>
+                              <div style={{ textAlign: "center", fontSize: 11 }}>
+                                <div style={{ color: "#f59e0b", fontWeight: 700 }}>{mediaEncuestas[party.id] ?? 0}</div>
+                                <div style={{ color: "#7a7990", fontSize: 10 }}>Media</div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <div className="r-party-bar-wrap">
