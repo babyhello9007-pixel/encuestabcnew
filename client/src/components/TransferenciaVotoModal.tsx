@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -13,6 +13,7 @@ import {
   GitCommit,
   ChevronLeft,
   ChevronRight,
+  Image as ImageIcon,
 } from "lucide-react";
 
 // --- Interfaces ---
@@ -79,6 +80,8 @@ export function TransferenciaVotoModal({
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const sankeyRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -265,6 +268,48 @@ export function TransferenciaVotoModal({
     document.body.removeChild(link);
   };
 
+  const handleExportPNG = () => {
+    if (!sankeyRef.current) return;
+
+    const svgElement = sankeyRef.current;
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const URLObject = window.URL || window.webkitURL || window;
+    const blobURL = URLObject.createObjectURL(svgBlob);
+
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      const scale = 2; // Alta definición para la descarga
+      const viewBox = svgElement.viewBox.baseVal;
+      const width = viewBox ? viewBox.width : svgElement.clientWidth || 950;
+      const height = viewBox ? viewBox.height : svgElement.clientHeight || 400;
+
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+
+      const context = canvas.getContext("2d");
+      if (context) {
+        context.scale(scale, scale);
+        // Fondo oscuro para mantener coherencia visual con el modal
+        context.fillStyle = "#111118";
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+
+        const pngURL = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngURL;
+        downloadLink.download = `grafica_transferencia_${selectedOrigen}_${modeFilter}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      }
+      URLObject.revokeObjectURL(blobURL);
+    };
+
+    image.src = blobURL;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -333,27 +378,49 @@ export function TransferenciaVotoModal({
             </p>
           </div>
 
-          <button
-            onClick={handleExportCSV}
-            disabled={filteredData.length === 0}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 10,
-              padding: "8px 16px",
-              color: "#f8fafc",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
-              opacity: filteredData.length === 0 ? 0.5 : 1,
-              marginRight: 40,
-            }}
-          >
-            <Download size={16} /> Exportar CSV
-          </button>
+          <div style={{ display: "flex", gap: 10, marginRight: 40 }}>
+            <button
+              onClick={handleExportPNG}
+              disabled={filteredData.length === 0}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(129, 140, 248, 0.15)",
+                border: "1px solid rgba(129, 140, 248, 0.3)",
+                borderRadius: 10,
+                padding: "8px 16px",
+                color: "#818cf8",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
+                opacity: filteredData.length === 0 ? 0.5 : 1,
+              }}
+            >
+              <ImageIcon size={16} /> Descargar Gráfica PNG
+            </button>
+
+            <button
+              onClick={handleExportCSV}
+              disabled={filteredData.length === 0}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 10,
+                padding: "8px 16px",
+                color: "#f8fafc",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
+                opacity: filteredData.length === 0 ? 0.5 : 1,
+              }}
+            >
+              <Download size={16} /> Exportar CSV
+            </button>
+          </div>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
@@ -462,6 +529,24 @@ export function TransferenciaVotoModal({
                   <h3 style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
                     <BarChart3 size={16} style={{ color: "#818cf8" }} /> Diagrama Sankey
                   </h3>
+                  <button
+                    onClick={handleExportPNG}
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 6,
+                      padding: "4px 8px",
+                      color: "#94a3b8",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4
+                    }}
+                  >
+                    <ImageIcon size={12} /> Guardar PNG
+                  </button>
                 </div>
 
                 <SankeyChart
@@ -471,6 +556,7 @@ export function TransferenciaVotoModal({
                   getPartyDisplayName={getPartyDisplayName}
                   hoveredNode={hoveredNode}
                   setHoveredNode={setHoveredNode}
+                  svgRef={sankeyRef}
                 />
               </div>
 
@@ -559,6 +645,7 @@ interface SankeyChartProps {
   getPartyDisplayName: (party: string) => string;
   hoveredNode: string | null;
   setHoveredNode: (node: string | null) => void;
+  svgRef?: React.RefObject<SVGSVGElement | null>;
 }
 
 function SankeyChart({
@@ -567,6 +654,7 @@ function SankeyChart({
   getPartyDisplayName,
   hoveredNode,
   setHoveredNode,
+  svgRef,
 }: SankeyChartProps) {
   const [activeLink, setActiveLink] = useState<TransferenciaVotoData | null>(null);
 
@@ -579,7 +667,6 @@ function SankeyChart({
     const leftX = paddingX;
     const rightX = width - paddingX;
 
-    // 1. Asegurar que la lista de partidos en ambos lados mantenga el mismo orden para que las líneas cruzadas y rectos sean limpios
     const origenesSet = new Set<string>();
     const destinosSet = new Set<string>();
     const origenesTotales: Record<string, number> = {};
@@ -589,7 +676,7 @@ function SankeyChart({
     data.forEach((d) => {
       const orig = d.origen_partido.trim();
       const dest = d.destino_partido.trim();
-      
+
       origenesSet.add(orig);
       destinosSet.add(dest);
 
@@ -598,7 +685,6 @@ function SankeyChart({
       totalVotosGlobal += d.votos_transferidos;
     });
 
-    // Unificamos el orden visual de los partidos en ambos lados (Origen a la izq, Destino a la dcha)
     const listOrigenes = Array.from(origenesSet);
     const listDestinos = Array.from(destinosSet);
 
@@ -628,13 +714,11 @@ function SankeyChart({
       curYRight += h + gap;
     });
 
-    // Offsets acumulativos para que los flujos salgan/entren ordenadamente sin solaparse
     const curOffsetsOrig: Record<string, number> = {};
     const curOffsetsDest: Record<string, number> = {};
     listOrigenes.forEach((o) => (curOffsetsOrig[o] = 0));
     listDestinos.forEach((d) => (curOffsetsDest[d] = 0));
 
-    // Construcción de enlaces (TODOS van de Izquierda a Derecha)
     const computedLinks = data.map((d, index) => {
       const origKey = d.origen_partido.trim();
       const destKey = d.destino_partido.trim();
@@ -642,15 +726,13 @@ function SankeyChart({
       const oNode = origNodes[origKey];
       const dNode = destNodes[destKey];
 
-      // Si falta alguno de los dos nodos por desajuste de datos, omitimos
       if (!oNode || !dNode) return null;
 
       const isFidelity = origKey === destKey;
 
-      // Cálculo de grosor en origen y destino
       const origRatio = d.votos_transferidos / (oNode.total || 1);
       const thickness = Math.max(origRatio * oNode.height, 2.5);
-      
+
       const destRatio = d.votos_transferidos / (dNode.total || 1);
       const destThickness = Math.max(destRatio * dNode.height, 2.5);
 
@@ -664,7 +746,6 @@ function SankeyChart({
       const x2 = rightX;
       const mx = (x1 + x2) / 2;
 
-      // Trayectoria de curva Bezier idéntica para fugas y fidelidad
       const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
 
       return {
@@ -696,7 +777,11 @@ function SankeyChart({
 
   return (
     <div style={{ position: "relative", width: "100%", overflowX: "auto" }}>
-      <svg viewBox={`0 0 ${layout.width} ${layout.height}`} style={{ width: "100%", height: "auto", display: "block" }}>
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${layout.width} ${layout.height}`}
+        style={{ width: "100%", height: "auto", display: "block" }}
+      >
         <defs>
           {layout.links.map((link) => link && (
             <linearGradient key={`grad-${link.id}`} id={`grad-${link.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
