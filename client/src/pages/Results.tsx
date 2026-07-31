@@ -323,7 +323,7 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "primarias";
+  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "primarias" | "crisis-ceuta";
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
@@ -353,6 +353,7 @@ const TAB_GROUPS: TabGroup[] = [
     { key: "contexto-historico", label: "Contexto Histórico" },
     { key: "noche-electoral", label: "Modo Directo: Noche Electoral" },
     { key: "preguntas-varias", label: "Preguntas Varias" },
+    { key: "crisis-ceuta", label: "Crisis Ceuta" },
   ]},
   { label: "Primarias", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
     { key: "primarias", label: "Resultados Primarias" },

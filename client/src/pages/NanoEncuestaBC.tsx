@@ -1213,15 +1213,23 @@ export default function NanoEncuestaBC() {
 
               {/* CARDS (monarquia, territorio, pensiones) */}
               {currentStepData.type === "cards" && (
-                <div className="nc-cards-grid">
-                  {(cardOptions[currentStepData.key] || []).map(opt => {
-                    const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        className={`nc-option-card${isSelected ? " selected" : ""}`}
-                        style={isSelected ? { borderColor: "var(--nc-accent)", background: "rgba(232,70,90,0.05)" } : {}}
-                        onClick={() => handleAnswer(opt.value)}
+                <>
+                  <div className="nc-cards-grid">
+                    {(cardOptions[currentStepData.key] || []).map(opt => {
+                      const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          className={`nc-option-card${isSelected ? " selected" : ""}`}
+                          style={isSelected ? { borderColor: "var(--nc-accent)", background: "rgba(232,70,90,0.05)" } : {}}
+                          onClick={() => {
+                            if (opt.value === "Otro") {
+                              setShowOtroInput(!showOtroInput);
+                            } else {
+                              setShowOtroInput(false);
+                              handleAnswer(opt.value);
+                            }
+                          }}
                       >
                         <div className="nc-option-radio">
                           <div className="nc-option-radio-dot" />
@@ -1230,10 +1238,29 @@ export default function NanoEncuestaBC() {
                           <div className="nc-option-label">{opt.label}</div>
                           {opt.desc && <div className="nc-option-desc">{opt.desc}</div>}
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {showOtroInput && currentStepData.type === "cards" && (
+                    <div style={{ marginTop: 14 }}>
+                      <input
+                        className="nc-input"
+                        type="text"
+                        placeholder="Escribe tu opción personalizada..."
+                        value={
+                          (() => {
+                            const val = responses[currentStepData.key as keyof NanoSurveyResponse];
+                            const knownOption = (cardOptions[currentStepData.key] || []).find(o => o.value === val);
+                            return knownOption ? "" : (String(val || ""));
+                          })()
+                        }
+                        onChange={e => handleAnswer(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
             </div>
