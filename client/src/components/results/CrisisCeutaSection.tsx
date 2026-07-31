@@ -116,10 +116,10 @@ export function CrisisCeutaSection({ partyMeta }: CrisisCeutaSectionProps) {
                 {opinionLabels[item.opinion] || item.opinion}
               </div>
               <div style={{ fontSize: 24, fontWeight: 800, color: "#f0eff8", marginBottom: 4 }}>
-                {item.porcentaje.toFixed(1)}%
+                {(item.porcentaje ?? 0).toFixed(1)}%
               </div>
               <div style={{ fontSize: 12, color: "#7a7990" }}>
-                {item.total_votos.toLocaleString()} votos
+                {(item.total_votos ?? 0).toLocaleString()} votos
               </div>
             </div>
           ))}
@@ -173,10 +173,10 @@ export function CrisisCeutaSection({ partyMeta }: CrisisCeutaSectionProps) {
                   <tr key={`${row.partido}-${row.opinion}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <td style={{ padding: "10px 12px", color: "#f0eff8", fontWeight: 500 }}>{row.partido}</td>
                     <td style={{ padding: "10px 12px", textAlign: "right", color: "#f0eff8" }}>
-                      {row.votos.toLocaleString()}
+                      {(row.votos ?? 0).toLocaleString()}
                     </td>
                     <td style={{ padding: "10px 12px", textAlign: "right", color: "#e8465a", fontWeight: 600 }}>
-                      {row.porcentaje.toFixed(2)}%
+                      {(row.porcentaje ?? 0).toFixed(2)}%
                     </td>
                   </tr>
                 ))}
@@ -188,3 +188,4 @@ export function CrisisCeutaSection({ partyMeta }: CrisisCeutaSectionProps) {
     </div>
   );
 }
+  
