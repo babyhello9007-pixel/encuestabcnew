@@ -83,7 +83,7 @@ export function TrendenciesChart({ partyColors = {} }: TrendenciesChartProps) {
         setSelectedParties([]);
       } catch (err) {
         console.error("Error:", err);
-      } fontal {
+      } finally {
         setLoading(false);
       }
     };
