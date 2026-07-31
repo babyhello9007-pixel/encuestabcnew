@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   TrendingUp,
   Shuffle,
-  Filter,
   BarChart3,
   GitCommit,
 } from "lucide-react";
@@ -47,6 +46,21 @@ interface TransferenciaVotoModalProps {
 
 type ModeFilter = "ALL" | "FIDELITY" | "LEAKAGE";
 
+// Fallback de colores estáticos
+const FALLBACK_COLORS: Record<string, string> = {
+  PP: "#1e40af",
+  PSOE: "#ef4444",
+  VOX: "#16a34a",
+  SUMAR: "#ec4899",
+  PODEMOS: "#8b5cf6",
+  ERC: "#f59e0b",
+  JUNTS: "#06b6d4",
+  PNV: "#059669",
+  BILDU: "#10b981",
+  D21: "#f97316", // Color predefinido asignado para D21
+  OTROS: "#6b7280",
+};
+
 export function TransferenciaVotoModal({
   isOpen,
   onClose,
@@ -79,7 +93,9 @@ export function TransferenciaVotoModal({
         if (!partyErr && partyData) {
           const configMap: Record<string, PartyConfig> = {};
           partyData.forEach((p) => {
-            configMap[p.party_name.toUpperCase()] = p;
+            if (p.party_name) {
+              configMap[p.party_name.toUpperCase()] = p;
+            }
           });
           setPartyConfigs(configMap);
         }
@@ -103,9 +119,10 @@ export function TransferenciaVotoModal({
               item.partido_nuevo ||
               "Otros"
             ).trim(),
-            votos_transferidos:
-              item.votos_transferidos ?? item.total_transferencias ?? 0,
-            porcentaje: item.porcentaje ?? 0,
+            votos_transferidos: Number(
+              item.votos_transferidos ?? item.total_transferencias ?? 0
+            ),
+            porcentaje: Number(item.porcentaje ?? 0),
           })
         );
 
@@ -121,32 +138,27 @@ export function TransferenciaVotoModal({
   }, [isOpen]);
 
   // Funciones auxiliares para obtener color y logo de partido
-  const getPartyColor = (partyName: string): string => {
-    const key = partyName.toUpperCase();
-    if (partyConfigs[key]?.color_code) return partyConfigs[key].color_code;
-    if (partyColors[partyName]) return partyColors[partyName];
-    // Colores por defecto para partidos comunes si no están en la BD
-    const fallbackColors: Record<string, string> = {
-      PP: "#1e40af",
-      PSOE: "#ef4444",
-      VOX: "#16a34a",
-      SUMAR: "#ec4899",
-      PODEMOS: "#8b5cf6",
-      ERC: "#f59e0b",
-      JUNTS: "#06b6d4",
-      PNV: "#059669",
-      BILDU: "#10b981",
-      OTROS: "#6b7280",
-    };
-    return fallbackColors[key] || "#818cf8";
-  };
+  const getPartyColor = useCallback(
+    (partyName: string): string => {
+      if (!partyName) return "#818cf8";
+      const key = partyName.toUpperCase();
+      if (partyConfigs[key]?.color_code) return partyConfigs[key].color_code;
+      if (partyColors[partyName]) return partyColors[partyName];
+      return FALLBACK_COLORS[key] || "#818cf8";
+    },
+    [partyConfigs, partyColors]
+  );
 
-  const getPartyLogo = (partyName: string): string | null => {
-    const key = partyName.toUpperCase();
-    return partyConfigs[key]?.logo_url || null;
-  };
+  const getPartyLogo = useCallback(
+    (partyName: string): string | null => {
+      if (!partyName) return null;
+      const key = partyName.toUpperCase();
+      return partyConfigs[key]?.logo_url || null;
+    },
+    [partyConfigs]
+  );
 
-  // --- CÁLCULOS METRICOS Y KPIS ---
+  // --- CÁLCULOS MÉTRICOS Y KPIS ---
   const metrics = useMemo(() => {
     if (transferData.length === 0)
       return { totalVotos: 0, movilidadPct: 0, topFidelidad: null, topFuga: null };
@@ -160,7 +172,6 @@ export function TransferenciaVotoModal({
       { origen: string; destino: string; pct: number; votos: number }
     > = {};
 
-    // Agrupar totales por origen
     const totalPorOrigen: Record<string, number> = {};
     transferData.forEach((d) => {
       totalPorOrigen[d.origen_partido] =
@@ -182,8 +193,10 @@ export function TransferenciaVotoModal({
           votos: d.votos_transferidos,
         };
       } else {
-        const key = `${d.origen_partido}->${d.destino_partido}`;
-        if (!fugaByParty[d.origen_partido] || fugaByParty[d.origen_partido].votos < d.votos_transferidos) {
+        if (
+          !fugaByParty[d.origen_partido] ||
+          fugaByParty[d.origen_partido].votos < d.votos_transferidos
+        ) {
           fugaByParty[d.origen_partido] = {
             origen: d.origen_partido,
             destino: d.destino_partido,
@@ -194,12 +207,8 @@ export function TransferenciaVotoModal({
       }
     });
 
-    // Encontrar mayor fidelidad
     const topFidelidad = Object.values(fidelidadByParty).sort((a, b) => b.pct - a.pct)[0] || null;
-
-    // Encontrar mayor fuga
     const topFuga = Object.values(fugaByParty).sort((a, b) => b.votos - a.votos)[0] || null;
-
     const movilidadPct = totalVotosGlobal > 0 ? (totalMovilizados / totalVotosGlobal) * 100 : 0;
 
     return { totalVotos: totalVotosGlobal, movilidadPct, topFidelidad, topFuga };
@@ -208,17 +217,14 @@ export function TransferenciaVotoModal({
   // --- FILTRADO DE DATOS ---
   const filteredData = useMemo(() => {
     return transferData.filter((item) => {
-      // 1. Selector de partido origen
       if (selectedOrigen !== "GLOBAL" && item.origen_partido !== selectedOrigen) {
         return false;
       }
 
-      // 2. Conmutador Fidelidad vs Fuga
       const isFidelidad = item.origen_partido === item.destino_partido;
       if (modeFilter === "FIDELITY" && !isFidelidad) return false;
       if (modeFilter === "LEAKAGE" && isFidelidad) return false;
 
-      // 3. Búsqueda por texto
       if (searchTerm.trim() !== "") {
         const term = searchTerm.toLowerCase();
         const matchOrigen = item.origen_partido.toLowerCase().includes(term);
@@ -230,18 +236,17 @@ export function TransferenciaVotoModal({
     });
   }, [transferData, selectedOrigen, modeFilter, searchTerm]);
 
-  // Lista única de partidos de origen para pestañas
   const partidosOrigen = useMemo(() => {
     const set = new Set(transferData.map((d) => d.origen_partido));
     return Array.from(set);
   }, [transferData]);
 
-  // Porcentaje máximo de las transferencias para normalizar las mini-barras
   const maxPorcentaje = useMemo(() => {
-    return Math.max(...transferData.map((d) => d.porcentaje), 100);
+    if (transferData.length === 0) return 100;
+    const max = Math.max(...transferData.map((d) => d.porcentaje));
+    return max > 0 ? max : 100;
   }, [transferData]);
 
-  // Exportar a CSV
   const handleExportCSV = () => {
     if (filteredData.length === 0) return;
     const headers = ["Origen Partido", "Destino Partido", "Votos Transferidos", "Porcentaje (%)"];
@@ -302,6 +307,7 @@ export function TransferenciaVotoModal({
         {/* BOTÓN DE CIERRE */}
         <button
           onClick={onClose}
+          aria-label="Cerrar modal"
           style={{
             position: "absolute",
             top: 20,
@@ -359,10 +365,13 @@ export function TransferenciaVotoModal({
               color: "#f8fafc",
               fontSize: 13,
               fontWeight: 600,
-              cursor: "pointer",
+              cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
+              opacity: filteredData.length === 0 ? 0.5 : 1,
               transition: "all 0.2s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
+            onMouseEnter={(e) => {
+              if (filteredData.length > 0) e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+            }}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
           >
             <Download size={16} />
@@ -377,7 +386,7 @@ export function TransferenciaVotoModal({
           </div>
         ) : transferData.length > 0 ? (
           <>
-            {/* 1. TARJETAS KPIS Y METRICAS DESTACADAS */}
+            {/* 1. TARJETAS KPIS */}
             <div
               style={{
                 display: "grid",
@@ -386,7 +395,6 @@ export function TransferenciaVotoModal({
                 marginBottom: 24,
               }}
             >
-              {/* KP1: Mayor Fidelidad */}
               <div
                 style={{
                   background: "rgba(255, 255, 255, 0.03)",
@@ -398,15 +406,7 @@ export function TransferenciaVotoModal({
                   gap: 14,
                 }}
               >
-                <div
-                  style={{
-                    background: "rgba(34, 197, 94, 0.15)",
-                    color: "#4ade80",
-                    padding: 10,
-                    borderRadius: 12,
-                    display: "flex",
-                  }}
-                >
+                <div style={{ background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", padding: 10, borderRadius: 12, display: "flex" }}>
                   <ShieldCheck size={24} />
                 </div>
                 <div>
@@ -426,7 +426,6 @@ export function TransferenciaVotoModal({
                 </div>
               </div>
 
-              {/* KP2: Mayor Transvase / Fuga */}
               <div
                 style={{
                   background: "rgba(255, 255, 255, 0.03)",
@@ -438,15 +437,7 @@ export function TransferenciaVotoModal({
                   gap: 14,
                 }}
               >
-                <div
-                  style={{
-                    background: "rgba(239, 68, 68, 0.15)",
-                    color: "#f87171",
-                    padding: 10,
-                    borderRadius: 12,
-                    display: "flex",
-                  }}
-                >
+                <div style={{ background: "rgba(239, 68, 68, 0.15)", color: "#f87171", padding: 10, borderRadius: 12, display: "flex" }}>
                   <TrendingUp size={24} />
                 </div>
                 <div>
@@ -468,7 +459,6 @@ export function TransferenciaVotoModal({
                 </div>
               </div>
 
-              {/* KP3: Movilidad Global */}
               <div
                 style={{
                   background: "rgba(255, 255, 255, 0.03)",
@@ -480,15 +470,7 @@ export function TransferenciaVotoModal({
                   gap: 14,
                 }}
               >
-                <div
-                  style={{
-                    background: "rgba(168, 85, 247, 0.15)",
-                    color: "#c084fc",
-                    padding: 10,
-                    borderRadius: 12,
-                    display: "flex",
-                  }}
-                >
+                <div style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", padding: 10, borderRadius: 12, display: "flex" }}>
                   <Shuffle size={24} />
                 </div>
                 <div>
@@ -503,9 +485,8 @@ export function TransferenciaVotoModal({
               </div>
             </div>
 
-            {/* 2. SELECTOR DE PESTAÑAS POR PARTIDO Y CONMUTADOR FIDELIDAD/FUGA */}
+            {/* 2. CONTROLES Y FILTROS */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
-              {/* Pestañas por Partido */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", paddingBottom: 6 }}>
                 <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginRight: 4 }}>Origen:</span>
                 <button
@@ -564,9 +545,7 @@ export function TransferenciaVotoModal({
                 })}
               </div>
 
-              {/* Barra de Herramientas: Filtro Fidelidad/Fuga + Buscador */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                {/* Conmutador Filtro */}
                 <div style={{ display: "flex", background: "rgba(255,255,255,0.04)", padding: 3, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
                   <button
                     onClick={() => setModeFilter("ALL")}
@@ -615,7 +594,6 @@ export function TransferenciaVotoModal({
                   </button>
                 </div>
 
-                {/* Buscador de Tabla */}
                 <div style={{ position: "relative", minWidth: 220 }}>
                   <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
                   <input
@@ -638,7 +616,7 @@ export function TransferenciaVotoModal({
               </div>
             </div>
 
-            {/* 3. VISUALIZACIÓN SANKEY / DIAGRAMA DE FLUJO */}
+            {/* 3. VISUALIZACIÓN SANKEY */}
             <div
               style={{
                 background: "rgba(0,0,0,0.25)",
@@ -658,7 +636,6 @@ export function TransferenciaVotoModal({
                 </span>
               </div>
 
-              {/* Render del Diagrama Sankey */}
               <SankeyChart
                 data={filteredData}
                 getPartyColor={getPartyColor}
@@ -668,7 +645,7 @@ export function TransferenciaVotoModal({
               />
             </div>
 
-            {/* 4. TABLA DETALLADA CON BARRAS PROPORCIONALES */}
+            {/* 4. TABLA DETALLADA */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: "#f8fafc", margin: 0 }}>
@@ -698,7 +675,7 @@ export function TransferenciaVotoModal({
 
                         return (
                           <tr
-                            key={idx}
+                            key={`${row.origen_partido}-${row.destino_partido}-${idx}`}
                             style={{
                               borderBottom: "1px solid rgba(255,255,255,0.04)",
                               background: isFidelidad ? "rgba(34, 197, 94, 0.02)" : "transparent",
@@ -850,31 +827,31 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
   const origenes = Object.keys(origenesMap);
   const destinos = Object.keys(destinosMap);
 
-  const svgHeight = Math.max(Math.max(origenes.length, destinos.length) * 45 + 40, 300);
+  const svgHeight = Math.max(Math.max(origenes.length, destinos.length) * 45 + 40, 320);
   const width = 800;
   const nodeWidth = 24;
   const leftX = 140;
   const rightX = width - 140;
 
-  // Calcular posiciones Y para los nodos de Origen
+  // CÁLCULO DE ALTURAS Y POSICIONES - Se asegura un tamaño mínimo visible para nodos pequeños como D21
   let currentYLeft = 20;
   const origenesPos: Record<string, { y: number; height: number }> = {};
   origenes.forEach((orig) => {
-    const h = Math.max((origenesMap[orig] / (totalVotos || 1)) * (svgHeight - 60), 18);
+    const rawHeight = (origenesMap[orig] / (totalVotos || 1)) * (svgHeight - 100);
+    const h = Math.max(rawHeight, 14); // Garantiza altura visible
     origenesPos[orig] = { y: currentYLeft, height: h };
     currentYLeft += h + 16;
   });
 
-  // Calcular posiciones Y para los nodos de Destino
   let currentYRight = 20;
   const destinosPos: Record<string, { y: number; height: number }> = {};
   destinos.forEach((dest) => {
-    const h = Math.max((destinosMap[dest] / (totalVotos || 1)) * (svgHeight - 60), 18);
+    const rawHeight = (destinosMap[dest] / (totalVotos || 1)) * (svgHeight - 100);
+    const h = Math.max(rawHeight, 14); // Garantiza altura visible
     destinosPos[dest] = { y: currentYRight, height: h };
     currentYRight += h + 16;
   });
 
-  // Acumuladores de offset para conectar cintas
   const origOffset: Record<string, number> = {};
   const destOffset: Record<string, number> = {};
   origenes.forEach((o) => (origOffset[o] = 0));
@@ -888,21 +865,23 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
             const c1 = getPartyColor(d.origen_partido);
             const c2 = getPartyColor(d.destino_partido);
             return (
-              <linearGradient key={i} id={`sankey-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={c1} stopOpacity="0.55" />
-                <stop offset="100%" stopColor={c2} stopOpacity="0.55" />
+              <linearGradient key={`sankey-grad-${i}`} id={`sankey-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor={c1} stopOpacity="0.65" />
+                <stop offset="100%" stopColor={c2} stopOpacity="0.65" />
               </linearGradient>
             );
           })}
         </defs>
 
-        {/* CINTAS DE FLUJO (LINKS SANKEY) */}
+        {/* CINTAS DE FLUJO */}
         {data.map((d, i) => {
           const origP = origenesPos[d.origen_partido];
           const destP = destinosPos[d.destino_partido];
           if (!origP || !destP) return null;
 
-          const linkThickness = Math.max((d.votos_transferidos / (totalVotos || 1)) * (svgHeight - 60), 2);
+          // Corrección clave: Cálculo proporcional relativo a los nodos con grosor mínimo garantizado
+          const calculatedThickness = (d.votos_transferidos / (totalVotos || 1)) * (svgHeight - 100);
+          const linkThickness = Math.max(calculatedThickness, 3); // Mínimo de 3px para garantizar visibilidad de D21
 
           const y1 = origP.y + origOffset[d.origen_partido] + linkThickness / 2;
           const y2 = destP.y + destOffset[d.destino_partido] + linkThickness / 2;
@@ -910,7 +889,6 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
           origOffset[d.origen_partido] += linkThickness;
           destOffset[d.destino_partido] += linkThickness;
 
-          const curvature = 0.5;
           const xi = leftX + nodeWidth;
           const xf = rightX;
           const interpolate = (xi + xf) / 2;
@@ -923,20 +901,20 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
 
           return (
             <path
-              key={i}
+              key={`link-${d.origen_partido}-${d.destino_partido}-${i}`}
               d={pathD}
               fill="none"
               stroke={`url(#sankey-grad-${i})`}
-              strokeWidth={Math.max(linkThickness, 3)}
-              strokeOpacity={hoveredNode ? (isHighlighted ? 0.9 : 0.1) : 0.6}
-              style={{ transition: "all 0.3s cursor: pointer" }}
+              strokeWidth={linkThickness}
+              strokeOpacity={hoveredNode ? (isHighlighted ? 0.95 : 0.08) : 0.65}
+              style={{ transition: "stroke-opacity 0.2s ease, stroke-width 0.2s ease", cursor: "pointer" }}
               onMouseEnter={() => setActiveLink(d)}
               onMouseLeave={() => setActiveLink(null)}
             />
           );
         })}
 
-        {/* NODOS DE ORIGEN (IZQUIERDA) */}
+        {/* NODOS ORIGEN */}
         {origenes.map((orig) => {
           const pos = origenesPos[orig];
           const color = getPartyColor(orig);
@@ -954,7 +932,7 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
                 height={pos.height}
                 rx={4}
                 fill={color}
-                stroke="rgba(255,255,255,0.3)"
+                stroke="rgba(255,255,255,0.4)"
                 strokeWidth={1}
               />
               <text x={leftX - 10} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={12} fontWeight={700}>
@@ -964,7 +942,7 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
           );
         })}
 
-        {/* NODOS DE DESTINO (DERECHA) */}
+        {/* NODOS DESTINO */}
         {destinos.map((dest) => {
           const pos = destinosPos[dest];
           const color = getPartyColor(dest);
@@ -982,7 +960,7 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
                 height={pos.height}
                 rx={4}
                 fill={color}
-                stroke="rgba(255,255,255,0.3)"
+                stroke="rgba(255,255,255,0.4)"
                 strokeWidth={1}
               />
               <text x={rightX + nodeWidth + 10} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={12} fontWeight={700}>
@@ -993,7 +971,7 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
         })}
       </svg>
 
-      {/* TOOLTIP FLOTANTE ENRIQUECIDO */}
+      {/* TOOLTIP FLOTANTE */}
       {activeLink && (
         <div
           style={{
