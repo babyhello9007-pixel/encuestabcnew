@@ -11,6 +11,9 @@ import {
   Shuffle,
   BarChart3,
   GitCommit,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 
 // --- Interfaces de Datos ---
@@ -31,11 +34,15 @@ interface TransferenciaVotoData {
   porcentaje: number;
 }
 
+// Interfaz corregida para coincidir con la DDL real de party_configuration
 interface PartyConfig {
-  id?: string;
-  party_name: string;
-  color_code: string;
-  logo_url?: string;
+  id?: number;
+  party_key: string;
+  display_name: string;
+  color: string;
+  logo_url: string;
+  is_active?: boolean;
+  party_type?: string;
 }
 
 interface TransferenciaVotoModalProps {
@@ -46,7 +53,7 @@ interface TransferenciaVotoModalProps {
 
 type ModeFilter = "ALL" | "FIDELITY" | "LEAKAGE";
 
-// Fallback de colores estáticos
+// Fallback de colores
 const FALLBACK_COLORS: Record<string, string> = {
   PP: "#1e40af",
   PSOE: "#ef4444",
@@ -57,7 +64,7 @@ const FALLBACK_COLORS: Record<string, string> = {
   JUNTS: "#06b6d4",
   PNV: "#059669",
   BILDU: "#10b981",
-  D21: "#f97316", // Color predefinido asignado para D21
+  D21: "#f97316",
   OTROS: "#6b7280",
 };
 
@@ -71,13 +78,17 @@ export function TransferenciaVotoModal({
   const [partyConfigs, setPartyConfigs] = useState<Record<string, PartyConfig>>({});
   const [loading, setLoading] = useState(true);
 
-  // Estados de UI y Filtros
+  // Estados de UI, Filtros y Paginación
   const [selectedOrigen, setSelectedOrigen] = useState<string>("GLOBAL");
   const [modeFilter, setModeFilter] = useState<ModeFilter>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  
+  // Paginación para manejar alto volumen de datos en la tabla
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Carga de datos de Supabase
+  // Carga de datos de Supabase corregida
   useEffect(() => {
     if (!isOpen) return;
 
@@ -85,22 +96,28 @@ export function TransferenciaVotoModal({
       try {
         setLoading(true);
 
-        // 1. Obtener configuraciones de partidos (Colores y Logos)
+        // 1. Consulta CORREGIDA a party_configuration según DDL
         const { data: partyData, error: partyErr } = await supabase
           .from("party_configuration")
-          .select("party_name, color_code, logo_url");
+          .select("party_key, display_name, color, logo_url, is_active")
+          .eq("is_active", true);
 
         if (!partyErr && partyData) {
           const configMap: Record<string, PartyConfig> = {};
           partyData.forEach((p) => {
-            if (p.party_name) {
-              configMap[p.party_name.toUpperCase()] = p;
+            if (p.party_key) {
+              configMap[p.party_key.toUpperCase()] = p;
+            }
+            if (p.display_name) {
+              configMap[p.display_name.toUpperCase()] = p;
             }
           });
           setPartyConfigs(configMap);
+        } else if (partyErr) {
+          console.warn("Advertencia al cargar party_configuration:", partyErr.message);
         }
 
-        // 2. Obtener datos de transferencia de votos
+        // 2. Obtener datos de transferencia
         const { data, error } = await supabase
           .from("transferencia_votos_view")
           .select("*");
@@ -137,12 +154,17 @@ export function TransferenciaVotoModal({
     fetchData();
   }, [isOpen]);
 
-  // Funciones auxiliares para obtener color y logo de partido
+  // Reset de página al cambiar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedOrigen, modeFilter, searchTerm]);
+
+  // Auxiliares para obtener color y logo de partidos
   const getPartyColor = useCallback(
     (partyName: string): string => {
       if (!partyName) return "#818cf8";
       const key = partyName.toUpperCase();
-      if (partyConfigs[key]?.color_code) return partyConfigs[key].color_code;
+      if (partyConfigs[key]?.color) return partyConfigs[key].color;
       if (partyColors[partyName]) return partyColors[partyName];
       return FALLBACK_COLORS[key] || "#818cf8";
     },
@@ -154,6 +176,15 @@ export function TransferenciaVotoModal({
       if (!partyName) return null;
       const key = partyName.toUpperCase();
       return partyConfigs[key]?.logo_url || null;
+    },
+    [partyConfigs]
+  );
+
+  const getPartyDisplayName = useCallback(
+    (partyName: string): string => {
+      if (!partyName) return "";
+      const key = partyName.toUpperCase();
+      return partyConfigs[key]?.display_name || partyName;
     },
     [partyConfigs]
   );
@@ -227,14 +258,23 @@ export function TransferenciaVotoModal({
 
       if (searchTerm.trim() !== "") {
         const term = searchTerm.toLowerCase();
-        const matchOrigen = item.origen_partido.toLowerCase().includes(term);
-        const matchDestino = item.destino_partido.toLowerCase().includes(term);
+        const matchOrigen = item.origen_partido.toLowerCase().includes(term) || 
+                            getPartyDisplayName(item.origen_partido).toLowerCase().includes(term);
+        const matchDestino = item.destino_partido.toLowerCase().includes(term) ||
+                            getPartyDisplayName(item.destino_partido).toLowerCase().includes(term);
         if (!matchOrigen && !matchDestino) return false;
       }
 
       return true;
     });
-  }, [transferData, selectedOrigen, modeFilter, searchTerm]);
+  }, [transferData, selectedOrigen, modeFilter, searchTerm, getPartyDisplayName]);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(start, start + itemsPerPage);
+  }, [filteredData, currentPage]);
 
   const partidosOrigen = useMemo(() => {
     const set = new Set(transferData.map((d) => d.origen_partido));
@@ -251,8 +291,8 @@ export function TransferenciaVotoModal({
     if (filteredData.length === 0) return;
     const headers = ["Origen Partido", "Destino Partido", "Votos Transferidos", "Porcentaje (%)"];
     const rows = filteredData.map((d) => [
-      `"${d.origen_partido}"`,
-      `"${d.destino_partido}"`,
+      `"${getPartyDisplayName(d.origen_partido)}"`,
+      `"${getPartyDisplayName(d.destino_partido)}"`,
       d.votos_transferidos,
       d.porcentaje.toFixed(2),
     ]);
@@ -294,11 +334,12 @@ export function TransferenciaVotoModal({
           backdropFilter: "blur(24px)",
           border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: 20,
-          padding: 28,
-          maxWidth: 1100,
+          padding: 24,
+          maxWidth: 1150,
           width: "100%",
-          maxHeight: "92vh",
-          overflowY: "auto",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
           position: "relative",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)",
         }}
@@ -321,6 +362,7 @@ export function TransferenciaVotoModal({
             alignItems: "center",
             justifyContent: "center",
             color: "#94a3b8",
+            zIndex: 10,
             transition: "all 0.2s",
           }}
           onMouseEnter={(e) => {
@@ -335,14 +377,14 @@ export function TransferenciaVotoModal({
           <X size={20} />
         </button>
 
-        {/* CABECERA & ACCIONES */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
+        {/* CABECERA */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 16 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
               <div style={{ background: "rgba(129, 140, 248, 0.15)", padding: 8, borderRadius: 10, color: "#818cf8" }}>
                 <GitCommit size={22} />
               </div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: "#f8fafc", margin: 0 }}>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: "#f8fafc", margin: 0 }}>
                 Transferencia y Matriz de Voto
               </h2>
             </div>
@@ -368,386 +410,443 @@ export function TransferenciaVotoModal({
               cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
               opacity: filteredData.length === 0 ? 0.5 : 1,
               transition: "all 0.2s",
+              marginRight: 40
             }}
-            onMouseEnter={(e) => {
-              if (filteredData.length > 0) e.currentTarget.style.background = "rgba(255,255,255,0.12)";
-            }}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
           >
             <Download size={16} />
             Exportar CSV
           </button>
         </div>
 
-        {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 12 }}>
-            <Loader2 className="animate-spin" size={36} style={{ color: "#818cf8" }} />
-            <span style={{ fontSize: 13, color: "#94a3b8" }}>Procesando matriz de transferencias...</span>
-          </div>
-        ) : transferData.length > 0 ? (
-          <>
-            {/* 1. TARJETAS KPIS */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: 14,
-                marginBottom: 24,
-              }}
-            >
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: 14,
-                  padding: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <div style={{ background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", padding: 10, borderRadius: 12, display: "flex" }}>
-                  <ShieldCheck size={24} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Mayor Fidelidad
-                  </div>
-                  {metrics.topFidelidad ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                      <PartyBadge party={metrics.topFidelidad.party} getColor={getPartyColor} getLogo={getPartyLogo} />
-                      <span style={{ fontSize: 16, fontWeight: 800, color: "#4ade80" }}>
-                        {metrics.topFidelidad.pct.toFixed(1)}%
-                      </span>
-                    </div>
-                  ) : (
-                    <span style={{ fontSize: 13, color: "#64748b" }}>N/D</span>
-                  )}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: 14,
-                  padding: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <div style={{ background: "rgba(239, 68, 68, 0.15)", color: "#f87171", padding: 10, borderRadius: 12, display: "flex" }}>
-                  <TrendingUp size={24} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Mayor Transvase de Voto
-                  </div>
-                  {metrics.topFuga ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                      <PartyBadge party={metrics.topFuga.origen} getColor={getPartyColor} getLogo={getPartyLogo} />
-                      <ArrowRight size={12} style={{ color: "#94a3b8" }} />
-                      <PartyBadge party={metrics.topFuga.destino} getColor={getPartyColor} getLogo={getPartyLogo} />
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "#f87171", marginLeft: 4 }}>
-                        ({metrics.topFuga.votos.toLocaleString()})
-                      </span>
-                    </div>
-                  ) : (
-                    <span style={{ fontSize: 13, color: "#64748b" }}>N/D</span>
-                  )}
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: 14,
-                  padding: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <div style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", padding: 10, borderRadius: 12, display: "flex" }}>
-                  <Shuffle size={24} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Movilidad Electorado
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "#c084fc", marginTop: 2 }}>
-                    {metrics.movilidadPct.toFixed(1)}%{" "}
-                    <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>cambió de voto</span>
-                  </div>
-                </div>
-              </div>
+        {/* CONTENEDOR CON SCROLL INTERNO PARA EVITAR DESBORDAMIENTO EN PANTALLAS PEQUEÑAS */}
+        <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
+          {loading ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 12 }}>
+              <Loader2 className="animate-spin" size={36} style={{ color: "#818cf8" }} />
+              <span style={{ fontSize: 13, color: "#94a3b8" }}>Procesando matriz de transferencias...</span>
             </div>
-
-            {/* 2. CONTROLES Y FILTROS */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", paddingBottom: 6 }}>
-                <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginRight: 4 }}>Origen:</span>
-                <button
-                  onClick={() => setSelectedOrigen("GLOBAL")}
+          ) : transferData.length > 0 ? (
+            <>
+              {/* 1. TARJETAS KPIS */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                  gap: 14,
+                  marginBottom: 20,
+                }}
+              >
+                <div
                   style={{
-                    background: selectedOrigen === "GLOBAL" ? "#818cf8" : "rgba(255,255,255,0.05)",
-                    color: selectedOrigen === "GLOBAL" ? "#ffffff" : "#94a3b8",
-                    border: "none",
-                    borderRadius: 8,
-                    padding: "6px 14px",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.2s",
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: 14,
+                    padding: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
                   }}
                 >
-                  🌐 Matriz Global (Sankey)
-                </button>
+                  <div style={{ background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", padding: 10, borderRadius: 12, display: "flex" }}>
+                    <ShieldCheck size={22} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Mayor Fidelidad
+                    </div>
+                    {metrics.topFidelidad ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                        <PartyBadge party={metrics.topFidelidad.party} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} />
+                        <span style={{ fontSize: 15, fontWeight: 800, color: "#4ade80" }}>
+                          {metrics.topFidelidad.pct.toFixed(1)}%
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: 13, color: "#64748b" }}>N/D</span>
+                    )}
+                  </div>
+                </div>
 
-                {partidosOrigen.map((partido) => {
-                  const isSelected = selectedOrigen === partido;
-                  const pColor = getPartyColor(partido);
-                  return (
+                <div
+                  style={{
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: 14,
+                    padding: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ background: "rgba(239, 68, 68, 0.15)", color: "#f87171", padding: 10, borderRadius: 12, display: "flex" }}>
+                    <TrendingUp size={22} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Mayor Transvase de Voto
+                    </div>
+                    {metrics.topFuga ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
+                        <PartyBadge party={metrics.topFuga.origen} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} />
+                        <ArrowRight size={12} style={{ color: "#94a3b8" }} />
+                        <PartyBadge party={metrics.topFuga.destino} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} />
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#f87171", marginLeft: 2 }}>
+                          ({metrics.topFuga.votos.toLocaleString()})
+                        </span>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: 13, color: "#64748b" }}>N/D</span>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: 14,
+                    padding: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", padding: 10, borderRadius: 12, display: "flex" }}>
+                    <Shuffle size={22} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      Movilidad Electorado
+                    </div>
+                    <div style={{ fontSize: 17, fontWeight: 800, color: "#c084fc", marginTop: 2 }}>
+                      {metrics.movilidadPct.toFixed(1)}%{" "}
+                      <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>cambió de voto</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. CONTROLES Y FILTROS */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+                {/* Selector de partidos de origen */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", paddingBottom: 6 }}>
+                  <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginRight: 4 }}>Origen:</span>
+                  <button
+                    onClick={() => setSelectedOrigen("GLOBAL")}
+                    style={{
+                      background: selectedOrigen === "GLOBAL" ? "#818cf8" : "rgba(255,255,255,0.05)",
+                      color: selectedOrigen === "GLOBAL" ? "#ffffff" : "#94a3b8",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    🌐 Matriz Global
+                  </button>
+
+                  {partidosOrigen.map((partido) => {
+                    const isSelected = selectedOrigen === partido;
+                    const pColor = getPartyColor(partido);
+                    const logo = getPartyLogo(partido);
+                    const name = getPartyDisplayName(partido);
+
+                    return (
+                      <button
+                        key={partido}
+                        onClick={() => setSelectedOrigen(partido)}
+                        style={{
+                          background: isSelected ? pColor : "rgba(255,255,255,0.05)",
+                          color: isSelected ? "#ffffff" : "#cbd5e1",
+                          border: isSelected ? `1px solid ${pColor}` : "1px solid rgba(255,255,255,0.08)",
+                          borderRadius: 8,
+                          padding: "5px 12px",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {logo ? (
+                          <img src={logo} alt={name} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />
+                        ) : (
+                          <span
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              background: pColor,
+                              boxShadow: isSelected ? "0 0 8px currentColor" : "none",
+                            }}
+                          />
+                        )}
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                  <div style={{ display: "flex", background: "rgba(255,255,255,0.04)", padding: 3, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
                     <button
-                      key={partido}
-                      onClick={() => setSelectedOrigen(partido)}
+                      onClick={() => setModeFilter("ALL")}
                       style={{
-                        background: isSelected ? pColor : "rgba(255,255,255,0.05)",
-                        color: isSelected ? "#ffffff" : "#cbd5e1",
-                        border: isSelected ? `1px solid ${pColor}` : "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: 8,
-                        padding: "6px 14px",
+                        background: modeFilter === "ALL" ? "rgba(255,255,255,0.12)" : "transparent",
+                        color: modeFilter === "ALL" ? "#f8fafc" : "#94a3b8",
+                        border: "none",
+                        borderRadius: 7,
+                        padding: "5px 12px",
                         fontSize: 12,
                         fontWeight: 600,
                         cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        transition: "all 0.2s",
                       }}
                     >
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          background: pColor,
-                          boxShadow: isSelected ? "0 0 8px currentColor" : "none",
-                        }}
-                      />
-                      {partido}
+                      Todos
                     </button>
-                  );
-                })}
-              </div>
+                    <button
+                      onClick={() => setModeFilter("FIDELITY")}
+                      style={{
+                        background: modeFilter === "FIDELITY" ? "rgba(34, 197, 94, 0.2)" : "transparent",
+                        color: modeFilter === "FIDELITY" ? "#4ade80" : "#94a3b8",
+                        border: "none",
+                        borderRadius: 7,
+                        padding: "5px 12px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      🛡️ Fidelidad
+                    </button>
+                    <button
+                      onClick={() => setModeFilter("LEAKAGE")}
+                      style={{
+                        background: modeFilter === "LEAKAGE" ? "rgba(239, 68, 68, 0.2)" : "transparent",
+                        color: modeFilter === "LEAKAGE" ? "#f87171" : "#94a3b8",
+                        border: "none",
+                        borderRadius: 7,
+                        padding: "5px 12px",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      💸 Transvase / Fuga
+                    </button>
+                  </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                <div style={{ display: "flex", background: "rgba(255,255,255,0.04)", padding: 3, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <button
-                    onClick={() => setModeFilter("ALL")}
-                    style={{
-                      background: modeFilter === "ALL" ? "rgba(255,255,255,0.12)" : "transparent",
-                      color: modeFilter === "ALL" ? "#f8fafc" : "#94a3b8",
-                      border: "none",
-                      borderRadius: 7,
-                      padding: "6px 12px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Todos
-                  </button>
-                  <button
-                    onClick={() => setModeFilter("FIDELITY")}
-                    style={{
-                      background: modeFilter === "FIDELITY" ? "rgba(34, 197, 94, 0.2)" : "transparent",
-                      color: modeFilter === "FIDELITY" ? "#4ade80" : "#94a3b8",
-                      border: "none",
-                      borderRadius: 7,
-                      padding: "6px 12px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    🛡️ Fidelidad
-                  </button>
-                  <button
-                    onClick={() => setModeFilter("LEAKAGE")}
-                    style={{
-                      background: modeFilter === "LEAKAGE" ? "rgba(239, 68, 68, 0.2)" : "transparent",
-                      color: modeFilter === "LEAKAGE" ? "#f87171" : "#94a3b8",
-                      border: "none",
-                      borderRadius: 7,
-                      padding: "6px 12px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    💸 Fuga / Transvase
-                  </button>
-                </div>
-
-                <div style={{ position: "relative", minWidth: 220 }}>
-                  <Search size={15} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
-                  <input
-                    type="text"
-                    placeholder="Buscar partido origen/destino..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 8,
-                      padding: "6px 12px 6px 32px",
-                      fontSize: 12,
-                      color: "#f8fafc",
-                      outline: "none",
-                      width: "100%",
-                    }}
-                  />
+                  <div style={{ position: "relative", minWidth: 220 }}>
+                    <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                    <input
+                      type="text"
+                      placeholder="Buscar partido origen/destino..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: 8,
+                        padding: "6px 12px 6px 32px",
+                        fontSize: 12,
+                        color: "#f8fafc",
+                        outline: "none",
+                        width: "100%",
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* 3. VISUALIZACIÓN SANKEY */}
-            <div
-              style={{
-                background: "rgba(0,0,0,0.25)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 16,
-                padding: 20,
-                marginBottom: 28,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: "#f8fafc", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                  <BarChart3 size={16} style={{ color: "#818cf8" }} />
-                  Diagrama de Flujo de Transferencias (Sankey View)
-                </h3>
-                <span style={{ fontSize: 11, color: "#64748b" }}>
-                  {selectedOrigen === "GLOBAL" ? "Flujos de todo el electorado" : `Flujos con origen ${selectedOrigen}`}
-                </span>
+              {/* 3. VISUALIZACIÓN SANKEY */}
+              <div
+                style={{
+                  background: "rgba(0,0,0,0.25)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 16,
+                  padding: 16,
+                  marginBottom: 20,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                    <BarChart3 size={16} style={{ color: "#818cf8" }} />
+                    Diagrama de Flujo de Transferencias (Sankey Dynamic View)
+                  </h3>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>
+                    {selectedOrigen === "GLOBAL" ? "Flujos de todo el electorado" : `Flujos con origen ${getPartyDisplayName(selectedOrigen)}`}
+                  </span>
+                </div>
+
+                <SankeyChart
+                  data={filteredData}
+                  getPartyColor={getPartyColor}
+                  getPartyLogo={getPartyLogo}
+                  getPartyDisplayName={getPartyDisplayName}
+                  hoveredNode={hoveredNode}
+                  setHoveredNode={setHoveredNode}
+                />
               </div>
 
-              <SankeyChart
-                data={filteredData}
-                getPartyColor={getPartyColor}
-                getPartyLogo={getPartyLogo}
-                hoveredNode={hoveredNode}
-                setHoveredNode={setHoveredNode}
-              />
-            </div>
+              {/* 4. TABLA DETALLADA Y PAGINADA */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <h3 style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", margin: 0 }}>
+                    Detalle Numérico ({filteredData.length} resultados)
+                  </h3>
 
-            {/* 4. TABLA DETALLADA */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: "#f8fafc", margin: 0 }}>
-                  Detalle Numérico de Transferencias ({filteredData.length})
-                </h3>
-              </div>
+                  {totalPages > 1 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                        Página {currentPage} de {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        disabled={currentPage === 1}
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: 6,
+                          padding: 4,
+                          color: "#fff",
+                          cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                          opacity: currentPage === 1 ? 0.4 : 1,
+                        }}
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: 6,
+                          padding: 4,
+                          color: "#fff",
+                          cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                          opacity: currentPage === totalPages ? 0.4 : 1,
+                        }}
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-              <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, background: "rgba(255,255,255,0.01)" }}>
-                  <thead>
-                    <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                      <th style={{ padding: "12px 16px", textAlign: "left", color: "#94a3b8", fontWeight: 600 }}>Origen</th>
-                      <th style={{ padding: "12px 16px", textAlign: "center", color: "#64748b", fontWeight: 600, width: 40 }}></th>
-                      <th style={{ padding: "12px 16px", textAlign: "left", color: "#94a3b8", fontWeight: 600 }}>Destino</th>
-                      <th style={{ padding: "12px 16px", textAlign: "right", color: "#94a3b8", fontWeight: 600 }}>Votos Transferidos</th>
-                      <th style={{ padding: "12px 16px", textAlign: "left", color: "#94a3b8", fontWeight: 600, minWidth: 200 }}>
-                        Porcentaje de Transvase
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.length > 0 ? (
-                      filteredData.map((row, idx) => {
-                        const isFidelidad = row.origen_partido === row.destino_partido;
-                        const origenColor = getPartyColor(row.origen_partido);
-                        const porcentajeNormalized = Math.min((row.porcentaje / maxPorcentaje) * 100, 100);
-
-                        return (
-                          <tr
-                            key={`${row.origen_partido}-${row.destino_partido}-${idx}`}
-                            style={{
-                              borderBottom: "1px solid rgba(255,255,255,0.04)",
-                              background: isFidelidad ? "rgba(34, 197, 94, 0.02)" : "transparent",
-                              transition: "background 0.2s",
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.background = isFidelidad ? "rgba(34, 197, 94, 0.02)" : "transparent")
-                            }
-                          >
-                            <td style={{ padding: "12px 16px" }}>
-                              <PartyBadge party={row.origen_partido} getColor={getPartyColor} getLogo={getPartyLogo} />
-                            </td>
-
-                            <td style={{ padding: "12px 0", textAlign: "center", color: isFidelidad ? "#4ade80" : "#64748b" }}>
-                              <ArrowRight size={14} />
-                            </td>
-
-                            <td style={{ padding: "12px 16px" }}>
-                              <PartyBadge party={row.destino_partido} getColor={getPartyColor} getLogo={getPartyLogo} />
-                            </td>
-
-                            <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700, color: "#f8fafc" }}>
-                              {row.votos_transferidos.toLocaleString()}
-                            </td>
-
-                            <td style={{ padding: "12px 16px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                <div style={{ flex: 1, height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
-                                  <div
-                                    style={{
-                                      height: "100%",
-                                      width: `${porcentajeNormalized}%`,
-                                      background: isFidelidad ? "#4ade80" : origenColor,
-                                      borderRadius: 4,
-                                      transition: "width 0.5s ease-out",
-                                    }}
-                                  />
-                                </div>
-                                <span
-                                  style={{
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    color: isFidelidad ? "#4ade80" : "#f8fafc",
-                                    minWidth: 50,
-                                    textAlign: "right",
-                                  }}
-                                >
-                                  {row.porcentaje.toFixed(2)}%
-                                </span>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={5} style={{ padding: 32, textAlign: "center", color: "#64748b" }}>
-                          No se encontraron transferencias con los filtros aplicados.
-                        </td>
+                <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, background: "rgba(255,255,255,0.01)" }}>
+                    <thead>
+                      <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                        <th style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8", fontWeight: 600 }}>Origen</th>
+                        <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 600, width: 30 }}></th>
+                        <th style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8", fontWeight: 600 }}>Destino</th>
+                        <th style={{ padding: "10px 14px", textAlign: "right", color: "#94a3b8", fontWeight: 600 }}>Votos Transferidos</th>
+                        <th style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8", fontWeight: 600, minWidth: 180 }}>
+                          Porcentaje de Transvase
+                        </th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {paginatedData.length > 0 ? (
+                        paginatedData.map((row, idx) => {
+                          const isFidelidad = row.origen_partido === row.destino_partido;
+                          const origenColor = getPartyColor(row.origen_partido);
+                          const porcentajeNormalized = Math.min((row.porcentaje / maxPorcentaje) * 100, 100);
+
+                          return (
+                            <tr
+                              key={`${row.origen_partido}-${row.destino_partido}-${idx}`}
+                              style={{
+                                borderBottom: "1px solid rgba(255,255,255,0.04)",
+                                background: isFidelidad ? "rgba(34, 197, 94, 0.02)" : "transparent",
+                                transition: "background 0.2s",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                              onMouseLeave={(e) =>
+                                (e.currentTarget.style.background = isFidelidad ? "rgba(34, 197, 94, 0.02)" : "transparent")
+                              }
+                            >
+                              <td style={{ padding: "10px 14px" }}>
+                                <PartyBadge
+                                  party={row.origen_partido}
+                                  getColor={getPartyColor}
+                                  getLogo={getPartyLogo}
+                                  getDisplayName={getPartyDisplayName}
+                                />
+                              </td>
+
+                              <td style={{ padding: "10px 0", textAlign: "center", color: isFidelidad ? "#4ade80" : "#64748b" }}>
+                                <ArrowRight size={14} />
+                              </td>
+
+                              <td style={{ padding: "10px 14px" }}>
+                                <PartyBadge
+                                  party={row.destino_partido}
+                                  getColor={getPartyColor}
+                                  getLogo={getPartyLogo}
+                                  getDisplayName={getPartyDisplayName}
+                                />
+                              </td>
+
+                              <td style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#f8fafc" }}>
+                                {row.votos_transferidos.toLocaleString()}
+                              </td>
+
+                              <td style={{ padding: "10px 14px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                  <div style={{ flex: 1, height: 7, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
+                                    <div
+                                      style={{
+                                        height: "100%",
+                                        width: `${porcentajeNormalized}%`,
+                                        background: isFidelidad ? "#4ade80" : origenColor,
+                                        borderRadius: 4,
+                                        transition: "width 0.5s ease-out",
+                                      }}
+                                    />
+                                  </div>
+                                  <span
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 700,
+                                      color: isFidelidad ? "#4ade80" : "#f8fafc",
+                                      minWidth: 45,
+                                      textAlign: "right",
+                                    }}
+                                  >
+                                    {row.porcentaje.toFixed(2)}%
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={5} style={{ padding: 28, textAlign: "center", color: "#64748b" }}>
+                            No se encontraron transferencias con los filtros aplicados.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+            </>
+          ) : (
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+              <p style={{ margin: 0 }}>No hay datos de transferencia de voto disponibles en la base de datos.</p>
             </div>
-          </>
-        ) : (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
-            <p style={{ margin: 0 }}>No hay datos de transferencia de voto disponibles en la base de datos.</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -760,11 +859,14 @@ interface PartyBadgeProps {
   party: string;
   getColor: (party: string) => string;
   getLogo: (party: string) => string | null;
+  getDisplayName: (party: string) => string;
 }
 
-function PartyBadge({ party, getColor, getLogo }: PartyBadgeProps) {
+function PartyBadge({ party, getColor, getLogo, getDisplayName }: PartyBadgeProps) {
   const color = getColor(party);
   const logo = getLogo(party);
+  const displayName = getDisplayName(party);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <span
@@ -777,43 +879,57 @@ function PartyBadge({ party, getColor, getLogo }: PartyBadgeProps) {
         background: `${color}18`,
         border: `1px solid ${color}40`,
         color: "#ffffff",
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 700,
+        whiteSpace: "nowrap",
       }}
     >
-      {logo ? (
-        <img src={logo} alt={party} style={{ width: 14, height: 14, borderRadius: "50%", objectFit: "cover" }} />
+      {logo && !imgError ? (
+        <img
+          src={logo}
+          alt={displayName}
+          onError={() => setImgError(true)}
+          style={{ width: 15, height: 15, borderRadius: "50%", objectFit: "cover" }}
+        />
       ) : (
-        <span style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
       )}
-      {party}
+      {displayName}
     </span>
   );
 }
 
 // ==========================================
-// COMPONENTE SECUNDARIO: SANKEY DIAGRAM (SVG)
+// COMPONENTE SECUNDARIO: SANKEY DIAGRAM (SVG DINO & ESCALABLE)
 // ==========================================
 interface SankeyChartProps {
   data: TransferenciaVotoData[];
   getPartyColor: (party: string) => string;
   getPartyLogo: (party: string) => string | null;
+  getPartyDisplayName: (party: string) => string;
   hoveredNode: string | null;
   setHoveredNode: (node: string | null) => void;
 }
 
-function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHoveredNode }: SankeyChartProps) {
+function SankeyChart({
+  data,
+  getPartyColor,
+  getPartyLogo,
+  getPartyDisplayName,
+  hoveredNode,
+  setHoveredNode,
+}: SankeyChartProps) {
   const [activeLink, setActiveLink] = useState<TransferenciaVotoData | null>(null);
 
   if (data.length === 0) {
     return (
-      <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+      <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
         Sin datos para generar el diagrama de flujo.
       </div>
     );
   }
 
-  // Agrupar nodos de origen y destino
+  // Agrupar nodos
   const origenesMap: Record<string, number> = {};
   const destinosMap: Record<string, number> = {};
   let totalVotos = 0;
@@ -827,29 +943,31 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
   const origenes = Object.keys(origenesMap);
   const destinos = Object.keys(destinosMap);
 
-  const svgHeight = Math.max(Math.max(origenes.length, destinos.length) * 45 + 40, 320);
-  const width = 800;
-  const nodeWidth = 24;
+  // Altura dinámicamente adaptada según la cantidad de elementos
+  const maxItems = Math.max(origenes.length, destinos.length);
+  const svgHeight = Math.max(maxItems * 38 + 40, 280);
+  const width = 850;
+  const nodeWidth = 20;
   const leftX = 140;
   const rightX = width - 140;
 
-  // CÁLCULO DE ALTURAS Y POSICIONES - Se asegura un tamaño mínimo visible para nodos pequeños como D21
+  // Cálculo de posiciones verticales
   let currentYLeft = 20;
   const origenesPos: Record<string, { y: number; height: number }> = {};
   origenes.forEach((orig) => {
-    const rawHeight = (origenesMap[orig] / (totalVotos || 1)) * (svgHeight - 100);
-    const h = Math.max(rawHeight, 14); // Garantiza altura visible
+    const rawHeight = (origenesMap[orig] / (totalVotos || 1)) * (svgHeight - 80);
+    const h = Math.max(rawHeight, 12);
     origenesPos[orig] = { y: currentYLeft, height: h };
-    currentYLeft += h + 16;
+    currentYLeft += h + 14;
   });
 
   let currentYRight = 20;
   const destinosPos: Record<string, { y: number; height: number }> = {};
   destinos.forEach((dest) => {
-    const rawHeight = (destinosMap[dest] / (totalVotos || 1)) * (svgHeight - 100);
-    const h = Math.max(rawHeight, 14); // Garantiza altura visible
+    const rawHeight = (destinosMap[dest] / (totalVotos || 1)) * (svgHeight - 80);
+    const h = Math.max(rawHeight, 12);
     destinosPos[dest] = { y: currentYRight, height: h };
-    currentYRight += h + 16;
+    currentYRight += h + 14;
   });
 
   const origOffset: Record<string, number> = {};
@@ -859,15 +977,15 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
 
   return (
     <div style={{ position: "relative", width: "100%", overflowX: "auto" }}>
-      <svg viewBox={`0 0 ${width} ${svgHeight}`} style={{ width: "100%", height: "auto", minWidth: 600 }}>
+      <svg viewBox={`0 0 ${width} ${svgHeight}`} style={{ width: "100%", height: "auto", minWidth: 650 }}>
         <defs>
           {data.map((d, i) => {
             const c1 = getPartyColor(d.origen_partido);
             const c2 = getPartyColor(d.destino_partido);
             return (
               <linearGradient key={`sankey-grad-${i}`} id={`sankey-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={c1} stopOpacity="0.65" />
-                <stop offset="100%" stopColor={c2} stopOpacity="0.65" />
+                <stop offset="0%" stopColor={c1} stopOpacity="0.6" />
+                <stop offset="100%" stopColor={c2} stopOpacity="0.6" />
               </linearGradient>
             );
           })}
@@ -879,9 +997,8 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
           const destP = destinosPos[d.destino_partido];
           if (!origP || !destP) return null;
 
-          // Corrección clave: Cálculo proporcional relativo a los nodos con grosor mínimo garantizado
-          const calculatedThickness = (d.votos_transferidos / (totalVotos || 1)) * (svgHeight - 100);
-          const linkThickness = Math.max(calculatedThickness, 3); // Mínimo de 3px para garantizar visibilidad de D21
+          const calculatedThickness = (d.votos_transferidos / (totalVotos || 1)) * (svgHeight - 80);
+          const linkThickness = Math.max(calculatedThickness, 2.5);
 
           const y1 = origP.y + origOffset[d.origen_partido] + linkThickness / 2;
           const y2 = destP.y + destOffset[d.destino_partido] + linkThickness / 2;
@@ -906,8 +1023,8 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
               fill="none"
               stroke={`url(#sankey-grad-${i})`}
               strokeWidth={linkThickness}
-              strokeOpacity={hoveredNode ? (isHighlighted ? 0.95 : 0.08) : 0.65}
-              style={{ transition: "stroke-opacity 0.2s ease, stroke-width 0.2s ease", cursor: "pointer" }}
+              strokeOpacity={hoveredNode ? (isHighlighted ? 0.95 : 0.06) : 0.6}
+              style={{ transition: "stroke-opacity 0.2s ease", cursor: "pointer" }}
               onMouseEnter={() => setActiveLink(d)}
               onMouseLeave={() => setActiveLink(null)}
             />
@@ -918,6 +1035,7 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
         {origenes.map((orig) => {
           const pos = origenesPos[orig];
           const color = getPartyColor(orig);
+          const name = getPartyDisplayName(orig);
           return (
             <g
               key={`orig-${orig}`}
@@ -930,13 +1048,13 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
                 y={pos.y}
                 width={nodeWidth}
                 height={pos.height}
-                rx={4}
+                rx={3}
                 fill={color}
-                stroke="rgba(255,255,255,0.4)"
+                stroke="rgba(255,255,255,0.3)"
                 strokeWidth={1}
               />
-              <text x={leftX - 10} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={12} fontWeight={700}>
-                {orig}
+              <text x={leftX - 8} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={11} fontWeight={700}>
+                {name}
               </text>
             </g>
           );
@@ -946,6 +1064,7 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
         {destinos.map((dest) => {
           const pos = destinosPos[dest];
           const color = getPartyColor(dest);
+          const name = getPartyDisplayName(dest);
           return (
             <g
               key={`dest-${dest}`}
@@ -958,13 +1077,13 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
                 y={pos.y}
                 width={nodeWidth}
                 height={pos.height}
-                rx={4}
+                rx={3}
                 fill={color}
-                stroke="rgba(255,255,255,0.4)"
+                stroke="rgba(255,255,255,0.3)"
                 strokeWidth={1}
               />
-              <text x={rightX + nodeWidth + 10} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={12} fontWeight={700}>
-                {dest}
+              <text x={rightX + nodeWidth + 8} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={11} fontWeight={700}>
+                {name}
               </text>
             </g>
           );
@@ -976,33 +1095,33 @@ function SankeyChart({ data, getPartyColor, getPartyLogo, hoveredNode, setHovere
         <div
           style={{
             position: "absolute",
-            bottom: 12,
+            bottom: 10,
             left: "50%",
             transform: "translateX(-50%)",
             background: "rgba(15, 23, 42, 0.95)",
             border: "1px solid rgba(255, 255, 255, 0.15)",
             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.8)",
             borderRadius: 12,
-            padding: "10px 16px",
+            padding: "8px 14px",
             display: "flex",
             alignItems: "center",
-            gap: 12,
+            gap: 10,
             zIndex: 10,
             pointerEvents: "none",
           }}
         >
-          <PartyBadge party={activeLink.origen_partido} getColor={getPartyColor} getLogo={getPartyLogo} />
-          <ArrowRight size={14} style={{ color: "#94a3b8" }} />
-          <PartyBadge party={activeLink.destino_partido} getColor={getPartyColor} getLogo={getPartyLogo} />
+          <PartyBadge party={activeLink.origen_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} />
+          <ArrowRight size={12} style={{ color: "#94a3b8" }} />
+          <PartyBadge party={activeLink.destino_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} />
 
-          <div style={{ height: 20, width: 1, background: "rgba(255,255,255,0.1)" }} />
+          <div style={{ height: 18, width: 1, background: "rgba(255,255,255,0.1)" }} />
 
           <div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: "#f8fafc" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#f8fafc" }}>
               {activeLink.votos_transferidos.toLocaleString()}{" "}
-              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400 }}>votos</span>
+              <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 400 }}>votos</span>
             </div>
-            <div style={{ fontSize: 11, color: "#818cf8", fontWeight: 700 }}>
+            <div style={{ fontSize: 10, color: "#818cf8", fontWeight: 700 }}>
               {activeLink.porcentaje.toFixed(2)}% del partido origen
             </div>
           </div>
