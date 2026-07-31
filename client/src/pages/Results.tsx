@@ -1838,6 +1838,7 @@ export default function Results() {
   const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
   const [barometroBC, setBarometroBC] = useState<Record<string, number>>({});
   const [mediaEncuestas, setMediaEncuestas] = useState<Record<string, number>>({});
+  const [liderPorPartido, setLiderPorPartido] = useState<Record<string, string>>({});
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -2028,6 +2029,25 @@ export default function Results() {
             setMediaEncuestas(meMap);
           }
         } catch (e) { console.warn("Error loading MediaEncuestas:", e); }
+
+        try {
+          const { data: topLideres } = await supabase.from("top_lider_por_partido").select("partido, lider_top");
+          if (topLideres?.length) {
+            const liderMap: Record<string, string> = {};
+            topLideres.forEach((r: any) => {
+              let partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
+              if (!generalPartyMap[partyKey]) {
+                const found = Object.entries(generalPartyMap).find(([, p]) => 
+                  p.name?.toLowerCase() === String(r.partido || "").toLowerCase()
+                );
+                if (found) partyKey = found[0];
+              }
+              liderMap[partyKey] = r.lider_top || "N/A";
+            });
+            setLiderPorPartido(liderMap);
+          }
+        } catch (e) { console.warn("Error loading top_lider_por_partido:", e); }
+
         try { 
           const { data } = await supabase.from("coherencia_voto_lider_view").select("*"); 
           setCoherenciaRows(data || []);
@@ -2361,9 +2381,9 @@ export default function Results() {
                                 Edad media: {edadMedia} años
                               </div>
                             )}
-                            {activeTab === "general" && leaderRatings.length > 0 && (
+                            {activeTab === "general" && liderPorPartido[party.id] && (
                               <div style={{ fontSize: 12, color: "#818cf8", marginTop: 4, fontWeight: 600 }}>
-                                Líder: {leaderRatings[0]?.name || "N/A"}
+                                Líder: {liderPorPartido[party.id]}
                               </div>
                             )}
                           </div>
