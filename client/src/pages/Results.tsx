@@ -2388,11 +2388,11 @@ export default function Results() {
                             )}
                             {activeTab === "general" && liderPorPartido[party.id] && (
                               <div style={{ marginTop: 6 }}>
-                                <div style={{ fontSize: 12, color: "#818cf8", fontWeight: 600, marginBottom: 4 }}>
+                                <div style={{ fontSize: 12, color: partyColor, fontWeight: 600, marginBottom: 4 }}>
                                   Líder: {liderPorPartido[party.id]}
                                 </div>
-                                <div style={{ height: 4, background: "rgba(129, 140, 248, 0.15)", borderRadius: 2, overflow: "hidden" }}>
-                                  <div style={{ height: "100%", background: "#818cf8", width: `${Math.min(porcentajeLiderPorPartido[party.id] || 0, 100)}%`, transition: "width 0.5s ease" }} />
+                                <div style={{ height: 4, background: `${partyColor}26`, borderRadius: 2, overflow: "hidden" }}>
+                                  <div style={{ height: "100%", background: partyColor, width: `${Math.min(porcentajeLiderPorPartido[party.id] || 0, 100)}%`, transition: "width 0.5s ease" }} />
                                 </div>
                                 <div style={{ fontSize: 9, color: "#7a7990", marginTop: 2, textAlign: "right" }}>
                                   {(porcentajeLiderPorPartido[party.id] || 0).toFixed(1)}% apoyo
