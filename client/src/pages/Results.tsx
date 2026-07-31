@@ -2361,22 +2361,27 @@ export default function Results() {
                                 Edad media: {edadMedia} años
                               </div>
                             )}
+                            {activeTab === "general" && leaderRatings.length > 0 && (
+                              <div style={{ fontSize: 12, color: "#818cf8", marginTop: 4, fontWeight: 600 }}>
+                                Líder: {leaderRatings[0]?.name || "N/A"}
+                              </div>
+                            )}
                           </div>
-                          <div className="r-party-seats">
-                            <div style={{ textAlign: "center" }}>
+                          <div className="r-party-seats" style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                            <div style={{ textAlign: "center", flex: 1 }}>
                               <div className="r-party-seats-num" style={{ color: partyColor, fontSize: 28 }}>{party.escanos}</div>
-                              <div className="r-party-seats-label">Encuesta</div>
+                              <div className="r-party-seats-label" style={{ fontSize: 11 }}>EncuestaBC</div>
                             </div>
-                            <div style={{ textAlign: "center", position: "relative", cursor: "help" }} title="Encuesta independiente de opinión">
-                              <div style={{ color: "#818cf8", fontWeight: 700, fontSize: 20 }}>{barometroBC[party.id] ?? 0}</div>
-                              <div style={{ color: "#7a7990", fontSize: 10 }}>BarómetroBC</div>
+                            <div style={{ textAlign: "center", flex: 1, position: "relative", cursor: "help" }} title="Encuesta independiente de opinión">
+                              <div style={{ color: "#818cf8", fontWeight: 700, fontSize: 24 }}>{barometroBC[party.id] ?? 0}</div>
+                              <div style={{ color: "#7a7990", fontSize: 10 }}>Barómetro</div>
                             </div>
-                            <div style={{ textAlign: "center", position: "relative", cursor: "help" }} title="Promedio de encuestas">
-                              <div style={{ color: "#f59e0b", fontWeight: 700, fontSize: 20 }}>{mediaEncuestas[party.id] ?? 0}</div>
+                            <div style={{ textAlign: "center", flex: 1, position: "relative", cursor: "help" }} title="Promedio de encuestas">
+                              <div style={{ color: "#f59e0b", fontWeight: 700, fontSize: 24 }}>{mediaEncuestas[party.id] ?? 0}</div>
                               <div style={{ color: "#7a7990", fontSize: 10 }}>Media</div>
                             </div>
                             {party.escanos !== (mediaEncuestas[party.id] ?? 0) && (
-                              <div style={{ textAlign: "center", fontSize: 13, marginTop: 4, fontWeight: 700 }}>
+                              <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, position: "relative", cursor: "help" }} title="Variación entre EncuestaBC y Media de encuestas">
                                 {party.escanos > (mediaEncuestas[party.id] ?? 0) ? (
                                   <span style={{ color: "#22c55e" }}>↑ +{party.escanos - (mediaEncuestas[party.id] ?? 0)}</span>
                                 ) : (
