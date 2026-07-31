@@ -900,7 +900,7 @@ function PartyBadge({ party, getColor, getLogo, getDisplayName }: PartyBadgeProp
 }
 
 // ==========================================
-// COMPONENTE SECUNDARIO: SANKEY DIAGRAM (SVG DINO & ESCALABLE)
+// COMPONENTE SECUNDARIO: SANKEY DIAGRAM (SVG DINO & ESCALABLE - SIN CORTES)
 // ==========================================
 interface SankeyChartProps {
   data: TransferenciaVotoData[];
@@ -929,7 +929,7 @@ function SankeyChart({
     );
   }
 
-  // Agrupar nodos
+  // 1. Agrupar nodos
   const origenesMap: Record<string, number> = {};
   const destinosMap: Record<string, number> = {};
   let totalVotos = 0;
@@ -943,31 +943,42 @@ function SankeyChart({
   const origenes = Object.keys(origenesMap);
   const destinos = Object.keys(destinosMap);
 
-  // Altura dinámicamente adaptada según la cantidad de elementos
+  // 2. CÁLCULO DE ALTURA DINÁMICA SIN CORTES
   const maxItems = Math.max(origenes.length, destinos.length);
-  const svgHeight = Math.max(maxItems * 38 + 40, 280);
-  const width = 850;
-  const nodeWidth = 20;
-  const leftX = 140;
-  const rightX = width - 140;
+  const nodeGap = 16;
+  const topPadding = 30;
+  const bottomPadding = 40;
+  
+  // Asignamos una altura mínima por fila para garantizar espacio suficiente
+  const minRowHeight = 36;
+  const totalNodesHeight = maxItems * minRowHeight + (maxItems - 1) * nodeGap;
+  const svgHeight = Math.max(totalNodesHeight + topPadding + bottomPadding, 320);
 
-  // Cálculo de posiciones verticales
-  let currentYLeft = 20;
+  const width = 900;
+  const nodeWidth = 20;
+  // Añadimos márgenes laterales suficientes para que los nombres/logos de los partidos no se corten
+  const leftX = 160; 
+  const rightX = width - 160;
+  const usableHeight = svgHeight - topPadding - bottomPadding;
+
+  // 3. Posicionamiento de Nodos Origen
+  let currentYLeft = topPadding;
   const origenesPos: Record<string, { y: number; height: number }> = {};
   origenes.forEach((orig) => {
-    const rawHeight = (origenesMap[orig] / (totalVotos || 1)) * (svgHeight - 80);
-    const h = Math.max(rawHeight, 12);
+    const rawHeight = (origenesMap[orig] / (totalVotos || 1)) * usableHeight;
+    const h = Math.max(rawHeight, 14); // Altura mínima garantizada
     origenesPos[orig] = { y: currentYLeft, height: h };
-    currentYLeft += h + 14;
+    currentYLeft += h + nodeGap;
   });
 
-  let currentYRight = 20;
+  // 4. Posicionamiento de Nodos Destino
+  let currentYRight = topPadding;
   const destinosPos: Record<string, { y: number; height: number }> = {};
   destinos.forEach((dest) => {
-    const rawHeight = (destinosMap[dest] / (totalVotos || 1)) * (svgHeight - 80);
-    const h = Math.max(rawHeight, 12);
+    const rawHeight = (destinosMap[dest] / (totalVotos || 1)) * usableHeight;
+    const h = Math.max(rawHeight, 14); // Altura mínima garantizada
     destinosPos[dest] = { y: currentYRight, height: h };
-    currentYRight += h + 14;
+    currentYRight += h + nodeGap;
   });
 
   const origOffset: Record<string, number> = {};
@@ -976,8 +987,8 @@ function SankeyChart({
   destinos.forEach((d) => (destOffset[d] = 0));
 
   return (
-    <div style={{ position: "relative", width: "100%", overflowX: "auto" }}>
-      <svg viewBox={`0 0 ${width} ${svgHeight}`} style={{ width: "100%", height: "auto", minWidth: 650 }}>
+    <div style={{ position: "relative", width: "100%", maxHeight: "500px", overflowY: "auto", overflowX: "auto", paddingBottom: 10 }}>
+      <svg viewBox={`0 0 ${width} ${svgHeight}`} style={{ width: "100%", height: "auto", minWidth: 700, display: "block" }}>
         <defs>
           {data.map((d, i) => {
             const c1 = getPartyColor(d.origen_partido);
@@ -991,13 +1002,13 @@ function SankeyChart({
           })}
         </defs>
 
-        {/* CINTAS DE FLUJO */}
+        {/* CINTAS DE FLUJO (LINKS) */}
         {data.map((d, i) => {
           const origP = origenesPos[d.origen_partido];
           const destP = destinosPos[d.destino_partido];
           if (!origP || !destP) return null;
 
-          const calculatedThickness = (d.votos_transferidos / (totalVotos || 1)) * (svgHeight - 80);
+          const calculatedThickness = (d.votos_transferidos / (totalVotos || 1)) * usableHeight;
           const linkThickness = Math.max(calculatedThickness, 2.5);
 
           const y1 = origP.y + origOffset[d.origen_partido] + linkThickness / 2;
@@ -1048,12 +1059,19 @@ function SankeyChart({
                 y={pos.y}
                 width={nodeWidth}
                 height={pos.height}
-                rx={3}
+                rx={4}
                 fill={color}
-                stroke="rgba(255,255,255,0.3)"
+                stroke="rgba(255,255,255,0.4)"
                 strokeWidth={1}
               />
-              <text x={leftX - 8} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={11} fontWeight={700}>
+              <text
+                x={leftX - 10}
+                y={pos.y + pos.height / 2 + 4}
+                textAnchor="end"
+                fill="#f8fafc"
+                fontSize={12}
+                fontWeight={700}
+              >
                 {name}
               </text>
             </g>
@@ -1077,12 +1095,19 @@ function SankeyChart({
                 y={pos.y}
                 width={nodeWidth}
                 height={pos.height}
-                rx={3}
+                rx={4}
                 fill={color}
-                stroke="rgba(255,255,255,0.3)"
+                stroke="rgba(255,255,255,0.4)"
                 strokeWidth={1}
               />
-              <text x={rightX + nodeWidth + 8} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={11} fontWeight={700}>
+              <text
+                x={rightX + nodeWidth + 10}
+                y={pos.y + pos.height / 2 + 4}
+                textAnchor="start"
+                fill="#f8fafc"
+                fontSize={12}
+                fontWeight={700}
+              >
                 {name}
               </text>
             </g>
@@ -1094,7 +1119,7 @@ function SankeyChart({
       {activeLink && (
         <div
           style={{
-            position: "absolute",
+            position: "sticky",
             bottom: 10,
             left: "50%",
             transform: "translateX(-50%)",
@@ -1103,11 +1128,13 @@ function SankeyChart({
             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.8)",
             borderRadius: 12,
             padding: "8px 14px",
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
             gap: 10,
-            zIndex: 10,
+            zIndex: 20,
             pointerEvents: "none",
+            width: "fit-content",
+            margin: "0 auto"
           }}
         >
           <PartyBadge party={activeLink.origen_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} />
