@@ -204,7 +204,7 @@ export default function NanoEncuestaBC() {
         if (leadersRes.data) setLeaders(leadersRes.data);
       } catch (err) {
         console.error("Error fetching party data:", err);
-      } fontal {
+      } finally {
         setLoadingParties(false);
       }
     };
