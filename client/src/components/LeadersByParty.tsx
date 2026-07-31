@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { PARTIES_GENERAL } from "@/lib/surveyData";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -10,90 +10,84 @@ interface LeaderByParty {
   porcentaje: number;
 }
 
+// Datos de fallback fuera del componente para evitar recreaciones en memoria
+const FALLBACK_DATA: Record<string, LeaderByParty[]> = {
+  PP: [
+    { partido: "PP", lider_preferido: "Feijóo", total_votos: 85, porcentaje: 60.7 },
+    { partido: "PP", lider_preferido: "Ayuso", total_votos: 40, porcentaje: 28.6 },
+    { partido: "PP", lider_preferido: "Juanma Moreno", total_votos: 15, porcentaje: 10.7 },
+  ],
+  PSOE: [
+    { partido: "PSOE", lider_preferido: "Sánchez", total_votos: 95, porcentaje: 79.2 },
+    { partido: "PSOE", lider_preferido: "Otro", total_votos: 25, porcentaje: 20.8 },
+  ],
+  VOX: [
+    { partido: "VOX", lider_preferido: "Abascal", total_votos: 72, porcentaje: 80.9 },
+    { partido: "VOX", lider_preferido: "Buxadé", total_votos: 17, porcentaje: 19.1 },
+  ],
+};
+
 export function LeadersByParty() {
   const [selectedParty, setSelectedParty] = useState<string>("PP");
   const [leadersByParty, setLeadersByParty] = useState<LeaderByParty[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchLeadersByParty = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        
-        // Intentar obtener datos de la vista ranking_lideres_por_partido
-        try {
-          const { data, error } = await supabase
-            .from("ranking_lideres_por_partido")
-            .select("*")
-            .eq("partido", selectedParty);
+        const { data, error } = await supabase
+          .from("ranking_lideres_por_partido")
+          .select("*")
+          .eq("partido", selectedParty);
 
-          if (error) throw error;
+        if (error) throw error;
 
-          if (data && data.length > 0) {
-            setLeadersByParty(data);
-          } else {
-            // Datos de ejemplo si no hay datos
-            const exampleData = {
-              PP: [
-                { partido: "PP", lider_preferido: "Feijóo", total_votos: 85, porcentaje: 60.7 },
-                { partido: "PP", lider_preferido: "Ayuso", total_votos: 40, porcentaje: 28.6 },
-                { partido: "PP", lider_preferido: "Juanma Moreno", total_votos: 15, porcentaje: 10.7 },
-              ],
-              PSOE: [
-                { partido: "PSOE", lider_preferido: "Sánchez", total_votos: 95, porcentaje: 79.2 },
-                { partido: "PSOE", lider_preferido: "Otro", total_votos: 25, porcentaje: 20.8 },
-              ],
-              VOX: [
-                { partido: "VOX", lider_preferido: "Abascal", total_votos: 72, porcentaje: 80.9 },
-                { partido: "VOX", lider_preferido: "Buxadé", total_votos: 17, porcentaje: 19.1 },
-              ],
-            } as Record<string, LeaderByParty[]>;
-
-            setLeadersByParty(exampleData[selectedParty] || []);
-          }
-        } catch (err) {
-          console.error("Error fetching leaders by party:", err);
-          // Usar datos de ejemplo como fallback
-          const exampleData = {
-            PP: [
-              { partido: "PP", lider_preferido: "Feijóo", total_votos: 85, porcentaje: 60.7 },
-              { partido: "PP", lider_preferido: "Ayuso", total_votos: 40, porcentaje: 28.6 },
-              { partido: "PP", lider_preferido: "Juanma Moreno", total_votos: 15, porcentaje: 10.7 },
-            ],
-            PSOE: [
-              { partido: "PSOE", lider_preferido: "Sánchez", total_votos: 95, porcentaje: 79.2 },
-              { partido: "PSOE", lider_preferido: "Otro", total_votos: 25, porcentaje: 20.8 },
-            ],
-            VOX: [
-              { partido: "VOX", lider_preferido: "Abascal", total_votos: 72, porcentaje: 80.9 },
-              { partido: "VOX", lider_preferido: "Buxadé", total_votos: 17, porcentaje: 19.1 },
-            ],
-          } as Record<string, LeaderByParty[]>;
-
-          setLeadersByParty(exampleData[selectedParty] || []);
+        if (isMounted) {
+          setLeadersByParty(data && data.length > 0 ? data : FALLBACK_DATA[selectedParty] || []);
+        }
+      } catch (err) {
+        console.error("Error fetching leaders by party:", err);
+        if (isMounted) {
+          setLeadersByParty(FALLBACK_DATA[selectedParty] || []);
         }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchLeadersByParty();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedParty]);
 
-  const totalVotes = leadersByParty.reduce((sum, leader) => sum + leader.total_votos, 0);
+  const totalVotes = useMemo(
+    () => leadersByParty.reduce((sum, leader) => sum + leader.total_votos, 0),
+    [leadersByParty]
+  );
+
+  const topLeader = leadersByParty[0];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-bold text-[#2D2D2D] mb-4">Líderes Preferidos por Partido</h3>
-        
-        {/* Selector de partido */}
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-[#2D2D2D] mb-2">Selecciona un partido:</label>
+    <div className="space-y-6 max-w-5xl mx-auto p-4 sm:p-6 text-slate-800">
+      {/* Encabezado y Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-lg shadow-black/5">
+        <div>
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            Líderes Preferidos
+          </h3>
+          <p className="text-sm text-slate-500 font-medium">Estadísticas y ranking de votación por partido</p>
+        </div>
+
+        <div className="w-full sm:w-64">
           <select
             value={selectedParty}
             onChange={(e) => setSelectedParty(e.target.value)}
-            className="w-full md:w-64 px-4 py-2 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] focus:outline-none focus:ring-2 focus:ring-[#C41E3A]"
+            className="w-full px-4 py-2.5 rounded-2xl bg-white/60 backdrop-blur-md border border-white/80 text-slate-800 font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:bg-white/80"
           >
             {Object.entries(PARTIES_GENERAL).map(([key, party]) => (
               <option key={key} value={key}>
@@ -102,89 +96,103 @@ export function LeadersByParty() {
             ))}
           </select>
         </div>
+      </div>
 
-        {loading ? (
-          <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
-            <p>Cargando datos...</p>
-          </div>
-        ) : leadersByParty.length === 0 ? (
-          <div className="liquid-glass p-8 rounded-2xl text-center text-[#666666]">
-            <p>No hay datos de líderes preferidos para este partido.</p>
-          </div>
-        ) : (
-          <>
-            {/* Tabla de resultados */}
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <div className="glass-card p-6 rounded-xl space-y-4">
-                <h4 className="font-semibold text-[#2D2D2D]">Ranking de Líderes</h4>
-                <div className="space-y-3">
-                  {leadersByParty.map((leader, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-[#2D2D2D]">{leader.lider_preferido}</span>
-                        <span className="text-sm font-bold text-[#C41E3A]">{leader.porcentaje.toFixed(1)}%</span>
-                      </div>
-                      <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#C41E3A] transition-all duration-500"
-                          style={{ width: `${leader.porcentaje}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-[#999999]">{leader.total_votos} votos</p>
+      {loading ? (
+        <div className="p-12 rounded-3xl bg-white/30 backdrop-blur-xl border border-white/50 text-center text-slate-500 shadow-xl">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600 mb-3" />
+          <p className="font-medium text-sm">Cargando datos...</p>
+        </div>
+      ) : leadersByParty.length === 0 ? (
+        <div className="p-12 rounded-3xl bg-white/30 backdrop-blur-xl border border-white/50 text-center text-slate-500 shadow-xl">
+          <p className="font-medium">No hay datos disponibles para este partido.</p>
+        </div>
+      ) : (
+        <>
+          {/* Paneles de Información */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Ranking */}
+            <div className="p-6 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-lg shadow-black/5 space-y-5">
+              <h4 className="text-lg font-semibold text-slate-900">Ranking de Líderes</h4>
+              <div className="space-y-4">
+                {leadersByParty.map((leader, index) => (
+                  <div key={`${leader.partido}-${leader.lider_preferido}-${index}`} className="space-y-1.5">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="font-medium text-slate-700">{leader.lider_preferido}</span>
+                      <span className="font-bold text-rose-600">{leader.porcentaje.toFixed(1)}%</span>
                     </div>
-                  ))}
-                </div>
+                    {/* Barra de progreso de cristal */}
+                    <div className="h-3 w-full bg-slate-200/50 rounded-full p-0.5 backdrop-blur-sm inset-shadow">
+                      <div
+                        className="h-full bg-gradient-to-r from-rose-500 to-rose-600 rounded-full transition-all duration-700 ease-out shadow-sm"
+                        style={{ width: `${leader.porcentaje}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-400 text-right font-medium">{leader.total_votos} votos</p>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              {/* Estadísticas */}
-              <div className="glass-card p-6 rounded-xl space-y-4">
-                <h4 className="font-semibold text-[#2D2D2D]">Estadísticas</h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-[#666666]">Total de votos:</span>
-                    <span className="font-bold text-[#C41E3A]">{totalVotes}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#666666]">Líderes en ranking:</span>
-                    <span className="font-bold text-[#C41E3A]">{leadersByParty.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#666666]">Líder preferido:</span>
-                    <span className="font-bold text-[#C41E3A]">
-                      {leadersByParty[0]?.lider_preferido || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#666666]">Preferencia:</span>
-                    <span className="font-bold text-[#C41E3A]">
-                      {leadersByParty[0]?.porcentaje.toFixed(1) || "0"}%
-                    </span>
+            {/* Métricas destacadas */}
+            <div className="p-6 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-lg shadow-black/5 space-y-5">
+              <h4 className="text-lg font-semibold text-slate-900">Estadísticas Clave</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-white/50 border border-white/80 shadow-xs">
+                  <span className="text-xs text-slate-500 font-medium block mb-1">Total de votos</span>
+                  <span className="text-2xl font-black text-slate-800">{totalVotes}</span>
+                </div>
+                <div className="p-4 rounded-2xl bg-white/50 border border-white/80 shadow-xs">
+                  <span className="text-xs text-slate-500 font-medium block mb-1">Candidatos</span>
+                  <span className="text-2xl font-black text-slate-800">{leadersByParty.length}</span>
+                </div>
+                <div className="col-span-2 p-4 rounded-2xl bg-gradient-to-br from-white/70 to-white/30 border border-white shadow-xs">
+                  <span className="text-xs text-slate-500 font-medium block mb-1">Líder preferido</span>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xl font-bold text-slate-900">{topLeader?.lider_preferido || "N/A"}</span>
+                    <span className="text-lg font-bold text-rose-600">{topLeader ? `${topLeader.porcentaje.toFixed(1)}%` : "0%"}</span>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Gráfico de barras */}
-            <div className="liquid-glass p-8 rounded-2xl">
-              <h4 className="font-semibold text-[#2D2D2D] mb-4">Comparativa Visual</h4>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={leadersByParty}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E0D5CC" />
-                  <XAxis dataKey="lider_preferido" stroke="#666666" angle={-45} textAnchor="end" height={80} />
-                  <YAxis stroke="#666666" />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "#F5F1E8", border: "1px solid #E0D5CC", borderRadius: "8px" }}
-                    formatter={(value: any) => `${value}%`}
-                    labelStyle={{ color: "#2D2D2D" }}
+          {/* Gráfico Estilo iOS Frosted */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-lg shadow-black/5">
+            <h4 className="text-lg font-semibold text-slate-900 mb-6">Comparativa Visual</h4>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={leadersByParty} margin={{ top: 10, right: 10, left: -20, bottom: 25 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                  <XAxis
+                    dataKey="lider_preferido"
+                    stroke="#64748b"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    angle={-30}
+                    textAnchor="end"
                   />
-                  <Bar dataKey="porcentaje" fill="#C41E3A" radius={[8, 8, 0, 0]} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(255, 255, 255, 0.4)" }}
+                    contentStyle={{
+                      backgroundColor: "rgba(255, 255, 255, 0.8)",
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(255, 255, 255, 0.9)",
+                      borderRadius: "16px",
+                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)",
+                    }}
+                    formatter={(value: number | string) => [`${value}%`, "Preferencia"]}
+                    labelStyle={{ color: "#0f172a", fontWeight: "bold" }}
+                  />
+                  <Bar dataKey="porcentaje" fill="#e11d48" radius={[10, 10, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
-
