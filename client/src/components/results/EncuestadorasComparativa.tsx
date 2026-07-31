@@ -1,392 +1,166 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { trpc } from "@/lib/trpc";
-import { AlertCircle, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
-import { PARTIES_GENERAL } from "@/lib/surveyData";
 import PartyLogo from "@/components/PartyLogo";
 
-interface EncuestaExterna {
-  id: string;
-  encuestadora_id: string;
-  tipo_encuesta: string;
-  ambito: string;
-  ccaa_o_provincia?: string;
-  fecha_publicacion: string;
-  tamano_muestra?: number;
-  margen_error?: number;
-  encuestadoras?: {
-    id: string;
-    nombre: string;
-    sigla?: string;
-    logo_url?: string;
-  };
+// 1. Configuración Oficial de Partidos (según public.party_configuration)
+export interface PartyConfig {
+  id: number;
+  party_key: string;
+  display_name: string;
+  color: string;
+  logo_url: string;
 }
 
-interface ResultadoEncuesta {
-  id: string;
-  partido_id: string;
-  porcentaje: number;
-  escanos?: number;
+export const PARTY_CONFIG_MAP: Record<string, PartyConfig> = {
+  PSOE: { id: 2, party_key: "PSOE", display_name: "PSOE", color: "#E20613", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/psoe.png" },
+  PP: { id: 160, party_key: "PP", display_name: "PP", color: "#005497", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pp.png" },
+  VOX: { id: 162, party_key: "VOX", display_name: "VOX", color: "#5AC035", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/vox.png" },
+  SUMAR: { id: 123, party_key: "SUMAR", display_name: "SUMAR", color: "#E61455", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/sumar.png" },
+  PODEMOS: { id: 5, party_key: "PODEMOS", display_name: "PODEMOS", color: "#9169F4", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pod.png" },
+  JUNTS: { id: 6, party_key: "JUNTS", display_name: "JUNTS", color: "#00C4B2", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/junts.png" },
+  ERC: { id: 7, party_key: "ERC", display_name: "ERC", color: "#F95838", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/erc.png" },
+  PNV: { id: 8, party_key: "PNV", display_name: "PNV", color: "#2A8343", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pnv.png" },
+  BILDU: { id: 10, party_key: "BILDU", display_name: "BILDU", color: "#08A3A6", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/bildu.png" },
+  BNG: { id: 17, party_key: "BNG", display_name: "BNG", color: "#6AADE4", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/bng.png" },
+  CC: { id: 12, party_key: "CC", display_name: "Coalición Canaria", color: "#25BAF2", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/CoalicionCanaria.png" },
+  UPN: { id: 13, party_key: "UPN", display_name: "Unión del Pueblo Navarro", color: "#A30E12", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/upn.png" },
+  "Se Acabó La Fiesta": { id: 11, party_key: "Se Acabó La Fiesta", display_name: "Se Acabó la Fiesta", color: "#ECC29E", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/SeAcaboLaFiesta.png" },
+  "Adelante Andalucía": { id: 24, party_key: "Adelante Andalucía", display_name: "ADELANTE ANDALUCÍA", color: "#24C87E", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/Adelante%20Andalucia.png" },
+  "Aliança Catalana": { id: 9, party_key: "Aliança Catalana", display_name: "Aliança Catalana", color: "#0F4C81", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/AliancaCatalana.png" },
+  D21: { id: 189, party_key: "D21", display_name: "D21", color: "#FF7F50", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/InShot_20260627_105907307.jpg" },
+  PACMA: { id: 26, party_key: "PACMA", display_name: "PACMA", color: "#22D65D", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/PACMA.png" },
+};
+
+// 2. Datos del Barómetro BC (Última proyección de escaños)
+const BAROMETRO_BC: Record<string, string> = {
+  PP: "130-133",
+  PSOE: "102",
+  VOX: "70-72",
+  ERC: "10",
+  BILDU: "8",
+  PNV: "5",
+  SUMAR: "5",
+  JUNTS: "4-7",
+  PODEMOS: "4",
+  "Adelante Andalucía": "2",
+  BNG: "2",
+  CC: "1",
+  UPN: "1",
+  "Aliança Catalana": "0-2",
+  D21: "0-1",
+  "Se Acabó La Fiesta": "0",
+  PACMA: "0",
+};
+
+interface BarometroProps {
+  // Conteo devuelto de la tabla public.respuestas agrupado por voto_generales
+  respuestasEncuesta?: Record<string, number>; 
+  // Totales opcionales formateados de la Media de Encuestas (CSV)
+  mediaEncuestasCSV?: Record<string, number>; 
 }
 
-interface PartyStats {
-  id: string;
-  nombre: string;
-  votos: number;
-  porcentaje: number;
-  escanos: number;
-  logo: string;
-  color?: string;
-}
+export default function BarometroGenerales({ respuestasEncuesta = {}, mediaEncuestasCSV = {} }: BarometroProps) {
+  const totalRespuestas = useMemo(() => {
+    return Object.values(respuestasEncuesta).reduce((a, b) => a + b, 0);
+  }, [respuestasEncuesta]);
 
-interface Props {
-  tipoEncuesta?: string;
-  diasAtras?: number;
-  generalStats?: PartyStats[];
-  totalResponses?: number;
-}
-
-export default function EncuestadorasComparativa({ tipoEncuesta, diasAtras = 30, generalStats = [], totalResponses = 0 }: Props) {
-  const [encuestas, setEncuestas] = useState<EncuestaExterna[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [resultadosPorEncuesta, setResultadosPorEncuesta] = useState<Record<string, ResultadoEncuesta[]>>({});
-  const [mostrarAnalisisIA, setMostrarAnalisisIA] = useState(false);
-
-  // Query tRPC para obtener encuestas externas
-  const encuestasQuery = trpc.elAnalisis.obtenerEncuestasExternas.useQuery({
-    tipoEncuesta: tipoEncuesta as any,
-    diasAtras,
-  });
-
-  // Query para obtener resultados de encuesta específica
-  const resultadosQuery = trpc.elAnalisis.obtenerResultadosEncuesta.useQuery(
-    { encuestaId: expandedId || "" },
-    { enabled: !!expandedId }
-  );
-
-  useEffect(() => {
-    if (encuestasQuery.data) {
-      setEncuestas(encuestasQuery.data as any);
-    }
-  }, [encuestasQuery.data]);
-
-  useEffect(() => {
-    if (expandedId && resultadosQuery.data) {
-      setResultadosPorEncuesta(prev => ({
-        ...prev,
-        [expandedId]: resultadosQuery.data as ResultadoEncuesta[]
-      }));
-    }
-  }, [expandedId, resultadosQuery.data]);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const getTipoEncuestaLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      generales: "Generales",
-      autonomicas: "Autonómicas",
-      municipales: "Municipales",
-      europeas: "Europeas",
-    };
-    return labels[tipo] || tipo;
-  };
-
-  const getAmbitoLabel = (ambito: string) => {
-    const labels: Record<string, string> = {
-      nacional: "Nacional",
-      autonomico: "Autonómico",
-      provincial: "Provincial",
-    };
-    return labels[ambito] || ambito;
-  };
-
-  const getPartyColor = (partyId: string): string => {
-    const party = Object.values(PARTIES_GENERAL).find(p => p.id === partyId);
-    return party?.color || "#999999";
-  };
-
-  const getPartyName = (partyId: string): string => {
-    const party = Object.values(PARTIES_GENERAL).find(p => p.id === partyId);
-    return party?.name || partyId;
-  };
-
-  const calcularMargenError = (muestra: number): string => {
-    if (muestra <= 0) return "N/A";
-    return (100 / Math.sqrt(muestra)).toFixed(1);
-  };
-
-  if (encuestasQuery.isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="liquid-glass p-6 rounded-2xl">
-          <div className="text-center py-8 text-[#999999]">
-            Cargando encuestadoras...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (encuestasQuery.isError) {
-    return (
-      <div className="space-y-4">
-        <div className="liquid-glass p-6 rounded-2xl">
-          <div className="flex items-center gap-2 text-red-500 mb-4">
-            <AlertCircle className="w-5 h-5" />
-            <span className="font-semibold">Error al cargar encuestadoras</span>
-          </div>
-          <p className="text-[#999999]">No se pudieron cargar los datos de las encuestadoras</p>
-        </div>
-      </div>
-    );
-  }
+  const partidosOrdenados = useMemo(() => {
+    return Object.keys(BAROMETRO_BC);
+  }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Encabezado */}
-      <div className="liquid-glass p-6 rounded-2xl">
-        <div className="flex items-center justify-between mb-4">
+    <Card className="w-full shadow-lg border border-border">
+      <CardHeader className="border-b bg-muted/20">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div>
-            <h2 className="text-2xl font-bold text-[#2D2D2D]">Comparativa de Encuestadoras</h2>
-            <p className="text-[#999999] text-sm mt-1">
-              {encuestas.length} encuestas registradas en los últimos {diasAtras} días
-            </p>
+            <CardTitle className="text-xl font-bold">Barómetro Político & Estimación Electoral</CardTitle>
+            <CardDescription>
+              Comparativa entre datos de encuestas, barómetro de escaños y respuestas de usuarios.
+            </CardDescription>
           </div>
-          <Button
-            onClick={() => setMostrarAnalisisIA(!mostrarAnalisisIA)}
-            className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1626] text-white flex items-center gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            Análisis de IA
-          </Button>
+          <Badge variant="outline" className="w-fit text-xs font-semibold px-3 py-1">
+            Total Muestra Interna: {totalRespuestas} respuestas
+          </Badge>
         </div>
+      </CardHeader>
 
-        {mostrarAnalisisIA && (
-          <div className="mt-4 p-4 bg-[#F5F0EB] rounded-lg border border-[#E0D5CC]">
-            <p className="text-sm text-[#2D2D2D] leading-relaxed">
-              <strong>Análisis de IA:</strong> Basado en los datos de las encuestadoras más recientes, 
-              se observa una tendencia de polarización entre los principales bloques políticos. 
-              Las encuestadoras muestran variaciones en la estimación de escaños debido a diferentes 
-              metodologías de muestreo y ponderación. La fiabilidad de cada encuesta depende de su 
-              tamaño de muestra y margen de error. Se recomienda analizar múltiples encuestadoras 
-              para obtener una visión más completa del panorama electoral.
-            </p>
-          </div>
-        )}
-      </div>
+      <CardContent className="p-6">
+        <div className="grid grid-cols-1 gap-4">
+          {partidosOrdenados.map((key) => {
+            const config = PARTY_CONFIG_MAP[key] || {
+              display_name: key,
+              color: "#6B7280",
+              logo_url: "",
+            };
 
-      {encuestas.length === 0 ? (
-        <div className="liquid-glass p-6 rounded-2xl text-center py-12">
-          <p className="text-[#999999]">No hay encuestas disponibles en este momento</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {encuestas.map((encuesta) => (
-            <div key={encuesta.id} className="liquid-glass rounded-2xl overflow-hidden">
-              {/* Header de encuesta */}
-              <button
-                onClick={() =>
-                  setExpandedId(expandedId === encuesta.id ? null : encuesta.id)
-                }
-                className="w-full p-4 hover:bg-white/50 transition-colors flex items-center justify-between"
+            const escanos = BAROMETRO_BC[key] || "0";
+            const numVotosInternos = respuestasEncuesta[key] || 0;
+            const pctInterno = totalRespuestas > 0 ? ((numVotosInternos / totalRespuestas) * 100).toFixed(1) : "0.0";
+            const pctMedia = mediaEncuestasCSV[key] ? mediaEncuestasCSV[key].toFixed(1) : null;
+
+            return (
+              <div
+                key={key}
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border hover:border-muted-foreground/40 transition-all bg-card gap-4"
               >
-                <div className="flex items-center gap-4 flex-1 text-left">
-                  {/* Logo encuestadora */}
-                  {encuesta.encuestadoras?.logo_url ? (
-                    <div className="w-14 h-14 flex items-center justify-center bg-white rounded-lg flex-shrink-0 shadow-sm">
-                      <img
-                        src={encuesta.encuestadoras.logo_url}
-                        alt={encuesta.encuestadoras.nombre}
-                        className="max-h-12 max-w-full object-contain"
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-14 h-14 flex items-center justify-center bg-white rounded-lg flex-shrink-0 text-xs text-[#999999] font-semibold">
-                      {encuesta.encuestadoras?.sigla || "ENC"}
-                    </div>
-                  )}
-
-                  {/* Información */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-[#2D2D2D]">
-                        {encuesta.encuestadoras?.nombre || "Encuestadora desconocida"}
-                      </h3>
-                      {encuesta.encuestadoras?.sigla && (
-                        <Badge className="bg-[#C41E3A] text-white text-xs">
-                          {encuesta.encuestadoras.sigla}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-[#999999]">
-                      <span>{getTipoEncuestaLabel(encuesta.tipo_encuesta)}</span>
-                      <span>•</span>
-                      <span>{getAmbitoLabel(encuesta.ambito)}</span>
-                      <span>•</span>
-                      <span>{formatDate(encuesta.fecha_publicacion)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botón expandir */}
-                <div className="flex items-center gap-2 ml-4">
-                  {expandedId === encuesta.id ? (
-                    <ChevronUp className="w-5 h-5 text-[#C41E3A]" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-[#999999]" />
-                  )}
-                </div>
-              </button>
-
-              {/* Contenido expandido */}
-              {expandedId === encuesta.id && (
-                <div className="border-t border-[#E0D5CC] p-6 bg-white/50 space-y-6">
-                  {/* Detalles de la encuesta */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {encuesta.tamano_muestra && (
-                      <div className="p-3 bg-[#F5F0EB] rounded-lg">
-                        <p className="text-[#999999] text-xs font-semibold">Tamaño muestra</p>
-                        <p className="font-bold text-[#2D2D2D] mt-1">
-                          {encuesta.tamano_muestra.toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-
-                    {encuesta.ccaa_o_provincia && (
-                      <div className="p-3 bg-[#F5F0EB] rounded-lg">
-                        <p className="text-[#999999] text-xs font-semibold">Territorio</p>
-                        <p className="font-bold text-[#2D2D2D] mt-1">{encuesta.ccaa_o_provincia}</p>
-                      </div>
+                {/* Logo y Nombre con Color Oficial */}
+                <div className="flex items-center gap-3 min-w-[220px]">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center p-1 border shadow-sm shrink-0"
+                    style={{ backgroundColor: `${config.color}15`, borderColor: config.color }}
+                  >
+                    {config.logo_url ? (
+                      <PartyLogo src={config.logo_url} alt={config.display_name} partyName={config.display_name} size={28} />
+                    ) : (
+                      <span className="text-xs font-bold" style={{ color: config.color }}>
+                        {config.display_name.slice(0, 3)}
+                      </span>
                     )}
                   </div>
 
-                  {/* Resultados por partido */}
-                  {resultadosPorEncuesta[encuesta.id] && resultadosPorEncuesta[encuesta.id].length > 0 && (
-                    <div>
-                      <h4 className="font-bold text-[#2D2D2D] mb-4">Resultados por partido</h4>
-                      <div className="space-y-3">
-                        {resultadosPorEncuesta[encuesta.id]
-                          .sort((a, b) => (b.porcentaje || 0) - (a.porcentaje || 0))
-                          .map((resultado) => (
-                            <div key={resultado.id} className="flex items-center gap-3">
-                              <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                <PartyLogo partyId={resultado.partido_id} size={32} />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="font-semibold text-[#2D2D2D] text-sm">
-                                    {getPartyName(resultado.partido_id)}
-                                  </span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-[#C41E3A]">
-                                      {resultado.porcentaje?.toFixed(1) || 0}%
-                                    </span>
-                                    {resultado.escanos && (
-                                      <span className="text-xs bg-[#C41E3A] text-white px-2 py-1 rounded">
-                                        {resultado.escanos} escaños
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-[#C41E3A] transition-all duration-500"
-                                    style={{ width: `${Math.min(resultado.porcentaje || 0, 100)}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {(!resultadosPorEncuesta[encuesta.id] || resultadosPorEncuesta[encuesta.id].length === 0) && (
-                    <div className="text-center py-6 text-[#999999]">
-                      <p className="text-sm">No hay resultados disponibles para esta encuesta</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Sección de #LaEncuestaBC */}
-      <div className="liquid-glass p-6 rounded-2xl">
-        <h3 className="text-xl font-bold text-[#2D2D2D] mb-4">Resultados de #LaEncuestaBC</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="p-4 bg-[#F5F0EB] rounded-lg">
-            <p className="text-[#999999] text-sm font-semibold">Total de respuestas</p>
-            <p className="text-3xl font-bold text-[#C41E3A] mt-2">{totalResponses.toLocaleString()}</p>
-          </div>
-          <div className="p-4 bg-[#F5F0EB] rounded-lg">
-            <p className="text-[#999999] text-sm font-semibold">Período de encuesta</p>
-            <p className="text-lg font-bold text-[#2D2D2D] mt-2">En tiempo real</p>
-          </div>
-        </div>
-
-        {/* Resultados por partido */}
-        {generalStats && generalStats.length > 0 && (
-          <div>
-            <h4 className="font-bold text-[#2D2D2D] mb-4">Distribución de Votos y Escaños</h4>
-            <div className="space-y-3">
-              {generalStats
-                .sort((a, b) => (b.porcentaje || 0) - (a.porcentaje || 0))
-                .map((party) => (
-                  <div key={party.id} className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                      <PartyLogo partyId={party.id} size={32} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold text-[#2D2D2D] text-sm">
-                          {party.nombre}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#C41E3A]">
-                            {party.porcentaje?.toFixed(1) || 0}%
-                          </span>
-                          {party.escanos > 0 && (
-                            <span className="text-xs bg-[#C41E3A] text-white px-2 py-1 rounded">
-                              {party.escanos} escaños
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="h-2 bg-[#E0D5CC] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#C41E3A] transition-all duration-500"
-                          style={{ width: `${Math.min(party.porcentaje || 0, 100)}%` }}
-                        />
-                      </div>
-                    </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: config.color }} />
+                      {config.display_name}
+                    </h4>
+                    <span className="text-xs text-muted-foreground">{config.party_key}</span>
                   </div>
-                ))}
-            </div>
-          </div>
-        )}
+                </div>
 
-        <p className="text-sm text-[#999999] mt-4">
-          Los resultados de #LaEncuestaBC se basan en respuestas voluntarias de usuarios de redes sociales 
-          y no representan una muestra estadísticamente representativa de la población española.
-        </p>
-      </div>
-    </div>
+                {/* Bloque Barómetro BC (Escaños) */}
+                <div className="flex items-center gap-6 sm:justify-end flex-1">
+                  <div className="text-center sm:text-right">
+                    <span className="text-xs text-muted-foreground block uppercase font-medium">Escaños BC</span>
+                    <Badge
+                      className="text-sm font-semibold px-2.5 py-0.5 text-white"
+                      style={{ backgroundColor: config.color }}
+                    >
+                      {escanos}
+                    </Badge>
+                  </div>
+
+                  {/* Media de Encuestas (Si aplica) */}
+                  {pctMedia !== null && (
+                    <div className="text-center sm:text-right min-w-[80px]">
+                      <span className="text-xs text-muted-foreground block uppercase font-medium">Media Encuestas</span>
+                      <span className="text-sm font-semibold">{pctMedia}%</span>
+                    </div>
+                  )}
+
+                  {/* Voto Interno (Tabla Respuestas) */}
+                  <div className="text-center sm:text-right min-w-[90px]">
+                    <span className="text-xs text-muted-foreground block uppercase font-medium">Respuestas</span>
+                    <span className="text-sm font-bold text-foreground">
+                      {pctInterno}% <span className="text-xs text-muted-foreground font-normal">({numVotosInternos})</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
