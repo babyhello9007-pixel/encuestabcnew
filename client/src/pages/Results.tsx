@@ -149,12 +149,12 @@ const RESULTS_CSS = `
 .r-party-card { --party-accent: #e8465a; background: linear-gradient(160deg, color-mix(in srgb, var(--party-accent) 12%, transparent), rgba(255,255,255,0.03)); backdrop-filter: blur(20px) saturate(175%); -webkit-backdrop-filter: blur(20px) saturate(175%); border: 1px solid color-mix(in srgb, var(--party-accent) 38%, rgba(255,255,255,0.16)); border-radius: 16px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
 .r-party-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px color-mix(in srgb, var(--party-accent) 35%, rgba(0,0,0,0.32)); }
 .r-party-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.r-party-logo-wrap { width: 40px; height: 40px; border-radius: 9px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.r-party-logo-wrap { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .r-party-info { flex: 1; min-width: 0; }
-.r-party-name { font-size: 13px; font-weight: 700; color: #f0eff8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.r-party-votes { font-size: 11px; color: #7a7990; margin-top: 1px; }
-.r-party-edad { font-size: 10px; color: #c9a96e; margin-top: 1px; display: flex; align-items: center; gap: 4px; }
-.r-party-seats { text-align: right; flex-shrink: 0; }
+.r-party-name { font-size: 16px; font-weight: 800; color: #f0eff8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r-party-votes { font-size: 13px; color: #7a7990; margin-top: 2px; font-weight: 600; }
+.r-party-edad { font-size: 12px; color: #c9a96e; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.r-party-seats { text-align: right; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; min-width: 130px; }
 .r-party-seats-num { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; line-height: 1; }
 .r-party-seats-label { font-size: 9px; color: #7a7990; }
 .r-party-bar-wrap { display: flex; flex-direction: column; gap: 3px; }
@@ -1815,7 +1815,7 @@ export default function Results() {
   const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string | null>(null);
   const [votosPorPartidoProvincia, setVotosPorPartidoProvincia] = useState<Record<string, number>>({});
   const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
-  const [sortBy, setSortBy] = useState<"votos" | "escanos">("votos");
+  const [sortBy, setSortBy] = useState<"votos" | "escanos" | "barometro" | "media">("votos");
   const [mapView, setMapView] = useState<"schematic" | "realistic">("realistic");
   const [votosPorProvinciaJuveniles, setVotosPorProvinciaJuveniles] = useState<Record<string, Record<string, number>>>({});
   const [escanosJuvenilesPorProvincia, setEscanosJuvenilesPorProvincia] = useState<Record<string, number>>({});
@@ -1996,7 +1996,14 @@ export default function Results() {
           if (bc?.length) {
             const bcMap: Record<string, number> = {};
             bc.forEach((r: any) => {
-              const partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
+              let partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
+              // Si no encuentra por party_key, buscar por display_name
+              if (!generalPartyMap[partyKey]) {
+                const found = Object.entries(generalPartyMap).find(([, p]) => 
+                  p.name?.toLowerCase() === String(r.partido || "").toLowerCase()
+                );
+                if (found) partyKey = found[0];
+              }
               bcMap[partyKey] = parseInt(r.escaños || "0", 10) || 0;
             });
             setBarometroBC(bcMap);
@@ -2008,7 +2015,14 @@ export default function Results() {
           if (me?.length) {
             const meMap: Record<string, number> = {};
             me.forEach((r: any) => {
-              const partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
+              let partyKey = resolvePartyKey(String(r.partido || ""), generalPartyMap);
+              // Si no encuentra por party_key, buscar por display_name
+              if (!generalPartyMap[partyKey]) {
+                const found = Object.entries(generalPartyMap).find(([, p]) => 
+                  p.name?.toLowerCase() === String(r.partido || "").toLowerCase()
+                );
+                if (found) partyKey = found[0];
+              }
               meMap[partyKey] = parseInt(r.escaños || "0", 10) || 0;
             });
             setMediaEncuestas(meMap);
@@ -2274,14 +2288,24 @@ export default function Results() {
                     <div className="r-stat-suffix">/ 10</div>
                   </div>
                 )}
+                <div className="r-stat-card">
+                  <div className="r-stat-label">Abstención BarómetroBC</div>
+                  <div className="r-stat-value">40</div>
+                  <div className="r-stat-suffix">%</div>
+                </div>
+                <div className="r-stat-card">
+                  <div className="r-stat-label">Nivel de Cabreo</div>
+                  <div className="r-stat-value">7</div>
+                  <div className="r-stat-suffix">/ 10</div>
+                </div>
               </div>
 
               {showSortBar && (
                 <div className="r-sort-bar">
                   <span style={{ fontSize: 11, color: "#7a7990" }}>Ordenar:</span>
-                  {(["votos", "escanos"] as const).map(opt => (
-                    <button key={opt} className={`r-sort-btn${sortBy === opt ? " active" : ""}`} onClick={() => setSortBy(opt)}>
-                      {opt === "votos" ? "Votos" : "Escaños"}
+                  {(["votos", "escanos", "barometro", "media"] as const).map(opt => (
+                    <button key={opt} className={`r-sort-btn${sortBy === opt ? " active" : ""}`} onClick={() => setSortBy(opt as any)}>
+                      {opt === "votos" ? "Votos" : opt === "escanos" ? "Escaños" : opt === "barometro" ? "BarómetroBC" : "Media"}
                     </button>
                   ))}
                   <span className="r-sort-hint">{totalEscanos} escaños en juego</span>
@@ -2316,7 +2340,7 @@ export default function Results() {
 
               {showPartyList && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {(sortBy === "votos" ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map(party => {
+                  {(sortBy === "votos" ? [...stats].sort((a, b) => b.votos - a.votos) : sortBy === "escanos" ? [...stats].sort((a, b) => b.escanos - a.escanos) : sortBy === "barometro" ? [...stats].sort((a, b) => (barometroBC[b.id] ?? 0) - (barometroBC[a.id] ?? 0)) : [...stats].sort((a, b) => (mediaEncuestas[b.id] ?? 0) - (mediaEncuestas[a.id] ?? 0))).map(party => {
                     const lookup = activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup;
                     const rk = resolvePartyKey(party.id, lookup);
                     const logoUrl = lookup[rk]?.logo || party.logo || "";
@@ -2326,33 +2350,40 @@ export default function Results() {
                       <div key={party.id} className="r-party-card" style={{ borderColor: `${partyColor}45`, ["--party-accent" as any]: partyColor }} onClick={() => setSelectedPartyForStats(party.nombre)}>
                         <div className="r-party-card-top">
                           <div className="r-party-logo-wrap" style={{ background: `${partyColor}18` }}>
-                            <PartyLogoImg src={logoUrl} name={party.nombre} color={partyColor} size={34} />
+                            <PartyLogoImg src={logoUrl} name={party.nombre} color={partyColor} size={48} />
                           </div>
                           <div className="r-party-info">
                             <div className="r-party-name">{party.nombre}</div>
                             <div className="r-party-votes">{party.votos.toLocaleString("es-ES")} votos</div>
                             {activeTab === "general" && edadMedia && (
                               <div className="r-party-edad">
-                                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#c9a96e", display: "inline-block" }} />
+                                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#c9a96e", display: "inline-block", marginRight: 4 }} />
                                 Edad media: {edadMedia} años
                               </div>
                             )}
                           </div>
                           <div className="r-party-seats">
-                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                              <div style={{ textAlign: "center" }}>
-                                <div className="r-party-seats-num" style={{ color: partyColor }}>{party.escanos}</div>
-                                <div className="r-party-seats-label">Encuesta</div>
-                              </div>
-                              <div style={{ textAlign: "center", fontSize: 11 }}>
-                                <div style={{ color: "#818cf8", fontWeight: 700 }}>{barometroBC[party.id] ?? 0}</div>
-                                <div style={{ color: "#7a7990", fontSize: 10 }}>BarómetroBC</div>
-                              </div>
-                              <div style={{ textAlign: "center", fontSize: 11 }}>
-                                <div style={{ color: "#f59e0b", fontWeight: 700 }}>{mediaEncuestas[party.id] ?? 0}</div>
-                                <div style={{ color: "#7a7990", fontSize: 10 }}>Media</div>
-                              </div>
+                            <div style={{ textAlign: "center" }}>
+                              <div className="r-party-seats-num" style={{ color: partyColor, fontSize: 28 }}>{party.escanos}</div>
+                              <div className="r-party-seats-label">Encuesta</div>
                             </div>
+                            <div style={{ textAlign: "center", position: "relative", cursor: "help" }} title="Encuesta independiente de opinión">
+                              <div style={{ color: "#818cf8", fontWeight: 700, fontSize: 20 }}>{barometroBC[party.id] ?? 0}</div>
+                              <div style={{ color: "#7a7990", fontSize: 10 }}>BarómetroBC</div>
+                            </div>
+                            <div style={{ textAlign: "center", position: "relative", cursor: "help" }} title="Promedio de encuestas">
+                              <div style={{ color: "#f59e0b", fontWeight: 700, fontSize: 20 }}>{mediaEncuestas[party.id] ?? 0}</div>
+                              <div style={{ color: "#7a7990", fontSize: 10 }}>Media</div>
+                            </div>
+                            {party.escanos !== (mediaEncuestas[party.id] ?? 0) && (
+                              <div style={{ textAlign: "center", fontSize: 13, marginTop: 4, fontWeight: 700 }}>
+                                {party.escanos > (mediaEncuestas[party.id] ?? 0) ? (
+                                  <span style={{ color: "#22c55e" }}>↑ +{party.escanos - (mediaEncuestas[party.id] ?? 0)}</span>
+                                ) : (
+                                  <span style={{ color: "#ef4444" }}>↓ {party.escanos - (mediaEncuestas[party.id] ?? 0)}</span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="r-party-bar-wrap">
