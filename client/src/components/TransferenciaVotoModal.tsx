@@ -550,7 +550,7 @@ function PartyBadge({ party, getColor, getLogo, getDisplayName }: { party: strin
 }
 
 // ==========================================
-// SANKEY ENGINE MEJORADO (FIDELIDAD CON AUTO-BUCLE + ESTILO)
+// SANKEY ENGINE (FIDELIDAD DE IZQUIERDA A DERECHA, MISMO TRATAMIENTO)
 // ==========================================
 interface SankeyChartProps {
   data: TransferenciaVotoData[];
@@ -575,33 +575,42 @@ function SankeyChart({
 
     const width = 950;
     const nodeWidth = 20;
-    const paddingX = 190;
+    const paddingX = 180;
     const leftX = paddingX;
     const rightX = width - paddingX;
 
-    // Separar enlaces de fidelidad y transvase
+    // 1. Asegurar que la lista de partidos en ambos lados mantenga el mismo orden para que las líneas cruzadas y rectos sean limpios
+    const origenesSet = new Set<string>();
+    const destinosSet = new Set<string>();
     const origenesTotales: Record<string, number> = {};
     const destinosTotales: Record<string, number> = {};
     let totalVotosGlobal = 0;
 
     data.forEach((d) => {
-      origenesTotales[d.origen_partido] = (origenesTotales[d.origen_partido] || 0) + d.votos_transferidos;
-      destinosTotales[d.destino_partido] = (destinosTotales[d.destino_partido] || 0) + d.votos_transferidos;
+      const orig = d.origen_partido.trim();
+      const dest = d.destino_partido.trim();
+      
+      origenesSet.add(orig);
+      destinosSet.add(dest);
+
+      origenesTotales[orig] = (origenesTotales[orig] || 0) + d.votos_transferidos;
+      destinosTotales[dest] = (destinosTotales[dest] || 0) + d.votos_transferidos;
       totalVotosGlobal += d.votos_transferidos;
     });
 
-    const listOrigenes = Object.keys(origenesTotales);
-    const listDestinos = Object.keys(destinosTotales);
+    // Unificamos el orden visual de los partidos en ambos lados (Origen a la izq, Destino a la dcha)
+    const listOrigenes = Array.from(origenesSet);
+    const listDestinos = Array.from(destinosSet);
 
-    const gap = 24;
-    const topMargin = 40;
-    const minNodeHeight = 22;
+    const gap = 20;
+    const topMargin = 35;
+    const minNodeHeight = 20;
 
     const maxItems = Math.max(listOrigenes.length, listDestinos.length);
-    const calculatedHeight = Math.max(maxItems * 54 + topMargin * 2, 380);
+    const calculatedHeight = Math.max(maxItems * 50 + topMargin * 2, 360);
     const usableHeight = calculatedHeight - topMargin * 2 - (maxItems - 1) * gap;
 
-    // Posicionamiento de Nodos Izquierda (Origen)
+    // Nodos Izquierda (Origen)
     let curYLeft = topMargin;
     const origNodes: Record<string, { y: number; height: number; total: number }> = {};
     listOrigenes.forEach((orig) => {
@@ -610,7 +619,7 @@ function SankeyChart({
       curYLeft += h + gap;
     });
 
-    // Posicionamiento de Nodos Derecha (Destino)
+    // Nodos Derecha (Destino)
     let curYRight = topMargin;
     const destNodes: Record<string, { y: number; height: number; total: number }> = {};
     listDestinos.forEach((dest) => {
@@ -619,47 +628,44 @@ function SankeyChart({
       curYRight += h + gap;
     });
 
-    // Controladores de desplazamientos
+    // Offsets acumulativos para que los flujos salgan/entren ordenadamente sin solaparse
     const curOffsetsOrig: Record<string, number> = {};
     const curOffsetsDest: Record<string, number> = {};
     listOrigenes.forEach((o) => (curOffsetsOrig[o] = 0));
     listDestinos.forEach((d) => (curOffsetsDest[d] = 0));
 
-    // Construcción de trazados
+    // Construcción de enlaces (TODOS van de Izquierda a Derecha)
     const computedLinks = data.map((d, index) => {
-      const oNode = origNodes[d.origen_partido];
-      const dNode = destNodes[d.destino_partido];
+      const origKey = d.origen_partido.trim();
+      const destKey = d.destino_partido.trim();
 
-      if (!oNode) return null;
+      const oNode = origNodes[origKey];
+      const dNode = destNodes[destKey];
 
-      const isFidelity = d.origen_partido === d.destino_partido;
+      // Si falta alguno de los dos nodos por desajuste de datos, omitimos
+      if (!oNode || !dNode) return null;
 
+      const isFidelity = origKey === destKey;
+
+      // Cálculo de grosor en origen y destino
       const origRatio = d.votos_transferidos / (oNode.total || 1);
-      const thickness = Math.max(origRatio * oNode.height, 3);
-      const y1 = oNode.y + curOffsetsOrig[d.origen_partido] + thickness / 2;
-      curOffsetsOrig[d.origen_partido] += thickness;
+      const thickness = Math.max(origRatio * oNode.height, 2.5);
+      
+      const destRatio = d.votos_transferidos / (dNode.total || 1);
+      const destThickness = Math.max(destRatio * dNode.height, 2.5);
 
-      let path = "";
+      const y1 = oNode.y + curOffsetsOrig[origKey] + thickness / 2;
+      const y2 = dNode.y + curOffsetsDest[destKey] + destThickness / 2;
 
-      if (isFidelity) {
-        // ASA DE FIDELIDAD (Curva hacia afuera a la izquierda)
-        const loopRadius = Math.min(thickness * 1.5, 35) + 15;
-        const xStart = leftX;
-        const yStart = y1;
-        path = `M ${xStart} ${yStart - thickness / 4} C ${xStart - loopRadius} ${yStart - loopRadius}, ${xStart - loopRadius} ${yStart + loopRadius}, ${xStart} ${yStart + thickness / 4}`;
-      } else {
-        // FLUJO NORMAL ENTRE PARTIDOS
-        if (!dNode) return null;
-        const destRatio = d.votos_transferidos / (dNode.total || 1);
-        const destThickness = Math.max(destRatio * dNode.height, 3);
-        const y2 = dNode.y + curOffsetsDest[d.destino_partido] + destThickness / 2;
-        curOffsetsDest[d.destino_partido] += destThickness;
+      curOffsetsOrig[origKey] += thickness;
+      curOffsetsDest[destKey] += destThickness;
 
-        const x1 = leftX + nodeWidth;
-        const x2 = rightX;
-        const mx = (x1 + x2) / 2;
-        path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
-      }
+      const x1 = leftX + nodeWidth;
+      const x2 = rightX;
+      const mx = (x1 + x2) / 2;
+
+      // Trayectoria de curva Bezier idéntica para fugas y fidelidad
+      const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
 
       return {
         id: `link-${index}`,
@@ -667,8 +673,8 @@ function SankeyChart({
         path,
         thickness,
         isFidelity,
-        colorOrigen: getPartyColor(d.origen_partido),
-        colorDestino: getPartyColor(d.destino_partido),
+        colorOrigen: getPartyColor(origKey),
+        colorDestino: getPartyColor(destKey),
       };
     }).filter(Boolean);
 
@@ -685,27 +691,22 @@ function SankeyChart({
   }, [data, getPartyColor]);
 
   if (!layout) {
-    return <div style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Sin datos suficientes.</div>;
+    return <div style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Sin datos suficientes para generar el gráfico.</div>;
   }
 
   return (
     <div style={{ position: "relative", width: "100%", overflowX: "auto" }}>
       <svg viewBox={`0 0 ${layout.width} ${layout.height}`} style={{ width: "100%", height: "auto", display: "block" }}>
         <defs>
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-
           {layout.links.map((link) => link && (
             <linearGradient key={`grad-${link.id}`} id={`grad-${link.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.8" : "0.55"} />
-              <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.8" : "0.55"} />
+              <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.75" : "0.45"} />
+              <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.75" : "0.45"} />
             </linearGradient>
           ))}
         </defs>
 
-        {/* Flujos / Enlaces */}
+        {/* Flujos (Tanto Fugas como Fidelidad van de Izq a Dcha) */}
         {layout.links.map((link) => {
           if (!link) return null;
           const isHighlighted =
@@ -718,82 +719,82 @@ function SankeyChart({
               key={link.id}
               d={link.path}
               fill="none"
-              stroke={link.isFidelity ? "#4ade80" : `url(#grad-${link.id})`}
+              stroke={`url(#grad-${link.id})`}
               strokeWidth={link.thickness}
-              strokeDasharray={link.isFidelity ? "4,2" : "none"}
-              strokeOpacity={hoveredNode || activeLink ? (isHighlighted ? 0.95 : 0.05) : link.isFidelity ? 0.75 : 0.45}
-              filter={isHighlighted ? "url(#glow)" : undefined}
-              style={{ transition: "all 0.2s ease", cursor: "pointer" }}
+              strokeOpacity={
+                hoveredNode || activeLink
+                  ? isHighlighted ? 0.95 : 0.05
+                  : link.isFidelity ? 0.7 : 0.4
+              }
+              style={{ transition: "stroke-opacity 0.2s ease, stroke-width 0.2s ease", cursor: "pointer" }}
               onMouseEnter={() => setActiveLink(link.data)}
               onMouseLeave={() => setActiveLink(null)}
             />
           );
         })}
 
-        {/* Nodos Izquierda (Origen) */}
-        {Object.entries(layout.origNodes).map(([party, pos]) => {
-          const color = getPartyColor(party);
-          const isHovered = hoveredNode === party;
-          return (
-            <g key={`orig-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
-              <rect
-                x={layout.leftX}
-                y={pos.y}
-                width={layout.nodeWidth}
-                height={pos.height}
-                rx={5}
-                fill={color}
-                stroke={isHovered ? "#fff" : "rgba(255,255,255,0.2)"}
-                strokeWidth={isHovered ? 2 : 1}
-              />
-              <text x={layout.leftX - 12} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={12} fontWeight={800}>
-                {getPartyDisplayName(party)}
-              </text>
-            </g>
-          );
-        })}
+        {/* Nodos Origen (Columna Izquierda) */}
+        {Object.entries(layout.origNodes).map(([party, pos]) => (
+          <g key={`orig-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
+            <rect
+              x={layout.leftX}
+              y={pos.y}
+              width={layout.nodeWidth}
+              height={pos.height}
+              rx={4}
+              fill={getPartyColor(party)}
+              stroke="rgba(255,255,255,0.2)"
+              strokeWidth={1}
+            />
+            <text x={layout.leftX - 10} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={12} fontWeight={700}>
+              {getPartyDisplayName(party)}
+            </text>
+          </g>
+        ))}
 
-        {/* Nodos Derecha (Destino) */}
-        {Object.entries(layout.destNodes).map(([party, pos]) => {
-          const color = getPartyColor(party);
-          const isHovered = hoveredNode === party;
-          return (
-            <g key={`dest-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
-              <rect
-                x={layout.rightX}
-                y={pos.y}
-                width={layout.nodeWidth}
-                height={pos.height}
-                rx={5}
-                fill={color}
-                stroke={isHovered ? "#fff" : "rgba(255,255,255,0.2)"}
-                strokeWidth={isHovered ? 2 : 1}
-              />
-              <text x={layout.rightX + layout.nodeWidth + 12} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={12} fontWeight={800}>
-                {getPartyDisplayName(party)}
-              </text>
-            </g>
-          );
-        })}
+        {/* Nodos Destino (Columna Derecha) */}
+        {Object.entries(layout.destNodes).map(([party, pos]) => (
+          <g key={`dest-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
+            <rect
+              x={layout.rightX}
+              y={pos.y}
+              width={layout.nodeWidth}
+              height={pos.height}
+              rx={4}
+              fill={getPartyColor(party)}
+              stroke="rgba(255,255,255,0.2)"
+              strokeWidth={1}
+            />
+            <text x={layout.rightX + layout.nodeWidth + 10} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={12} fontWeight={700}>
+              {getPartyDisplayName(party)}
+            </text>
+          </g>
+        ))}
       </svg>
 
-      {/* Leyenda explicativa de fidelidad en la esquina del Sankey */}
-      <div style={{ position: "absolute", top: 10, right: 16, display: "flex", gap: 14, fontSize: 11, color: "#94a3b8", background: "rgba(0,0,0,0.4)", padding: "4px 10px", borderRadius: 8 }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ width: 12, height: 2, background: "#4ade80", borderStyle: "dashed" }} /> Fidelidad (Asa)
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ width: 12, height: 3, background: "#818cf8" }} /> Fuga / Transvase
-        </span>
-      </div>
-
-      {/* Tooltip Emergente */}
+      {/* Tooltip flotante */}
       {activeLink && (
-        <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", background: "rgba(15, 23, 42, 0.95)", border: activeLink.origen_partido === activeLink.destino_partido ? "1px solid #4ade80" : "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "8px 16px", display: "flex", alignItems: "center", gap: 10, zIndex: 10, boxShadow: "0 10px 25px -5px rgba(0,0,0,0.5)" }}>
+        <div style={{
+          position: "absolute",
+          bottom: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "rgba(15, 23, 42, 0.95)",
+          border: "1px solid rgba(255,255,255,0.15)",
+          borderRadius: 10,
+          padding: "8px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          zIndex: 10,
+          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.5)"
+        }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>
-            {activeLink.origen_partido === activeLink.destino_partido ? `🛡️ Fidelidad de ${getPartyDisplayName(activeLink.origen_partido)}:` : `${getPartyDisplayName(activeLink.origen_partido)} → ${getPartyDisplayName(activeLink.destino_partido)}:`}
+            {activeLink.origen_partido === activeLink.destino_partido
+              ? `🛡️ Fidelidad ${getPartyDisplayName(activeLink.origen_partido)}:`
+              : `${getPartyDisplayName(activeLink.origen_partido)} → ${getPartyDisplayName(activeLink.destino_partido)}:`}
           </span>
-          <span style={{ fontSize: 12, fontWeight: 800, color: activeLink.origen_partido === activeLink.destino_partido ? "#4ade80" : "#818cf8" }}>
+          <span style={{ fontSize: 12, fontWeight: 800, color: "#818cf8" }}>
             {activeLink.votos_transferidos.toLocaleString()} votos ({activeLink.porcentaje.toFixed(2)}%)
           </span>
         </div>
