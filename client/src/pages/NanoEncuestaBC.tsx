@@ -16,6 +16,7 @@ interface NanoSurveyResponse {
   provincia?: string;
   comunidad_autonoma?: string;
   nacionalidad?: string;
+  anteriores_eegg?: string;
   voto_generales?: string;
   voto_autonomicas?: string;
   voto_municipales?: string;
@@ -220,6 +221,7 @@ export default function NanoEncuestaBC() {
     { title: "Comunidad Autónoma", subtitle: "Selecciona tu comunidad autónoma de residencia", key: "comunidad_autonoma", type: "select" },
     { title: "Provincia", subtitle: "Selecciona tu provincia de residencia", key: "provincia", type: "select" },
     { title: "Nacionalidad", subtitle: "¿Cuál es tu nacionalidad?", key: "nacionalidad", type: "text", inputType: "text" },
+    { title: "Elecciones Anteriores", subtitle: "¿A qué partido votó UD. en las anteriores elecciones?", key: "anteriores_eegg", type: "party" },
     { title: "Elecciones Generales", subtitle: "¿A qué partido votarías en las próximas elecciones generales?", key: "voto_generales", type: "party" },
     { title: "Elecciones Autonómicas", subtitle: "¿A qué partido votarías en las próximas elecciones autonómicas?", key: "voto_autonomicas", type: "party" },
     { title: "Elecciones Municipales", subtitle: "¿A qué partido votarías en las próximas elecciones municipales?", key: "voto_municipales", type: "party" },
@@ -239,6 +241,7 @@ export default function NanoEncuestaBC() {
     { title: "Forma del Estado", subtitle: "¿Qué forma del Estado prefieres para España?", key: "monarquia_republica", type: "cards" },
     { title: "División Territorial", subtitle: "¿Qué modelo territorial prefieres para España?", key: "division_territorial", type: "cards" },
     { title: "Sistema de Pensiones", subtitle: "¿Qué modelo de pensiones prefieres?", key: "sistema_pensiones", type: "cards" },
+    { title: "Crisis Migratoria en Ceuta", subtitle: "¿Qué opina de la crisis ocurrida en Ceuta, tras la entrada de más de 40.000 personas de manera irregular?", key: "opinion_crisismigratoria", type: "cards" },
   ];
 
   const currentStepData = steps[currentStep];
@@ -301,7 +304,7 @@ export default function NanoEncuestaBC() {
       }
     } catch (error) { console.error("Cooldown check error:", error); }
 
-    const requiredFields = ["edad","provincia","comunidad_autonoma","nacionalidad","voto_generales","voto_autonomicas","voto_municipales","voto_europeas","nota_ejecutivo","valoracion_feijoo","valoracion_sanchez","valoracion_abascal","valoracion_alvise","valoracion_yolanda","valoracion_irene","valoracion_ayuso","valoracion_buxade","posicion_ideologica","asociacion_juvenil","lider_partido","monarquia_republica","division_territorial","sistema_pensiones"];
+    const requiredFields = ["edad","provincia","comunidad_autonoma","nacionalidad","anteriores_eegg","voto_generales","voto_autonomicas","voto_municipales","voto_europeas","nota_ejecutivo","valoracion_feijoo","valoracion_sanchez","valoracion_abascal","valoracion_alvise","valoracion_yolanda","valoracion_irene","valoracion_ayuso","valoracion_buxade","posicion_ideologica","asociacion_juvenil","lider_partido","monarquia_republica","division_territorial","sistema_pensiones","opinion_crisismigratoria"];
     const missing = requiredFields.filter(f => { const v = responses[f as keyof NanoSurveyResponse]; return v === undefined || v === null || v === "" || (typeof v === "number" && isNaN(v)); });
     if (missing.length > 0) { toast.error(`Faltan ${missing.length} respuestas por completar`); return; }
 
@@ -312,6 +315,7 @@ export default function NanoEncuestaBC() {
         provincia: normalizeProvinceName(responses.provincia) || null,
         ccaa: responses.comunidad_autonoma || null,
         nacionalidad: responses.nacionalidad || null,
+        anteriores_eegg: responses.anteriores_eegg || null,
         voto_generales: responses.voto_generales || null,
         voto_autonomicas: responses.voto_autonomicas || null,
         voto_municipales: responses.voto_municipales || null,
@@ -330,6 +334,7 @@ export default function NanoEncuestaBC() {
         monarquia_republica: responses.monarquia_republica || null,
         division_territorial: responses.division_territorial || null,
         sistema_pensiones: responses.sistema_pensiones || null,
+        opinion_crisismigratoria: responses.opinion_crisismigratoria || null,
       };
       const { error } = await supabase.from("respuestas").insert([dataToSubmit]);
       if (error) { 
@@ -408,6 +413,13 @@ export default function NanoEncuestaBC() {
       { value: "Privado", label: "Sistema Privado", desc: "Pensiones gestionadas por fondos privados" },
       { value: "Mixto", label: "Sistema Mixto", desc: "Combinación de público y privado" },
       { value: "Otro", label: "Otro modelo", desc: "Una alternativa diferente" },
+    ],
+    opinion_crisismigratoria: [
+      { value: "Invasión territorial", label: "Invasión territorial", desc: "Lo considero invasión territorial" },
+      { value: "Crisis humanitaria", label: "Crisis humanitaria", desc: "Requiere intervención urgente de la UE" },
+      { value: "Consecuencia geopolítica", label: "Consecuencia geopolítica", desc: "Deterioro geopolítico y socioeconómico" },
+      { value: "Fallo diplomático", label: "Fallo diplomático", desc: "Fallo en gestión diplomática y fronteras" },
+      { value: "Drama humanitario", label: "Drama humanitario", desc: "Falta de vías legales, derecho a migrar" },
     ],
   };
 
