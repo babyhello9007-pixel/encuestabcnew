@@ -12,113 +12,27 @@ export interface PartyConfig {
   is_active?: boolean;
 }
 
-// 1. Configuración estática de respaldo extraída directamente de tu base de datos SQL
+// Configuración por defecto
 const DEFAULT_PARTY_CONFIGS: Record<string, PartyConfig> = {
-  PP: {
-    party_key: "PP",
-    display_name: "PP",
-    color: "#005497",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pp.png",
-  },
-  PSOE: {
-    party_key: "PSOE",
-    display_name: "PSOE",
-    color: "#E20613",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/psoe.png",
-  },
-  VOX: {
-    party_key: "VOX",
-    display_name: "VOX",
-    color: "#5AC035",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/vox.png",
-  },
-  SUMAR: {
-    party_key: "SUMAR",
-    display_name: "SUMAR",
-    color: "#E61455",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/sumar.png",
-  },
-  PODEMOS: {
-    party_key: "PODEMOS",
-    display_name: "PODEMOS",
-    color: "#9169F4",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pod.png",
-  },
-  ERC: {
-    party_key: "ERC",
-    display_name: "ERC",
-    color: "#F95838",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/erc.png",
-  },
-  BILDU: {
-    party_key: "BILDU",
-    display_name: "BILDU",
-    color: "#08A3A6",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/bildu.png",
-  },
-  JUNTS: {
-    party_key: "JUNTS",
-    display_name: "JUNTS",
-    color: "#00C4B2",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/junts.png",
-  },
-  PNV: {
-    party_key: "PNV",
-    display_name: "PNV",
-    color: "#2A8343",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pnv.png",
-  },
-  "Adelante Andalucía": {
-    party_key: "Adelante Andalucía",
-    display_name: "ADELANTE ANDALUCÍA",
-    color: "#24C87E",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/Adelante%20Andalucia.png",
-  },
-  BNG: {
-    party_key: "BNG",
-    display_name: "Bloque Nacionalista Galego",
-    color: "#6AADE4",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/bng.png",
-  },
-  CC: {
-    party_key: "CC",
-    display_name: "Coalición Canaria",
-    color: "#25BAF2",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/CoalicionCanaria.png",
-  },
-  UPN: {
-    party_key: "UPN",
-    display_name: "Unión del Pueblo Navarro",
-    color: "#A30E12",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/upn.png",
-  },
-  "Aliança Catalana": {
-    party_key: "Aliança Catalana",
-    display_name: "Aliança Catalana",
-    color: "#0F4C81",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/AliancaCatalana.png",
-  },
-  D21: {
-    party_key: "D21",
-    display_name: "D21",
-    color: "#FF7F50",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/InShot_20260627_105907307.jpg",
-  },
-  "Se Acabó La Fiesta": {
-    party_key: "Se Acabó La Fiesta",
-    display_name: "Se Acabó la Fiesta",
-    color: "#ECC29E",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/SeAcaboLaFiesta.png",
-  },
-  PACMA: {
-    party_key: "PACMA",
-    display_name: "PACMA",
-    color: "#22D65D",
-    logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/PACMA.png",
-  },
+  PP: { id: 160, party_key: "PP", display_name: "PP", color: "#005497", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pp.png" },
+  PSOE: { id: 2, party_key: "PSOE", display_name: "PSOE", color: "#E20613", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/psoe.png" },
+  VOX: { id: 162, party_key: "VOX", display_name: "VOX", color: "#5AC035", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/vox.png" },
+  SUMAR: { id: 123, party_key: "SUMAR", display_name: "SUMAR", color: "#E61455", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/sumar.png" },
+  PODEMOS: { id: 5, party_key: "PODEMOS", display_name: "PODEMOS", color: "#9169F4", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pod.png" },
+  ERC: { id: 7, party_key: "ERC", display_name: "ERC", color: "#F95838", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/erc.png" },
+  BILDU: { id: 10, party_key: "BILDU", display_name: "BILDU", color: "#08A3A6", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/bildu.png" },
+  JUNTS: { id: 6, party_key: "JUNTS", display_name: "JUNTS", color: "#00C4B2", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/junts.png" },
+  PNV: { id: 8, party_key: "PNV", display_name: "PNV", color: "#2A8343", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/pnv.png" },
+  "Adelante Andalucía": { id: 24, party_key: "Adelante Andalucía", display_name: "ADELANTE ANDALUCÍA", color: "#24C87E", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/Adelante%20Andalucia.png" },
+  BNG: { id: 17, party_key: "BNG", display_name: "Bloque Nacionalista Galego", color: "#6AADE4", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/bng.png" },
+  CC: { id: 12, party_key: "CC", display_name: "Coalición Canaria", color: "#25BAF2", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/CoalicionCanaria.png" },
+  UPN: { id: 13, party_key: "UPN", display_name: "Unión del Pueblo Navarro", color: "#A30E12", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/upn.png" },
+  "Aliança Catalana": { id: 9, party_key: "Aliança Catalana", display_name: "Aliança Catalana", color: "#0F4C81", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/AliancaCatalana.png" },
+  D21: { id: 189, party_key: "D21", display_name: "D21", color: "#FF7F50", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/InShot_20260627_105907307.jpg" },
+  "Se Acabó La Fiesta": { id: 11, party_key: "Se Acabó La Fiesta", display_name: "Se Acabó la Fiesta", color: "#ECC29E", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/SeAcaboLaFiesta.png" },
+  PACMA: { id: 26, party_key: "PACMA", display_name: "PACMA", color: "#22D65D", logo_url: "https://hlhzxxeqfznwutgkdvdp.supabase.co/storage/v1/object/public/party-logos/PACMA.png" },
 };
 
-// Escaños del Barómetro BC
 const BAROMETRO_BC: Record<string, string> = {
   PP: "130-133",
   PSOE: "102",
@@ -139,7 +53,6 @@ const BAROMETRO_BC: Record<string, string> = {
   PACMA: "0",
 };
 
-// CSV Histórico
 const CSV_DATA_STATICS: Record<string, { votos: number; pct: number }> = {
   PP: { votos: 8263724, pct: 32.62 },
   PSOE: { votos: 6628162, pct: 26.17 },
@@ -157,9 +70,6 @@ const CSV_DATA_STATICS: Record<string, { votos: number; pct: number }> = {
   UPN: { votos: 50453, pct: 0.20 },
 };
 
-/**
- * Normaliza cualquier texto quitando acentos, caracteres especiales y espacios en blanco
- */
 function cleanKey(str: string): string {
   if (!str) return "";
   return str
@@ -172,7 +82,9 @@ function cleanKey(str: string): string {
 interface Props {
   partyConfigs?: PartyConfig[];
   respuestasDB?: Array<{
+    party_id?: number;
     party_key?: string;
+    display_name?: string;
     voto_generales?: string;
     total_votos_raw?: number;
     total_votos?: number;
@@ -198,48 +110,48 @@ export default function BarometroGenerales({
       : CSV_DATA_STATICS;
   }, [csvMediaData]);
 
-  // 1. Diccionario Unificado de Configuración (Prioridad: Props > Fallback DB)
+  // Mapa de configuraciones
   const partyConfigMap = useMemo(() => {
     const map = new Map<string, PartyConfig>();
 
-    // Primero agregamos el fallback por defecto
     Object.entries(DEFAULT_PARTY_CONFIGS).forEach(([key, config]) => {
       map.set(cleanKey(key), config);
       if (config.party_key) map.set(cleanKey(config.party_key), config);
       if (config.display_name) map.set(cleanKey(config.display_name), config);
+      if (config.id) map.set(`id_${config.id}`, config);
     });
 
-    // Sobrescribimos con los datos dinámicos recibidos por props
     partyConfigs.forEach((p) => {
       if (p.party_key) map.set(cleanKey(p.party_key), p);
       if (p.display_name) map.set(cleanKey(p.display_name), p);
+      if (p.id) map.set(`id_${p.id}`, p);
     });
 
     return map;
   }, [partyConfigs]);
 
-  // 2. Diccionario de Respuestas de la DB
+  // Mapa de Respuestas DB
   const respuestasMap = useMemo(() => {
     const map = new Map<string, { count: number; pct: number }>();
 
-    // Calculamos total si los datos vienen crudos
     const totalVotosGlobal = respuestasDB.reduce((acc, curr) => {
       return acc + Number(curr.total_votos ?? curr.total_votos_raw ?? 0);
     }, 0);
 
     respuestasDB.forEach((item) => {
-      const key = item.party_key || item.voto_generales;
-      if (key) {
-        const count = Number(item.total_votos ?? item.total_votos_raw ?? 0);
-        let pct = Number(item.porcentaje_voto ?? 0);
+      const votes = Number(item.total_votos ?? item.total_votos_raw ?? 0);
+      let pct = Number(item.porcentaje_voto ?? 0);
 
-        if (pct === 0 && totalVotosGlobal > 0) {
-          pct = Number(((count / totalVotosGlobal) * 100).toFixed(2));
-        }
-
-        const normalizedKey = cleanKey(key);
-        map.set(normalizedKey, { count, pct });
+      if (pct === 0 && totalVotosGlobal > 0) {
+        pct = Number(((votes / totalVotosGlobal) * 100).toFixed(2));
       }
+
+      const record = { count: votes, pct };
+
+      if (item.party_id) map.set(`id_${item.party_id}`, record);
+      if (item.party_key) map.set(cleanKey(item.party_key), record);
+      if (item.display_name) map.set(cleanKey(item.display_name), record);
+      if (item.voto_generales) map.set(cleanKey(item.voto_generales), record);
     });
 
     return map;
@@ -258,18 +170,19 @@ export default function BarometroGenerales({
         <div className="space-y-3">
           {Object.keys(BAROMETRO_BC).map((key) => {
             const normalized = cleanKey(key);
-
-            // Búsqueda de configuración de partido
             const config = partyConfigMap.get(normalized);
 
-            // Búsqueda de CSV
             const csvEntryKey = Object.keys(effectiveCsvData).find(
               (k) => cleanKey(k) === normalized
             );
             const csvInfo = csvEntryKey ? effectiveCsvData[csvEntryKey] : undefined;
 
-            // Búsqueda en Respuestas DB
-            const dbInfo = respuestasMap.get(normalized);
+            // Búsqueda cruzada de la métrica de respuestas en la DB
+            const dbInfo =
+              respuestasMap.get(normalized) ||
+              (config?.id ? respuestasMap.get(`id_${config.id}`) : undefined) ||
+              (config?.party_key ? respuestasMap.get(cleanKey(config.party_key)) : undefined) ||
+              (config?.display_name ? respuestasMap.get(cleanKey(config.display_name)) : undefined);
 
             const logoUrl = config?.logo_url;
             const partyColor = config?.color || "#000000";
