@@ -39,6 +39,8 @@ import { SpainMapRealistic } from "@/components/results/SpainMapRealistic";
 import { CongressHemicycle } from "@/components/results/CongressHemicycle";
 import EncuestadorasComparativa from "@/components/results/EncuestadorasComparativa";
 import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
+import { CrisisCeutaSection } from "@/components/results/CrisisCeutaSection";
+import { TransferenciaVotoModal } from "@/components/TransferenciaVotoModal";
 import { PrimariasResultsSection } from "@/components/results/PrimariasResultsSection";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
@@ -349,11 +351,11 @@ const TAB_GROUPS: TabGroup[] = [
   ]},
   { label: "Análisis", icon: <BarChart2 className="w-3.5 h-3.5" />, tabs: [
     { key: "tendencias", label: "Tendencias" },
-    { key: "analisis-avanzado", label: "Coherencia y Visualizaciones" },
     { key: "contexto-historico", label: "Contexto Histórico" },
-    { key: "noche-electoral", label: "Modo Directo: Noche Electoral" },
     { key: "preguntas-varias", label: "Preguntas Varias" },
-    { key: "crisis-ceuta", label: "Crisis Ceuta" },
+  ]},
+  { label: "Crisis Ceuta", icon: <AlertTriangle className="w-3.5 h-3.5" />, tabs: [
+    { key: "crisis-ceuta", label: "Análisis de Crisis" },
   ]},
   { label: "Primarias", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
     { key: "primarias", label: "Resultados Primarias" },
@@ -1822,6 +1824,7 @@ export default function Results() {
   const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showInfografiaModal, setShowInfografiaModal] = useState(false);
+  const [showTransferenciaModal, setShowTransferenciaModal] = useState(false);
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
   const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
   const [leadersSubTab, setLeadersSubTab] = useState<"individual" | "porpartido">("individual");
@@ -2256,6 +2259,32 @@ export default function Results() {
                     </button>
                   ))}
                   <span className="r-sort-hint">{totalEscanos} escaños en juego</span>
+                  {activeTab === "general" && (
+                    <button
+                      onClick={() => setShowTransferenciaModal(true)}
+                      style={{
+                        marginLeft: "auto",
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        background: "rgba(232,70,90,0.15)",
+                        border: "1px solid rgba(232,70,90,0.3)",
+                        color: "#e8465a",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(232,70,90,0.25)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(232,70,90,0.15)";
+                      }}
+                    >
+                      <GitBranch size={11} style={{ display: "inline", marginRight: 4 }} />
+                      Transferencia de Voto
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -2390,6 +2419,7 @@ export default function Results() {
               )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
               {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "crisis-ceuta" && <CrisisCeutaSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "primarias" && <PrimariasResultsSection />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
@@ -2545,6 +2575,7 @@ export default function Results() {
 
         <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} partyKey={selectedPartyForStats ? resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup) : undefined} />
         {showInfografiaModal && <InfografiaModal parties={generalStats} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
+        <TransferenciaVotoModal isOpen={showTransferenciaModal} onClose={() => setShowTransferenciaModal(false)} partyColors={partyColorMap} />
       </div>
     </>
   );
