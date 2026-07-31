@@ -1625,8 +1625,9 @@ export default function Results() {
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic Party Config Hook
-  const { partyConfigs, loading: syncLoading } = usePartySync();
+const syncResult = usePartySync();
+const partyConfigs = syncResult?.partyConfigs ?? [];
+const syncLoading = syncResult?.loading ?? true;
 
   useEffect(() => {
     fetch("/logo-presidencia-blanco.png").then(r => r.blob()).then(blob => {
