@@ -3,6 +3,16 @@ import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Loader2, X } from "lucide-react";
 
+interface TransferenciaVotoDataRaw {
+  partido_anterior?: string;
+  origen_partido?: string;
+  partido_nuevo?: string;
+  destino_partido?: string;
+  total_transferencias?: number;
+  votos_transferidos?: number;
+  porcentaje?: number;
+}
+
 interface TransferenciaVotoData {
   origen_partido: string;
   destino_partido: string;
@@ -33,7 +43,15 @@ export function TransferenciaVotoModal({ isOpen, onClose, partyColors = {} }: Tr
 
         if (error) throw error;
 
-        setTransferData(data || []);
+        // Normalizamos los nombres de las columnas para compatibilidad
+        const formattedData: TransferenciaVotoData[] = (data || []).map((item: TransferenciaVotoDataRaw) => ({
+          origen_partido: item.origen_partido || item.partido_anterior || "Otros",
+          destino_partido: item.destino_partido || item.partido_nuevo || "Otros",
+          votos_transferidos: item.votos_transferidos ?? item.total_transferencias ?? 0,
+          porcentaje: item.porcentaje ?? 0,
+        }));
+
+        setTransferData(formattedData);
       } catch (error) {
         console.error("Error fetching transfer data:", error);
       } finally {
@@ -152,7 +170,7 @@ export function TransferenciaVotoModal({ isOpen, onClose, partyColors = {} }: Tr
                           if (typeof value === "number") {
                             return value.toLocaleString();
                           }
-                          return value;
+                          return value ?? 0;
                         }}
                       />
                       <Legend />
@@ -203,10 +221,10 @@ export function TransferenciaVotoModal({ isOpen, onClose, partyColors = {} }: Tr
                           {row.destino_partido}
                         </td>
                         <td style={{ padding: "10px 12px", textAlign: "right", color: "#f0eff8" }}>
-                          {row.votos_transferidos.toLocaleString()}
+                          {(row.votos_transferidos ?? 0).toLocaleString()}
                         </td>
                         <td style={{ padding: "10px 12px", textAlign: "right", color: "#e8465a", fontWeight: 600 }}>
-                          {row.porcentaje.toFixed(2)}%
+                          {(row.porcentaje ?? 0).toFixed(2)}%
                         </td>
                       </tr>
                     ))}
@@ -222,7 +240,7 @@ export function TransferenciaVotoModal({ isOpen, onClose, partyColors = {} }: Tr
               </h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
                 {Object.entries(dataByOrigen).map(([origen, data]) => {
-                  const totalVotos = data.reduce((sum, item) => sum + item.votos_transferidos, 0);
+                  const totalVotos = data.reduce((sum, item) => sum + (item.votos_transferidos ?? 0), 0);
                   return (
                     <div
                       key={origen}
