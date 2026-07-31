@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Results.tsx — Versión corregida y mejorada
-// Fixes: comentarios, logos partidos, simulador, gobierno, infografía, mobile
+// Fixes: comentarios, logos partidos, simulador, gobierno, infografía, mobile, fallback 0 en PartyCards sin datos
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -82,6 +82,70 @@ interface NocheElectoralRow {
   id: number;
   election_date: string; region_name: string; region_flag_url: string | null; close_at: string; escrutado?: number | null;
   results: { party_id: number; party_key: string; display_name: string; color: string; logo_url?: string; porcentaje_voto: number; escanos: number | null; proyected_escaños?: number | null; proyected_porcentaje?: number | null; candidato?: string | null; is_projection: boolean; is_final: boolean; }[];
+}
+
+// ─── Componente PartyCard con Fallback a 0 ────────────────────────────────────
+export function PartyCard({ party, onClick }: { party?: Partial<PartyStats>; onClick?: () => void }) {
+  const votos = typeof party?.votos === "number" && !isNaN(party.votos) ? party.votos : 0;
+  const porcentaje = typeof party?.porcentaje === "number" && !isNaN(party.porcentaje) ? party.porcentaje : 0;
+  const escanos = typeof party?.escanos === "number" && !isNaN(party.escanos) ? party.escanos : 0;
+  const nombre = party?.nombre || "Sin datos";
+  const color = party?.color || "#e8465a";
+
+  return (
+    <div
+      className="r-party-card"
+      style={{ "--party-accent": color } as React.CSSProperties}
+      onClick={onClick}
+    >
+      <div className="r-party-card-top">
+        <div className="r-party-logo-wrap">
+          <PartyLogoImg src={party?.logo} name={nombre} color={color} size={36} />
+        </div>
+        <div className="r-party-info">
+          <div className="r-party-name">{nombre}</div>
+          <div className="r-party-votes">{votos.toLocaleString("es-ES")} votos</div>
+        </div>
+        <div className="r-party-seats-group">
+          <div className="r-party-seats-box">
+            <div className="r-party-seats-num" style={{ color }}>{escanos}</div>
+            <div className="r-party-seats-label">escaños</div>
+          </div>
+        </div>
+      </div>
+      <div className="r-party-bar-wrap">
+        <div className="r-party-bar-labels">
+          <span>Porcentaje de voto</span>
+          <span>{porcentaje.toFixed(1)}%</span>
+        </div>
+        <div className="r-party-bar-track">
+          <div
+            className="r-party-bar-fill"
+            style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%`, backgroundColor: color }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Componente Contenedor PartyCards ─────────────────────────────────────────
+export function PartyCardsGrid({ parties, onPartyClick }: { parties?: PartyStats[]; onPartyClick?: (party: PartyStats) => void }) {
+  if (!parties || parties.length === 0) {
+    return (
+      <div className="r-direct-grid">
+        <PartyCard party={{ nombre: "Sin datos", votos: 0, porcentaje: 0, escanos: 0 }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="r-direct-grid">
+      {parties.map((p) => (
+        <PartyCard key={p.id || p.nombre} party={p} onClick={() => onPartyClick && onPartyClick(p)} />
+      ))}
+    </div>
+  );
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
