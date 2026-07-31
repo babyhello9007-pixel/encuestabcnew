@@ -80,7 +80,7 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
       <div className="nc-cooldown-card" style={{ maxWidth: "500px", textAlign: "center", padding: "50px 40px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
         <div className="nc-cooldown-icon" style={{ marginBottom: "30px", animation: "pulse 2s infinite" }}>
           <div style={{ width: "100px", height: "100px", margin: "0 auto", background: "rgba(196,30,58,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Clock size={56} color="#C41E3A" strokeWidth={1.5} />
+            <Clock size={56} color: "#C41E3A" strokeWidth={1.5} />
           </div>
         </div>
         <h2 className="nc-cooldown-title" style={{ fontSize: "32px", fontWeight: "700", marginBottom: "10px", color: "#fff" }}>¡Gracias por participar!</h2>
