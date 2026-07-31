@@ -421,7 +421,3 @@ export const CongressHemicycle: React.FC<CongressHemicycleProps> = ({
     </div>
   );
 };
-      </div>
-    </div>
-  );
-};
