@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Check, Share2, BookmarkPlus } from 'lucide-react';
 import CoalitionSummaryCard from './CoalitionSummaryCard';
 
 interface PartyStats {
@@ -99,6 +99,47 @@ export default function PactometerInteractive({
           </p>
         </div>
 
+        {/* --- MEJORA AÑADIDA: BARRA VISUAL DE MAYORÍA (HEMICICLO CONTINUO) --- */}
+        <Card className="p-4 bg-slate-900 text-white shadow-xl relative overflow-hidden border-slate-800">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs uppercase tracking-wider font-semibold text-slate-400">Progreso de la Coalición</span>
+            <span className="text-xs font-mono font-bold text-slate-300">{selectedCoalitionSeats} / {totalSeats} Escaños</span>
+          </div>
+          <div className="relative w-full h-8 bg-slate-800 rounded-lg overflow-hidden flex border border-slate-700">
+            {/* Marcador de línea de mayoría */}
+            <div 
+              className="absolute top-0 bottom-0 z-20 border-r-2 border-dashed border-yellow-400 flex flex-col justify-between items-center pointer-events-none"
+              style={{ left: `${(requiredForMajority / totalSeats) * 100}%` }}
+            >
+              <div className="bg-yellow-400 text-slate-950 font-black text-[9px] px-1 rounded-b shadow">
+                {requiredForMajority}
+              </div>
+            </div>
+            {/* Segmentos por partido en la coalición */}
+            {selectedPartiesData.map(party => (
+              <div
+                key={`bar-${party.id}`}
+                className="h-full transition-all duration-500 relative group"
+                style={{ 
+                  width: `${(party.escanos / totalSeats) * 100}%`,
+                  backgroundColor: getPartyColor(party)
+                }}
+              >
+                <div className="opacity-0 group-hover:opacity-100 absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] py-1 px-2 rounded shadow whitespace-nowrap z-30 transition-opacity">
+                  {party.nombre}: {party.escanos}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between items-center mt-2 text-xs">
+            <span className="text-slate-400">0 escaños</span>
+            <span className={`font-semibold ${hasMajority ? 'text-green-400' : 'text-amber-400'}`}>
+              {hasMajority ? '✓ Mayoría alcanzada' : `Faltan ${Math.max(0, requiredForMajority - selectedCoalitionSeats)} escaños`}
+            </span>
+            <span className="text-slate-400">{totalSeats} escaños</span>
+          </div>
+        </Card>
+
         {/* Información de la coalición seleccionada - Solo en vista compacta */}
         {selectedParties.length > 0 && (
           <Card className={`p-4 border-2 ${hasMajority ? 'bg-green-50 border-green-300' : 'bg-amber-50 border-amber-300'}`}>
@@ -133,7 +174,7 @@ export default function PactometerInteractive({
               <button
                 key={party.id}
                 onClick={() => toggleParty(party.id)}
-                className={`p-3 rounded-lg border-2 transition-all duration-300 ease-out text-center cursor-pointer transform hover:scale-105 active:scale-95 ${
+                className={`p-3 rounded-lg border-2 transition-all duration-300 ease-out text-center cursor-pointer transform hover:scale-105 active:scale-95 relative overflow-hidden ${
                   isSelected
                     ? 'border-slate-900 shadow-lg ring-2 ring-offset-2 ring-slate-900 animate-pulse'
                     : 'border-slate-200 hover:border-slate-300'
@@ -143,6 +184,12 @@ export default function PactometerInteractive({
                   transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
               >
+                {/* --- MEJORA AÑADIDA: BADGE DE CHECK VISUAL CUANDO ESTÁ SELECCIONADO --- */}
+                {isSelected && (
+                  <span className="absolute top-1 right-1 bg-white/20 rounded-full p-0.5 backdrop-blur-xs">
+                    <Check className="w-3 h-3 text-white" />
+                  </span>
+                )}
                 <div className={`font-bold text-sm mb-1 transition-colors duration-300 ${isSelected ? 'text-white' : 'text-slate-900'}`}>
                   {party.nombre}
                 </div>
@@ -165,10 +212,19 @@ export default function PactometerInteractive({
         {/* Tabla de partidos con colores */}
         {sortedStats.length > 0 && (
         <Card className="p-4">
-          <h4 className="font-semibold text-slate-900 mb-4">Distribución de Escaños</h4>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          <h4 className="font-semibold text-slate-900 mb-4 flex items-center justify-between">
+            <span>Distribución de Escaños</span>
+            <span className="text-xs text-slate-500 font-normal">Haz clic en la fila para seleccionar</span>
+          </h4>
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
             {sortedStats.map(party => (
-              <div key={party.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded">
+              <div 
+                key={party.id} 
+                onClick={() => toggleParty(party.id)}
+                className={`flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
+                  selectedParties.includes(party.id) ? 'bg-slate-100 ring-1 ring-slate-300' : 'hover:bg-slate-50'
+                }`}
+              >
                 <div className="flex items-center gap-3 flex-1">
                   <div
                     className="w-4 h-4 rounded"
