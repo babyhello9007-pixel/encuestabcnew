@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Results.tsx — Versión corregida y mejorada
-// Fixes: comentarios, logos partidos, simulador, gobierno, infografía, mobile, fallback 0 en PartyCards sin datos
+// Fixes: comentarios, logos partidos, simulador, gobierno, infografía, mobile
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -25,6 +25,7 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   ScatterChart, Scatter, ZAxis, Sankey
 } from "recharts";
+import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { CommentsSection } from "@/components/CommentsSection";
 import { TrendenciesChart } from "@/components/TrendenciesChart";
 import PartyLogo from "@/components/PartyLogo";
@@ -83,70 +84,6 @@ interface NocheElectoralRow {
   results: { party_id: number; party_key: string; display_name: string; color: string; logo_url?: string; porcentaje_voto: number; escanos: number | null; proyected_escaños?: number | null; proyected_porcentaje?: number | null; candidato?: string | null; is_projection: boolean; is_final: boolean; }[];
 }
 
-// ─── Componente PartyCard con Fallback a 0 ────────────────────────────────────
-export function PartyCard({ party, onClick }: { party?: Partial<PartyStats>; onClick?: () => void }) {
-  const votos = typeof party?.votos === "number" && !isNaN(party.votos) ? party.votos : 0;
-  const porcentaje = typeof party?.porcentaje === "number" && !isNaN(party.porcentaje) ? party.porcentaje : 0;
-  const escanos = typeof party?.escanos === "number" && !isNaN(party.escanos) ? party.escanos : 0;
-  const nombre = party?.nombre || "Sin datos";
-  const color = party?.color || "#e8465a";
-
-  return (
-    <div
-      className="r-party-card"
-      style={{ "--party-accent": color } as React.CSSProperties}
-      onClick={onClick}
-    >
-      <div className="r-party-card-top">
-        <div className="r-party-logo-wrap">
-          <PartyLogoImg src={party?.logo} name={nombre} color={color} size={36} />
-        </div>
-        <div className="r-party-info">
-          <div className="r-party-name">{nombre}</div>
-          <div className="r-party-votes">{votos.toLocaleString("es-ES")} votos</div>
-        </div>
-        <div className="r-party-seats-group">
-          <div className="r-party-seats-box">
-            <div className="r-party-seats-num" style={{ color }}>{escanos}</div>
-            <div className="r-party-seats-label">escaños</div>
-          </div>
-        </div>
-      </div>
-      <div className="r-party-bar-wrap">
-        <div className="r-party-bar-labels">
-          <span>Porcentaje de voto</span>
-          <span>{porcentaje.toFixed(1)}%</span>
-        </div>
-        <div className="r-party-bar-track">
-          <div
-            className="r-party-bar-fill"
-            style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%`, backgroundColor: color }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Componente Contenedor PartyCards ─────────────────────────────────────────
-export function PartyCardsGrid({ parties, onPartyClick }: { parties?: PartyStats[]; onPartyClick?: (party: PartyStats) => void }) {
-  if (!parties || parties.length === 0) {
-    return (
-      <div className="r-direct-grid">
-        <PartyCard party={{ nombre: "Sin datos", votos: 0, porcentaje: 0, escanos: 0 }} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="r-direct-grid">
-      {parties.map((p) => (
-        <PartyCard key={p.id || p.nombre} party={p} onClick={() => onPartyClick && onPartyClick(p)} />
-      ))}
-    </div>
-  );
-}
-
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const RESULTS_CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
@@ -195,7 +132,7 @@ const RESULTS_CSS = `
 .r-space { display: flex; flex-direction: column; gap: 18px; }
 
 /* Quick stats */
-.r-quickstats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.r-quickstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .r-stat-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(22px) saturate(165%); -webkit-backdrop-filter: blur(22px) saturate(165%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 14px 38px rgba(5,8,20,0.38); border-radius: 14px; padding: 16px 14px; text-align: center; }
 .r-stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7a7990; margin-bottom: 4px; }
 .r-stat-value { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; color: #f0eff8; line-height: 1; }
@@ -217,11 +154,9 @@ const RESULTS_CSS = `
 .r-party-name { font-size: 13px; font-weight: 700; color: #f0eff8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r-party-votes { font-size: 11px; color: #7a7990; margin-top: 1px; }
 .r-party-edad { font-size: 10px; color: #c9a96e; margin-top: 1px; display: flex; align-items: center; gap: 4px; }
-.r-party-seats-group { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-.r-party-seats { text-align: center; flex-shrink: 0; }
+.r-party-seats { text-align: right; flex-shrink: 0; }
 .r-party-seats-num { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; line-height: 1; }
 .r-party-seats-label { font-size: 9px; color: #7a7990; }
-.r-party-seats-box { border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 4px 8px; background: rgba(0, 0, 0, 0.25); text-align: center; }
 .r-party-bar-wrap { display: flex; flex-direction: column; gap: 3px; }
 .r-party-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: #5a596a; }
 .r-party-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
@@ -231,6 +166,7 @@ const RESULTS_CSS = `
 .r-section { background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 20px 48px rgba(1,6,18,0.45); border-radius: 16px; padding: 20px; }
 .r-section-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
 .r-section-sub { font-size: 12px; color: #7a7990; margin: 0 0 16px; }
+
 
 .r-direct-grid { display: grid; gap: 12px; }
 .r-direct-card { background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 18px 44px rgba(0,0,0,0.35); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); }
@@ -335,7 +271,7 @@ const RESULTS_CSS = `
 .r-method-val { font-size: 11px; color: #7a7990; line-height: 1.5; }
 
 /* Select */
-.r-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 99px; padding: 9px 12px; font-size: 13px; color: #f0eff8; font-family: inherit; outline: none; appearance: none; transition: border-color 0.18s; }
+.r-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; padding: 9px 12px; font-size: 13px; color: #f0eff8; font-family: inherit; outline: none; appearance: none; transition: border-color 0.18s; }
 .r-select:focus { border-color: #e8465a; }
 .r-select option { background: #18181f; }
 .r-circ-info { display: flex; align-items: center; gap: 8px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 9px; padding: 9px 14px; font-size: 12px; color: #f59e0b; margin-bottom: 12px; }
@@ -603,6 +539,7 @@ function GobiernoModal({
 
     if (leaderParty && leaderParty !== selectedParty) setSelectedParty(leaderParty);
   }, [selectedLeader, selectedParty, leaders]);
+
 
   const buildImageCandidates = (src?: string) => {
     if (!src) return [] as string[];
@@ -974,6 +911,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
   const [showGobModal, setShowGobModal] = useState(false);
 
   useEffect(() => {
+    // Intentar cargar logo presidencia desde public
     fetch("/logo-presidencia-blanco.png").then(r => r.blob()).then(blob => {
       const reader = new FileReader();
       reader.onload = () => setLogoB64(reader.result as string);
@@ -1053,6 +991,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
         </div>
       </div>
 
+      {/* Sub-tab: Gobierno */}
       {subTab === "gobierno" && (
         <div className="r-section">
           <div className="r-section-title" style={{ marginBottom: 6 }}>🏛️ Constructor de Gobierno</div>
@@ -1086,6 +1025,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
         </div>
       )}
 
+      {/* Sub-tab: Candidatos */}
       {subTab === "candidatos" && (
         <>
           {!selectedParty && (
@@ -1540,11 +1480,13 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
                   </div>
                   <div className="r-sim-party-grid">
                     {Object.entries(simulatorPartyMap).map(([partyKey, party]) => {
-                      const votes = circVotos[partyKey] ?? 0;
+                      const votes = provinciaVotes[selectedCirc]?.[partyKey] ?? 0;
+                      const pct = circTotal > 0 ? ((votes / circTotal) * 100).toFixed(1) : "0.0";
                       return (
                         <div key={partyKey} className="r-sim-party-row">
-                          <PartyLogoImg src={party.logo} name={party.name} color={party.color} size={20} />
+                          <PartyLogoImg src={party.logo} name={party.name} color={party.color} size={18} />
                           <span className="r-sim-party-name">{party.name}</span>
+                          <span className="r-sim-pct">{pct}%</span>
                           <input type="number" min={0} value={votes} className="r-sim-input"
                             onChange={e => updateProvVote(selectedCirc, partyKey, Number(e.target.value))} />
                         </div>
@@ -1553,739 +1495,1088 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
                   </div>
                 </>
               ) : (
-                <div className="r-empty-circ">Selecciona una provincia arriba para personalizar los votos de esa circunscripción.</div>
+                <div className="r-empty-circ">
+                  <MapPin size={32} style={{ margin: "0 auto 10px", opacity: 0.2 }} />
+                  <p style={{ fontSize: 12 }}>Selecciona una provincia para editar</p>
+                </div>
               )}
             </>
           )}
 
-          {/* Añadir partido custom */}
           <div className="r-sim-add">
-            <div className="r-sim-add-title"><Plus size={12} />Añadir partido personalizado</div>
+            <div className="r-sim-add-title"><Plus size={11} />Añadir partido personalizado</div>
             <div className="r-sim-add-row">
-              <input type="text" placeholder="Nombre partido..." value={newPartyName} onChange={e => setNewPartyName(e.target.value)} className="r-sim-add-input" />
-              <input type="color" value={newPartyColor} onChange={e => setNewPartyColor(e.target.value)} style={{ width: 36, height: 32, borderRadius: 6, border: "none", cursor: "pointer", background: "none" }} />
-              <button onClick={addCustomParty} className="r-sim-add-btn">Añadir</button>
+              <input type="text" value={newPartyName} onChange={e => setNewPartyName(e.target.value)} onKeyDown={e => e.key === "Enter" && addCustomParty()} placeholder="Nombre del partido" className="r-sim-add-input" />
+              <input type="color" value={newPartyColor} onChange={e => setNewPartyColor(e.target.value)} style={{ height: 36, width: 40, borderRadius: 7, border: "1px solid rgba(255,255,255,0.1)", background: "none", cursor: "pointer" }} />
+              <button onClick={addCustomParty} className="r-sim-add-btn"><Plus size={12} />Añadir</button>
             </div>
-          </div>
-
-          {/* Resultados simulados */}
-          <div className="r-sim-results">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#f0eff8" }}>Escaños resultantes</span>
-              <span style={{ fontSize: 11, color: "#7a7990" }}>Mayoría: <strong style={{ color: "#f59e0b" }}>{mayoriaAbs}</strong></span>
-            </div>
-            {simulatorStats.map(s => {
-              const pctSeats = totalEscanos > 0 ? (s.escanos / totalEscanos) * 100 : 0;
-              return (
-                <div key={s.id} className="r-sim-row">
-                  <div className="r-sim-dot" style={{ background: s.color }} />
-                  <span className="r-sim-row-name">{s.nombre}</span>
-                  <div className="r-sim-row-bar">
-                    <div className="r-sim-row-fill" style={{ width: `${pctSeats}%`, background: s.color }} />
-                    <div className="r-sim-row-majority" style={{ left: `${(mayoriaAbs / totalEscanos) * 100}%` }} />
-                  </div>
-                  <span className="r-sim-row-seats" style={{ color: s.color }}>{s.escanos}</span>
-                  <span className="r-sim-row-pct">{s.porcentaje.toFixed(1)}%</span>
-                </div>
-              );
-            })}
           </div>
         </div>
+      </div>
+
+      <div className="r-section">
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4, flexWrap: "wrap" }}>
+          <div className="r-section-title">Escaños simulados</div>
+          <span style={{ fontSize: 11, color: "#f59e0b" }}>Mayoría absoluta: <strong>{mayoriaAbs}</strong></span>
+        </div>
+        <p className="r-section-sub">Reparto proporcional mediante Ley d'Hondt</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {[...simulatorStats].sort((a, b) => b.escanos - a.escanos).filter(s => s.escanos > 0 || s.votos > 0).map(party => (
+            <div key={party.id} className="r-sim-row">
+              <div className="r-sim-dot" style={{ background: party.color }} />
+              <span className="r-sim-row-name">{party.nombre}</span>
+              <div className="r-sim-row-bar">
+                <div className="r-sim-row-fill" style={{ background: party.color, width: `${(party.escanos / 350) * 100}%` }} />
+                <div className="r-sim-row-majority" style={{ left: `${(mayoriaAbs / 350) * 100}%` }} />
+              </div>
+              <span className="r-sim-row-seats" style={{ color: party.color }}>{party.escanos}</span>
+              <span className="r-sim-row-pct">{party.porcentaje.toFixed(1)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="r-section">
+        <div className="r-section-title">Pactómetro Simulado</div>
+        <p className="r-section-sub">Selecciona partidos para ver si alcanzan la mayoría absoluta</p>
+        <PactometerInteractive stats={simulatorStats.map(s => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={350} requiredForMajority={176} />
+      </div>
+
+      <div className="r-section">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+          <div className="r-section-title">Mapa Provincial Simulado</div>
+          <div className="r-map-toggle">
+            {(["schematic", "realistic"] as const).map(v => (
+              <button key={v} className={`r-map-btn${mapView === v ? " active" : ""}`} onClick={() => setMapView(v)}>
+                {v === "schematic" ? <><Grid3x3 size={11} />Esquemática</> : <><Map size={11} />Realista</>}
+              </button>
+            ))}
+          </div>
+        </div>
+        {mapView === "schematic"
+          ? <SpainMapProvincial votosPorProvincia={effectiveVotesByProvince} isYouthAssociations={false} partyMeta={simulatorPartyMap} onProvinceClick={(p, d, v, e) => { setSimProvinciaSeleccionada(p); setSimVotosProvincia(v); setSimEscanosProvincia(e); }} />
+          : <SpainMapRealistic votosPorProvincia={effectiveVotesByProvince} provinciaMetricsMap={provinciaMetricsMap} isYouthAssociations={false} partyMeta={simulatorPartyMap} onProvinceClick={(p, d, v, e) => { setSimProvinciaSeleccionada(p); setSimVotosProvincia(v); setSimEscanosProvincia(e); }} />}
+      </div>
+
+      <div className="r-section">
+        <div className="r-section-title" style={{ marginBottom: 14 }}>Hemiciclo Simulado</div>
+        <CongressHemicycle escanos={simulatorEscanosByProvince} totalEscanos={350} provinciaSeleccionada={simProvinciaSeleccionada} votosProvincia={simVotosProvincia} escanosProvincia={simEscanosProvincia} partyMeta={simulatorPartyMap} />
       </div>
     </div>
   );
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// ─── Generador de Infografía PNG profesional ──────────────────────────────────
+async function generarInfografiaPNG(
+  stats: PartyStats[],
+  totalResponses: number,
+  edadPromedio: number | null,
+  ideologiaPromedio: number | null,
+  type: "general" | "party",
+  partyName?: string,
+  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>,
+  topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
+  topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>,
+  top5LideresPorPartido?: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>>,
+  preguntasVariasPorPartido?: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }>,
+  partyLogos?: Record<string, string>
+) {
+  const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200;
+  canvas.height = 800;
+  const ctx = canvas.getContext("2d")!;
+
+  // BG
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, 800);
+  bgGrad.addColorStop(0, "#0a0a1a");
+  bgGrad.addColorStop(1, "#12121f");
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, 1200, 800);
+
+  // Franja roja izquierda
+  const redGrad = ctx.createLinearGradient(0, 0, 0, 800);
+  redGrad.addColorStop(0, "#C41E3A");
+  redGrad.addColorStop(1, "#8B0000");
+  ctx.fillStyle = redGrad;
+  ctx.fillRect(0, 0, 8, 800);
+
+  // Header
+  ctx.fillStyle = "#C41E3A";
+  ctx.font = "bold 13px monospace";
+  ctx.fillText("LA ENCUESTA DE BATALLA CULTURAL", 40, 38);
+  ctx.fillStyle = "rgba(255,255,255,0.15)";
+  ctx.fillRect(40, 48, 1120, 1);
+
+  // Título principal
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 42px Georgia, serif";
+  const title = type === "general" ? "Resultados de la Encuesta" : type === "party" ? `Análisis: ${partyName}` : "Análisis de Líderes";
+  ctx.fillText(title, 40, 100);
+  if (type === "party" && partyName) {
+    const logo = await loadImage((partyLogos || {})[partyName]);
+    if (logo) ctx.drawImage(logo, 1085, 28, 72, 72);
+  }
+
+  // Stats principales
+  const statBoxes = [
+    { label: "RESPUESTAS", value: totalResponses.toLocaleString("es-ES"), color: "#C41E3A" },
+    { label: "EDAD MEDIA", value: edadPromedio ? `${edadPromedio.toFixed(1)} años` : "—", color: "#3B82F6" },
+    { label: "IDEOLOGÍA", value: ideologiaPromedio ? `${ideologiaPromedio.toFixed(1)}/10` : "—", color: "#8B5CF6" },
+  ];
+  statBoxes.forEach((sb, i) => {
+    const x = 40 + i * 280;
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(x, 120, 260, 80, 10); ctx.fill();
+    ctx.strokeStyle = sb.color + "40"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = sb.color; ctx.font = "bold 11px monospace";
+    ctx.fillText(sb.label, x + 16, 148);
+    ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px Georgia, serif";
+    ctx.fillText(sb.value, x + 16, 182);
+  });
+
+  // Barras partidos
+  if (type === "general") {
+    const topParties = [...stats].sort((a, b) => b.votos - a.votos).slice(0, 10);
+    const maxVotos = Math.max(...topParties.map(p => p.votos), 1);
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(40, 230, 720, 520, 12); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.15)";
+    ctx.font = "bold 11px monospace"; ctx.fillText("DISTRIBUCIÓN DE VOTO", 60, 262);
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.fillRect(60, 270, 680, 1);
+    topParties.forEach((party, i) => {
+      const y = 288 + i * 44;
+      const barW = Math.max(4, (party.votos / maxVotos) * 580);
+      const color = party.color || "#C41E3A";
+      // Bar
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.beginPath(); ctx.roundRect(60, y + 10, 580, 22, 4); ctx.fill();
+      const barGrad = ctx.createLinearGradient(60, 0, 640, 0);
+      barGrad.addColorStop(0, color);
+      barGrad.addColorStop(1, color + "88");
+      ctx.fillStyle = barGrad;
+      ctx.beginPath(); ctx.roundRect(60, y + 10, barW, 22, 4); ctx.fill();
+      // Party name
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 12px 'DM Sans', sans-serif";
+      ctx.fillText(party.nombre.slice(0, 18), 60, y + 8);
+      // Percentage
+      ctx.fillStyle = color; ctx.font = "bold 11px monospace";
+      ctx.fillText(`${party.porcentaje.toFixed(1)}%`, 650, y + 25);
+      // Seats
+      ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
+      ctx.fillText(`${party.escanos} esc.`, 700, y + 25);
+    });
+    const topLeaderRows = (topLiderPorPartido || []).slice(0, 5);
+    const topRegionRows = (topRegionPorPartido || []).slice(0, 5);
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 230, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#C41E3A"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
+    topLeaderRows.forEach((row, i) => {
+      const y = 290 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.lider, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(`${row.porcentaje.toFixed(1)}%`, 1110, y);
+    });
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(780, 500, 380, 250, 12); ctx.fill();
+    ctx.fillStyle = "#3b82f6"; ctx.font = "bold 12px monospace"; ctx.fillText("REGIÓN TOP POR PARTIDO", 800, 526);
+    topRegionRows.forEach((row, i) => {
+      const y = 560 + i * 34;
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.region, 870, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(String(row.votos), 1110, y);
+    });
+  } else if (type === "party" && partyName) {
+    const party = stats.find(s => s.nombre === partyName);
+    if (party) {
+      // Sección izquierda: Resultados principales
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.beginPath(); ctx.roundRect(40, 230, 350, 520, 12); ctx.fill();
+      ctx.fillStyle = party.color || "#C41E3A";
+      ctx.font = "bold 48px Georgia, serif"; ctx.fillText(party.porcentaje.toFixed(1) + "%", 60, 310);
+      ctx.fillStyle = "#fff"; ctx.font = "14px 'DM Sans', sans-serif";
+      ctx.fillText(`${party.votos.toLocaleString("es-ES")} votos`, 60, 345);
+      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 56px Georgia, serif";
+      ctx.fillText(String(party.escanos), 60, 430);
+      ctx.fillStyle = "#7a7990"; ctx.font = "14px 'DM Sans', sans-serif";
+      ctx.fillText("escaños", 60, 460);
+      
+      const top5 = (top5LideresPorPartido?.[partyName] || []).slice(0, 5);
+      const preguntas = preguntasVariasPorPartido?.[partyName] || {};
+      // Sección derecha: TOP 5 líderes
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.beginPath(); ctx.roundRect(410, 230, 350, 520, 12); ctx.fill();
+      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("TOP 5 LÍDERES", 430, 260);
+      ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(430, 268, 310, 1);
+      for (let i = 0; i < 5; i++) {
+        const y = 295 + i * 38;
+        const row = top5[i];
+        const initial = (row?.nombre || "—").charAt(0).toUpperCase();
+        const leaderImg = await loadImage(row?.photo_url);
+        if (leaderImg) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(442, y - 5, 12, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(leaderImg, 430, y - 17, 24, 24);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.15)";
+          ctx.beginPath(); ctx.arc(442, y - 5, 12, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#fff"; ctx.font = "bold 10px 'DM Sans', sans-serif"; ctx.fillText(initial, 438, y - 1);
+        }
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
+        ctx.fillText(`${i + 1}. ${row?.nombre || "Sin dato"}`, 460, y);
+        ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
+        ctx.fillText(`${row ? row.porcentaje.toFixed(1) : "0.0"}%`, 685, y);
+      }
+      
+      // Sección inferior: Preguntas Varias
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.beginPath(); ctx.roundRect(780, 230, 380, 520, 12); ctx.fill();
+      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("PREGUNTAS VARIAS", 800, 260);
+      ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(800, 268, 340, 1);
+      const preguntasRows = [
+        { q: "División territorial", a: preguntas.division_territorial || "—" },
+        { q: "Monarquía/República", a: preguntas.monarquia_republica || "—" },
+        { q: "Sistema pensiones", a: preguntas.sistema_pensiones || "—" }
+      ];
+      preguntasRows.forEach((p, i) => {
+        const y = 310 + i * 72;
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
+        ctx.fillText(p.q, 800, y);
+        ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "10px 'DM Sans', sans-serif";
+        ctx.fillText(String(p.a).slice(0, 28), 800, y + 24);
+      });
+    }
+  }
+
+  // Hemiciclo visual simplificado
+  // Hemiciclo visual simplificado (para infografía general)
+  if (type === "general") {
+    const hx = 1020, hy = 218, hr = 120;
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.beginPath(); ctx.arc(hx, hy, hr + 20, Math.PI, 0); ctx.fill();
+    const sortedBySeats = [...stats].sort((a, b) => b.escanos - a.escanos).filter(s => s.escanos > 0);
+    const totalSeats = sortedBySeats.reduce((a, s) => a + s.escanos, 0) || 350;
+    let angle = Math.PI;
+    sortedBySeats.forEach(party => {
+      const span = (party.escanos / totalSeats) * Math.PI;
+      ctx.beginPath(); ctx.moveTo(hx, hy);
+      ctx.arc(hx, hy, hr, angle, angle + span);
+      ctx.closePath(); ctx.fillStyle = party.color || "#e8465a"; ctx.fill();
+      angle += span;
+    });
+    ctx.fillStyle = "#0a0a1a"; ctx.beginPath(); ctx.arc(hx, hy, hr * 0.55, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 26px Georgia, serif"; ctx.textAlign = "center";
+    ctx.fillText("350", hx, hy - 10);
+    ctx.fillStyle = "#7a7990"; ctx.font = "12px monospace";
+    ctx.fillText("ESCAÑOS", hx, hy + 14);
+    ctx.textAlign = "left";
+  }
+
+  // Footer
+  ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fillRect(0, 762, 1200, 1);
+  ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.font = "11px monospace";
+  ctx.fillText(`Datos: ${new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })} · La Encuesta de Batalla Cultural`, 40, 785);
+  ctx.fillText(`encuestadebc.es`, 1060, 785);
+
+  const link = document.createElement("a");
+  link.download = `infografia-encuesta-bc-${Date.now()}.png`;
+  link.href = canvas.toDataURL("image/png", 0.95);
+  link.click();
+}
+
+// ─── Componente Principal ─────────────────────────────────────────────────────
 export default function Results() {
-  const [location, setLocation] = useLocation();
-
-  // URL Tab handling
-  const getTabFromUrl = useCallback((): TabKey => {
-    const p = window.location.pathname;
-    if (p.includes("/mapa-hemiciclo")) return "mapa-hemiciclo";
-    if (p.includes("/encuestadoras")) return "encuestadoras-externas";
-    if (p.includes("/ccaa")) return "ccaa";
-    if (p.includes("/provincias")) return "provincias";
-    if (p.includes("/comparacion-ccaa")) return "comparacion-ccaa";
-    if (p.includes("/youth")) return "youth";
-    if (p.includes("/asoc-juv-mapa-hemiciclo")) return "asoc-juv-mapa-hemiciclo";
-    if (p.includes("/leaders")) return "leaders";
-    if (p.includes("/tendencias")) return "tendencias";
-    if (p.includes("/lideres-preferidos")) return "lideres-preferidos";
-    if (p.includes("/lideres-partidos")) return "lideres-partidos";
-    if (p.includes("/preguntas-varias")) return "preguntas-varias";
-    if (p.includes("/analisis-avanzado")) return "analisis-avanzado";
-    if (p.includes("/contexto-historico")) return "contexto-historico";
-    if (p.includes("/noche-electoral")) return "noche-electoral";
-    if (p.includes("/primarias")) return "primarias";
-    if (p.includes("/crisis-ceuta")) return "crisis-ceuta";
-    return "general";
-  }, []);
-
-  const [activeTab, setActiveTab] = useState<TabKey>(getTabFromUrl);
-
-  const handleTabChange = useCallback((tab: TabKey) => {
-    setActiveTab(tab);
-    const routes: Record<TabKey, string> = {
-      general: "/results",
-      "mapa-hemiciclo": "/results/mapa-hemiciclo",
-      "encuestadoras-externas": "/results/encuestadoras",
-      ccaa: "/results/ccaa",
-      provincias: "/results/provincias",
-      "comparacion-ccaa": "/results/comparacion-ccaa",
-      youth: "/results/youth",
-      "asoc-juv-mapa-hemiciclo": "/results/asoc-juv-mapa-hemiciclo",
-      leaders: "/results/leaders",
-      tendencias: "/results/tendencias",
-      "lideres-preferidos": "/results/lideres-preferidos",
-      "lideres-partidos": "/results/lideres-partidos",
-      "preguntas-varias": "/results/preguntas-varias",
-      "analisis-avanzado": "/results/analisis-avanzado",
-      "contexto-historico": "/results/contexto-historico",
-      "noche-electoral": "/results/noche-electoral",
-      primarias: "/results/primarias",
-      "crisis-ceuta": "/results/crisis-ceuta",
-    };
-    if (routes[tab]) setLocation(routes[tab]);
-  }, [setLocation]);
-
-  // General State
-  const [loading, setLoading] = useState(true);
-  const [totalRespuestas, setTotalRespuestas] = useState(0);
+  usePartySync();
+  const [, setLocation] = useLocation();
   const [generalStats, setGeneralStats] = useState<PartyStats[]>([]);
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
-  const [generalPartyMap, setGeneralPartyMap] = useState<Record<string, PartyMeta>>({});
-  const [youthPartyMap, setYouthPartyMap] = useState<Record<string, PartyMeta>>({});
+  const [totalResponses, setTotalResponses] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabKey>("general");
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
-  const [lideresPreferidos, setLideresPreferidos] = useState<LiderPreferido[]>([]);
-  const [rankingLideres, setRankingLideres] = useState<RankingLiderPartido[]>([]);
+  const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
+  const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);
+  const [notaEjecutivo, setNotaEjecutivo] = useState<number | null>(null);
+  const [selectedPartyForStats, setSelectedPartyForStats] = useState<string | null>(null);
   const [votosPorProvincia, setVotosPorProvincia] = useState<Record<string, Record<string, number>>>({});
-  const [votosJuvenilesPorProvincia, setVotosJuvenilesPorProvincia] = useState<Record<string, Record<string, number>>>({});
+  const [escanosGeneralesPorProvincia, setEscanosGeneralesPorProvincia] = useState<Record<string, number>>({});
+  const [provinciaSeleccionada, setProvinciaSeleccionada] = useState<string | null>(null);
+  const [votosPorPartidoProvincia, setVotosPorPartidoProvincia] = useState<Record<string, number>>({});
+  const [escanosProvincia, setEscanosProvincia] = useState<Record<string, number>>({});
+  const [sortBy, setSortBy] = useState<"votos" | "escanos">("votos");
+  const [mapView, setMapView] = useState<"schematic" | "realistic">("realistic");
+  const [votosPorProvinciaJuveniles, setVotosPorProvinciaJuveniles] = useState<Record<string, Record<string, number>>>({});
+  const [escanosJuvenilesPorProvincia, setEscanosJuvenilesPorProvincia] = useState<Record<string, number>>({});
+  const [provinciaSeleccionadaJuveniles, setProvinciaSeleccionadaJuveniles] = useState<string | null>(null);
+  const [votosPorPartidoProvinciaJuveniles, setVotosPorPartidoProvinciaJuveniles] = useState<Record<string, number>>({});
+  const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
-  const [partyEdadesMap, setPartyEdadesMap] = useState<Record<string, number>>({});
-  const [nocheElectoralData, setNocheElectoralData] = useState<NocheElectoralRow[]>([]);
-
-  // Nuevas tablas: BarómetroBC y MediaEncuestas
-  const [barometroSeats, setBarometroSeats] = useState<Record<string, string>>({});
-  const [mediaEncuestasSeats, setMediaEncuestasSeats] = useState<Record<string, string>>({});
-
-  // Advanced analysis states
+  const [showInfografiaModal, setShowInfografiaModal] = useState(false);
+  const [showTransferenciaModal, setShowTransferenciaModal] = useState(false);
+  const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
+  const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
+  const [leadersSubTab, setLeadersSubTab] = useState<"individual" | "porpartido">("individual");
   const [coherenciaRows, setCoherenciaRows] = useState<any[]>([]);
   const [flujosRows, setFlujosRows] = useState<any[]>([]);
   const [ideologiaRows, setIdeologiaRows] = useState<any[]>([]);
   const [correlacionRows, setCorrelacionRows] = useState<any[]>([]);
   const [historicoRows, setHistoricoRows] = useState<any[]>([]);
+  const [historicoElecciones, setHistoricoElecciones] = useState<HistoricoEleccion[]>([]);
+  const [nocheElectoralRows, setNocheElectoralRows] = useState<NocheElectoralRow[]>([]);
+  const [leaderPhotoByName, setLeaderPhotoByName] = useState<Record<string, string>>({});
 
-  // Modals & UI Controls
-  const [sortBy, setSortBy] = useState<"escanos" | "votos" | "porcentaje">("escanos");
-  const [selectedPartyModal, setSelectedPartyModal] = useState<PartyStats | null>(null);
-  const [showInfografiaModal, setShowInfografiaModal] = useState(false);
-  const [showGovModal, setShowGovModal] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [showTransferModal, setShowTransferModal] = useState(false);
-  const [logoB64, setLogoB64] = useState("");
+  useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
-  const contentRef = useRef<HTMLDivElement>(null);
+  const normalizePartyKey = (v: string) => v?.trim().toUpperCase();
 
-const syncResult = usePartySync();
-const partyConfigs = syncResult?.partyConfigs ?? [];
-const syncLoading = syncResult?.loading ?? true;
-
-  useEffect(() => {
-    fetch("/logo-presidencia-blanco.png").then(r => r.blob()).then(blob => {
-      const reader = new FileReader();
-      reader.onload = () => setLogoB64(reader.result as string);
-      reader.readAsDataURL(blob);
-    }).catch(() => {});
-  }, []);
-
-  // Main Data Loading
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch BarómetroBC and MediaEncuestas
-        const [baroRes, mediaRes] = await Promise.all([
-          supabase.from("BarómetroBC").select("partido, escaños"),
-          supabase.from("MediaEncuestas").select("partido, escaños")
-        ]);
-
-        if (baroRes.data) {
-          const bMap: Record<string, string> = {};
-          baroRes.data.forEach((r: any) => { if (r.partido) bMap[r.partido] = r.escaños || "0"; });
-          setBarometroSeats(bMap);
-        }
-
-        if (mediaRes.data) {
-          const mMap: Record<string, string> = {};
-          mediaRes.data.forEach((r: any) => { if (r.partido) mMap[r.partido] = r.escaños || "0"; });
-          setMediaEncuestasSeats(mMap);
-        }
-
-        // Fetch configurations
-        const { data: configData } = await supabase.from("party_configuration").select("*");
-        const gMap: Record<string, PartyMeta> = {};
-        const yMap: Record<string, PartyMeta> = {};
-
-        if (configData) {
-          configData.forEach((c: any) => {
-            const meta = { key: c.party_key, name: c.display_name, color: c.color, logo: c.logo_url };
-            if (c.election_type === "generales") gMap[c.party_key] = meta;
-            else if (c.election_type === "juveniles") yMap[c.party_key] = meta;
-          });
-          setRuntimePartyConfig(configData);
-        }
-        setGeneralPartyMap(gMap);
-        setYouthPartyMap(yMap);
-
-        // Fetch Raw Responses
-        const { data: respData, count } = await supabase
-          .from("respuestas")
-          .select("*", { count: "exact" });
-
-        setTotalRespuestas(count || 0);
-
-        if (respData) {
-          // Process Votes General & Youth
-          const gVotes: Record<string, number> = {};
-          const yVotes: Record<string, number> = {};
-          const provGVotes: Record<string, Record<string, number>> = {};
-          const provYVotes: Record<string, Record<string, number>> = {};
-          const provMetrics: Record<string, { totalEdad: number; totalIdeo: number; count: number }> = {};
-          const partyEdades: Record<string, { totalEdad: number; count: number }> = {};
-
-          respData.forEach((r: any) => {
-            const gParty = r.voto_generales;
-            const yParty = r.voto_juvenil;
-            const prov = r.provincia;
-            const edad = r.edad ? Number(r.edad) : null;
-            const ideo = r.ideologia ? Number(r.ideologia) : null;
-
-            if (gParty) {
-              gVotes[gParty] = (gVotes[gParty] || 0) + 1;
-              if (prov) {
-                if (!provGVotes[prov]) provGVotes[prov] = {};
-                provGVotes[prov][gParty] = (provGVotes[prov][gParty] || 0) + 1;
-              }
-              if (edad) {
-                if (!partyEdades[gParty]) partyEdades[gParty] = { totalEdad: 0, count: 0 };
-                partyEdades[gParty].totalEdad += edad;
-                partyEdades[gParty].count += 1;
-              }
-            }
-
-            if (yParty) {
-              yVotes[yParty] = (yVotes[yParty] || 0) + 1;
-              if (prov) {
-                if (!provYVotes[prov]) provYVotes[prov] = {};
-                provYVotes[prov][yParty] = (provYVotes[prov][yParty] || 0) + 1;
-              }
-            }
-
-            if (prov) {
-              if (!provMetrics[prov]) provMetrics[prov] = { totalEdad: 0, totalIdeo: 0, count: 0 };
-              if (edad) provMetrics[prov].totalEdad += edad;
-              if (ideo) provMetrics[prov].totalIdeo += ideo;
-              provMetrics[prov].count += 1;
-            }
-          });
-
-          setVotosPorProvincia(provGVotes);
-          setVotosJuvenilesPorProvincia(provYVotes);
-
-          // Calculate D'Hondt Seats
-          const gSeatsProv = calcularEscanosGeneralesPorProvincia(provGVotes);
-          const ySeatsProv = calcularEscanosJuvenilesPorProvincia(provYVotes);
-
-          const gSeatsTotal: Record<string, number> = {};
-          Object.values(gSeatsProv).forEach(pe => {
-            Object.entries(pe).forEach(([p, s]) => { gSeatsTotal[p] = (gSeatsTotal[p] || 0) + s; });
-          });
-
-          const ySeatsTotal: Record<string, number> = {};
-          Object.values(ySeatsProv).forEach(pe => {
-            Object.entries(pe).forEach(([p, s]) => { ySeatsTotal[p] = (ySeatsTotal[p] || 0) + s; });
-          });
-
-          // Party Names and Logos mapping
-          const gNames: Record<string, string> = {}; const gLogos: Record<string, string> = {};
-          Object.entries(gMap).forEach(([k, v]) => { gNames[k] = v.name; gLogos[k] = v.logo; });
-
-          const yNames: Record<string, string> = {}; const yLogos: Record<string, string> = {};
-          Object.entries(yMap).forEach(([k, v]) => { yNames[k] = v.name; yLogos[k] = v.logo; });
-
-          const gStats = obtenerEstadisticas(gVotes, gSeatsTotal, gNames, gLogos)
-            .map(s => ({ ...s, color: gMap[s.id]?.color || "#e8465a" }));
-
-          const yStats = obtenerEstadisticas(yVotes, ySeatsTotal, yNames, yLogos)
-            .map(s => ({ ...s, color: yMap[s.id]?.color || "#818cf8" }));
-
-          setGeneralStats(gStats);
-          setYouthStats(yStats);
-
-          // Calculate Province Metrics
-          const compiledProvMetrics: Record<string, { edad_promedio: number; ideologia_promedio: number }> = {};
-          Object.entries(provMetrics).forEach(([prov, d]) => {
-            if (d.count > 0) {
-              compiledProvMetrics[prov] = {
-                edad_promedio: Math.round((d.totalEdad / d.count) * 10) / 10,
-                ideologia_promedio: Math.round((d.totalIdeo / d.count) * 10) / 10,
-              };
-            }
-          });
-          setProvinciaMetricsMap(compiledProvMetrics);
-
-          // Calculate Party Average Ages
-          const compiledPartyEdades: Record<string, number> = {};
-          Object.entries(partyEdades).forEach(([p, d]) => {
-            if (d.count > 0) compiledPartyEdades[p] = Math.round((d.totalEdad / d.count) * 10) / 10;
-          });
-          setPartyEdadesMap(compiledPartyEdades);
-
-          // Calculate Leader Ratings
-          const leaderFields = [
-            { field: "val_feijoo", name: "Alberto Núñez Feijóo" },
-            { field: "val_sanchez", name: "Pedro Sánchez" },
-            { field: "val_abascal", name: "Santiago Abascal" },
-            { field: "val_alvise", name: "Alvise Pérez" },
-            { field: "val_yolanda_diaz", name: "Yolanda Díaz" },
-            { field: "val_irene_montero", name: "Irene Montero" },
-            { field: "val_ayuso", name: "Isabel Díaz Ayuso" },
-            { field: "val_buxade", name: "Jorge Buxadé" },
-          ];
-
-          const ratingsCompiled: LeaderRating[] = leaderFields.map(lf => {
-            let sum = 0; let count_ = 0;
-            respData.forEach((r: any) => {
-              const val = r[lf.field];
-              if (val != null && !isNaN(val)) { sum += Number(val); count_++; }
-            });
-            return {
-              name: lf.name,
-              fieldName: lf.field,
-              average: count_ > 0 ? Math.round((sum / count_) * 10) / 10 : 0,
-              count: count_,
-            };
-          }).sort((a, b) => b.average - a.average);
-
-          setLeaderRatings(ratingsCompiled);
-        }
-
-        // Fetch Election Night
-        const { data: neData } = await supabase.from("noche_electoral").select("*").order("election_date", { ascending: false });
-        if (neData) setNocheElectoralData(neData);
-
-        // Fetch Views for Advanced Analysis
-        const [coh, flu, ide, cor, hist] = await Promise.all([
-          supabase.from("v_coherencia_voto").select("*"),
-          supabase.from("v_flujos_voto_sankey").select("*"),
-          supabase.from("v_ideologia_por_partido").select("*"),
-          supabase.from("v_correlacion_lideres").select("*"),
-          supabase.from("v_tendencia_temporal_voto").select("*"),
-        ]);
-        if (coh.data) setCoherenciaRows(coh.data);
-        if (flu.data) setFlujosRows(flu.data);
-        if (ide.data) setIdeologiaRows(ide.data);
-        if (cor.data) setCorrelacionRows(cor.data);
-        if (hist.data) setHistoricoRows(hist.data);
-
-      } catch (e) {
-        console.error("Error fetching results data:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // Sorted Party Stats
-  const sortedGeneralStats = useMemo(() => {
-    return [...generalStats].sort((a, b) => {
-      if (sortBy === "escanos") return b.escanos - a.escanos || b.votos - a.votos;
-      if (sortBy === "votos") return b.votos - a.votos;
-      return b.porcentaje - a.porcentaje;
+  const generalPartyMap = useMemo((): Record<string, PartyMeta> => {
+    const d: Record<string, PartyMeta> = {};
+    partyConfigData.parties.forEach(p => {
+      d[String(p.partyKey || "")] = { key: p.partyKey, name: p.displayName, color: p.color, logo: p.logoUrl };
     });
-  }, [generalStats, sortBy]);
+    return d;
+  }, [partyConfigData]);
 
-  // PDF Export Trigger
-  const handleExportPDF = async () => {
-    setPdfLoading(true);
-    try {
-      await downloadPDFWithMetrics("resultados-generales", {
-        totalRespuestas,
-        generalStats,
-        leaderRatings,
-      });
-    } catch (e) {
-      console.error("Error generating PDF:", e);
-    } finally {
-      setPdfLoading(false);
-    }
+  const youthPartyMap = useMemo((): Record<string, PartyMeta> => {
+    const d: Record<string, PartyMeta> = {};
+    partyConfigData.youth.forEach(p => {
+      d[String(p.partyKey || "")] = { key: p.partyKey, name: p.displayName, color: p.color, logo: p.logoUrl };
+    });
+    return d;
+  }, [partyConfigData]);
+
+  const resolvePartyKey = (value: string, metaMap: Record<string, PartyMeta>) => {
+    if (metaMap[value]) return value;
+    const n = normalizePartyKey(value);
+    return Object.keys(metaMap).find(k => normalizePartyKey(k) === n) ||
+      Object.entries(metaMap).find(([, p]) => normalizePartyKey(String(p?.name || "")) === n)?.[0] ||
+      value;
   };
- 
+
+  const buildLookup = (map: Record<string, PartyMeta>): Record<string, PartyMeta> => {
+    const lookup: Record<string, PartyMeta> = {};
+    Object.entries(map).forEach(([k, p]) => {
+      [k, p.key, p.name, normalizePartyKey(k), normalizePartyKey(p.key), normalizePartyKey(p.name)].forEach(a => {
+        if (a) lookup[String(a)] = p;
+      });
+    });
+    return lookup;
+  };
+
+  const generalPartyMetaLookup = useMemo(() => buildLookup(generalPartyMap), [generalPartyMap]);
+  const youthPartyMetaLookup = useMemo(() => buildLookup(youthPartyMap), [youthPartyMap]);
+
+  useEffect(() => {
+    if (Object.keys(votosPorProvincia).length > 0 && generalStats.length > 0) {
+      const e = calcularEscanosGeneralesPorProvincia(votosPorProvincia);
+      setEscanosGeneralesPorProvincia(e);
+      setGeneralStats(prev => prev.map(s => ({ ...s, escanos: e[s.id] || 0 })));
+    }
+  }, [votosPorProvincia]);
+
+  useEffect(() => {
+    if (Object.keys(votosPorProvinciaJuveniles).length > 0 && youthStats.length > 0) {
+      const e = calcularEscanosJuvenilesPorProvincia(votosPorProvinciaJuveniles);
+      setEscanosJuvenilesPorProvincia(e);
+      setYouthStats(prev => prev.map(s => ({ ...s, escanos: e[s.id] || 0 })));
+    }
+  }, [votosPorProvinciaJuveniles]);
+
+  useEffect(() => {
+    const loadPartyConfig = async () => {
+      const { data } = await supabase.from("party_configuration").select("party_key, display_name, color, logo_url, party_type, is_active").eq("is_active", true);
+      const all = data || [];
+      setRuntimePartyConfig(all.map((r: any) => ({ key: r.party_key, displayName: r.display_name, color: r.color, logoUrl: r.logo_url, partyType: r.party_type })));
+      setPartyConfigData({
+        parties: all.filter((r: any) => r.party_type === "general").map((r: any) => ({ partyKey: r.party_key, displayName: r.display_name, color: r.color, logoUrl: r.logo_url })),
+        youth: all.filter((r: any) => ["youth", "asociacion_juvenil", "juvenile"].includes(r.party_type)).map((r: any) => ({ partyKey: r.party_key, displayName: r.display_name, color: r.color, logoUrl: r.logo_url }))
+      });
+    };
+    loadPartyConfig();
+    const ch = supabase.channel("party-config-results").on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, loadPartyConfig).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        try { const { data } = await supabase.from("total_respuestas_view").select("total_respuestas"); setTotalResponses(data?.[0]?.total_respuestas || 0); }
+        catch { const { count } = await supabase.from("respuestas").select("*", { count: "exact", head: true }); setTotalResponses(count || 0); }
+
+        try {
+          const { data: gd } = await supabase.from("votos_generales_totales").select("*");
+          if (gd?.length) {
+            const gv: Record<string, number> = {};
+            Object.keys(generalPartyMap).forEach(k => { gv[k] = 0; });
+            gd.forEach((r: any) => { gv[resolvePartyKey(String(r.partido_id || ""), generalPartyMap)] = r.votos; });
+            const escanos = Object.keys(votosPorProvincia).length > 0 ? calcularEscanosGeneralesPorProvincia(votosPorProvincia) : calcularEscanosGenerales(gv);
+            const nombres: Record<string, string> = {}; const logos: Record<string, string> = {};
+            Object.entries(generalPartyMap).forEach(([k, p]) => { nombres[k] = p.name; logos[k] = p.logo; });
+            setGeneralStats(obtenerEstadisticas(gv, escanos, nombres, logos).map(s => ({ ...s, color: generalPartyMap[resolvePartyKey(s.id, generalPartyMap)]?.color })));
+
+            try {
+              const { data: pd } = await supabase.from("votos_por_provincia_view").select("provincia, partido, votos");
+              if (pd?.length) {
+                const vp: Record<string, Record<string, number>> = {};
+                pd.forEach((r: any) => { if (r.provincia && r.partido) { if (!vp[r.provincia]) vp[r.provincia] = {}; vp[r.provincia][resolvePartyKey(String(r.partido), generalPartyMap)] = r.votos; } });
+                setVotosPorProvincia(vp);
+                try {
+                  const { data: md } = await supabase.from("respuestas").select("provincia, edad, posicion_ideologica, voto_generales").limit(2500);
+                  if (md) {
+                    const pc: Record<string, { es: number; is: number; c: number }> = {};
+                    const pp: Record<string, { sum: number; count: number }> = {};
+                    md.forEach((r: any) => {
+                      if (r.provincia) { if (!pc[r.provincia]) pc[r.provincia] = { es: 0, is: 0, c: 0 }; if (r.edad != null) pc[r.provincia].es += r.edad; if (r.posicion_ideologica != null) pc[r.provincia].is += r.posicion_ideologica; pc[r.provincia].c++; }
+                      if (r.voto_generales && r.edad != null) { if (!pp[r.voto_generales]) pp[r.voto_generales] = { sum: 0, count: 0 }; pp[r.voto_generales].sum += r.edad; pp[r.voto_generales].count++; }
+                    });
+                    const mm: Record<string, { edad_promedio: number; ideologia_promedio: number }> = {};
+                    Object.entries(pc).forEach(([p, c]) => { mm[p] = { edad_promedio: c.c > 0 ? c.es / c.c : 0, ideologia_promedio: c.c > 0 ? c.is / c.c : 0 }; });
+                    setProvinciaMetricsMap(mm);
+                    const edadPP: Record<string, number> = {};
+                    Object.entries(pp).forEach(([p, d]) => { if (d.count > 0) edadPP[p] = Math.round(d.sum / d.count); });
+                    setEdadMediaPorPartido(edadPP);
+                  }
+                } catch { /* skip */ }
+              }
+            } catch (e) { console.error(e); }
+          }
+        } catch (e) { console.error(e); }
+
+        try {
+          const { data: yd } = await supabase.from("votos_juveniles_totales").select("*");
+          if (yd?.length) {
+            const yv: Record<string, number> = {};
+            yd.forEach((r: any) => { yv[resolvePartyKey(String(r.asociacion_id || ""), youthPartyMap)] = r.votos; });
+            const escanos = calcularEscanosJuveniles(yv);
+            const nombres: Record<string, string> = {}; const logos: Record<string, string> = {};
+            Object.entries(youthPartyMap).forEach(([k, p]) => { nombres[k] = p.name; logos[k] = p.logo; });
+            setYouthStats(obtenerEstadisticas(yv, escanos, nombres, logos).map(s => ({ ...s, color: youthPartyMap[resolvePartyKey(s.id, youthPartyMap)]?.color })));
+          }
+        } catch (e) { console.error(e); }
+
+        try {
+          const { data: jpd } = await supabase.from("votos_por_provincia_juveniles_view").select("provincia, asociacion, votos");
+          if (jpd?.length) { const vjp: Record<string, Record<string, number>> = {}; jpd.forEach((r: any) => { if (r.provincia && r.asociacion) { if (!vjp[r.provincia]) vjp[r.provincia] = {}; vjp[r.provincia][resolvePartyKey(String(r.asociacion), youthPartyMap)] = r.votos; } }); setVotosPorProvinciaJuveniles(vjp); }
+        } catch (e) { console.error(e); }
+
+        try {
+          const { data: vld } = await supabase.from("valoraciones_lideres_view").select("*");
+          if (vld?.length) {
+            const lm: Record<string, { name: string; fieldName: string }> = { feijoo: { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" }, sanchez: { name: "Pedro Sánchez", fieldName: "val_sanchez" }, abascal: { name: "Santiago Abascal", fieldName: "val_abascal" }, alvise: { name: "Alvise Pérez", fieldName: "val_alvise" }, yolanda_diaz: { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" }, irene_montero: { name: "Irene Montero", fieldName: "val_irene_montero" }, ayuso: { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" }, buxade: { name: "Jorge Buxadé", fieldName: "val_buxade" } };
+            setLeaderRatings(vld.map((r: any) => { const l = lm[r.lider]; return { name: l?.name ?? r.lider, fieldName: l?.fieldName ?? r.lider, average: parseFloat(r.valoracion_media) || 0, count: r.total_valoraciones || 0 }; }));
+          }
+        } catch {
+          const { data: ar } = await supabase.from("respuestas").select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
+          if (ar) {
+            const ls = [{ name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" }, { name: "Pedro Sánchez", fieldName: "val_sanchez" }, { name: "Santiago Abascal", fieldName: "val_abascal" }, { name: "Alvise Pérez", fieldName: "val_alvise" }, { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" }, { name: "Irene Montero", fieldName: "val_irene_montero" }, { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" }, { name: "Jorge Buxadé", fieldName: "val_buxade" }];
+            setLeaderRatings(ls.map(l => { let s = 0, c = 0; ar.forEach((r: any) => { const v = r[l.fieldName]; if (v != null) { s += v; c++; } }); return { ...l, average: Math.round(c > 0 ? (s / c) * 10 : 0) / 10, count: c }; }));
+          }
+        }
+
+        try { const { data } = await supabase.from("media_nota_ejecutivo").select("nota_media"); if (data?.[0]) setNotaEjecutivo(data[0].nota_media); } catch { /* skip */ }
+        try { const { data } = await supabase.from("edad_promedio").select("edad_media"); if (data?.[0]) setEdadPromedio(data[0].edad_media); } catch { /* skip */ }
+        try { const { data } = await supabase.from("ideologia_promedio").select("ideologia_media"); if (data?.[0]) setIdeologiaPromedio(data[0].ideologia_media); } catch { /* skip */ }
+        try { 
+          const { data } = await supabase.from("coherencia_voto_lider_view").select("*"); 
+          setCoherenciaRows(data || []);
+        } catch (e) {
+          console.warn("Error loading coherencia:", e);
+          setCoherenciaRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("flujos_voto_view").select("*").limit(40); 
+          setFlujosRows(data || []);
+        } catch (e) {
+          console.warn("Error loading flujos:", e);
+          setFlujosRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("ideologia_por_partido").select("*"); 
+          setIdeologiaRows(data || []);
+        } catch (e) {
+          console.warn("Error loading ideologia:", e);
+          setIdeologiaRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("correlacion_voto_valoracion").select("*"); 
+          setCorrelacionRows(data || []);
+        } catch (e) {
+          console.warn("Error loading correlacion:", e);
+          setCorrelacionRows([]);
+        }
+        try { 
+          const { data } = await supabase.from("votos_historico_resumen").select("*").order("snapshot_at", { ascending: true }).limit(150); 
+          setHistoricoRows(data || []);
+        } catch (e) {
+          console.warn("Error loading historico:", e);
+          setHistoricoRows([]);
+        }
+        try { const { data } = await supabase.from("elecciones_historicas").select("*").order("año", { ascending: true }); setHistoricoElecciones((data || []) as HistoricoEleccion[]); } catch {}
+        try {
+          const { data } = await supabase
+            .from("electionsdirect")
+            .select("id,election_date,region_name,region_flag_url,close_at,escrutado,electiondirect_results(porcentaje_voto,escanos,proyected_escaños,proyected_porcentaje,Candidato,is_projection,is_final,party_configuration(id,party_key,display_name,color,logo_url))")
+            .order("close_at", { ascending: true });
+          const normalized = (data || []).map((r: any) => ({
+            id: r.id,
+            election_date: r.election_date,
+            region_name: r.region_name,
+            region_flag_url: r.region_flag_url,
+            close_at: r.close_at,
+            escrutado: r.escrutado,
+            results: (r.electiondirect_results || []).map((x: any) => ({
+              party_id: x.party_configuration?.id,
+              party_key: x.party_configuration?.party_key,
+              display_name: x.party_configuration?.display_name,
+              color: x.party_configuration?.color,
+              logo_url: x.party_configuration?.logo_url,
+              porcentaje_voto: Number(x.porcentaje_voto || 0),
+              escanos: x.escanos,
+              proyected_escaños: x.proyected_escaños,
+              proyected_porcentaje: x.proyected_porcentaje,
+              candidato: x.Candidato,
+              is_projection: !!x.is_projection,
+              is_final: !!x.is_final,
+            })),
+          }));
+          setNocheElectoralRows(normalized as NocheElectoralRow[]);
+        } catch {}
+        try {
+          const { data } = await supabase.from("party_leaders").select("leader_name, photo_url").eq("is_active", true);
+          const map: Record<string, string> = {};
+          (data || []).forEach((l: any) => { if (l.leader_name && l.photo_url) map[String(l.leader_name).trim().toLowerCase()] = l.photo_url; });
+          setLeaderPhotoByName(map);
+        } catch {}
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
+    };
+    fetchResults();
+    const interval = setInterval(fetchResults, 10000);
+    return () => clearInterval(interval);
+  }, [generalPartyMap, youthPartyMap]);
+
+  const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
+  const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
+  const partyColorMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    [...Object.values(generalPartyMap), ...Object.values(youthPartyMap)].forEach((p: any) => {
+      if (!p) return;
+      if (p.key && p.color) m[p.key.toUpperCase()] = p.color;
+      if (p.name && p.color) m[p.name.toUpperCase()] = p.color;
+    });
+    return m;
+  }, [generalPartyMap, youthPartyMap]);
+  const historicoPorPartido = useMemo(() => {
+    if (!historicoElecciones || historicoElecciones.length === 0) return [];
+    
+    return historicoElecciones.map((h: any) => ({
+      año: h.año,
+      PP: h.pp || 0,
+      PSOE: h.psoe || 0,
+      VOX: h.vox || 0,
+      SUMAR: h.sumar || 0,
+      PODEMOS: h.podemos || 0,
+      Ciudadanos: h.ciudadanos || 0,
+      ERC: h.erc || 0,
+      JUNTS: h.junts || 0,
+    })).sort((a: any, b: any) => a.año - b.año);
+  }, [historicoElecciones]);
+  const comparativa2023VsActual = useMemo(() => {
+    if (!historicoElecciones || historicoElecciones.length === 0) return [];
+    
+    const r2023 = historicoElecciones.find((h: any) => h.año === 2023);
+    if (!r2023) return [];
+    
+    const parties = ['PP', 'PSOE', 'VOX', 'SUMAR', 'PODEMOS', 'Ciudadanos', 'ERC', 'JUNTS'];
+    return parties.map(p => {
+      const current = generalStats.find(g => g.nombre === p || g.id === p)?.escanos || 0;
+      const key = p.toLowerCase();
+      return { partido: p, escanos_2023: Number((r2023 as any)[key] || 0), escanos_actuales: current };
+    });
+  }, [historicoElecciones, generalStats]);
+
+  const handleGenerarInfografia = async (type: "general" | "party", party?: string) => {
+    let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
+    let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
+    let top5LideresPorPartido: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>> = {};
+    let preguntasVarias: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }> = {};
+    let partyLogos: Record<string, string> = {};
+    
+    try {
+      const { data: partyConfig } = await supabase.from("party_configuration").select("party_key, display_name, logo_url");
+      const byAnyName: Record<string, { key: string; display: string; logo_url?: string }> = {};
+      (partyConfig || []).forEach((p: any) => {
+        const key = String(p.party_key || "").trim();
+        const display = String(p.display_name || "").trim();
+        if (!key) return;
+        byAnyName[key.toLowerCase()] = { key, display, logo_url: p.logo_url || "" };
+        if (display) byAnyName[display.toLowerCase()] = { key, display, logo_url: p.logo_url || "" };
+        if (p.logo_url) {
+          partyLogos[key] = p.logo_url;
+          if (display) partyLogos[display] = p.logo_url;
+        }
+      });
+      const selectedPartyCanonical = party ? byAnyName[String(party).trim().toLowerCase()] : undefined;
+
+      const { data: topLeaderRows } = await supabase.from("top_lider_por_partido").select("partido, lider_top, votos_lider_top, porcentaje_lider_top");
+      if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
+
+      const { data: leaderPhotosRows } = await supabase.from("party_leaders").select("leader_name, photo_url").eq("is_active", true);
+      const photoByLeader: Record<string, string> = {};
+      (leaderPhotosRows || []).forEach((l: any) => {
+        if (l?.leader_name && l?.photo_url) photoByLeader[String(l.leader_name).trim().toLowerCase()] = l.photo_url;
+      });
+      const { data: top5Rows } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje").order("partido", { ascending: true }).order("total_votos", { ascending: false });
+      if (top5Rows?.length) {
+        top5Rows.forEach((r: any) => {
+          const rawPartido = String(r.partido || "").trim();
+          const canonical = byAnyName[rawPartido.toLowerCase()];
+          const keys = [rawPartido, canonical?.key, canonical?.display].filter(Boolean) as string[];
+          const targetKey = keys[0];
+          if (!top5LideresPorPartido[targetKey]) top5LideresPorPartido[targetKey] = [];
+          if (top5LideresPorPartido[targetKey].length < 5) {
+            const payload = {
+              nombre: r.lider_preferido,
+              votos: Number(r.total_votos || 0),
+              porcentaje: Number(r.porcentaje || 0),
+              photo_url: photoByLeader[String(r.lider_preferido || "").trim().toLowerCase()]
+            };
+            keys.forEach((k) => {
+              if (!top5LideresPorPartido[k]) top5LideresPorPartido[k] = [];
+              if (top5LideresPorPartido[k].length < 5) top5LideresPorPartido[k].push(payload);
+            });
+          }
+        });
+      }
+
+      if (party) {
+        const filterParty = selectedPartyCanonical?.display || selectedPartyCanonical?.key || party;
+        const { data: respuestasData } = await supabase.from("respuestas").select("division_territorial, monarquia_republica, sistema_pensiones").eq("voto_generales", filterParty).limit(1000);
+        if (respuestasData?.length) {
+          const countMap = (arr: any[], field: string) => {
+            const counts: Record<string, number> = {};
+            arr.forEach(r => { const val = r[field]; if (val) counts[val] = (counts[val] || 0) + 1; });
+            return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+          };
+          const payload = {
+            division_territorial: countMap(respuestasData, "division_territorial"),
+            monarquia_republica: countMap(respuestasData, "monarquia_republica"),
+            sistema_pensiones: countMap(respuestasData, "sistema_pensiones")
+          };
+          [party, selectedPartyCanonical?.key, selectedPartyCanonical?.display].filter(Boolean).forEach((k: any) => { preguntasVarias[k] = payload; });
+        }
+      }
+
+      const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
+      if (topRegionRows?.length) topRegionPorPartido = topRegionRows.map((r: any) => ({ partido: r.partido, region: r.region_top, votos: Number(r.votos_region_top || 0) }));
+    } catch (e) {
+      console.error("Error cargando datos extendidos para infografía:", e);
+    }
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, undefined, top1PorPartido, topRegionPorPartido, top5LideresPorPartido, preguntasVarias, partyLogos);
+  };
+
+  const showSortBar = activeTab === "general" || activeTab === "youth";
+  const showPartyList = stats.length > 0 && showSortBar;
 
   return (
-    <div className="r-root">
+    <>
       <style>{RESULTS_CSS}</style>
-
-      {/* ── HEADER ── */}
-      <header className="r-header">
-        <div className="r-brand">
-          <img src="/logo-oficial.png" alt="Logo" onError={e => (e.currentTarget.style.display = "none")} />
-          <div>
-            <div className="r-brand-title">Barómetro BC</div>
-            <div className="r-brand-sub">Resultados e Inteligencia Electoral</div>
+      <div className="r-root">
+        {/* Header */}
+        <header className="r-header">
+          <div className="r-brand">
+            <img src="/favicon.png" alt="BC" />
+            <div>
+              <div className="r-brand-title">Resultados en Vivo</div>
+              <div className="r-brand-sub">{totalResponses.toLocaleString("es-ES")} respuestas · Batalla Cultural</div>
+            </div>
           </div>
-        </div>
+          <div className="r-header-actions">
+            <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
+              <Image size={12} /><span>Infografía</span>
+            </button>
+            <button className="r-hbtn r-hbtn-pdf" onClick={() => downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null)}>
+              <FileText size={12} /><span>PDF</span>
+            </button>
+            
+            <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
+            <div className="hidden md:block"><FollowUsMenu /></div>
+          </div>
+        </header>
 
-        <div className="r-header-actions">
-          <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
-            <Image size={13} />
-            <span>Infografía</span>
-          </button>
-          <button className="r-hbtn r-hbtn-gov" onClick={() => setShowGovModal(true)}>
-            <Building2 size={13} />
-            <span>Constructor Gobierno</span>
-          </button>
-          <button className="r-hbtn r-hbtn-pdf" onClick={handleExportPDF} disabled={pdfLoading}>
-            {pdfLoading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-            <span>Exportar PDF</span>
-          </button>
-          <FollowUsMenu />
-        </div>
-      </header>
+        {/* NavBar */}
+        <ResultsNavBar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* ── NAVIGATION ── */}
-      <ResultsNavBar activeTab={activeTab} onTabChange={handleTabChange} />
-
-      {/* ── MAIN CONTENT ── */}
-      <main className="r-main" ref={contentRef}>
-        <div className="r-space">
-
-          {/* TAB: GENERAL */}
-          {activeTab === "general" && (
-            <>
-              {/* Quick Stats Grid */}
-              <div className="r-quickstats">
+        <main className="r-main" style={{ animation: 'fadeIn 0.6s ease-out' }}>
+          <div className="r-space" style={{ animation: 'slideInUp 0.8s ease-out 0.2s both' }}>
+              {/* Quick stats */}
+              <div className="r-quickstats" style={{ animation: 'slideInUp 0.6s ease-out' }}>
                 <div className="r-stat-card">
-                  <div className="r-stat-label">Total Muestra</div>
-                  <div className="r-stat-value accent">{totalRespuestas.toLocaleString("es-ES")}</div>
-                  <div className="r-stat-suffix">Respuestas válidas</div>
+                  <div className="r-stat-label">Respuestas</div>
+                  <div className="r-stat-value accent">{totalResponses.toLocaleString("es-ES")}</div>
                 </div>
-                <div className="r-stat-card">
-                  <div className="r-stat-label">Partido Líder</div>
-                  <div className="r-stat-value">{sortedGeneralStats[0]?.nombre || "—"}</div>
-                  <div className="r-stat-suffix">{sortedGeneralStats[0]?.escanos || 0} escaños proyectados</div>
-                </div>
-                <div className="r-stat-card">
-                  <div className="r-stat-label">Mayoría Absoluta</div>
-                  <div className="r-stat-value">176</div>
-                  <div className="r-stat-suffix">Escaños en Congreso</div>
-                </div>
-                <div className="r-stat-card">
-                  <div className="r-stat-label">Líder Mejor Valorado</div>
-                  <div className="r-stat-value">{leaderRatings[0]?.name.split(" ").slice(-1)[0] || "—"}</div>
-                  <div className="r-stat-suffix">{leaderRatings[0]?.average.toFixed(1) || 0} / 10 puntos</div>
-                </div>
-                <div className="r-stat-card">
-                  <div className="r-stat-label">Estimación de abstención</div>
-                  <div className="r-stat-value" style={{ color: "#f59e0b" }}>38-42%</div>
-                  <div className="r-stat-suffix">Participación estimada: ~60%</div>
-                </div>
+                {edadPromedio !== null && (
+                  <div className="r-stat-card">
+                    <div className="r-stat-label">Edad media</div>
+                    <div className="r-stat-value">{edadPromedio.toFixed(1)}</div>
+                    <div className="r-stat-suffix">años</div>
+                  </div>
+                )}
+                {ideologiaPromedio !== null && (
+                  <div className="r-stat-card">
+                    <div className="r-stat-label">Ideología</div>
+                    <div className="r-stat-value">{ideologiaPromedio.toFixed(1)}</div>
+                    <div className="r-stat-suffix">/ 10</div>
+                  </div>
+                )}
+                {notaEjecutivo !== null && (
+                  <div className="r-stat-card">
+                    <div className="r-stat-label">Nota Ejecutivo</div>
+                    <div className="r-stat-value">{notaEjecutivo.toFixed(1)}</div>
+                    <div className="r-stat-suffix">/ 10</div>
+                  </div>
+                )}
               </div>
 
-              {/* General Results Section */}
-              <div className="r-section">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
-                  <div>
-                    <h2 className="r-section-title">Resultados Generales</h2>
-                    <p className="r-section-sub" style={{ margin: 0 }}>Proyección de escaños por Ley D'Hondt provincial</p>
-                  </div>
-
-                  {/* Sort Controls */}
-                  <div className="r-sort-bar">
-                    <span style={{ fontSize: 11, color: "#7a7990" }}>Ordenar por:</span>
-                    <button className={`r-sort-btn${sortBy === "escanos" ? " active" : ""}`} onClick={() => setSortBy("escanos")}>Escaños</button>
-                    <button className={`r-sort-btn${sortBy === "votos" ? " active" : ""}`} onClick={() => setSortBy("votos")}>Votos</button>
-                    <button className={`r-sort-btn${sortBy === "porcentaje" ? " active" : ""}`} onClick={() => setSortBy("porcentaje")}>% Voto</button>
-                  </div>
+              {showSortBar && (
+                <div className="r-sort-bar">
+                  <span style={{ fontSize: 11, color: "#7a7990" }}>Ordenar:</span>
+                  {(["votos", "escanos"] as const).map(opt => (
+                    <button key={opt} className={`r-sort-btn${sortBy === opt ? " active" : ""}`} onClick={() => setSortBy(opt)}>
+                      {opt === "votos" ? "Votos" : "Escaños"}
+                    </button>
+                  ))}
+                  <span className="r-sort-hint">{totalEscanos} escaños en juego</span>
+                  {activeTab === "general" && (
+                    <button
+                      onClick={() => setShowTransferenciaModal(true)}
+                      style={{
+                        marginLeft: "auto",
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        background: "rgba(232,70,90,0.15)",
+                        border: "1px solid rgba(232,70,90,0.3)",
+                        color: "#e8465a",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(232,70,90,0.25)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(232,70,90,0.15)";
+                      }}
+                    >
+                      <GitBranch size={11} style={{ display: "inline", marginRight: 4 }} />
+                      Transferencia de Voto
+                    </button>
+                  )}
                 </div>
+              )}
 
-                {/* Party Cards Grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-                  {sortedGeneralStats.map(party => {
-                    const partyAge = partyEdadesMap[party.id];
-                    const baroEscanos = barometroSeats[party.id] || "0";
-                    const mediaEscanos = mediaEncuestasSeats[party.id] || "0";
-
+              {showPartyList && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {(sortBy === "votos" ? [...stats].sort((a, b) => b.votos - a.votos) : [...stats].sort((a, b) => b.escanos - a.escanos)).map(party => {
+                    const lookup = activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup;
+                    const rk = resolvePartyKey(party.id, lookup);
+                    const logoUrl = lookup[rk]?.logo || party.logo || "";
+                    const partyColor = lookup[rk]?.color || party.color || "#e8465a";
+                    const edadMedia = edadMediaPorPartido[party.nombre] || edadMediaPorPartido[party.id];
                     return (
-                      <div
-                        key={party.id}
-                        className="r-party-card"
-                        style={{ "--party-accent": party.color } as React.CSSProperties}
-                        onClick={() => setSelectedPartyModal(party)}
-                      >
+                      <div key={party.id} className="r-party-card" style={{ borderColor: `${partyColor}45`, ["--party-accent" as any]: partyColor }} onClick={() => setSelectedPartyForStats(party.nombre)}>
                         <div className="r-party-card-top">
-                          <div className="r-party-logo-wrap" style={{ background: `${party.color}20` }}>
-                            <PartyLogoImg src={party.logo} name={party.nombre} color={party.color} size={30} />
+                          <div className="r-party-logo-wrap" style={{ background: `${partyColor}18` }}>
+                            <PartyLogoImg src={logoUrl} name={party.nombre} color={partyColor} size={34} />
                           </div>
                           <div className="r-party-info">
                             <div className="r-party-name">{party.nombre}</div>
                             <div className="r-party-votes">{party.votos.toLocaleString("es-ES")} votos</div>
-                            {partyAge && <div className="r-party-edad"><Users size={10} />Edad media: {partyAge} años</div>}
+                            {activeTab === "general" && edadMedia && (
+                              <div className="r-party-edad">
+                                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#c9a96e", display: "inline-block" }} />
+                                Edad media: {edadMedia} años
+                              </div>
+                            )}
                           </div>
-                          <div className="r-party-seats-group">
-                            <div className="r-party-seats">
-                              <div className="r-party-seats-num" style={{ color: party.color }}>{party.escanos}</div>
-                              <div className="r-party-seats-label">Escaños</div>
-                            </div>
-                            <div className="r-party-seats-box">
-                              <div style={{ fontSize: 8, color: "#7a7990", fontWeight: 700 }}>#BarómetroBC</div>
-                              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 800, color: "#f0eff8" }}>{baroEscanos}</div>
-                            </div>
-                            <div className="r-party-seats-box">
-                              <div style={{ fontSize: 8, color: "#7a7990", fontWeight: 700 }}>Media Encuestas</div>
-                              <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 800, color: "#f0eff8" }}>{mediaEscanos}</div>
-                            </div>
+                          <div className="r-party-seats">
+                            <div className="r-party-seats-num" style={{ color: partyColor }}>{party.escanos}</div>
+                            <div className="r-party-seats-label">escaños</div>
                           </div>
                         </div>
-
                         <div className="r-party-bar-wrap">
                           <div className="r-party-bar-labels">
-                            <span>Porcentaje de voto</span>
-                            <strong>{party.porcentaje.toFixed(1)}%</strong>
+                            <span>{party.porcentaje.toFixed(1)}% votos</span>
+                            <span>{((party.escanos / totalEscanos) * 100).toFixed(1)}% escaños</span>
                           </div>
                           <div className="r-party-bar-track">
-                            <div className="r-party-bar-fill" style={{ width: `${Math.min(100, party.porcentaje * 2.5)}%`, background: party.color }} />
+                            <div className="r-party-bar-fill" style={{ background: partyColor, width: `${party.porcentaje}%` }} />
                           </div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              )}
 
-              {/* Pactometer Interactive Section */}
-              <div className="r-section">
-                <PactometerInteractive parties={generalStats} />
-              </div>
+              {/* Tabs content */}
+              {activeTab === "tendencias" && <TrendenciesChart partyColors={partyColorMap} />}
+              {activeTab === "analisis-avanzado" && (
+                <AnalisisAvanzadoSection
+                  coherenciaRows={coherenciaRows}
+                  flujosRows={flujosRows}
+                  ideologiaRows={ideologiaRows}
+                  correlacionRows={correlacionRows}
+                  historicoRows={historicoRows}
+                />
+              )}
+              {activeTab === "contexto-historico" && (
+                <div style={{ display: "grid", gap: 14 }}>
+                  <div className="r-section">
+                    <div className="r-section-title">Contexto histórico y ciclos electorales (por partido)</div>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <LineChart data={historicoPorPartido}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                        <XAxis dataKey="año" tick={{ fill: "#7a7990" }} />
+                        <YAxis tick={{ fill: "#7a7990" }} />
+                        <Tooltip />
+                        <Legend />
+                        {["PP", "PSOE", "VOX", "SUMAR", "PODEMOS", "Ciudadanos", "ERC", "JUNTS"].map((p) => (
+                          <Line key={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} dot={false} connectNulls />
+                        ))}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="r-section">
+                    <div className="r-section-title">Comparativa 2023 vs escaños actuales (Encuesta BC)</div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={comparativa2023VsActual}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                      <XAxis dataKey="partido" tick={{ fill: "#7a7990" }} />
+                      <YAxis tick={{ fill: "#7a7990" }} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="escanos_2023" fill="#60a5fa" name="2023" />
+                      <Bar dataKey="escanos_actuales" fill="#e8465a" name="Actual BC" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                </div>
+              )}
+              {activeTab === "noche-electoral" && (
+                <div className="r-section">
+                  <div className="r-section-title">Modo Directo: Noche Electoral</div>
+                  <div className="r-direct-grid">
+                    {nocheElectoralRows.length === 0 && <div style={{ fontSize: 12, color: "#7a7990" }}>Sin datos en tiempo real todavía.</div>}
+                    {nocheElectoralRows.map((r, i) => {
+                      const seconds = Math.max(0, Math.floor((new Date(r.close_at).getTime() - Date.now()) / 1000));
+                      const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
+                      const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+                      const ss = String(seconds % 60).padStart(2, "0");
+                      return <div key={`${r.region_name}-${i}`} className="r-direct-card">
+                        <div className="r-direct-header">
+                          {r.region_flag_url ? <img src={r.region_flag_url} alt={r.region_name} style={{ width: 20, height: 14, objectFit: "cover" }} /> : null}
+                          <strong>{r.region_name}</strong>
+                          <div className="r-direct-meta"><span className="r-direct-pill">Cierre: {hh}:{mm}:{ss}</span><span className="r-direct-pill">Escrutado: {r.escrutado == null ? "—" : `${Number(r.escrutado).toFixed(1)}%`}</span></div>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#7a7990" }}>Resultados por partido (desde party_configuration)</div>
+                        <div className="r-direct-list">
+                          {r.results?.map((pr, idx) => (
+                            <div key={`${pr.party_id}-${idx}`} className="r-direct-row">
+                              {pr.logo_url ? <img src={pr.logo_url} alt={pr.display_name} style={{ width: 16, height: 16, objectFit: "contain", borderRadius: 3 }} /> : null}
+                              <span style={{ width: 8, height: 8, borderRadius: 999, background: pr.color || "#999" }} />
+                              <span style={{ minWidth: 120 }}>{pr.display_name}</span>
+                              <b>{(pr.proyected_porcentaje ?? pr.porcentaje_voto).toFixed(2)}%</b>
+                              <span style={{ color: "#7a7990" }}>{pr.escanos ?? "-"} escaños</span>
+                              <span style={{ color: "#7a7990" }}>proj: {pr.proyected_escaños ?? "-"} </span>
+                              {pr.candidato ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  {leaderPhotoByName[String(pr.candidato).trim().toLowerCase()] ? <img src={leaderPhotoByName[String(pr.candidato).trim().toLowerCase()]} alt={pr.candidato || ""} style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover" }} /> : null}
+                                  <span>{pr.candidato}</span>
+                                </span>
+                              ) : null}
+                              <span style={{ marginLeft: "auto", color: pr.is_final ? "#22c55e" : "#f59e0b" }}>{pr.is_final ? "Final" : pr.is_projection ? "Proyección" : "Parcial"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>;
+                    })}
+                  </div>
+                </div>
+              )}
+              {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
+              {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "crisis-ceuta" && <CrisisCeutaSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "primarias" && <PrimariasResultsSection />}
+              {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa tipoEncuesta="generales" generalStats={generalStats} totalResponses={totalResponses} />}
+              {activeTab === "lideres-partidos" && <LideresDePartidosSection partyMeta={generalPartyMetaLookup} />}
 
-              {/* Simulator Section */}
-              <SimuladorElectoral
-                generalStats={generalStats}
-                generalPartyMap={generalPartyMap}
-                votosPorProvincia={votosPorProvincia}
-                provinciaMetricsMap={provinciaMetricsMap}
-              />
-            </>
-          )}
-
-          {/* TAB: MAPA Y HEMICICLO */}
-          {activeTab === "mapa-hemiciclo" && (
-            <div className="r-space">
-              <div className="r-section">
-                <div className="r-section-title">Hemiciclo del Congreso</div>
-                <p className="r-section-sub">Distribución de 350 escaños de las Elecciones Generales</p>
-                <CongressHemicycle parties={generalStats} />
-              </div>
-              <div className="r-section">
-                <div className="r-section-title">Mapa Provincial Generales</div>
-                <p className="r-section-sub">Partido más votado por provincia</p>
-                <SpainMapRealistic votosPorProvincia={votosPorProvincia} partyMap={generalPartyMap} />
-              </div>
-            </div>
-          )}
-
-          {/* TAB: ENCUESTADORAS EXTERNAS */}
-          {activeTab === "encuestadoras-externas" && (
-            <EncuestadorasComparativa />
-          )}
-
-          {/* TAB: CCAA */}
-          {activeTab === "ccaa" && (
-            <CCAAResltsSection />
-          )}
-
-          {/* TAB: PROVINCIAS */}
-          {activeTab === "provincias" && (
-            <ProvincesResultsSection votosPorProvincia={votosPorProvincia} provinciaMetricsMap={provinciaMetricsMap} partyMap={generalPartyMap} />
-          )}
-
-          {/* TAB: COMPARAR CCAA */}
-          {activeTab === "comparacion-ccaa" && (
-            <CCAAComparisonSection />
-          )}
-
-          {/* TAB: JUVENTUD (YOUTH) */}
-          {activeTab === "youth" && (
-            <div className="r-section">
-              <div className="r-section-title">Asociaciones Juveniles</div>
-              <p className="r-section-sub">Resultados de votación entre organizaciones juveniles</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-                {youthStats.map(party => (
-                  <div key={party.id} className="r-party-card" style={{ "--party-accent": party.color } as React.CSSProperties}>
-                    <div className="r-party-card-top">
-                      <div className="r-party-logo-wrap" style={{ background: `${party.color}20` }}>
-                        <PartyLogoImg src={party.logo} name={party.nombre} color={party.color} size={30} />
-                      </div>
-                      <div className="r-party-info">
-                        <div className="r-party-name">{party.nombre}</div>
-                        <div className="r-party-votes">{party.votos.toLocaleString("es-ES")} votos</div>
-                      </div>
-                      <div className="r-party-seats">
-                        <div className="r-party-seats-num" style={{ color: party.color }}>{party.escanos}</div>
-                        <div className="r-party-seats-label">Escaños</div>
-                      </div>
-                    </div>
-                    <div className="r-party-bar-wrap">
-                      <div className="r-party-bar-labels">
-                        <span>Porcentaje</span>
-                        <strong>{party.porcentaje.toFixed(1)}%</strong>
-                      </div>
-                      <div className="r-party-bar-track">
-                        <div className="r-party-bar-fill" style={{ width: `${Math.min(100, party.porcentaje * 2.5)}%`, background: party.color }} />
-                      </div>
+              {activeTab === "leaders" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                    <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Valoración de Líderes</h2>
+                    <div className="r-mode-tabs" style={{ marginBottom: 0 }}>
+                      <button className={`r-mode-tab${leadersSubTab === "individual" ? " active" : ""}`} onClick={() => setLeadersSubTab("individual")}>Individual</button>
+                      <button className={`r-mode-tab${leadersSubTab === "porpartido" ? " active" : ""}`} onClick={() => setLeadersSubTab("porpartido")}>Por Partido</button>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* TAB: MAPA JUVENIL */}
-          {activeTab === "asoc-juv-mapa-hemiciclo" && (
-            <div className="r-space">
-              <div className="r-section">
-                <div className="r-section-title">Hemiciclo Juvenil</div>
-                <p className="r-section-sub">Representación de Organizaciones Juveniles</p>
-                <CongressHemicycle parties={youthStats} />
-              </div>
-              <div className="r-section">
-                <div className="r-section-title">Mapa Territorial Juvenil</div>
-                <SpainMapRealistic votosPorProvincia={votosJuvenilesPorProvincia} partyMap={youthPartyMap} />
-              </div>
-            </div>
-          )}
+                  {leadersSubTab === "individual" && (
+                    leaderRatings.length === 0
+                      ? <div className="r-section" style={{ textAlign: "center", color: "#7a7990" }}>Aún no hay valoraciones.</div>
+                      : (
+                        <>
+                          <div className="r-leader-grid">
+                            {leaderRatings.map(leader => {
+                              const km: Record<string, keyof typeof LEADERS> = { val_feijoo: "FEIJOO", val_sanchez: "SANCHEZ", val_abascal: "ABASCAL", val_alvise: "ALVISE", val_yolanda_diaz: "YOLANDA", val_irene_montero: "IRENE", val_ayuso: "AYUSO", val_buxade: "BUXADE" };
+                              const lk = km[leader.fieldName]; const ld = lk ? LEADERS[lk] : null; let li: string | undefined;
+                              if (ld?.image) { const fn = ld.image.split("/").pop(); if (fn) { const ek = Object.keys(EMBEDDED_LEADERS).find(k => k.toLowerCase().includes(fn.toLowerCase().replace(/\.[^/.]+$/, ""))); if (ek) li = EMBEDDED_LEADERS[ek]; } }
+                              if (!li && ld?.image) li = ld.image;
+                              const scoreColor = leader.average >= 7 ? "#22c55e" : leader.average >= 4 ? "#f59e0b" : "#e8465a";
+                              return (
+                                <div key={leader.fieldName} className="r-leader-card">
+                                  {li ? <img src={li} alt={leader.name} className="r-leader-img" style={{ border: `2px solid ${scoreColor}30` }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div className="r-leader-img-placeholder">{leader.name.charAt(0)}</div>}
+                                  <div className="r-leader-name">{leader.name}</div>
+                                  <div className="r-leader-score" style={{ color: scoreColor }}>{leader.average.toFixed(1)}</div>
+                                  <div style={{ fontSize: 10, color: "#7a7990", marginBottom: 6 }}>sobre 10</div>
+                                  <div className="r-leader-bar-track"><div className="r-leader-bar-fill" style={{ background: scoreColor, width: `${(leader.average / 10) * 100}%` }} /></div>
+                                  <div className="r-leader-count">{leader.count.toLocaleString("es-ES")} valoraciones</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="r-section">
+                            <div className="r-section-title" style={{ marginBottom: 14 }}>Comparativa</div>
+                            <ResponsiveContainer width="100%" height={280}>
+                              <BarChart data={leaderRatings}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                                <XAxis dataKey="name" stroke="rgba(255,255,255,0.15)" angle={-30} textAnchor="end" height={70} fontSize={10} tick={{ fill: "#7a7990" }} />
+                                <YAxis stroke="rgba(255,255,255,0.1)" domain={[0, 10]} fontSize={10} tick={{ fill: "#7a7990" }} />
+                                <Tooltip contentStyle={{ background: "#18181f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 11 }} formatter={(v: any) => v.toFixed(1)} />
+                                <Bar dataKey="average" radius={[5, 5, 0, 0]}>
+                                  {leaderRatings.map(l => <Cell key={l.fieldName} fill={l.average >= 7 ? "#22c55e" : l.average >= 4 ? "#f59e0b" : "#e8465a"} fillOpacity={0.85} />)}
+                                </Bar>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </>
+                      )
+                  )}
 
-          {/* TAB: VALORACION LIDERES */}
-          {activeTab === "leaders" && (
-            <div className="r-space">
-              <div className="r-section">
-                <div className="r-section-title">Valoración de Líderes Políticos</div>
-                <p className="r-section-sub">Puntuación media sobre 10 atribuida por los participantes</p>
-                <div className="r-leader-grid">
-                  {leaderRatings.map(l => (
-                    <div key={l.fieldName} className="r-leader-card">
-                      <div className="r-leader-name">{l.name}</div>
-                      <div className="r-leader-score">{l.average.toFixed(1)}</div>
-                      <div className="r-leader-bar-track">
-                        <div className="r-leader-bar-fill" style={{ width: `${l.average * 10}%`, background: l.average >= 5 ? "#e8465a" : "#7a7990" }} />
-                      </div>
-                      <div className="r-leader-count">{l.count} valoraciones</div>
-                    </div>
-                  ))}
+                  {leadersSubTab === "porpartido" && (
+                    <LeadersByPartyAvg leaderRatings={leaderRatings} generalStats={generalStats} generalPartyMap={generalPartyMap} />
+                  )}
                 </div>
+              )}
+
+              {activeTab === "mapa-hemiciclo" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {Object.keys(votosPorProvincia).length > 0 ? (
+                    <>
+                      <div className="r-section">
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                          <div className="r-section-title">Mapa Provincial</div>
+                          <div className="r-map-toggle">
+                            {(["schematic", "realistic"] as const).map(v => (
+                              <button key={v} className={`r-map-btn${mapView === v ? " active" : ""}`} onClick={() => setMapView(v)}>
+                                {v === "schematic" ? <><Grid3x3 size={11} />Esquemática</> : <><Map size={11} />Realista</>}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {mapView === "schematic"
+                          ? <SpainMapProvincial votosPorProvincia={votosPorProvincia} isYouthAssociations={false} partyMeta={generalPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionada(p); setVotosPorPartidoProvincia(v); setEscanosProvincia(e); }} />
+                          : <SpainMapRealistic votosPorProvincia={votosPorProvincia} provinciaMetricsMap={provinciaMetricsMap} isYouthAssociations={false} partyMeta={generalPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionada(p); setVotosPorPartidoProvincia(v); setEscanosProvincia(e); }} />}
+                      </div>
+                      <div className="r-section">
+                        <div className="r-section-title">Pactómetro</div>
+                        <PactometerInteractive stats={generalStats.map(s => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={350} requiredForMajority={176} />
+                      </div>
+                      <div className="r-section">
+                        <div className="r-section-title" style={{ marginBottom: 14 }}>Hemiciclo del Congreso</div>
+                        <CongressHemicycle escanos={escanosGeneralesPorProvincia} totalEscanos={350} provinciaSeleccionada={provinciaSeleccionada} votosProvincia={votosPorPartidoProvincia} escanosProvincia={escanosProvincia} partyMeta={generalPartyMetaLookup} />
+                      </div>
+                    </>
+                  ) : <div className="r-section" style={{ textAlign: "center", color: "#7a7990" }}>Cargando datos de provincias...</div>}
+                </div>
+              )}
+
+              {activeTab === "asoc-juv-mapa-hemiciclo" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {Object.keys(votosPorProvinciaJuveniles).length > 0 ? (
+                    <>
+                      <div className="r-section">
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                          <div className="r-section-title">Mapa — Asociaciones Juveniles</div>
+                          <div className="r-map-toggle">
+                            {(["schematic", "realistic"] as const).map(v => (
+                              <button key={v} className={`r-map-btn${mapView === v ? " active" : ""}`} onClick={() => setMapView(v)}>
+                                {v === "schematic" ? <><Grid3x3 size={11} />Esquemática</> : <><Map size={11} />Realista</>}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        {mapView === "schematic"
+                          ? <SpainMapProvincial votosPorProvincia={votosPorProvinciaJuveniles} isYouthAssociations={true} partyMeta={youthPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionadaJuveniles(p); setVotosPorPartidoProvinciaJuveniles(v); setEscanosProvinciaJuveniles(e); }} />
+                          : <SpainMapRealistic votosPorProvincia={votosPorProvinciaJuveniles} provinciaMetricsMap={{}} isYouthAssociations={true} partyMeta={youthPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionadaJuveniles(p); setVotosPorPartidoProvinciaJuveniles(v); setEscanosProvinciaJuveniles(e); }} />}
+                      </div>
+                      <div className="r-section">
+                        {youthStats.length > 0 && <PactometerInteractive stats={youthStats.map(s => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={100} requiredForMajority={51} />}
+                      </div>
+                      <div className="r-section">
+                        <div className="r-section-title" style={{ marginBottom: 14 }}>Hemiciclo Asociaciones Juveniles</div>
+                        <CongressHemicycle escanos={escanosJuvenilesPorProvincia} totalEscanos={100} provinciaSeleccionada={provinciaSeleccionadaJuveniles} votosProvincia={votosPorPartidoProvinciaJuveniles} escanosProvincia={escanosProvinciaJuveniles} partyMeta={youthPartyMetaLookup} />
+                      </div>
+                    </>
+                  ) : <div className="r-section" style={{ textAlign: "center", color: "#7a7990" }}>Cargando datos...</div>}
+                </div>
+              )}
+
+              {/* Metodología */}
+              {!["lideres-partidos", "encuestadoras-externas"].includes(activeTab) && (
+                <div className="r-section">
+                  <div className="r-section-title" style={{ fontSize: 13, marginBottom: 12 }}>Metodología</div>
+                  <div className="r-method">
+                    <div><div className="r-method-key">Ley d'Hondt.</div><div className="r-method-val">Reparto proporcional usado en España.</div></div>
+                    <div><div className="r-method-key">Umbral mínimo.</div><div className="r-method-val">3% generales, 4% asociaciones juveniles.</div></div>
+                    <div><div className="r-method-key">Actualización.</div><div className="r-method-val">Datos en tiempo real cada 10 segundos.</div></div>
+                  </div>
+                </div>
+              )}
+
+              <CommentsSection activeTab={activeTab} />
+
+              <div className="r-cta">
+                <p className="r-cta-text">¿Aún no has respondido la encuesta?</p>
+                <button className="r-cta-btn" onClick={() => setLocation("/encuesta")}>Responder Encuesta</button>
               </div>
-              <LeadersByPartyAvg leaderRatings={leaderRatings} generalStats={generalStats} generalPartyMap={generalPartyMap} />
             </div>
-          )}
+        </main>
 
-          {/* TAB: LIDERES POR PARTIDO */}
-          {activeTab === "lideres-partidos" && (
-            <LideresDePartidosSection partyMeta={generalPartyMap} />
-          )}
+        <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.8)", padding: "16px 20px", textAlign: "center", fontSize: 11, color: "#5a596a" }}>
+          La Encuesta de Batalla Cultural © 2025 · Datos anónimos y públicos
+        </footer>
 
-          {/* TAB: PREFERIDOS */}
-          {activeTab === "lideres-preferidos" && (
-            <div className="r-section">
-              <div className="r-section-title">Líder Preferido para Gobernar</div>
-              <p className="r-section-sub">Preferencia directa de los encuestados</p>
-              <LeadersResultsChart />
-            </div>
-          )}
-
-          {/* TAB: TENDENCIAS */}
-          {activeTab === "tendencias" && (
-            <div className="r-section">
-              <div className="r-section-title">Evolución y Tendencias</div>
-              <p className="r-section-sub">Histórico de estimación de voto en el tiempo</p>
-              <TrendenciesChart />
-            </div>
-          )}
-
-          {/* TAB: CONTEXTO HISTORICO */}
-          {activeTab === "contexto-historico" && (
-            <div className="r-section">
-              <div className="r-section-title">Contexto Histórico Electoral</div>
-              <p className="r-section-sub">Comparativa con elecciones pasadas en España</p>
-              <div style={{ fontSize: 13, color: "#7a7990", lineHeight: 1.6 }}>
-                En esta sección se compara la evolución histórica del voto en elecciones generales desde 1977 hasta las últimas generales de 2023, analizando la volatilidad de los bloques ideológicos.
-              </div>
-            </div>
-          )}
-
-          {/* TAB: PREGUNTAS VARIAS */}
-          {activeTab === "preguntas-varias" && (
-            <PreguntasVariasSection />
-          )}
-
-          {/* TAB: CRISIS CEUTA */}
-          {activeTab === "crisis-ceuta" && (
-            <CrisisCeutaSection />
-          )}
-
-          {/* TAB: PRIMARIAS */}
-          {activeTab === "primarias" && (
-            <PrimariasResultsSection />
-          )}
-
-          {/* TAB: ANALISIS AVANZADO */}
-          {activeTab === "analisis-avanzado" && (
-            <AnalisisAvanzadoSection
-              coherenciaRows={coherenciaRows}
-              flujosRows={flujosRows}
-              ideologiaRows={ideologiaRows}
-              correlacionRows={correlacionRows}
-              historicoRows={historicoRows}
-            />
-          )}
-
-          {/* ── COMENTARIOS ── */}
-          <div className="r-section">
-            <CommentsSection />
-          </div>
-
-        </div>
-      </main>
-
-      {/* ── MODALS ── */}
-      {selectedPartyModal && (
-        <PartyStatsModal party={selectedPartyModal} onClose={() => setSelectedPartyModal(null)} />
-      )}
-
-      {showInfografiaModal && (
-        <InfografiaModal
-          parties={generalStats}
-          onClose={() => setShowInfografiaModal(false)}
-          onGenerate={(type, party) => {
-            alert(`Generando infografía de tipo "${type}"${party ? ` para ${party}` : ""}...`);
-          }}
-        />
-      )}
-
-      {showGovModal && (
-        <GobiernoModal
-          onClose={() => setShowGovModal(false)}
-          leaders={EMBEDDED_LEADERS as any}
-          partyMeta={generalPartyMap}
-          logoPresidenciaB64={logoB64}
-        />
-      )}
-
-      {showTransferModal && (
-        <TransferenciaVotoModal onClose={() => setShowTransferModal(false)} />
-      )}
-    </div>
+        <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} partyKey={selectedPartyForStats ? resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup) : undefined} />
+        {showInfografiaModal && <InfografiaModal parties={generalStats} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
+        <TransferenciaVotoModal isOpen={showTransferenciaModal} onClose={() => setShowTransferenciaModal(false)} partyColors={partyColorMap} />
+      </div>
+    </>
   );
 }
