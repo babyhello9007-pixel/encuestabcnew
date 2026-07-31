@@ -251,7 +251,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
         <p className="text-emerald-300 font-medium text-xs md:text-sm tracking-wide">
-          <strong className="font-semibold text-emerald-200">Mapa en tiempo real:</strong> Mostrando los datos y proyecciones de escasos por provincia.
+          <strong className="font-semibold text-emerald-200">Mapa en tiempo real:</strong> Mostrando los datos y proyecciones de escaños por provincia.
         </p>
       </div>
 
