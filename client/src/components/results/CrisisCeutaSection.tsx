@@ -70,6 +70,14 @@ export function CrisisCeutaSection({ partyMeta }: CrisisCeutaSectionProps) {
     );
   }
 
+  if (!crisisData || crisisData.length === 0 || !crisisResumen || crisisResumen.length === 0) {
+    return (
+      <div style={{ textAlign: "center", padding: "40px 20px", color: "#7a7990" }}>
+        <p>No hay datos de Crisis Ceuta disponibles.</p>
+      </div>
+    );
+  }
+
   // Group data by opinion
   const dataByOpinion: Record<string, CrisisCeutaData[]> = {};
   crisisData.forEach((item) => {
