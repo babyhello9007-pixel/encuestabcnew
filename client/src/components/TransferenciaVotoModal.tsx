@@ -765,7 +765,13 @@ function SankeyChart({
         colorOrigen: getPartyColor(origKey),
         colorDestino: getPartyColor(destKey),
       };
-    }).filter(Boolean);
+    }).filter(Boolean)
+      .sort((a, b) => {
+        // Ordenar por espesor descendente para que los más gruesos se dibujen primero
+        // Esto evita que líneas delgadas queden ocultas bajo las gruesas
+        if (a.isFidelity !== b.isFidelity) return a.isFidelity ? 1 : -1;
+        return b.thickness - a.thickness;
+      });
 
     return {
       width,
@@ -793,8 +799,8 @@ function SankeyChart({
         <defs>
           {layout.links.map((link) => link && (
             <linearGradient key={link.gradientId} id={link.gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.75" : "0.45"} />
-              <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.75" : "0.45"} />
+              <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.85" : "0.65"} />
+              <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.85" : "0.65"} />
             </linearGradient>
           ))}
         </defs>
@@ -816,8 +822,8 @@ function SankeyChart({
               strokeWidth={link.thickness}
               strokeOpacity={
                 hoveredNode || activeLink
-                  ? isHighlighted ? 0.95 : 0.05
-                  : link.isFidelity ? 0.7 : 0.4
+                  ? isHighlighted ? 0.95 : 0.08
+                  : link.isFidelity ? 0.85 : 0.6
               }
               style={{ transition: "stroke-opacity 0.2s ease, stroke-width 0.2s ease", cursor: "pointer" }}
               onMouseEnter={() => setActiveLink(link.data)}
