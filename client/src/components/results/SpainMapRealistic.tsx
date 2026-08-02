@@ -148,38 +148,37 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
     // Contenido Popup HTML estilizado en Modo Noche con efecto Frosted Glass
     const popupContentHtml = `
-      <div class="w-80 p-4 bg-slate-900/85 backdrop-blur-md text-slate-100 rounded-2xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] font-sans">
-        <div class="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
-          <h3 class="text-base font-bold tracking-wide text-slate-50 uppercase">${spanishProvinceName}</h3>
-          <span class="text-[10px] font-medium tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase">
+      <div style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); font-family: sans-serif; color: #e2e8f0; font-size: 13px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+          <h3 style="font-size: 12px; font-weight: 700; color: #f1f5f9; margin: 0; text-transform: uppercase;">${spanishProvinceName}</h3>
+          <span style="font-size: 8px; font-weight: 600; color: #10b981; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 5px; border-radius: 10px;">
             Activo
           </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 mb-4">
-          <div class="bg-white/5 backdrop-blur-sm border border-white/5 p-2 rounded-xl">
-            <p class="text-slate-400 text-[10px] font-semibold tracking-wider uppercase">Total Votos</p>
-            <p class="text-base font-bold text-white mt-0.5">${totalVotos.toLocaleString()}</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
+          <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 6px; border-radius: 6px;">
+            <p style="font-size: 8px; font-weight: 600; color: #94a3b8; margin: 0 0 2px 0; text-transform: uppercase;">Votos</p>
+            <p style="font-size: 11px; font-weight: 700; color: #fff; margin: 0;">${totalVotos.toLocaleString()}</p>
           </div>
           ${
             metrics
               ? `
-            <div class="bg-white/5 backdrop-blur-sm border border-white/5 p-2 rounded-xl">
-              <p class="text-slate-400 text-[10px] font-semibold tracking-wider uppercase">Edad Media</p>
-              <p class="text-base font-bold text-white mt-0.5">${metrics.edad_promedio.toFixed(1)} <span class="text-xs font-normal text-slate-400">años</span></p>
+            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 6px; border-radius: 6px;">
+              <p style="font-size: 8px; font-weight: 600; color: #94a3b8; margin: 0 0 2px 0; text-transform: uppercase;">Edad</p>
+              <p style="font-size: 11px; font-weight: 700; color: #fff; margin: 0;">${metrics.edad_promedio.toFixed(0)}</p>
             </div>
-            <div class="bg-white/5 backdrop-blur-sm border border-white/5 p-2 rounded-xl col-span-2 flex justify-between items-center">
-              <p class="text-slate-400 text-[10px] font-semibold tracking-wider uppercase">Posición Ideológica</p>
-              <p class="text-sm font-bold text-sky-400">${metrics.ideologia_promedio.toFixed(1)} <span class="text-slate-500">/ 10</span></p>
+            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 6px; border-radius: 6px; grid-column: 1 / -1;">
+              <p style="font-size: 8px; font-weight: 600; color: #94a3b8; margin: 0 0 2px 0; text-transform: uppercase;">Ideología: ${metrics.ideologia_promedio.toFixed(1)}/10</p>
             </div>
           `
               : ''
           }
         </div>
 
-        <div class="space-y-2">
-          <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Resultados por Partido</p>
-          <div class="max-h-56 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+        <div style="margin-top: 8px;">
+          <p style="font-size: 8px; font-weight: 600; color: #94a3b8; margin: 0 0 6px 0; text-transform: uppercase;">Partidos</p>
+          <div style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
             ${Object.entries(data.votos)
               .sort(([, a], [, b]) => b - a)
               .slice(0, 10)
@@ -189,21 +188,21 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
                 const partyColor = getColorForParty(partido);
 
                 return `
-                  <div class="flex items-center gap-2 p-2 bg-white/5 hover:bg-white/10 transition-colors rounded-xl border border-white/5">
-                    <div class="flex-1 min-w-0">
-                      <div class="flex justify-between items-center mb-1">
-                        <p class="text-xs font-semibold text-slate-200 truncate">${partido}</p>
-                        <span class="text-xs font-bold text-slate-300">${porcentaje}%</span>
+                  <div style="display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; font-size: 10px;">
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                        <p style="font-weight: 600; color: #e2e8f0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${partido}</p>
+                        <span style="font-weight: 700; color: #cbd5e1; margin-left: 4px;">${porcentaje}%</span>
                       </div>
-                      <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div class="h-full rounded-full transition-all duration-500" style="width: ${porcentaje}%; background-color: ${partyColor}; border-right: 1px solid rgba(255,255,255,0.4);"></div>
+                      <div style="height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden;">
+                        <div style="height: 100%; border-radius: 2px; width: ${porcentaje}%; background-color: ${partyColor};"></div>
                       </div>
                     </div>
-                    <div class="text-right flex-shrink-0 flex flex-col items-end pl-1">
-                      <p class="text-[11px] font-medium text-slate-400">${votos.toLocaleString()}</p>
+                    <div style="text-align: right; flex-shrink: 0;">
+                      <p style="font-weight: 600; color: #94a3b8; margin: 0; font-size: 9px;">${votos.toLocaleString()}</p>
                       ${
                         escanosPartido > 0
-                          ? `<span class="text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.2 rounded-md mt-0.5">${escanosPartido} esc.</span>`
+                          ? `<span style="font-weight: 700; color: #fbbf24; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); padding: 1px 3px; border-radius: 3px; display: inline-block; margin-top: 2px; font-size: 8px;">${escanosPartido}e</span>`
                           : ''
                       }
                     </div>
@@ -220,8 +219,12 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
     container.innerHTML = popupContentHtml;
 
     layer.bindPopup(container, {
-      maxWidth: 340,
+      maxWidth: 280,
+      minWidth: 200,
       className: 'custom-dark-popup',
+      autoPan: true,
+      autoPanPaddingTopLeft: [50, 50],
+      autoPanPaddingBottomRight: [50, 50],
     });
   };
 
@@ -277,12 +280,26 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
           background: transparent !important;
           box-shadow: none !important;
           padding: 0 !important;
+          border-radius: 12px !important;
         }
         .leaflet-popup-tip-container {
           display: none !important;
         }
         .leaflet-popup-content {
           margin: 0 !important;
+          padding: 0 !important;
+          width: auto !important;
+        }
+        .leaflet-popup {
+          margin-bottom: 20px !important;
+        }
+        @media (max-width: 768px) {
+          .leaflet-popup-content-wrapper {
+            max-width: 280px !important;
+          }
+          .leaflet-popup {
+            margin-bottom: 10px !important;
+          }
         }
         /* Custom scrollbar para los resultados */
         .custom-scrollbar::-webkit-scrollbar {
