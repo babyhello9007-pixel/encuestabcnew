@@ -206,18 +206,19 @@ const RESULTS_CSS = `
   .r-stat-card { padding: 10px 8px; }
   .r-stat-label { font-size: 9px; }
   .r-stat-value { font-size: 18px; }
-  .r-sort-bar { gap: 4px; }
+  .r-sort-bar { gap: 4px; flex-wrap: wrap; }
   .r-sort-btn { padding: 3px 8px; font-size: 9px; }
   .r-sort-hint { display: none; }
   .r-party-card { padding: 10px 12px; }
-  .r-party-card-top { gap: 8px; margin-bottom: 8px; }
-  .r-party-logo-wrap { width: 40px; height: 40px; }
+  .r-party-card-top { flex-direction: column; gap: 8px; margin-bottom: 8px; align-items: stretch; }
+  .r-party-logo-wrap { width: 40px; height: 40px; flex-shrink: 0; }
+  .r-party-info { width: 100%; }
   .r-party-name { font-size: 13px; }
   .r-party-votes { font-size: 10px; }
   .r-party-edad { font-size: 9px; }
-  .r-party-seats { gap: 6px; }
-  .r-party-seats > div { min-width: 50px; }
-  .r-party-seats-num { font-size: 16px; }
+  .r-party-seats { width: 100%; flex-wrap: wrap; gap: 4px; justify-content: space-between; }
+  .r-party-seats > div { flex: 1; min-width: 45px; }
+  .r-party-seats-num { font-size: 14px; }
   .r-party-seats-label { font-size: 7px; }
 }
 
