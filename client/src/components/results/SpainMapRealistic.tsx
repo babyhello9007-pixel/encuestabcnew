@@ -227,36 +227,36 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-[600px] flex flex-col items-center justify-center p-8 bg-slate-950 rounded-2xl border border-slate-800 shadow-2xl">
+      <div className="w-full h-[300px] sm:h-[400px] md:h-[600px] flex flex-col items-center justify-center p-4 sm:p-8 bg-slate-950 rounded-2xl border border-slate-800 shadow-2xl">
         <div class="w-8 h-8 border-4 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-slate-400 text-sm font-medium tracking-wide">Cargando cartografía del mapa...</p>
+        <p class="text-slate-400 text-xs sm:text-sm font-medium tracking-wide">Cargando cartografía del mapa...</p>
       </div>
     );
   }
 
   if (error || !geoJsonData) {
     return (
-      <div className="w-full h-[600px] flex items-center justify-center p-8 bg-slate-950 rounded-2xl border border-red-900/30">
-        <p className="text-red-400 text-sm font-medium">{error || 'Error al cargar el mapa'}</p>
+      <div className="w-full h-[300px] sm:h-[400px] md:h-[600px] flex items-center justify-center p-4 sm:p-8 bg-slate-950 rounded-2xl border border-red-900/30">
+        <p className="text-red-400 text-xs sm:text-sm font-medium">{error || 'Error al cargar el mapa'}</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-4 font-sans">
+    <div className="w-full space-y-2 sm:space-y-4 font-sans">
       {/* Banner de Estado (Frosted Glass Dark Mode) */}
-      <div className="w-full p-4 bg-emerald-950/30 backdrop-blur-md border border-emerald-500/20 rounded-2xl shadow-[0_4px_20px_0_rgba(0,0,0,0.3)] flex items-center gap-3">
-        <span className="flex h-2.5 w-2.5 relative">
+      <div className="w-full p-2 sm:p-4 bg-emerald-950/30 backdrop-blur-md border border-emerald-500/20 rounded-xl sm:rounded-2xl shadow-[0_4px_20px_0_rgba(0,0,0,0.3)] flex items-center gap-2 sm:gap-3">
+        <span className="flex h-2.5 w-2.5 relative flex-shrink-0">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <p className="text-emerald-300 font-medium text-xs md:text-sm tracking-wide">
-          <strong className="font-semibold text-emerald-200">Mapa en tiempo real:</strong> Mostrando los datos y proyecciones de escaños por provincia.
+        <p className="text-emerald-300 font-medium text-xs tracking-wide">
+          <strong className="font-semibold text-emerald-200">Mapa en vivo:</strong> Datos por provincia
         </p>
       </div>
 
       {/* Contenedor del Mapa con diseño Modo Noche / Liquid Edge */}
-      <div className="relative w-full h-[600px] bg-slate-950 rounded-3xl overflow-hidden border border-slate-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
+      <div className="relative w-full h-[300px] sm:h-[400px] md:h-[600px] bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.7)]">
         <MapContainer
           center={[40, -3.5]}
           zoom={6}

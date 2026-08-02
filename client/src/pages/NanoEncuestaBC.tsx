@@ -949,6 +949,84 @@ export default function NanoEncuestaBC() {
 
         /* Custom leader input */
         .nc-custom-input-wrap { margin-top: 10px; }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+          .nc-header { padding: 12px 16px; }
+          .nc-header-brand { font-size: 14px; gap: 8px; }
+          .nc-header-brand img { width: 24px; height: 24px; }
+          .nc-header-progress-text { font-size: 12px; }
+          .nc-main { padding: 16px 16px 32px; }
+          .nc-container { max-width: 100%; }
+          .nc-step-title { font-size: 22px; }
+          .nc-step-sub { font-size: 14px; }
+          .nc-option-card { padding: 14px 16px; gap: 12px; }
+          .nc-option-label { font-size: 14px; }
+          .nc-option-desc { font-size: 12px; }
+          .nc-leader-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+          .nc-leader-btn { padding: 12px 8px; gap: 8px; }
+          .nc-leader-photo { width: 56px; height: 56px; }
+          .nc-leader-photo-placeholder { width: 56px; height: 56px; font-size: 18px; }
+          .nc-leader-name { font-size: 11px; }
+          .nc-num-btn { font-size: 12px; }
+          .nc-slider-labels { margin-top: 6px; }
+          .nc-slider-label { font-size: 11px; }
+          .nc-slider-value { font-size: 24px; }
+          .nc-ideology-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+          .nc-ideology-btn { font-size: 12px; }
+          .nc-nav { gap: 8px; }
+          .nc-btn-prev { padding: 12px 16px; font-size: 13px; }
+          .nc-btn-next { padding: 12px 16px; font-size: 14px; }
+          .nc-btn-primary { padding: 12px 20px; font-size: 14px; }
+          .nc-btn-outline { padding: 12px 20px; font-size: 14px; }
+          .nc-cooldown-card, .nc-thankyou-card { padding: 32px 24px; }
+          .nc-cooldown-title { font-size: 24px; }
+          .nc-cooldown-sub { font-size: 14px; }
+          .nc-timer-num { font-size: 32px; }
+          .nc-timer-label { font-size: 10px; }
+          .nc-timer-sep { font-size: 24px; }
+          .nc-thankyou-title { font-size: 26px; }
+          .nc-thankyou-sub { font-size: 14px; }
+        }
+
+        @media (max-width: 480px) {
+          .nc-header { padding: 10px 12px; }
+          .nc-header-brand { font-size: 12px; gap: 6px; }
+          .nc-header-brand img { width: 20px; height: 20px; }
+          .nc-header-progress-text { font-size: 11px; }
+          .nc-close-btn { width: 28px; height: 28px; }
+          .nc-main { padding: 12px 12px 24px; }
+          .nc-container { max-width: 100%; }
+          .nc-step-title { font-size: 18px; margin-bottom: 8px; }
+          .nc-step-sub { font-size: 13px; }
+          .nc-option-card { padding: 12px 12px; gap: 10px; flex-direction: column; align-items: flex-start; }
+          .nc-option-label { font-size: 13px; }
+          .nc-option-desc { font-size: 11px; }
+          .nc-leader-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; max-height: 300px; }
+          .nc-leader-btn { padding: 10px 6px; gap: 6px; }
+          .nc-leader-photo { width: 48px; height: 48px; }
+          .nc-leader-photo-placeholder { width: 48px; height: 48px; font-size: 16px; }
+          .nc-leader-name { font-size: 10px; }
+          .nc-num-btn { font-size: 11px; }
+          .nc-slider-labels { margin-top: 4px; }
+          .nc-slider-label { font-size: 10px; }
+          .nc-slider-value { font-size: 20px; }
+          .nc-ideology-grid { grid-template-columns: repeat(4, 1fr); gap: 3px; }
+          .nc-ideology-btn { font-size: 10px; }
+          .nc-nav { flex-direction: column; gap: 6px; }
+          .nc-btn-prev { padding: 10px 12px; font-size: 12px; }
+          .nc-btn-next { padding: 10px 12px; font-size: 13px; }
+          .nc-btn-primary { padding: 10px 16px; font-size: 13px; }
+          .nc-btn-outline { padding: 10px 16px; font-size: 13px; }
+          .nc-cooldown-card, .nc-thankyou-card { padding: 24px 16px; }
+          .nc-cooldown-title { font-size: 20px; }
+          .nc-cooldown-sub { font-size: 13px; }
+          .nc-timer-num { font-size: 28px; }
+          .nc-timer-label { font-size: 9px; }
+          .nc-timer-sep { font-size: 20px; }
+          .nc-thankyou-title { font-size: 22px; }
+          .nc-thankyou-sub { font-size: 13px; }
+        }
       `}</style>
 
       <div className="nc-wrap">

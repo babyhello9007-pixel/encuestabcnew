@@ -163,6 +163,64 @@ const RESULTS_CSS = `
 .r-party-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
 .r-party-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
 
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .r-header { height: 52px; padding: 0 16px; }
+  .r-brand img { height: 24px; width: 24px; }
+  .r-brand-title { font-size: 12px; }
+  .r-brand-sub { font-size: 10px; }
+  .r-header-actions { gap: 4px; }
+  .r-hbtn { padding: 5px 10px; font-size: 11px; }
+  .r-subnav-inner { padding: 0 12px; }
+  .r-nav-group-btn { padding: 10px 12px; font-size: 11px; }
+  .r-main { padding: 12px 16px 40px; }
+  .r-quickstats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .r-stat-card { padding: 12px 10px; }
+  .r-stat-value { font-size: 20px; }
+  .r-sort-bar { gap: 6px; }
+  .r-sort-btn { padding: 4px 10px; font-size: 10px; }
+  .r-sort-hint { font-size: 10px; }
+  .r-party-card { padding: 12px 14px; }
+  .r-party-card-top { gap: 10px; margin-bottom: 10px; }
+  .r-party-logo-wrap { width: 48px; height: 48px; }
+  .r-party-name { font-size: 14px; }
+  .r-party-votes { font-size: 11px; }
+  .r-party-edad { font-size: 10px; }
+  .r-party-seats { gap: 8px; }
+  .r-party-seats > div { min-width: 60px; }
+  .r-party-seats-num { font-size: 18px; }
+  .r-party-seats-label { font-size: 8px; }
+}
+
+@media (max-width: 480px) {
+  .r-header { height: 48px; padding: 0 12px; }
+  .r-brand img { height: 20px; width: 20px; }
+  .r-brand-title { font-size: 11px; }
+  .r-brand-sub { display: none; }
+  .r-header-actions { gap: 3px; }
+  .r-hbtn { padding: 4px 8px; font-size: 10px; }
+  .r-subnav-inner { padding: 0 8px; }
+  .r-nav-group-btn { padding: 8px 10px; font-size: 10px; }
+  .r-main { padding: 10px 12px 30px; }
+  .r-quickstats { grid-template-columns: 1fr; gap: 6px; }
+  .r-stat-card { padding: 10px 8px; }
+  .r-stat-label { font-size: 9px; }
+  .r-stat-value { font-size: 18px; }
+  .r-sort-bar { gap: 4px; }
+  .r-sort-btn { padding: 3px 8px; font-size: 9px; }
+  .r-sort-hint { display: none; }
+  .r-party-card { padding: 10px 12px; }
+  .r-party-card-top { gap: 8px; margin-bottom: 8px; }
+  .r-party-logo-wrap { width: 40px; height: 40px; }
+  .r-party-name { font-size: 13px; }
+  .r-party-votes { font-size: 10px; }
+  .r-party-edad { font-size: 9px; }
+  .r-party-seats { gap: 6px; }
+  .r-party-seats > div { min-width: 50px; }
+  .r-party-seats-num { font-size: 16px; }
+  .r-party-seats-label { font-size: 7px; }
+}
+
 /* Section card */
 .r-section { background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 20px 48px rgba(1,6,18,0.45); border-radius: 16px; padding: 20px; }
 .r-section-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
