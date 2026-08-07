@@ -13,15 +13,20 @@ import {
   Sparkles,
 } from "lucide-react";
 
-interface LiderRanking {
+interface PartyBadge {
   party_key: string;
-  leader_name: string;
-  media_valoracion: number;
-  total_valoraciones: number;
   display_name: string;
   color: string;
   logo_url: string;
+}
+
+interface LiderRanking {
+  leader_name: string;
+  media_valoracion: number;
+  total_valoraciones: number;
   photo_url: string;
+  parties: PartyBadge[];
+  primary_color: string;
 }
 
 interface MediaValoracionRow {
@@ -56,8 +61,7 @@ export function LideresRankingSection() {
       const [mediaRes, leadersRes] = await Promise.all([
         supabase
           .from("media_valoraciones_lideres")
-          .select("*")
-          .order("media_valoracion", { ascending: false }),
+          .select("*"),
         supabase
           .from("party_leaders")
           .select(
@@ -77,27 +81,88 @@ export function LideresRankingSection() {
       const mediaData = (mediaRes.data as MediaValoracionRow[]) || [];
       const leadersData = (leadersRes.data as unknown as PartyLeaderRow[]) || [];
 
+      // Mapa para obtener metadatos rápidamente por party_key + leader_name
       const leadersMap = new Map<string, PartyLeaderRow>();
       leadersData.forEach((leader) => {
         const key = `${leader.party_key}_${leader.leader_name}`;
         leadersMap.set(key, leader);
       });
 
-      const combined: LiderRanking[] = mediaData.map((media) => {
+      // Agrupación por nombre de líder (leader_name)
+      const groupedMap = new Map<
+        string,
+        {
+          totalPuntosPonderados: number;
+          totalVotos: number;
+          photo_url: string;
+          partiesMap: Map<string, PartyBadge>;
+        }
+      >();
+
+      mediaData.forEach((media) => {
+        const leaderName = media.leader_name.trim();
         const key = `${media.party_key}_${media.leader_name}`;
         const leaderInfo = leadersMap.get(key);
 
-        return {
-          party_key: media.party_key,
-          leader_name: media.leader_name,
-          media_valoracion: media.media_valoracion ?? 0,
-          total_valoraciones: media.total_valoraciones ?? 0,
-          display_name:
-            leaderInfo?.party_configuration?.display_name || media.party_key,
-          color: leaderInfo?.party_configuration?.color || "#6366f1",
-          logo_url: leaderInfo?.party_configuration?.logo_url || "",
-          photo_url: leaderInfo?.photo_url || "",
-        };
+        const votos = media.total_valoraciones ?? 0;
+        const mediaVal = media.media_valoracion ?? 0;
+
+        if (!groupedMap.has(leaderName)) {
+          groupedMap.set(leaderName, {
+            totalPuntosPonderados: 0,
+            totalVotos: 0,
+            photo_url: leaderInfo?.photo_url || "",
+            partiesMap: new Map(),
+          });
+        }
+
+        const currentGroup = groupedMap.get(leaderName)!;
+
+        // Suma ponderada de puntos
+        currentGroup.totalPuntosPonderados += mediaVal * votos;
+        currentGroup.totalVotos += votos;
+
+        // Conservar imagen válida si no se ha asignado aún
+        if (!currentGroup.photo_url && leaderInfo?.photo_url) {
+          currentGroup.photo_url = leaderInfo.photo_url;
+        }
+
+        // Registrar partido asociado
+        const partyKey = media.party_key;
+        if (!currentGroup.partiesMap.has(partyKey)) {
+          currentGroup.partiesMap.set(partyKey, {
+            party_key: partyKey,
+            display_name: leaderInfo?.party_configuration?.display_name || partyKey,
+            color: leaderInfo?.party_configuration?.color || "#6366f1",
+            logo_url: leaderInfo?.party_configuration?.logo_url || "",
+          });
+        }
+      });
+
+      // Construcción y cálculo de medias ponderadas
+      const combined: LiderRanking[] = Array.from(groupedMap.entries()).map(
+        ([leader_name, data]) => {
+          const parties = Array.from(data.partiesMap.values());
+          const mediaPonderada =
+            data.totalVotos > 0 ? data.totalPuntosPonderados / data.totalVotos : 0;
+
+          return {
+            leader_name,
+            media_valoracion: mediaPonderada,
+            total_valoraciones: data.totalVotos,
+            photo_url: data.photo_url,
+            parties,
+            primary_color: parties[0]?.color || "#6366f1",
+          };
+        }
+      );
+
+      // Ordenar por media ponderada (descendente) y secundariamente por total de votos
+      combined.sort((a, b) => {
+        if (b.media_valoracion !== a.media_valoracion) {
+          return b.media_valoracion - a.media_valoracion;
+        }
+        return b.total_valoraciones - a.total_valoraciones;
       });
 
       setLideres(combined);
@@ -132,14 +197,14 @@ export function LideresRankingSection() {
     };
   }, [fetchLideresRanking]);
 
-  // Reorganizar Top 3 para mostrar en formato podio visual: [2º, 1º, 3º]
+  // Reorganizar Top 3 para el podio visual: [2º, 1º, 3º]
   const podiumData = useMemo(() => {
     const top3 = lideres.slice(0, 3);
     if (top3.length < 3) return top3.map((l, i) => ({ ...l, originalIndex: i }));
     return [
-      { ...top3[1], originalIndex: 1 }, // 2º Puesto (Izquierda)
-      { ...top3[0], originalIndex: 0 }, // 1er Puesto (Centro)
-      { ...top3[2], originalIndex: 2 }, // 3er Puesto (Derecha)
+      { ...top3[1], originalIndex: 1 },
+      { ...top3[0], originalIndex: 0 },
+      { ...top3[2], originalIndex: 2 },
     ];
   }, [lideres]);
 
@@ -150,7 +215,7 @@ export function LideresRankingSection() {
     return lideres.filter(
       (l) =>
         l.leader_name.toLowerCase().includes(query) ||
-        l.display_name.toLowerCase().includes(query)
+        l.parties.some((p) => p.display_name.toLowerCase().includes(query))
     );
   }, [lideres, searchQuery]);
 
@@ -206,7 +271,7 @@ export function LideresRankingSection() {
               Ranking de Líderes
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Valoraciones acumuladas en tiempo real
+              Valoraciones acumuladas en tiempo real (media ponderada por votos)
             </p>
           </div>
         </div>
@@ -226,7 +291,7 @@ export function LideresRankingSection() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
             {podiumData.map((lider) => (
               <PodioCard
-                key={`${lider.party_key}-${lider.leader_name}`}
+                key={lider.leader_name}
                 lider={lider}
                 rank={lider.originalIndex + 1}
               />
@@ -235,15 +300,13 @@ export function LideresRankingSection() {
         </div>
       )}
 
-      {/* Sección Tabla con Filtro de Búsqueda */}
+      {/* Tabla con Filtro de Búsqueda */}
       <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-3xl border border-gray-200/80 dark:border-gray-800 shadow-xl overflow-hidden transition-all">
-        {/* Barra superior de la tabla */}
         <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
           <h4 className="text-base font-bold text-gray-800 dark:text-gray-200">
             Clasificación Completa
           </h4>
 
-          {/* Input Buscador */}
           <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -256,15 +319,14 @@ export function LideresRankingSection() {
           </div>
         </div>
 
-        {/* Tabla */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                 <th className="px-6 py-3.5 text-center w-20">Posición</th>
                 <th className="px-6 py-3.5">Líder</th>
-                <th className="px-6 py-3.5">Partido</th>
-                <th className="px-6 py-3.5 text-center">Valoración</th>
+                <th className="px-6 py-3.5">Partido(s)</th>
+                <th className="px-6 py-3.5 text-center">Valoración Media</th>
                 <th className="px-6 py-3.5 text-center">Total Votos</th>
               </tr>
             </thead>
@@ -272,7 +334,7 @@ export function LideresRankingSection() {
               {filteredLideres.length > 0 ? (
                 filteredLideres.map((lider, index) => (
                   <RankingRow
-                    key={`${lider.party_key}-${lider.leader_name}`}
+                    key={lider.leader_name}
                     lider={lider}
                     index={index}
                   />
@@ -292,10 +354,8 @@ export function LideresRankingSection() {
   );
 }
 
-// Subcomponente de la tarjeta del Podio
+// Subcomponente PodioCard
 function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
-  const isFirst = rank === 1;
-
   const cardConfig = {
     1: {
       border: "border-amber-400/80 dark:border-amber-400/60 ring-4 ring-amber-400/15",
@@ -327,24 +387,22 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
   };
 
   const activeStars = Math.round(lider.media_valoracion / 2);
+  const partyNames = lider.parties.map((p) => p.display_name).join(" / ");
 
   return (
     <div
       className={`relative group bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-6 rounded-3xl border-2 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-2 ${cardConfig.border} ${cardConfig.height}`}
     >
-      {/* Fondo con resplandor suave */}
       <div
         className={`absolute inset-0 bg-gradient-to-b ${cardConfig.glowBg} rounded-3xl pointer-events-none`}
       />
 
-      {/* Corona o Icono de Medalla flotante superior */}
       <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center justify-center">
         <div className="p-2 bg-white dark:bg-gray-900 rounded-full shadow-md border border-gray-100 dark:border-gray-800">
           {cardConfig.icon}
         </div>
       </div>
 
-      {/* Badge con el número de puesto */}
       <div className="text-center mt-2 mb-4">
         <span
           className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-black text-sm shadow-md ${cardConfig.badgeBg}`}
@@ -353,7 +411,6 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
         </span>
       </div>
 
-      {/* Avatar / Fotografía del Líder */}
       <div className="relative mx-auto mb-4 w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-inner group-hover:scale-105 transition-transform duration-300">
         {lider.photo_url ? (
           <img
@@ -371,34 +428,37 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
           </div>
         )}
 
-        {/* Insignia del partido encima de la foto */}
-        {lider.logo_url && (
-          <div className="absolute bottom-1.5 right-1.5 p-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-lg shadow-md border border-white/20">
-            <img
-              src={lider.logo_url}
-              alt={lider.display_name}
-              className="w-4 h-4 object-contain"
-            />
-          </div>
-        )}
+        {/* Logos de los partidos del líder */}
+        <div className="absolute bottom-1.5 right-1.5 flex gap-1 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md p-1 rounded-lg shadow-md border border-white/20">
+          {lider.parties.map(
+            (p) =>
+              p.logo_url && (
+                <img
+                  key={p.party_key}
+                  src={p.logo_url}
+                  alt={p.display_name}
+                  className="w-4 h-4 object-contain"
+                  title={p.display_name}
+                />
+              )
+          )}
+        </div>
       </div>
 
-      {/* Nombre e Información */}
       <div className="text-center mb-4">
         <h4 className="font-extrabold text-gray-900 dark:text-white text-base sm:text-lg line-clamp-1">
           {lider.leader_name}
         </h4>
-        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
-          {lider.display_name}
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
+          {partyNames}
         </p>
       </div>
 
-      {/* Puntuación y Estrellas */}
       <div className="bg-gray-50/80 dark:bg-gray-800/50 rounded-2xl p-3 border border-gray-100 dark:border-gray-800 text-center space-y-2">
         <div className="flex items-center justify-center gap-1.5">
           <span
             className="text-2xl font-black tracking-tight"
-            style={{ color: lider.color }}
+            style={{ color: lider.primary_color }}
           >
             {lider.media_valoracion.toFixed(1)}
           </span>
@@ -407,7 +467,6 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
           </span>
         </div>
 
-        {/* Estrellas */}
         <div className="flex justify-center gap-1">
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
@@ -421,13 +480,12 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
           ))}
         </div>
 
-        {/* Barra de progreso de valoración */}
         <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${(lider.media_valoracion / 10) * 100}%`,
-              backgroundColor: lider.color,
+              backgroundColor: lider.primary_color,
             }}
           />
         </div>
@@ -440,13 +498,10 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
   );
 }
 
-// Subcomponente de las filas de la Tabla
+// Subcomponente RankingRow
 function RankingRow({ lider, index }: { lider: LiderRanking; index: number }) {
-  const isTop3 = index < 3;
-
   return (
     <tr className="hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors group">
-      {/* Posición */}
       <td className="px-6 py-4 text-center">
         <span
           className={`inline-flex items-center justify-center w-7 h-7 rounded-xl font-extrabold text-xs ${
@@ -463,7 +518,6 @@ function RankingRow({ lider, index }: { lider: LiderRanking; index: number }) {
         </span>
       </td>
 
-      {/* Líder (Foto + Nombre) */}
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0 border border-gray-200/50 dark:border-gray-700">
@@ -491,29 +545,31 @@ function RankingRow({ lider, index }: { lider: LiderRanking; index: number }) {
         </div>
       </td>
 
-      {/* Partido */}
       <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          {lider.logo_url && (
-            <img
-              src={lider.logo_url}
-              alt={lider.display_name}
-              className="w-4 h-4 object-contain rounded"
-            />
-          )}
-          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-            {lider.display_name}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {lider.parties.map((p) => (
+            <div key={p.party_key} className="flex items-center gap-1.5">
+              {p.logo_url && (
+                <img
+                  src={p.logo_url}
+                  alt={p.display_name}
+                  className="w-4 h-4 object-contain rounded"
+                />
+              )}
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                {p.display_name}
+              </span>
+            </div>
+          ))}
         </div>
       </td>
 
-      {/* Valoración con Bar de Progreso integrada */}
       <td className="px-6 py-4 text-center">
         <div className="inline-flex flex-col items-center gap-1">
           <div className="flex items-center gap-1.5">
             <span
               className="font-extrabold text-base tracking-tight"
-              style={{ color: lider.color }}
+              style={{ color: lider.primary_color }}
             >
               {lider.media_valoracion.toFixed(1)}
             </span>
@@ -524,14 +580,13 @@ function RankingRow({ lider, index }: { lider: LiderRanking; index: number }) {
               className="h-full rounded-full"
               style={{
                 width: `${(lider.media_valoracion / 10) * 100}%`,
-                backgroundColor: lider.color,
+                backgroundColor: lider.primary_color,
               }}
             />
           </div>
         </div>
       </td>
 
-      {/* Votos */}
       <td className="px-6 py-4 text-center text-xs font-semibold text-gray-500 dark:text-gray-400">
         {lider.total_valoraciones.toLocaleString()}
       </td>
@@ -539,7 +594,6 @@ function RankingRow({ lider, index }: { lider: LiderRanking; index: number }) {
   );
 }
 
-// Skeleton para Carga Gradual (UX)
 function RankingSkeleton() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto px-4 animate-pulse">
