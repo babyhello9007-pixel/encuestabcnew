@@ -1,7 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { Star, ChevronLeft, Send, Loader2 } from "lucide-react";
+import { Star, ChevronLeft, Send, Loader2, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
+
+interface PartyConfiguration {
+  display_name: string | null;
+  color: string | null;
+  logo_url: string | null;
+}
+
+interface RawPartyLeader {
+  id: number;
+  party_key: string;
+  leader_name: string;
+  photo_url: string | null;
+  party_configuration: PartyConfiguration | null;
+}
 
 interface Leader {
   id: number;
@@ -13,66 +27,76 @@ interface Leader {
   logo_url: string;
 }
 
-interface Valoracion {
-  [key: string]: number;
-}
+type ValoracionMap = Record<string, number>;
 
 export default function ValorarLideres() {
   const [, setLocation] = useLocation();
   const [leaders, setLeaders] = useState<Leader[]>([]);
-  const [valoraciones, setValoraciones] = useState<Valoracion>({});
+  const [valoraciones, setValoraciones] = useState<ValoracionMap>({});
+  const [hoverRatings, setHoverRatings] = useState<Record<string, number>>({});
+  
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchLeaders = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+
+      const { data, error } = await supabase
+        .from("party_leaders")
+        .select(
+          `
+          id,
+          party_key,
+          leader_name,
+          photo_url,
+          party_configuration!inner(display_name, color, logo_url)
+        `
+        )
+        .eq("is_active", true)
+        .order("party_key", { ascending: true });
+
+      if (error) throw error;
+
+      const rawData = (data || []) as unknown as RawPartyLeader[];
+
+      const formattedLeaders: Leader[] = rawData.map((item) => ({
+        id: item.id,
+        party_key: item.party_key,
+        leader_name: item.leader_name,
+        photo_url: item.photo_url || "/placeholder-avatar.png",
+        display_name: item.party_configuration?.display_name || item.party_key,
+        color: item.party_configuration?.color || "#818cf8",
+        logo_url: item.party_configuration?.logo_url || "",
+      }));
+
+      setLeaders(formattedLeaders);
+
+      // Inicializar valoraciones a 0
+      const initialVals: ValoracionMap = {};
+      formattedLeaders.forEach((leader) => {
+        initialVals[`${leader.party_key}-${leader.leader_name}`] = 0;
+      });
+      setValoraciones(initialVals);
+    } catch (err: any) {
+      console.error("Error fetching leaders:", err);
+      setErrorMsg("No se pudieron cargar los líderes. Por favor, reinténtalo.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLeaders = async () => {
-      try {
-        setLoading(true);
-
-        // Obtener líderes activos con info del partido
-        const { data, error } = await supabase
-          .from("party_leaders")
-          .select(
-            `
-            id,
-            party_key,
-            leader_name,
-            photo_url,
-            party_configuration!inner(display_name, color, logo_url)
-          `
-          )
-          .eq("is_active", true)
-          .order("party_key", { ascending: true });
-
-        if (error) throw error;
-
-        const formattedLeaders = (data || []).map((item: any) => ({
-          id: item.id,
-          party_key: item.party_key,
-          leader_name: item.leader_name,
-          photo_url: item.photo_url,
-          display_name: item.party_configuration?.display_name || item.party_key,
-          color: item.party_configuration?.color || "#818cf8",
-          logo_url: item.party_configuration?.logo_url || "",
-        }));
-
-        setLeaders(formattedLeaders);
-
-        // Inicializar valoraciones
-        const initialVals: Valoracion = {};
-        formattedLeaders.forEach((leader: Leader) => {
-          initialVals[`${leader.party_key}-${leader.leader_name}`] = 0;
-        });
-        setValoraciones(initialVals);
-      } catch (err) {
-        console.error("Error fetching leaders:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchLeaders();
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, []);
 
   const handleRating = (key: string, rating: number) => {
@@ -82,14 +106,24 @@ export default function ValorarLideres() {
     }));
   };
 
+  const handleMouseEnter = (key: string, rating: number) => {
+    setHoverRatings((prev) => ({ ...prev, [key]: rating }));
+  };
+
+  const handleMouseLeave = (key: string) => {
+    setHoverRatings((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+  };
+
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
 
-      // Generar UUID para respuesta
       const respuestaId = crypto.randomUUID();
 
-      // Preparar datos para insertar
       const insertData = leaders
         .filter((leader) => {
           const key = `${leader.party_key}-${leader.leader_name}`;
@@ -103,7 +137,7 @@ export default function ValorarLideres() {
         }));
 
       if (insertData.length === 0) {
-        alert("Por favor, valora al menos un líder");
+        alert("Por favor, valora al menos a un líder antes de enviar.");
         setSubmitting(false);
         return;
       }
@@ -115,23 +149,44 @@ export default function ValorarLideres() {
       if (error) throw error;
 
       setSubmitted(true);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setLocation("/resultados");
       }, 2000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error submitting valuations:", err);
-      alert("Error al enviar valoraciones");
+      alert("Error al enviar tus valoraciones. Inténtalo de nuevo.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const ratedCount = Object.values(valoraciones).filter((val) => val > 0).length;
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
+      <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F] text-white">
         <div className="text-center">
-          <Loader2 className="animate-spin w-12 h-12 text-[#C41E3A] mx-auto mb-4" />
-          <p className="text-[#2D2D2D]">Cargando líderes...</p>
+          <Loader2 className="animate-spin w-10 h-10 text-[#C41E3A] mx-auto mb-4" />
+          <p className="text-gray-400 font-medium">Cargando líderes políticos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F] text-white p-4">
+        <div className="text-center max-w-md bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <h2 className="text-lg font-bold mb-2">Error de conexión</h2>
+          <p className="text-gray-400 text-sm mb-6">{errorMsg}</p>
+          <button
+            onClick={fetchLeaders}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C41E3A] hover:bg-[#A01830] transition font-medium text-sm"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -139,152 +194,185 @@ export default function ValorarLideres() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
-        <div className="text-center liquid-glass p-8 rounded-2xl max-w-md">
-          <div className="text-5xl mb-4">✓</div>
-          <h2 className="text-2xl font-bold text-[#2D2D2D] mb-2">¡Gracias!</h2>
-          <p className="text-[#666666]">Tus valoraciones han sido registradas</p>
-          <p className="text-sm text-[#999999] mt-4">Redirigiendo a resultados...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F] text-white p-4">
+        <div className="text-center bg-white/5 border border-white/10 p-8 rounded-2xl max-w-md backdrop-blur-md shadow-2xl animate-fade-in">
+          <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">¡Valoraciones enviadas!</h2>
+          <p className="text-gray-400 text-sm mb-6">Muchas gracias por participar en la evaluación.</p>
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin text-[#C41E3A]" />
+            Redirigiendo a resultados...
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
+    <div className="min-h-screen bg-[#0F0F0F] text-gray-100 flex flex-col selection:bg-[#C41E3A] selection:text-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 header-dark border-b">
-        <div className="container flex items-center justify-between h-16">
-          <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 bg-[#141414]/80 backdrop-blur-md border-b border-white/10">
+        <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-16">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setLocation("/resultados")}
-              className="p-2 hover:bg-white/10 rounded-lg transition"
+              className="p-2 hover:bg-white/10 rounded-xl transition text-gray-400 hover:text-white"
+              aria-label="Volver"
             >
-              <ChevronLeft className="w-5 h-5 text-[#2D2D2D]" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-bold text-[#C41E3A]">Valorar Líderes</h1>
+            <h1 className="text-lg font-bold text-white">Valorar Líderes</h1>
+          </div>
+
+          {/* Badge del progreso */}
+          <div className="text-xs bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-gray-300">
+            Evaluados: <span className="font-bold text-[#C41E3A]">{ratedCount}</span> / {leaders.length}
           </div>
         </div>
       </header>
 
-      {/* Content */}
-      <main className="container py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Instrucciones */}
-          <div className="liquid-glass p-6 rounded-2xl mb-8">
-            <h2 className="text-lg font-bold text-[#2D2D2D] mb-2">
-              Valora a los líderes políticos
-            </h2>
-            <p className="text-[#666666]">
-              Usa las estrellas para valorar a cada líder de 1 a 10. Tu opinión es importante.
-            </p>
-          </div>
+      {/* Main Content */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8">
+        {/* Banner de Instrucciones */}
+        <div className="bg-gradient-to-r from-white/5 to-white/[0.02] border border-white/10 p-6 rounded-2xl mb-8">
+          <h2 className="text-xl font-semibold text-white mb-1">
+            Evaluación de Líderes Políticos
+          </h2>
+          <p className="text-gray-400 text-sm">
+            Otorga una calificación de <strong>1 a 10</strong> a los líderes de cada formación. Puedes valorar solo a los que conozcas.
+          </p>
+        </div>
 
-          {/* Grid de líderes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {leaders.map((leader) => {
-              const key = `${leader.party_key}-${leader.leader_name}`;
-              const rating = valoraciones[key] || 0;
+        {/* Grid de Líderes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {leaders.map((leader) => {
+            const key = `${leader.party_key}-${leader.leader_name}`;
+            const currentRating = valoraciones[key] || 0;
+            const activeHover = hoverRatings[key] || 0;
+            const displayRating = activeHover || currentRating;
 
-              return (
-                <div
-                  key={key}
-                  className="frosted-glass p-6 rounded-2xl border border-white/10 hover:border-white/20 transition"
-                >
-                  {/* Logo y nombre del partido */}
-                  <div className="flex items-center gap-3 mb-4">
-                    {leader.logo_url && (
-                      <img
-                        src={leader.logo_url}
-                        alt={leader.display_name}
-                        className="w-8 h-8 rounded"
-                      />
+            return (
+              <div
+                key={key}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-white/20 transition flex flex-col justify-between"
+              >
+                <div>
+                  {/* Encabezado del Partido */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2.5">
+                      {leader.logo_url && (
+                        <img
+                          src={leader.logo_url}
+                          alt={leader.display_name}
+                          className="w-7 h-7 object-contain rounded"
+                        />
+                      )}
+                      <span
+                        className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: `${leader.color}20`,
+                          color: leader.color,
+                        }}
+                      >
+                        {leader.display_name}
+                      </span>
+                    </div>
+
+                    {currentRating > 0 && (
+                      <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                        Valorado
+                      </span>
                     )}
-                    <span className="text-xs font-semibold text-[#999999] uppercase">
-                      {leader.display_name}
-                    </span>
                   </div>
 
-                  {/* Foto del líder */}
-                  {leader.photo_url && (
-                    <div className="mb-4 rounded-xl overflow-hidden h-40">
+                  {/* Foto y Nombre del Líder */}
+                  <div className="flex gap-4 items-center mb-5">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white/5 flex-shrink-0 border border-white/10">
                       <img
                         src={leader.photo_url}
                         alt={leader.leader_name}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
                       />
                     </div>
-                  )}
+                    <div>
+                      <h3 className="text-lg font-bold text-white leading-tight">
+                        {leader.leader_name}
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Candidato / Representante
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Nombre del líder */}
-                  <h3 className="text-lg font-bold text-[#2D2D2D] mb-4">
-                    {leader.leader_name}
-                  </h3>
+                {/* Rating interactivo (Puntuación) */}
+                <div className="pt-2 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">Puntuación:</span>
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: displayRating > 0 ? leader.color : "#9CA3AF" }}
+                    >
+                      {displayRating > 0 ? `${displayRating} / 10` : "Sin valorar"}
+                    </span>
+                  </div>
 
-                  {/* Estrellas de valoración */}
-                  <div className="flex gap-2 mb-3">
+                  {/* Selector rápido de 1 a 10 */}
+                  <div className="grid grid-cols-10 gap-1">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
                       <button
                         key={star}
+                        type="button"
                         onClick={() => handleRating(key, star)}
-                        className="transition-transform hover:scale-110"
+                        onMouseEnter={() => handleMouseEnter(key, star)}
+                        onMouseLeave={() => handleMouseLeave(key)}
+                        className={`h-9 rounded-lg flex items-center justify-center transition-all text-xs font-semibold ${
+                          star <= displayRating
+                            ? "bg-[#C41E3A] text-white shadow-lg shadow-[#C41E3A]/20"
+                            : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                        }`}
                       >
-                        <Star
-                          className={`w-6 h-6 ${
-                            star <= rating
-                              ? "fill-[#C41E3A] text-[#C41E3A]"
-                              : "text-[#999999]"
-                          }`}
-                        />
+                        {star}
                       </button>
                     ))}
                   </div>
-
-                  {/* Puntuación */}
-                  {rating > 0 && (
-                    <div
-                      className="text-center py-2 rounded-lg"
-                      style={{ backgroundColor: `${leader.color}20` }}
-                    >
-                      <span
-                        className="font-bold text-lg"
-                        style={{ color: leader.color }}
-                      >
-                        {rating}/10
-                      </span>
-                    </div>
-                  )}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
 
-          {/* Botón de envío */}
-          <div className="mt-8 flex gap-4 justify-center">
-            <button
-              onClick={() => setLocation("/resultados")}
-              className="px-6 py-3 rounded-lg border border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A]/10 transition font-semibold"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="px-6 py-3 rounded-lg bg-[#C41E3A] hover:bg-[#A01830] text-white transition font-semibold flex items-center gap-2 disabled:opacity-50"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Enviar Valoraciones
-                </>
-              )}
-            </button>
-          </div>
+        {/* Acciones del Formulario */}
+        <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-end items-center border-t border-white/10 pt-6">
+          <button
+            type="button"
+            onClick={() => setLocation("/resultados")}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl border border-white/10 hover:bg-white/5 text-gray-300 transition font-medium text-sm"
+          >
+            Cancelar
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitting || ratedCount === 0}
+            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#C41E3A] hover:bg-[#A01830] text-white transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#C41E3A]/20"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                Enviar Valoraciones ({ratedCount})
+              </>
+            )}
+          </button>
         </div>
       </main>
     </div>
