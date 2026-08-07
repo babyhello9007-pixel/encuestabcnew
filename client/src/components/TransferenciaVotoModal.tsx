@@ -733,10 +733,10 @@ function SankeyChart({
       const isFidelity = origKey === destKey;
 
       const origRatio = d.votos_transferidos / (oNode.total || 1);
-      const thickness = Math.max(origRatio * oNode.height, 2.5);
+      const thickness = Math.max(origRatio * oNode.height, 5);
 
       const destRatio = d.votos_transferidos / (dNode.total || 1);
-      const destThickness = Math.max(destRatio * dNode.height, 2.5);
+      const destThickness = Math.max(destRatio * dNode.height, 5);
 
       const y1 = oNode.y + curOffsetsOrig[origKey] + thickness / 2;
       const y2 = dNode.y + curOffsetsDest[destKey] + destThickness / 2;
@@ -799,8 +799,8 @@ function SankeyChart({
         <defs>
           {layout.links.map((link) => link && (
             <linearGradient key={link.gradientId} id={link.gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.85" : "0.65"} />
-              <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.85" : "0.65"} />
+              <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.9" : "0.75"} />
+              <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.9" : "0.75"} />
             </linearGradient>
           ))}
         </defs>
@@ -822,8 +822,8 @@ function SankeyChart({
               strokeWidth={link.thickness}
               strokeOpacity={
                 hoveredNode || activeLink
-                  ? isHighlighted ? 0.95 : 0.08
-                  : link.isFidelity ? 0.85 : 0.6
+                  ? isHighlighted ? 1 : 0.1
+                  : link.isFidelity ? 0.95 : 0.75
               }
               style={{ transition: "stroke-opacity 0.2s ease, stroke-width 0.2s ease", cursor: "pointer" }}
               onMouseEnter={() => setActiveLink(link.data)}
