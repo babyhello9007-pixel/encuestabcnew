@@ -824,10 +824,54 @@ interface SankeyLink {
   gradientId: string;
   data: TransferenciaVotoData;
   path: string;
-  thickness: number;
+  avgThickness: number;
   isFidelity: boolean;
   colorOrigen: string;
   colorDestino: string;
+}
+
+interface SankeyNodePos {
+  y: number;
+  height: number;
+  total: number;
+}
+
+// Anchura mínima visible (en px) para que un flujo pequeño no desaparezca del todo.
+const MIN_RIBBON_THICKNESS = 2.5;
+
+// Reparte el alto de cada nodo entre sus enlaces de forma proporcional a sus votos.
+// Aplica un grosor mínimo visible, pero si la suma de mínimos supera la altura del
+// nodo, reescala TODOS los enlaces de ese nodo para que quepan exactamente dentro
+// de él — así ningún flujo se sale del rectángulo de su partido ni queda tapado
+// por el nodo vecino.
+function distributeThickness(
+  groups: Map<string, number[]>,
+  nodes: Record<string, SankeyNodePos>,
+  votesByIndex: number[]
+): { thickness: Record<number, number>; offset: Record<number, number> } {
+  const thickness: Record<number, number> = {};
+  const offset: Record<number, number> = {};
+
+  groups.forEach((indices, key) => {
+    const node = nodes[key];
+    if (!node) return;
+
+    const raw = indices.map((i) =>
+      Math.max((votesByIndex[i] / (node.total || 1)) * node.height, MIN_RIBBON_THICKNESS)
+    );
+    const sum = raw.reduce((a, b) => a + b, 0);
+    const scale = sum > node.height && sum > 0 ? node.height / sum : 1;
+
+    let cursor = 0;
+    indices.forEach((i, idx) => {
+      const t = raw[idx] * scale;
+      thickness[i] = t;
+      offset[i] = cursor;
+      cursor += t;
+    });
+  });
+
+  return { thickness, offset };
 }
 
 interface SankeyChartProps {
@@ -894,7 +938,7 @@ function SankeyChart({
 
     // Nodos Izquierda (Origen)
     let curYLeft = topMargin;
-    const origNodes: Record<string, { y: number; height: number; total: number }> = {};
+    const origNodes: Record<string, SankeyNodePos> = {};
     listOrigenes.forEach((orig) => {
       const h = Math.max((origenesTotales[orig] / (totalVotosGlobal || 1)) * usableHeight, minNodeHeight);
       origNodes[orig] = { y: curYLeft, height: h, total: origenesTotales[orig] };
@@ -903,19 +947,34 @@ function SankeyChart({
 
     // Nodos Derecha (Destino)
     let curYRight = topMargin;
-    const destNodes: Record<string, { y: number; height: number; total: number }> = {};
+    const destNodes: Record<string, SankeyNodePos> = {};
     listDestinos.forEach((dest) => {
       const h = Math.max((destinosTotales[dest] / (totalVotosGlobal || 1)) * usableHeight, minNodeHeight);
       destNodes[dest] = { y: curYRight, height: h, total: destinosTotales[dest] };
       curYRight += h + gap;
     });
 
-    const curOffsetsOrig: Record<string, number> = {};
-    const curOffsetsDest: Record<string, number> = {};
-    listOrigenes.forEach((o) => (curOffsetsOrig[o] = 0));
-    listDestinos.forEach((d) => (curOffsetsDest[d] = 0));
+    // Agrupamos los índices de enlaces por nodo de origen y por nodo de destino,
+    // para poder repartir el alto disponible de cada nodo entre sus enlaces sin
+    // que la suma de anchuras supere nunca la altura del propio nodo.
+    const votesByIndex = data.map((d) => d.votos_transferidos);
+    const origGroups = new Map<string, number[]>();
+    const destGroups = new Map<string, number[]>();
+    data.forEach((d, i) => {
+      const origKey = normalizeParty(d.origen_partido);
+      const destKey = normalizeParty(d.destino_partido);
+      if (!origGroups.has(origKey)) origGroups.set(origKey, []);
+      if (!destGroups.has(destKey)) destGroups.set(destKey, []);
+      origGroups.get(origKey)!.push(i);
+      destGroups.get(destKey)!.push(i);
+    });
 
-    // Construcción de enlaces
+    const origDist = distributeThickness(origGroups, origNodes, votesByIndex);
+    const destDist = distributeThickness(destGroups, destNodes, votesByIndex);
+
+    // Construcción de enlaces como cintas (ribbons): cada una ocupa exactamente
+    // el tramo que le corresponde en su nodo de origen y en su nodo de destino,
+    // así que nunca se sale del rectángulo del partido ni queda oculta bajo él.
     const computedLinks: SankeyLink[] = data
       .map((d, index): SankeyLink | null => {
         const origKey = normalizeParty(d.origen_partido);
@@ -928,23 +987,27 @@ function SankeyChart({
 
         const isFidelity = origKey === destKey;
 
-        const origRatio = d.votos_transferidos / (oNode.total || 1);
-        const thickness = Math.max(origRatio * oNode.height, 5);
+        const oThick = origDist.thickness[index] ?? MIN_RIBBON_THICKNESS;
+        const oOffset = origDist.offset[index] ?? 0;
+        const dThick = destDist.thickness[index] ?? MIN_RIBBON_THICKNESS;
+        const dOffset = destDist.offset[index] ?? 0;
 
-        const destRatio = d.votos_transferidos / (dNode.total || 1);
-        const destThickness = Math.max(destRatio * dNode.height, 5);
-
-        const y1 = oNode.y + curOffsetsOrig[origKey] + thickness / 2;
-        const y2 = dNode.y + curOffsetsDest[destKey] + destThickness / 2;
-
-        curOffsetsOrig[origKey] += thickness;
-        curOffsetsDest[destKey] += destThickness;
+        const y1Top = oNode.y + oOffset;
+        const y1Bottom = y1Top + oThick;
+        const y2Top = dNode.y + dOffset;
+        const y2Bottom = y2Top + dThick;
 
         const x1 = leftX + nodeWidth;
         const x2 = rightX;
         const mx = (x1 + x2) / 2;
 
-        const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+        const path = [
+          `M ${x1} ${y1Top}`,
+          `C ${mx} ${y1Top}, ${mx} ${y2Top}, ${x2} ${y2Top}`,
+          `L ${x2} ${y2Bottom}`,
+          `C ${mx} ${y2Bottom}, ${mx} ${y1Bottom}, ${x1} ${y1Bottom}`,
+          "Z",
+        ].join(" ");
 
         // ID seguro para los gradientes SVG
         const safeOrig = origKey.replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -956,7 +1019,7 @@ function SankeyChart({
           gradientId,
           data: d,
           path,
-          thickness,
+          avgThickness: (oThick + dThick) / 2,
           isFidelity,
           colorOrigen: getPartyColor(origKey),
           colorDestino: getPartyColor(destKey),
@@ -967,7 +1030,7 @@ function SankeyChart({
         // Los flujos no-fidelidad se dibujan primero (más gruesos primero para
         // que los delgados no queden ocultos); los de fidelidad siempre encima.
         if (a.isFidelity !== b.isFidelity) return a.isFidelity ? 1 : -1;
-        return b.thickness - a.thickness;
+        return b.avgThickness - a.avgThickness;
       });
 
     return {
@@ -1016,15 +1079,15 @@ function SankeyChart({
             <path
               key={link.id}
               d={link.path}
-              fill="none"
-              stroke={`url(#${link.gradientId})`}
-              strokeWidth={link.thickness}
-              strokeOpacity={
+              fill={`url(#${link.gradientId})`}
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth={0.5}
+              fillOpacity={
                 hoveredNode || activeLink
                   ? isHighlighted ? 1 : 0.1
                   : link.isFidelity ? 0.95 : 0.75
               }
-              style={{ transition: "stroke-opacity 0.2s ease, stroke-width 0.2s ease", cursor: "pointer" }}
+              style={{ transition: "fill-opacity 0.2s ease", cursor: "pointer" }}
               onMouseEnter={() => setActiveLink(link.data)}
               onMouseLeave={() => setActiveLink(null)}
               onFocus={() => setActiveLink(link.data)}
