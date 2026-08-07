@@ -14,6 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 
 // --- Interfaces ---
@@ -64,6 +66,19 @@ const FALLBACK_COLORS: Record<string, string> = {
   OTROS: "#6b7280",
 };
 
+const ITEMS_PER_PAGE = 10;
+
+// Normaliza el nombre de un partido de forma consistente en toda la app
+function normalizeParty(name?: string | null): string {
+  return (name || "OTROS").trim().toUpperCase();
+}
+
+// Escapa un valor para uso seguro dentro de un campo CSV entrecomillado
+function csvEscape(value: string | number): string {
+  const str = String(value);
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
 export function TransferenciaVotoModal({
   isOpen,
   onClose,
@@ -72,83 +87,133 @@ export function TransferenciaVotoModal({
   const [transferData, setTransferData] = useState<TransferenciaVotoData[]>([]);
   const [partyConfigs, setPartyConfigs] = useState<Record<string, PartyConfig>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const [selectedOrigen, setSelectedOrigen] = useState<string>("GLOBAL");
   const [modeFilter, setModeFilter] = useState<ModeFilter>("ALL");
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   const sankeyRef = useRef<SVGSVGElement | null>(null);
+  const hasFetchedRef = useRef(false);
+  const dialogTitleId = "transferencia-voto-titulo";
 
+  // Debounce del buscador para no re-filtrar en cada pulsación
   useEffect(() => {
-    if (!isOpen) return;
+    const t = setTimeout(() => setSearchTerm(searchInput), 200);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // Carga de datos: se cachea mientras el componente permanezca montado,
+  // y se cancela de forma segura si el modal se cierra antes de terminar.
+  useEffect(() => {
+    if (!isOpen || hasFetchedRef.current) return;
+    let cancelled = false;
 
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        const { data: partyData, error: partyErr } = await supabase
-          .from("party_configuration")
-          .select("party_key, display_name, color, logo_url, is_active")
-          .eq("is_active", true);
+        const [{ data: partyData, error: partyErr }, { data, error: dataErr }] =
+          await Promise.all([
+            supabase
+              .from("party_configuration")
+              .select("party_key, display_name, color, logo_url, is_active")
+              .eq("is_active", true),
+            supabase.from("transferencia_votos_view").select("*"),
+          ]);
+
+        if (cancelled) return;
 
         if (!partyErr && partyData) {
           const configMap: Record<string, PartyConfig> = {};
           partyData.forEach((p) => {
-            if (p.party_key) configMap[p.party_key.trim().toUpperCase()] = p;
-            if (p.display_name) configMap[p.display_name.trim().toUpperCase()] = p;
+            if (p.party_key) configMap[normalizeParty(p.party_key)] = p;
+            if (p.display_name) configMap[normalizeParty(p.display_name)] = p;
           });
           setPartyConfigs(configMap);
         }
 
-        const { data, error } = await supabase
-          .from("transferencia_votos_view")
-          .select("*");
+        if (dataErr) throw dataErr;
 
-        if (error) throw error;
-
-        // NORMALIZACIÓN: Forzamos mayúsculas y trim en las claves de partidos
         const formattedData: TransferenciaVotoData[] = (data || []).map(
-          (item: TransferenciaVotoDataRaw) => ({
-            origen_partido: (
-              item.origen_partido ||
-              item.partido_anterior ||
-              "OTROS"
-            ).trim().toUpperCase(),
-            destino_partido: (
-              item.destino_partido ||
-              item.partido_nuevo ||
-              "OTROS"
-            ).trim().toUpperCase(),
-            votos_transferidos: Number(
+          (item: TransferenciaVotoDataRaw) => {
+            const votos = Number(
               item.votos_transferidos ?? item.total_transferencias ?? 0
-            ),
-            porcentaje: Number(item.porcentaje ?? 0),
-          })
+            );
+            const pct = Number(item.porcentaje ?? 0);
+            return {
+              origen_partido: normalizeParty(item.origen_partido || item.partido_anterior),
+              destino_partido: normalizeParty(item.destino_partido || item.partido_nuevo),
+              // Se descartan valores negativos o no numéricos, que no deberían
+              // poder darse en datos de votos pero podrían romper el layout.
+              votos_transferidos: Number.isFinite(votos) ? Math.max(votos, 0) : 0,
+              porcentaje: Number.isFinite(pct) ? Math.max(pct, 0) : 0,
+            };
+          }
         );
 
         setTransferData(formattedData);
+        hasFetchedRef.current = true;
       } catch (err) {
         console.error("Error fetching transfer data:", err);
+        if (!cancelled) {
+          setError(
+            "No se han podido cargar los datos de transferencia de voto. Comprueba tu conexión e inténtalo de nuevo."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen]);
+
+  // Bloquea el scroll del body y permite cerrar con Escape mientras el modal está abierto
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedOrigen, modeFilter, searchTerm]);
 
+  const handleRetry = useCallback(() => {
+    hasFetchedRef.current = false;
+    setError(null);
+    // Fuerza un nuevo intento reutilizando el efecto de carga
+    setLoading(true);
+    (async () => {
+      hasFetchedRef.current = false;
+    })();
+  }, []);
+
   const getPartyColor = useCallback(
     (partyName: string): string => {
       if (!partyName) return "#818cf8";
-      const key = partyName.trim().toUpperCase();
+      const key = normalizeParty(partyName);
       if (partyConfigs[key]?.color) return partyConfigs[key].color;
       if (partyColors[key]) return partyColors[key];
       if (partyColors[partyName]) return partyColors[partyName];
@@ -160,7 +225,7 @@ export function TransferenciaVotoModal({
   const getPartyLogo = useCallback(
     (partyName: string): string | null => {
       if (!partyName) return null;
-      const key = partyName.trim().toUpperCase();
+      const key = normalizeParty(partyName);
       return partyConfigs[key]?.logo_url || null;
     },
     [partyConfigs]
@@ -169,7 +234,7 @@ export function TransferenciaVotoModal({
   const getPartyDisplayName = useCallback(
     (partyName: string): string => {
       if (!partyName) return "";
-      const key = partyName.trim().toUpperCase();
+      const key = normalizeParty(partyName);
       return partyConfigs[key]?.display_name || key;
     },
     [partyConfigs]
@@ -236,28 +301,39 @@ export function TransferenciaVotoModal({
     });
   }, [transferData, selectedOrigen, modeFilter, searchTerm, getPartyDisplayName]);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.max(Math.ceil(filteredData.length / ITEMS_PER_PAGE), 1);
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredData.slice(start, start + itemsPerPage);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredData.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredData, currentPage]);
 
   const partidosOrigen = useMemo(() => {
-    return Array.from(new Set(transferData.map((d) => d.origen_partido)));
-  }, [transferData]);
+    return Array.from(new Set(transferData.map((d) => d.origen_partido))).sort((a, b) =>
+      getPartyDisplayName(a).localeCompare(getPartyDisplayName(b))
+    );
+  }, [transferData, getPartyDisplayName]);
 
   const maxPorcentaje = useMemo(() => {
-    if (transferData.length === 0) return 100;
-    const max = Math.max(...transferData.map((d) => d.porcentaje));
+    if (filteredData.length === 0) return 100;
+    const max = Math.max(...filteredData.map((d) => d.porcentaje));
     return max > 0 ? max : 100;
-  }, [transferData]);
+  }, [filteredData]);
+
+  const hasActiveFilters = selectedOrigen !== "GLOBAL" || modeFilter !== "ALL" || searchTerm.trim() !== "";
+
+  const resetFilters = useCallback(() => {
+    setSelectedOrigen("GLOBAL");
+    setModeFilter("ALL");
+    setSearchInput("");
+    setSearchTerm("");
+  }, []);
 
   const handleExportCSV = () => {
     if (filteredData.length === 0) return;
     const headers = ["Origen Partido", "Destino Partido", "Votos Transferidos", "Porcentaje (%)"];
     const rows = filteredData.map((d) => [
-      `"${getPartyDisplayName(d.origen_partido)}"`,
-      `"${getPartyDisplayName(d.destino_partido)}"`,
+      csvEscape(getPartyDisplayName(d.origen_partido)),
+      csvEscape(getPartyDisplayName(d.destino_partido)),
       d.votos_transferidos,
       d.porcentaje.toFixed(2),
     ]);
@@ -272,6 +348,7 @@ export function TransferenciaVotoModal({
 
   const handleExportPNG = () => {
     if (!sankeyRef.current) return;
+    setExportError(null);
 
     const svgElement = sankeyRef.current;
     const svgString = new XMLSerializer().serializeToString(svgElement);
@@ -280,32 +357,44 @@ export function TransferenciaVotoModal({
     const blobURL = URLObject.createObjectURL(svgBlob);
 
     const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      const scale = 2;
-      const viewBox = svgElement.viewBox.baseVal;
-      const width = viewBox ? viewBox.width : svgElement.clientWidth || 950;
-      const height = viewBox ? viewBox.height : svgElement.clientHeight || 400;
 
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-
-      const context = canvas.getContext("2d");
-      if (context) {
-        context.scale(scale, scale);
-        context.fillStyle = "#111118";
-        context.fillRect(0, 0, width, height);
-        context.drawImage(image, 0, 0, width, height);
-
-        const pngURL = canvas.toDataURL("image/png");
-        const downloadLink = document.createElement("a");
-        downloadLink.href = pngURL;
-        downloadLink.download = `grafica_transferencia_${selectedOrigen}_${modeFilter}.png`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-      }
+    image.onerror = () => {
       URLObject.revokeObjectURL(blobURL);
+      setExportError("No se pudo generar la imagen PNG. Inténtalo de nuevo.");
+    };
+
+    image.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const scale = 2;
+        const viewBox = svgElement.viewBox.baseVal;
+        const width = viewBox?.width || svgElement.clientWidth || 950;
+        const height = viewBox?.height || svgElement.clientHeight || 400;
+
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+
+        const context = canvas.getContext("2d");
+        if (context) {
+          context.scale(scale, scale);
+          context.fillStyle = "#111118";
+          context.fillRect(0, 0, width, height);
+          context.drawImage(image, 0, 0, width, height);
+
+          const pngURL = canvas.toDataURL("image/png");
+          const downloadLink = document.createElement("a");
+          downloadLink.href = pngURL;
+          downloadLink.download = `grafica_transferencia_${selectedOrigen}_${modeFilter}.png`;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        }
+      } catch (err) {
+        console.error("Error exporting PNG:", err);
+        setExportError("No se pudo generar la imagen PNG. Inténtalo de nuevo.");
+      } finally {
+        URLObject.revokeObjectURL(blobURL);
+      }
     };
 
     image.src = blobURL;
@@ -315,6 +404,7 @@ export function TransferenciaVotoModal({
 
   return (
     <div
+      role="presentation"
       style={{
         position: "fixed",
         top: 0, left: 0, right: 0, bottom: 0,
@@ -329,6 +419,9 @@ export function TransferenciaVotoModal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={dialogTitleId}
         style={{
           background: "rgba(17,17,24,0.98)",
           backdropFilter: "blur(24px)",
@@ -370,7 +463,7 @@ export function TransferenciaVotoModal({
               <div style={{ background: "rgba(129, 140, 248, 0.15)", padding: 8, borderRadius: 10, color: "#818cf8" }}>
                 <GitCommit size={22} />
               </div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: "#f8fafc", margin: 0 }}>
+              <h2 id={dialogTitleId} style={{ fontSize: 22, fontWeight: 800, color: "#f8fafc", margin: 0 }}>
                 Transferencia y Matriz de Voto
               </h2>
             </div>
@@ -379,56 +472,89 @@ export function TransferenciaVotoModal({
             </p>
           </div>
 
-          <div style={{ display: "flex", gap: 10, marginRight: 40 }}>
-            <button
-              onClick={handleExportPNG}
-              disabled={filteredData.length === 0}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(129, 140, 248, 0.15)",
-                border: "1px solid rgba(129, 140, 248, 0.3)",
-                borderRadius: 10,
-                padding: "8px 16px",
-                color: "#818cf8",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
-                opacity: filteredData.length === 0 ? 0.5 : 1,
-              }}
-            >
-              <ImageIcon size={16} /> Descargar PNG
-            </button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            <div style={{ display: "flex", gap: 10, marginRight: 40 }}>
+              <button
+                onClick={handleExportPNG}
+                disabled={filteredData.length === 0}
+                aria-label="Descargar gráfico como PNG"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "rgba(129, 140, 248, 0.15)",
+                  border: "1px solid rgba(129, 140, 248, 0.3)",
+                  borderRadius: 10,
+                  padding: "8px 16px",
+                  color: "#818cf8",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
+                  opacity: filteredData.length === 0 ? 0.5 : 1,
+                }}
+              >
+                <ImageIcon size={16} /> Descargar PNG
+              </button>
 
-            <button
-              onClick={handleExportCSV}
-              disabled={filteredData.length === 0}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 10,
-                padding: "8px 16px",
-                color: "#f8fafc",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
-                opacity: filteredData.length === 0 ? 0.5 : 1,
-              }}
-            >
-              <Download size={16} /> Exportar CSV
-            </button>
+              <button
+                onClick={handleExportCSV}
+                disabled={filteredData.length === 0}
+                aria-label="Exportar datos como CSV"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 10,
+                  padding: "8px 16px",
+                  color: "#f8fafc",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
+                  opacity: filteredData.length === 0 ? 0.5 : 1,
+                }}
+              >
+                <Download size={16} /> Exportar CSV
+              </button>
+            </div>
+            {exportError && (
+              <span role="alert" style={{ fontSize: 11, color: "#f87171", marginRight: 40 }}>
+                {exportError}
+              </span>
+            )}
           </div>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", paddingRight: 4 }}>
           {loading ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 12 }}>
+            <div
+              role="status"
+              aria-busy="true"
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 12 }}
+            >
               <Loader2 className="animate-spin" size={36} style={{ color: "#818cf8" }} />
               <span style={{ fontSize: 13, color: "#94a3b8" }}>Cargando matriz de transferencias...</span>
+            </div>
+          ) : error ? (
+            <div
+              role="alert"
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 14, textAlign: "center" }}
+            >
+              <div style={{ background: "rgba(239, 68, 68, 0.15)", color: "#f87171", padding: 14, borderRadius: 999 }}>
+                <AlertTriangle size={28} />
+              </div>
+              <span style={{ fontSize: 14, color: "#f8fafc", fontWeight: 600, maxWidth: 420 }}>{error}</span>
+              <button
+                onClick={handleRetry}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)",
+                  borderRadius: 10, padding: "8px 16px", color: "#818cf8", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                <RotateCcw size={14} /> Reintentar
+              </button>
             </div>
           ) : transferData.length > 0 ? (
             <>
@@ -474,10 +600,11 @@ export function TransferenciaVotoModal({
 
               {/* Filtros */}
               <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", paddingBottom: 6 }}>
+                <div role="group" aria-label="Filtrar por partido de origen" style={{ display: "flex", alignItems: "center", gap: 8, overflowX: "auto", paddingBottom: 6 }}>
                   <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>Origen:</span>
                   <button
                     onClick={() => setSelectedOrigen("GLOBAL")}
+                    aria-pressed={selectedOrigen === "GLOBAL"}
                     style={{
                       background: selectedOrigen === "GLOBAL" ? "#818cf8" : "rgba(255,255,255,0.05)",
                       color: selectedOrigen === "GLOBAL" ? "#fff" : "#94a3b8",
@@ -490,6 +617,7 @@ export function TransferenciaVotoModal({
                     <button
                       key={partido}
                       onClick={() => setSelectedOrigen(partido)}
+                      aria-pressed={selectedOrigen === partido}
                       style={{
                         background: selectedOrigen === partido ? getPartyColor(partido) : "rgba(255,255,255,0.05)",
                         color: "#fff",
@@ -503,19 +631,23 @@ export function TransferenciaVotoModal({
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-                  <div style={{ display: "flex", background: "rgba(255,255,255,0.04)", padding: 3, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <button onClick={() => setModeFilter("ALL")} style={{ background: modeFilter === "ALL" ? "rgba(255,255,255,0.12)" : "transparent", color: modeFilter === "ALL" ? "#fff" : "#94a3b8", border: "none", borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Todos</button>
-                    <button onClick={() => setModeFilter("FIDELITY")} style={{ background: modeFilter === "FIDELITY" ? "rgba(34, 197, 94, 0.2)" : "transparent", color: modeFilter === "FIDELITY" ? "#4ade80" : "#94a3b8", border: "none", borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🛡️ Fidelidad</button>
-                    <button onClick={() => setModeFilter("LEAKAGE")} style={{ background: modeFilter === "LEAKAGE" ? "rgba(239, 68, 68, 0.2)" : "transparent", color: modeFilter === "LEAKAGE" ? "#f87171" : "#94a3b8", border: "none", borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>💸 Transvase</button>
+                  <div role="group" aria-label="Filtrar por tipo de movimiento" style={{ display: "flex", background: "rgba(255,255,255,0.04)", padding: 3, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <button onClick={() => setModeFilter("ALL")} aria-pressed={modeFilter === "ALL"} style={{ background: modeFilter === "ALL" ? "rgba(255,255,255,0.12)" : "transparent", color: modeFilter === "ALL" ? "#fff" : "#94a3b8", border: "none", borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Todos</button>
+                    <button onClick={() => setModeFilter("FIDELITY")} aria-pressed={modeFilter === "FIDELITY"} style={{ background: modeFilter === "FIDELITY" ? "rgba(34, 197, 94, 0.2)" : "transparent", color: modeFilter === "FIDELITY" ? "#4ade80" : "#94a3b8", border: "none", borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>🛡️ Fidelidad</button>
+                    <button onClick={() => setModeFilter("LEAKAGE")} aria-pressed={modeFilter === "LEAKAGE"} style={{ background: modeFilter === "LEAKAGE" ? "rgba(239, 68, 68, 0.2)" : "transparent", color: modeFilter === "LEAKAGE" ? "#f87171" : "#94a3b8", border: "none", borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>💸 Transvase</button>
                   </div>
 
                   <div style={{ position: "relative", minWidth: 220 }}>
                     <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#64748b" }} />
+                    <label htmlFor="party-search" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                      Buscar partido
+                    </label>
                     <input
+                      id="party-search"
                       type="text"
                       placeholder="Buscar partido..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
                       style={{
                         background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "6px 12px 6px 32px", fontSize: 12, color: "#f8fafc", outline: "none", width: "100%"
                       }}
@@ -524,98 +656,134 @@ export function TransferenciaVotoModal({
                 </div>
               </div>
 
-              {/* Diagrama de Flujo (Sankey Recalculado) */}
-              <div style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 16, marginBottom: 20 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <h3 style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                    <BarChart3 size={16} style={{ color: "#818cf8" }} /> Diagrama Sankey
-                  </h3>
-                  <button
-                    onClick={handleExportPNG}
-                    style={{
-                      background: "rgba(255,255,255,0.05)",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: 6,
-                      padding: "4px 8px",
-                      color: "#94a3b8",
-                      fontSize: 11,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4
-                    }}
-                  >
-                    <ImageIcon size={12} /> Guardar PNG
-                  </button>
-                </div>
-
-                <SankeyChart
-                  data={filteredData}
-                  getPartyColor={getPartyColor}
-                  getPartyLogo={getPartyLogo}
-                  getPartyDisplayName={getPartyDisplayName}
-                  hoveredNode={hoveredNode}
-                  setHoveredNode={setHoveredNode}
-                  svgRef={sankeyRef}
-                />
-              </div>
-
-              {/* Tabla Detallada */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                  <h3 style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", margin: 0 }}>
-                    Detalle Numérico ({filteredData.length} resultados)
-                  </h3>
-
-                  {totalPages > 1 && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 12, color: "#94a3b8" }}>Página {currentPage} de {totalPages}</span>
-                      <button onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))} disabled={currentPage === 1} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 4, color: "#fff", opacity: currentPage === 1 ? 0.4 : 1 }}><ChevronLeft size={16} /></button>
-                      <button onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 4, color: "#fff", opacity: currentPage === totalPages ? 0.4 : 1 }}><ChevronRight size={16} /></button>
-                    </div>
+              {filteredData.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "50px 20px", color: "#64748b", background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16, marginBottom: 20 }}>
+                  <p style={{ margin: "0 0 12px 0" }}>Ningún movimiento de voto coincide con los filtros seleccionados.</p>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={resetFilters}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        background: "rgba(129, 140, 248, 0.15)", border: "1px solid rgba(129, 140, 248, 0.3)",
+                        borderRadius: 10, padding: "6px 14px", color: "#818cf8", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                      }}
+                    >
+                      <RotateCcw size={13} /> Restablecer filtros
+                    </button>
                   )}
                 </div>
+              ) : (
+                <>
+                  {/* Diagrama de Flujo (Sankey Recalculado) */}
+                  <div style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 16, marginBottom: 20 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <h3 style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                        <BarChart3 size={16} style={{ color: "#818cf8" }} /> Diagrama Sankey
+                      </h3>
+                      <button
+                        onClick={handleExportPNG}
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: 6,
+                          padding: "4px 8px",
+                          color: "#94a3b8",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}
+                      >
+                        <ImageIcon size={12} /> Guardar PNG
+                      </button>
+                    </div>
 
-                <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, background: "rgba(255,255,255,0.01)" }}>
-                    <thead>
-                      <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                        <th style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8" }}>Origen</th>
-                        <th style={{ width: 30 }}></th>
-                        <th style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8" }}>Destino</th>
-                        <th style={{ padding: "10px 14px", textAlign: "right", color: "#94a3b8" }}>Votos Transferidos</th>
-                        <th style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8", minWidth: 180 }}>Porcentaje</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((row, idx) => {
-                        const isFidelidad = row.origen_partido === row.destino_partido;
-                        const pctNorm = Math.min((row.porcentaje / maxPorcentaje) * 100, 100);
-                        return (
-                          <tr key={`${row.origen_partido}-${row.destino_partido}-${idx}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                            <td style={{ padding: "10px 14px" }}><PartyBadge party={row.origen_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} /></td>
-                            <td style={{ textAlign: "center", color: isFidelidad ? "#4ade80" : "#64748b" }}><ArrowRight size={14} /></td>
-                            <td style={{ padding: "10px 14px" }}><PartyBadge party={row.destino_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} /></td>
-                            <td style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#f8fafc" }}>{row.votos_transferidos.toLocaleString()}</td>
-                            <td style={{ padding: "10px 14px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                <div style={{ flex: 1, height: 7, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
-                                  <div style={{ height: "100%", width: `${pctNorm}%`, background: isFidelidad ? "#4ade80" : getPartyColor(row.origen_partido), borderRadius: 4 }} />
-                                </div>
-                                <span style={{ fontSize: 11, fontWeight: 700, color: isFidelidad ? "#4ade80" : "#f8fafc", minWidth: 45, textAlign: "right" }}>{row.porcentaje.toFixed(2)}%</span>
-                              </div>
-                            </td>
+                    <SankeyChart
+                      data={filteredData}
+                      getPartyColor={getPartyColor}
+                      getPartyLogo={getPartyLogo}
+                      getPartyDisplayName={getPartyDisplayName}
+                      hoveredNode={hoveredNode}
+                      setHoveredNode={setHoveredNode}
+                      svgRef={sankeyRef}
+                    />
+                  </div>
+
+                  {/* Tabla Detallada */}
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <h3 style={{ fontSize: 13, fontWeight: 700, color: "#f8fafc", margin: 0 }}>
+                        Detalle Numérico ({filteredData.length} resultados)
+                      </h3>
+
+                      {totalPages > 1 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 12, color: "#94a3b8" }}>Página {currentPage} de {totalPages}</span>
+                          <button
+                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                            disabled={currentPage === 1}
+                            aria-label="Página anterior"
+                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 4, color: "#fff", opacity: currentPage === 1 ? 0.4 : 1, cursor: currentPage === 1 ? "not-allowed" : "pointer" }}
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <button
+                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            aria-label="Página siguiente"
+                            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 4, color: "#fff", opacity: currentPage === totalPages ? 0.4 : 1, cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, background: "rgba(255,255,255,0.01)" }}>
+                        <thead>
+                          <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                            <th scope="col" style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8" }}>Origen</th>
+                            <th scope="col" style={{ width: 30 }}><span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Dirección</span></th>
+                            <th scope="col" style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8" }}>Destino</th>
+                            <th scope="col" style={{ padding: "10px 14px", textAlign: "right", color: "#94a3b8" }}>Votos Transferidos</th>
+                            <th scope="col" style={{ padding: "10px 14px", textAlign: "left", color: "#94a3b8", minWidth: 180 }}>Porcentaje</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                        </thead>
+                        <tbody>
+                          {paginatedData.map((row, idx) => {
+                            const isFidelidad = row.origen_partido === row.destino_partido;
+                            const pctNorm = Math.min((row.porcentaje / maxPorcentaje) * 100, 100);
+                            return (
+                              <tr key={`${row.origen_partido}-${row.destino_partido}-${idx}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                                <td style={{ padding: "10px 14px" }}><PartyBadge party={row.origen_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} /></td>
+                                <td style={{ textAlign: "center", color: isFidelidad ? "#4ade80" : "#64748b" }}><ArrowRight size={14} /></td>
+                                <td style={{ padding: "10px 14px" }}><PartyBadge party={row.destino_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} /></td>
+                                <td style={{ padding: "10px 14px", textAlign: "right", fontWeight: 700, color: "#f8fafc" }}>{row.votos_transferidos.toLocaleString("es-ES")}</td>
+                                <td style={{ padding: "10px 14px" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ flex: 1, height: 7, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
+                                      <div style={{ height: "100%", width: `${pctNorm}%`, background: isFidelidad ? "#4ade80" : getPartyColor(row.origen_partido), borderRadius: 4 }} />
+                                    </div>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: isFidelidad ? "#4ade80" : "#f8fafc", minWidth: 45, textAlign: "right" }}>{row.porcentaje.toFixed(2)}%</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           ) : (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>No hay datos disponibles.</div>
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+              No hay datos de transferencia de voto disponibles todavía.
+            </div>
           )}
         </div>
       </div>
@@ -630,7 +798,19 @@ function PartyBadge({ party, getColor, getLogo, getDisplayName }: { party: strin
 
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 20, background: `${color}18`, border: `1px solid ${color}40`, color: "#fff", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
-      {logo ? <img src={logo} alt={displayName} style={{ width: 15, height: 15, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />}
+      {logo ? (
+        <img
+          src={logo}
+          alt=""
+          style={{ width: 15, height: 15, borderRadius: "50%", objectFit: "cover" }}
+          onError={(e) => {
+            // Si el logo falla al cargar, se oculta para no dejar un icono roto
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      ) : (
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+      )}
       {displayName}
     </span>
   );
@@ -639,6 +819,17 @@ function PartyBadge({ party, getColor, getLogo, getDisplayName }: { party: strin
 // ==========================================
 // SANKEY ENGINE (FIDELIDAD DE IZQUIERDA A DERECHA)
 // ==========================================
+interface SankeyLink {
+  id: string;
+  gradientId: string;
+  data: TransferenciaVotoData;
+  path: string;
+  thickness: number;
+  isFidelity: boolean;
+  colorOrigen: string;
+  colorDestino: string;
+}
+
 interface SankeyChartProps {
   data: TransferenciaVotoData[];
   getPartyColor: (party: string) => string;
@@ -652,6 +843,7 @@ interface SankeyChartProps {
 function SankeyChart({
   data,
   getPartyColor,
+  getPartyLogo,
   getPartyDisplayName,
   hoveredNode,
   setHoveredNode,
@@ -675,8 +867,8 @@ function SankeyChart({
     let totalVotosGlobal = 0;
 
     data.forEach((d) => {
-      const orig = d.origen_partido.trim().toUpperCase();
-      const dest = d.destino_partido.trim().toUpperCase();
+      const orig = normalizeParty(d.origen_partido);
+      const dest = normalizeParty(d.destino_partido);
 
       origenesSet.add(orig);
       destinosSet.add(dest);
@@ -695,7 +887,10 @@ function SankeyChart({
 
     const maxItems = Math.max(listOrigenes.length, listDestinos.length);
     const calculatedHeight = Math.max(maxItems * 50 + topMargin * 2, 360);
-    const usableHeight = calculatedHeight - topMargin * 2 - (maxItems - 1) * gap;
+    const usableHeight = Math.max(
+      calculatedHeight - topMargin * 2 - (maxItems - 1) * gap,
+      minNodeHeight
+    );
 
     // Nodos Izquierda (Origen)
     let curYLeft = topMargin;
@@ -721,54 +916,56 @@ function SankeyChart({
     listDestinos.forEach((d) => (curOffsetsDest[d] = 0));
 
     // Construcción de enlaces
-    const computedLinks = data.map((d, index) => {
-      const origKey = d.origen_partido.trim().toUpperCase();
-      const destKey = d.destino_partido.trim().toUpperCase();
+    const computedLinks: SankeyLink[] = data
+      .map((d, index): SankeyLink | null => {
+        const origKey = normalizeParty(d.origen_partido);
+        const destKey = normalizeParty(d.destino_partido);
 
-      const oNode = origNodes[origKey];
-      const dNode = destNodes[destKey];
+        const oNode = origNodes[origKey];
+        const dNode = destNodes[destKey];
 
-      if (!oNode || !dNode) return null;
+        if (!oNode || !dNode) return null;
 
-      const isFidelity = origKey === destKey;
+        const isFidelity = origKey === destKey;
 
-      const origRatio = d.votos_transferidos / (oNode.total || 1);
-      const thickness = Math.max(origRatio * oNode.height, 5);
+        const origRatio = d.votos_transferidos / (oNode.total || 1);
+        const thickness = Math.max(origRatio * oNode.height, 5);
 
-      const destRatio = d.votos_transferidos / (dNode.total || 1);
-      const destThickness = Math.max(destRatio * dNode.height, 5);
+        const destRatio = d.votos_transferidos / (dNode.total || 1);
+        const destThickness = Math.max(destRatio * dNode.height, 5);
 
-      const y1 = oNode.y + curOffsetsOrig[origKey] + thickness / 2;
-      const y2 = dNode.y + curOffsetsDest[destKey] + destThickness / 2;
+        const y1 = oNode.y + curOffsetsOrig[origKey] + thickness / 2;
+        const y2 = dNode.y + curOffsetsDest[destKey] + destThickness / 2;
 
-      curOffsetsOrig[origKey] += thickness;
-      curOffsetsDest[destKey] += destThickness;
+        curOffsetsOrig[origKey] += thickness;
+        curOffsetsDest[destKey] += destThickness;
 
-      const x1 = leftX + nodeWidth;
-      const x2 = rightX;
-      const mx = (x1 + x2) / 2;
+        const x1 = leftX + nodeWidth;
+        const x2 = rightX;
+        const mx = (x1 + x2) / 2;
 
-      const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
-      
-      // ID seguro para los gradientes SVG
-      const safeOrig = origKey.replace(/[^a-zA-Z0-9_-]/g, "_");
-      const safeDest = destKey.replace(/[^a-zA-Z0-9_-]/g, "_");
-      const gradientId = `grad-${safeOrig}-${safeDest}-${index}`;
+        const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
 
-      return {
-        id: `link-${index}`,
-        gradientId,
-        data: d,
-        path,
-        thickness,
-        isFidelity,
-        colorOrigen: getPartyColor(origKey),
-        colorDestino: getPartyColor(destKey),
-      };
-    }).filter(Boolean)
+        // ID seguro para los gradientes SVG
+        const safeOrig = origKey.replace(/[^a-zA-Z0-9_-]/g, "_");
+        const safeDest = destKey.replace(/[^a-zA-Z0-9_-]/g, "_");
+        const gradientId = `grad-${safeOrig}-${safeDest}-${index}`;
+
+        return {
+          id: `link-${index}`,
+          gradientId,
+          data: d,
+          path,
+          thickness,
+          isFidelity,
+          colorOrigen: getPartyColor(origKey),
+          colorDestino: getPartyColor(destKey),
+        };
+      })
+      .filter((link): link is SankeyLink => link !== null)
       .sort((a, b) => {
-        // Ordenar por espesor descendente para que los más gruesos se dibujen primero
-        // Esto evita que líneas delgadas queden ocultas bajo las gruesas
+        // Los flujos no-fidelidad se dibujan primero (más gruesos primero para
+        // que los delgados no queden ocultos); los de fidelidad siempre encima.
         if (a.isFidelity !== b.isFidelity) return a.isFidelity ? 1 : -1;
         return b.thickness - a.thickness;
       });
@@ -795,9 +992,12 @@ function SankeyChart({
         ref={svgRef}
         viewBox={`0 0 ${layout.width} ${layout.height}`}
         style={{ width: "100%", height: "auto", display: "block" }}
+        role="img"
+        aria-label="Diagrama de flujo de transferencia de voto entre partidos"
       >
+        <title>Diagrama Sankey de transferencia de voto</title>
         <defs>
-          {layout.links.map((link) => link && (
+          {layout.links.map((link) => (
             <linearGradient key={link.gradientId} id={link.gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor={link.colorOrigen} stopOpacity={link.isFidelity ? "0.9" : "0.75"} />
               <stop offset="100%" stopColor={link.isFidelity ? link.colorOrigen : link.colorDestino} stopOpacity={link.isFidelity ? "0.9" : "0.75"} />
@@ -807,7 +1007,6 @@ function SankeyChart({
 
         {/* Flujos */}
         {layout.links.map((link) => {
-          if (!link) return null;
           const isHighlighted =
             hoveredNode === link.data.origen_partido ||
             hoveredNode === link.data.destino_partido ||
@@ -828,73 +1027,113 @@ function SankeyChart({
               style={{ transition: "stroke-opacity 0.2s ease, stroke-width 0.2s ease", cursor: "pointer" }}
               onMouseEnter={() => setActiveLink(link.data)}
               onMouseLeave={() => setActiveLink(null)}
+              onFocus={() => setActiveLink(link.data)}
+              onBlur={() => setActiveLink(null)}
+              tabIndex={0}
+              role="img"
+              aria-label={`${getPartyDisplayName(link.data.origen_partido)} a ${getPartyDisplayName(link.data.destino_partido)}: ${link.data.votos_transferidos.toLocaleString("es-ES")} votos, ${link.data.porcentaje.toFixed(2)}%`}
             />
           );
         })}
 
         {/* Nodos Origen (Izquierda) */}
-        {Object.entries(layout.origNodes).map(([party, pos]) => (
-          <g key={`orig-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
-            <rect
-              x={layout.leftX}
-              y={pos.y}
-              width={layout.nodeWidth}
-              height={pos.height}
-              rx={4}
-              fill={getPartyColor(party)}
-              stroke="rgba(255,255,255,0.2)"
-              strokeWidth={1}
-            />
-            <text x={layout.leftX - 10} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={12} fontWeight={700}>
-              {getPartyDisplayName(party)}
-            </text>
-          </g>
-        ))}
+        {Object.entries(layout.origNodes).map(([party, pos]) => {
+          const logo = getPartyLogo(party);
+          return (
+            <g key={`orig-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
+              <rect
+                x={layout.leftX}
+                y={pos.y}
+                width={layout.nodeWidth}
+                height={pos.height}
+                rx={4}
+                fill={getPartyColor(party)}
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth={1}
+              />
+              {logo && (
+                <image
+                  href={logo}
+                  x={layout.leftX - 34}
+                  y={pos.y + pos.height / 2 - 9}
+                  width={18}
+                  height={18}
+                  clipPath="circle(9px at 9px 9px)"
+                  onError={(e) => {
+                    (e.currentTarget as unknown as SVGImageElement).style.display = "none";
+                  }}
+                />
+              )}
+              <text x={layout.leftX - (logo ? 40 : 10)} y={pos.y + pos.height / 2 + 4} textAnchor="end" fill="#f8fafc" fontSize={12} fontWeight={700}>
+                {getPartyDisplayName(party)}
+              </text>
+            </g>
+          );
+        })}
 
         {/* Nodos Destino (Derecha) */}
-        {Object.entries(layout.destNodes).map(([party, pos]) => (
-          <g key={`dest-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
-            <rect
-              x={layout.rightX}
-              y={pos.y}
-              width={layout.nodeWidth}
-              height={pos.height}
-              rx={4}
-              fill={getPartyColor(party)}
-              stroke="rgba(255,255,255,0.2)"
-              strokeWidth={1}
-            />
-            <text x={layout.rightX + layout.nodeWidth + 10} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={12} fontWeight={700}>
-              {getPartyDisplayName(party)}
-            </text>
-          </g>
-        ))}
+        {Object.entries(layout.destNodes).map(([party, pos]) => {
+          const logo = getPartyLogo(party);
+          return (
+            <g key={`dest-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
+              <rect
+                x={layout.rightX}
+                y={pos.y}
+                width={layout.nodeWidth}
+                height={pos.height}
+                rx={4}
+                fill={getPartyColor(party)}
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth={1}
+              />
+              {logo && (
+                <image
+                  href={logo}
+                  x={layout.rightX + layout.nodeWidth + 16}
+                  y={pos.y + pos.height / 2 - 9}
+                  width={18}
+                  height={18}
+                  clipPath="circle(9px at 9px 9px)"
+                  onError={(e) => {
+                    (e.currentTarget as unknown as SVGImageElement).style.display = "none";
+                  }}
+                />
+              )}
+              <text x={layout.rightX + layout.nodeWidth + (logo ? 40 : 10)} y={pos.y + pos.height / 2 + 4} textAnchor="start" fill="#f8fafc" fontSize={12} fontWeight={700}>
+                {getPartyDisplayName(party)}
+              </text>
+            </g>
+          );
+        })}
       </svg>
 
       {/* Tooltip flotante */}
       {activeLink && (
-        <div style={{
-          position: "absolute",
-          bottom: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "rgba(15, 23, 42, 0.95)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          borderRadius: 10,
-          padding: "8px 14px",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          zIndex: 10,
-          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.5)"
-        }}>
+        <div
+          role="status"
+          style={{
+            position: "absolute",
+            bottom: 12,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(15, 23, 42, 0.95)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: 10,
+            padding: "8px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            zIndex: 10,
+            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.5)"
+          }}
+        >
           <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>
             {activeLink.origen_partido === activeLink.destino_partido
               ? `🛡️ Fidelidad ${getPartyDisplayName(activeLink.origen_partido)}:`
               : `${getPartyDisplayName(activeLink.origen_partido)} → ${getPartyDisplayName(activeLink.destino_partido)}:`}
           </span>
           <span style={{ fontSize: 12, fontWeight: 800, color: "#818cf8" }}>
-            {activeLink.votos_transferidos.toLocaleString()} votos ({activeLink.porcentaje.toFixed(2)}%)
+            {activeLink.votos_transferidos.toLocaleString("es-ES")} votos ({activeLink.porcentaje.toFixed(2)}%)
           </span>
         </div>
       )}
