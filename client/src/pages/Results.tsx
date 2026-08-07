@@ -42,6 +42,7 @@ import PreguntasVariasSection from "@/components/results/PreguntasVariasSection"
 import { CrisisCeutaSection } from "@/components/results/CrisisCeutaSection";
 import { TransferenciaVotoModal } from "@/components/TransferenciaVotoModal";
 import { PrimariasResultsSection } from "@/components/results/PrimariasResultsSection";
+import { LideresRankingSection } from "@/components/results/LideresRankingSection";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
 import GovernmentBuilder from "@/components/GovernmentBuilder";
@@ -385,7 +386,7 @@ type TabKey =
   | "general" | "mapa-hemiciclo" | "encuestadoras-externas" | "ccaa"
   | "provincias" | "comparacion-ccaa" | "youth" | "asoc-juv-mapa-hemiciclo"
   | "leaders" | "tendencias" | "lideres-preferidos" | "lideres-partidos"
-  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "primarias" | "crisis-ceuta";
+  | "preguntas-varias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "primarias" | "crisis-ceuta" | "lideres-ranking";
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
@@ -408,6 +409,7 @@ const TAB_GROUPS: TabGroup[] = [
     { key: "lideres-partidos", label: "Líderes por Partido" },
     { key: "leaders", label: "Valoración" },
     { key: "lideres-preferidos", label: "Preferidos" },
+    { key: "lideres-ranking", label: "Ranking de Líderes" },
   ]},
   { label: "Análisis", icon: <BarChart2 className="w-3.5 h-3.5" />, tabs: [
     { key: "tendencias", label: "Tendencias" },
@@ -2587,6 +2589,7 @@ export default function Results() {
               {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "crisis-ceuta" && <CrisisCeutaSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "primarias" && <PrimariasResultsSection />}
+              {activeTab === "lideres-ranking" && <LideresRankingSection />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}

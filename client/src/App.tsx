@@ -27,6 +27,7 @@ import AdminStatistics from "./pages/AdminStatistics";
 import SimuladorBCGuide from "./pages/SimuladorBCGuide";
 import Primarias from "./pages/Primarias";
 import TestPolitico from "./pages/TestPolitico";
+import ValorarLideres from "./pages/ValorarLideres";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -42,6 +43,7 @@ function Router() {
       <Route path={"/respuestas"} component={Results} />
       <Route path={"/primarias"} component={Primarias} />
       <Route path={"/test-politico"} component={TestPolitico} />
+      <Route path={"/valorar-lideres"} component={ValorarLideres} />
       <Route path={"/acerca-de"} component={About} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/editor"} component={CodeEditor} />
