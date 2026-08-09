@@ -134,14 +134,19 @@ export function Top5LideresWidget() {
 
           return {
             leader_name,
-            media_valoracion: Math.round(mediaPonderada * 10) / 10,
+            media_valoracion: mediaPonderada,
             total_valoraciones: data.totalVotos,
             photo_url: data.photo_url,
             parties,
             primary_color: parties[0]?.color || "#6366f1",
           };
         })
-        .sort((a, b) => b.media_valoracion - a.media_valoracion)
+        .sort((a, b) => {
+          if (b.media_valoracion !== a.media_valoracion) {
+            return b.media_valoracion - a.media_valoracion;
+          }
+          return b.total_valoraciones - a.total_valoraciones;
+        })
         .slice(0, 5);
 
       setLideres(combined);
