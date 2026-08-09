@@ -1,38 +1,54 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { Star, Crown, TrendingUp } from "lucide-react";
 
+interface PartyBadge {
+  party_key: string;
+  display_name: string;
+  color: string;
+  logo_url: string;
+}
+
 interface TopLider {
+  leader_name: string;
+  media_valoracion: number;
+  total_valoraciones: number;
+  photo_url: string;
+  parties: PartyBadge[];
+  primary_color: string;
+}
+
+interface MediaValoracionRow {
   party_key: string;
   leader_name: string;
   media_valoracion: number;
   total_valoraciones: number;
-  display_name: string;
-  color: string;
-  logo_url: string;
-  photo_url: string;
+}
+
+interface PartyLeaderRow {
+  party_key: string;
+  leader_name: string;
+  photo_url: string | null;
+  party_configuration: {
+    display_name: string;
+    color: string;
+    logo_url: string;
+  } | null;
 }
 
 export function Top5LideresWidget() {
   const [lideres, setLideres] = useState<TopLider[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchTop5 = async () => {
-      try {
-        setLoading(true);
+  const fetchTop5 = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        // Obtener top 5 líderes
-        const { data: mediaData, error: mediaError } = await supabase
+      const [mediaRes, leadersRes] = await Promise.all([
+        supabase
           .from("media_valoraciones_lideres")
-          .select("*")
-          .order("media_valoracion", { ascending: false })
-          .limit(5);
-
-        if (mediaError) throw mediaError;
-
-        // Obtener info de líderes y partidos
-        const { data: leadersData, error: leadersError } = await supabase
+          .select("*"),
+        supabase
           .from("party_leaders")
           .select(
             `
@@ -42,39 +58,101 @@ export function Top5LideresWidget() {
             party_configuration(display_name, color, logo_url)
           `
           )
-          .eq("is_active", true);
+          .eq("is_active", true),
+      ]);
 
-        if (leadersError) throw leadersError;
+      if (mediaRes.error) throw mediaRes.error;
+      if (leadersRes.error) throw leadersRes.error;
 
-        // Combinar datos
-        const combined = (mediaData || []).map((media: any) => {
-          const leaderInfo = (leadersData || []).find(
-            (l: any) =>
-              l.party_key === media.party_key &&
-              l.leader_name === media.leader_name
-          );
+      const mediaData = (mediaRes.data as MediaValoracionRow[]) || [];
+      const leadersData = (leadersRes.data as unknown as PartyLeaderRow[]) || [];
+
+      // Mapa para obtener metadatos rápidamente
+      const leadersMap = new Map<string, PartyLeaderRow>();
+      leadersData.forEach((leader) => {
+        const key = `${leader.party_key}_${leader.leader_name}`;
+        leadersMap.set(key, leader);
+      });
+
+      // Agrupación por nombre de líder
+      const groupedMap = new Map<
+        string,
+        {
+          totalPuntosPonderados: number;
+          totalVotos: number;
+          photo_url: string;
+          partiesMap: Map<string, PartyBadge>;
+        }
+      >();
+
+      mediaData.forEach((media) => {
+        const leaderName = media.leader_name.trim();
+        const key = `${media.party_key}_${media.leader_name}`;
+        const leaderInfo = leadersMap.get(key);
+
+        const votos = media.total_valoraciones ?? 0;
+        const mediaVal = media.media_valoracion ?? 0;
+
+        if (!groupedMap.has(leaderName)) {
+          groupedMap.set(leaderName, {
+            totalPuntosPonderados: 0,
+            totalVotos: 0,
+            photo_url: leaderInfo?.photo_url || "",
+            partiesMap: new Map(),
+          });
+        }
+
+        const currentGroup = groupedMap.get(leaderName)!;
+
+        // Suma ponderada de puntos
+        currentGroup.totalPuntosPonderados += mediaVal * votos;
+        currentGroup.totalVotos += votos;
+
+        // Conservar imagen válida
+        if (!currentGroup.photo_url && leaderInfo?.photo_url) {
+          currentGroup.photo_url = leaderInfo.photo_url;
+        }
+
+        // Registrar partido asociado
+        const partyKey = media.party_key;
+        if (!currentGroup.partiesMap.has(partyKey)) {
+          currentGroup.partiesMap.set(partyKey, {
+            party_key: partyKey,
+            display_name: leaderInfo?.party_configuration?.display_name || partyKey,
+            color: leaderInfo?.party_configuration?.color || "#6366f1",
+            logo_url: leaderInfo?.party_configuration?.logo_url || "",
+          });
+        }
+      });
+
+      // Construcción y cálculo de medias ponderadas
+      const combined: TopLider[] = Array.from(groupedMap.entries())
+        .map(([leader_name, data]) => {
+          const parties = Array.from(data.partiesMap.values());
+          const mediaPonderada =
+            data.totalVotos > 0 ? data.totalPuntosPonderados / data.totalVotos : 0;
 
           return {
-            party_key: media.party_key,
-            leader_name: media.leader_name,
-            media_valoracion: media.media_valoracion,
-            total_valoraciones: media.total_valoraciones,
-            display_name:
-              leaderInfo?.party_configuration?.display_name || media.party_key,
-            color: leaderInfo?.party_configuration?.color || "#818cf8",
-            logo_url: leaderInfo?.party_configuration?.logo_url || "",
-            photo_url: leaderInfo?.photo_url || "",
+            leader_name,
+            media_valoracion: Math.round(mediaPonderada * 10) / 10,
+            total_valoraciones: data.totalVotos,
+            photo_url: data.photo_url,
+            parties,
+            primary_color: parties[0]?.color || "#6366f1",
           };
-        });
+        })
+        .sort((a, b) => b.media_valoracion - a.media_valoracion)
+        .slice(0, 5);
 
-        setLideres(combined);
-      } catch (err) {
-        console.error("Error fetching top 5 leaders:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setLideres(combined);
+    } catch (err) {
+      console.error("Error fetching top 5 leaders:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     fetchTop5();
 
     // Suscribirse a cambios en tiempo real
@@ -96,7 +174,7 @@ export function Top5LideresWidget() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchTop5]);
 
   if (loading || lideres.length === 0) {
     return null;
@@ -115,7 +193,7 @@ export function Top5LideresWidget() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {lideres.map((lider, index) => (
           <div
-            key={`${lider.party_key}-${lider.leader_name}`}
+            key={lider.leader_name}
             className={`frosted-glass p-4 rounded-xl border-2 transition text-center ${
               index === 0
                 ? "border-yellow-400 ring-2 ring-yellow-400/20 md:col-span-2 md:row-span-2"
@@ -153,16 +231,20 @@ export function Top5LideresWidget() {
               {lider.leader_name}
             </h4>
 
-            {/* Partido */}
-            <div className="flex items-center justify-center gap-1 mb-2 mt-1">
-              {lider.logo_url && (
-                <img
-                  src={lider.logo_url}
-                  alt={lider.display_name}
-                  className="w-4 h-4 rounded"
-                />
-              )}
-              <p className="text-xs text-[#666666]">{lider.display_name}</p>
+            {/* Partidos */}
+            <div className="flex flex-wrap justify-center gap-1 mb-2 mt-1">
+              {lider.parties.map((party) => (
+                <div key={party.party_key} className="flex items-center gap-0.5">
+                  {party.logo_url && (
+                    <img
+                      src={party.logo_url}
+                      alt={party.display_name}
+                      className="w-4 h-4 rounded"
+                      title={party.display_name}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
 
             {/* Valoración */}
@@ -170,7 +252,7 @@ export function Top5LideresWidget() {
               <div className="flex items-center gap-1">
                 <span
                   className={`font-bold ${index === 0 ? "text-2xl" : "text-lg"}`}
-                  style={{ color: lider.color }}
+                  style={{ color: lider.primary_color }}
                 >
                   {lider.media_valoracion.toFixed(1)}
                 </span>
