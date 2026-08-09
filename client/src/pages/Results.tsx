@@ -43,6 +43,7 @@ import { CrisisCeutaSection } from "@/components/results/CrisisCeutaSection";
 import { TransferenciaVotoModal } from "@/components/TransferenciaVotoModal";
 import { PrimariasResultsSection } from "@/components/results/PrimariasResultsSection";
 import { LideresRankingSection } from "@/components/results/LideresRankingSection";
+import { Top5LideresWidget } from "@/components/results/Top5LideresWidget";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
 import GovernmentBuilder from "@/components/GovernmentBuilder";
@@ -2422,6 +2423,10 @@ export default function Results() {
                     </button>
                   )}
                 </div>
+              )}
+
+              {showPartyList && activeTab === "general" && (
+                <Top5LideresWidget />
               )}
 
               {showPartyList && (
