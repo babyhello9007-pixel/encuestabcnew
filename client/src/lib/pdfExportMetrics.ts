@@ -139,7 +139,7 @@ function drawTable(
 
 export async function exportPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral" | "primarias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "crisis-ceuta" | "lideres-ranking",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null
@@ -345,7 +345,7 @@ async function getMetricsFromViews(activeTab: "general" | "youth" | "asoc-juv-ma
 
 export async function downloadPDFWithMetrics(
   stats: PartyStats[],
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral" | "primarias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "crisis-ceuta",
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral" | "primarias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "crisis-ceuta" | "lideres-ranking",
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null

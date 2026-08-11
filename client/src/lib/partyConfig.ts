@@ -227,11 +227,6 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/OxYlERpqIvuYLNIC.png",
     displayName: "PCTE"
   },
-  "UPL": {
-    color: "#0066FF",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/mwmmLxCMDbZacPQT.png",
-    displayName: "UPL"
-  },
   "Por España": {
     color: "#0066FF",
     logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/LfhcjcOgngqwFaRh.png",
@@ -296,11 +291,6 @@ export const PARTY_CONFIG: Record<string, PartyConfig> = {
     color: "#FF0000",
     logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/flLSuaHeOIjYDIve.jpg",
     displayName: "RecortesCero"
-  },
-  "SALF": {
-    color: "#FF1493",
-    logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663194390516/pVOVNQaSxYeSVYyR.png",
-    displayName: "Se Acabó La Fiesta"
   },
   "UPN": {
     color: "#0066CC",

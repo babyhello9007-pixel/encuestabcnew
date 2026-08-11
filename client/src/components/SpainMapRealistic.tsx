@@ -92,7 +92,7 @@ export function SpainMapRealistic({
   const normalizedDataMap = useMemo(() => {
     const map = new Map<string, { originalKey: string; data: Province }>();
     Object.entries(provincesData).forEach(([key, val]) => {
-      map.set(normalizeProvinceName(key), { originalKey: key, data: val });
+      map.set(normalizeProvinceName(key) || key, { originalKey: key, data: val });
     });
     return map;
   }, [provincesData]);
@@ -100,7 +100,7 @@ export function SpainMapRealistic({
   const processedGeometries = useMemo(() => {
     if (!topoData) return [];
     const { bbox, transform, objects } = topoData;
-    const allArcs = objects.provinces.geometries.flatMap((g) => g.arcs);
+    const allArcs = objects.provinces.geometries.flatMap((g) => g.arcs as unknown as number[][]);
     const decodedArcs = decodeArcs(allArcs, transform);
 
     const arcMap: { [key: number]: number[][] } = {};
@@ -116,7 +116,7 @@ export function SpainMapRealistic({
       });
     });
 
-    const buildPath = (arcIndices: number[][]): string => {
+    const buildPath = (arcIndices: any): string => {
       return arcIndices
         .map((ring) => {
           return ring
@@ -136,14 +136,14 @@ export function SpainMapRealistic({
 
     return objects.provinces.geometries.map((geom) => {
       const geoName = geom.properties.name;
-      const normalized = normalizeProvinceName(geoName);
+      const normalized = normalizeProvinceName(geoName) || geoName;
       const match = normalizedDataMap.get(normalized);
 
       return {
         id: geom.id,
         name: match ? match.originalKey : geoName,
         data: match ? match.data : null,
-        pathData: buildPath(geom.arcs),
+            pathData: buildPath(geom.arcs as unknown as number[][]),
       };
     });
   }, [topoData, normalizedDataMap]);
@@ -329,14 +329,14 @@ export function SpainMapRealistic({
               fillOpacity="0.75"
               stroke="rgba(255, 255, 255, 0.15)"
             />
-            {PARTIES_GENERAL.map((party, idx) => {
+            {Object.entries(PARTIES_GENERAL).map(([partyId, party], idx) => {
               const xPos = 15 + idx * 85;
-              const color = getPartyColor(party.id) || party.color || "#94A3B8";
+              const color = getPartyColor(partyId) || party.color || "#94A3B8";
               return (
-                <g key={party.id} transform={`translate(${xPos}, 0)`}>
+                <g key={partyId} transform={`translate(${xPos}, 0)`}>
                   <circle cx="5" cy="4" r="5" fill={color} />
                   <text x="16" y="8" fill="#F1F5F9" fontSize="11" fontWeight="600">
-                    {party.name || party.id}
+                    {party.name || partyId}
                   </text>
                 </g>
               );

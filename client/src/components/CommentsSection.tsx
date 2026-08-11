@@ -8,11 +8,11 @@ interface Comment {
   texto: string;
   likes: number;
   created_at: string;
-  tab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral" | "primarias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "crisis-ceuta";
+  tab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral" | "primarias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "crisis-ceuta" | "lideres-ranking";
 }
 
 interface CommentsSectionProps {
-  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral" | "primarias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "crisis-ceuta";
+  activeTab: "general" | "youth" | "leaders" | "metrics" | "tendencias" | "lideres-preferidos" | "ccaa" | "provincias" | "comparacion-ccaa" | "mapa-hemiciclo" | "asoc-juv-mapa-hemiciclo" | "el-analisis" | "encuestadoras-externas" | "preguntas-varias" | "lideres-partidos" | "simulador-electoral" | "primarias" | "analisis-avanzado" | "contexto-historico" | "noche-electoral" | "crisis-ceuta" | "lideres-ranking";
 }
 
 export function CommentsSection({ activeTab }: CommentsSectionProps) {

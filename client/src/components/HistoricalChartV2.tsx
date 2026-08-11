@@ -17,7 +17,7 @@ export function HistoricalChartV2({ activeTab }: { activeTab: "general" | "youth
   const [loading, setLoading] = useState(true);
   const [selectedParties, setSelectedParties] = useState<string[]>([]);
 
-  const parties = activeTab === "general" ? PARTIES_GENERAL : YOUTH_ASSOCIATIONS;
+  const parties = (activeTab === "general" ? PARTIES_GENERAL : YOUTH_ASSOCIATIONS) as Record<string, { name: string; logo: string; color: string }>;
 
   useEffect(() => {
     const fetchHistoricalData = async () => {

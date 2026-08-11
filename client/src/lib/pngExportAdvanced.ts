@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from './surveyData';
 
 interface PartyStats {
   id?: string;
@@ -331,7 +331,8 @@ export const generateAllLogosInfographic = async (
 
   const data = activeTab === 'general' ? PARTIES_GENERAL : YOUTH_ASSOCIATIONS;
 
-  Object.entries(data).forEach(([key, party]) => {
+  Object.entries(data).forEach(([key, partyVal]) => {
+    const party = partyVal as { name: string; logo: string; color: string };
     const logoCard = document.createElement('div');
     logoCard.style.textAlign = 'center';
     logoCard.style.display = 'flex';

@@ -1646,7 +1646,7 @@ async function generarInfografiaPNG(
 ) {
   const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
     if (!src) return resolve(null);
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
@@ -2598,7 +2598,7 @@ export default function Results() {
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa tipoEncuesta="generales" generalStats={generalStats} totalResponses={totalResponses} />}
+              {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa />}
               {activeTab === "lideres-partidos" && <LideresDePartidosSection partyMeta={generalPartyMetaLookup} />}
 
               {activeTab === "leaders" && (

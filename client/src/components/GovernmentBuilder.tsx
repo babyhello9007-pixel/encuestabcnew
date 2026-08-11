@@ -597,7 +597,3 @@ export default function GovernmentBuilder({
     </div>
   );
 }
-      </div>
-    </div>
-  );
-}

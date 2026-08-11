@@ -128,13 +128,13 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
       {(selectedParty || (showCustomPartyInput && customParty.trim())) && (
         <div className="space-y-3 p-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200">
           <h3 className="text-lg font-semibold text-gray-900">
-            ¿Quién quieres que sea el líder de {showCustomPartyInput && customParty.trim() ? customParty : (selectedParty ? PARTIES_GENERAL[selectedParty]?.name : "tu partido")}?
+            ¿Quién quieres que sea el líder de {showCustomPartyInput && customParty.trim() ? customParty : (selectedParty ? PARTIES_GENERAL[selectedParty as keyof typeof PARTIES_GENERAL]?.name : "tu partido")}?
           </h3>
 
           <div className="space-y-2">
             {leaderOptions.map((leader) => {
               const isSelected = selectedLeader === leader.name;
-              const partyColor = selectedParty ? PARTIES_GENERAL[selectedParty]?.color : '#666666';
+              const partyColor = selectedParty ? PARTIES_GENERAL[selectedParty as keyof typeof PARTIES_GENERAL]?.color : '#666666';
               
               return (
                 <button
@@ -193,7 +193,7 @@ export function LeaderSelection({ onLeaderSelected, loading = false }: LeaderSel
             onClick={handleSubmit}
             disabled={loading || (!selectedParty && (!showCustomPartyInput || !customParty.trim())) || (!selectedLeader && !showCustomInput)}
             style={{
-              backgroundColor: selectedParty ? PARTIES_GENERAL[selectedParty]?.color : '#9333ea',
+              backgroundColor: selectedParty ? PARTIES_GENERAL[selectedParty as keyof typeof PARTIES_GENERAL]?.color : '#9333ea',
               opacity: loading || (!selectedParty && (!showCustomPartyInput || !customParty.trim())) || (!selectedLeader && !showCustomInput) ? 0.5 : 1,
             }}
             className="w-full mt-4 text-white font-semibold py-3 rounded-lg hover:shadow-lg transition-all disabled:cursor-not-allowed"

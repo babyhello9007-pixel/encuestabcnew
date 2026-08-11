@@ -231,8 +231,8 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   if (loading) {
     return (
       <div className="w-full h-[300px] sm:h-[400px] md:h-[600px] flex flex-col items-center justify-center p-4 sm:p-8 bg-slate-950 rounded-2xl border border-slate-800 shadow-2xl">
-        <div class="w-8 h-8 border-4 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-slate-400 text-xs sm:text-sm font-medium tracking-wide">Cargando cartografía del mapa...</p>
+        <div className="w-8 h-8 border-4 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-400 text-xs sm:text-sm font-medium tracking-wide">Cargando cartografía del mapa...</p>
       </div>
     );
   }
@@ -275,7 +275,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
       </div>
 
       {/* Estilos inyectados para Leaflet Popups oscuros */}
-      <style jsx global>{`
+      <style>{`
         .leaflet-popup-content-wrapper {
           background: transparent !important;
           box-shadow: none !important;

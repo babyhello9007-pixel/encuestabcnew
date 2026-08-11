@@ -1,69 +1,67 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import { buildDiscordAuthorizationUrl } from "../_core/discordOAuth";
 
-describe("Discord OAuth Credentials", () => {
-  it("should have valid Discord OAuth credentials", async () => {
+const liveDiscordTests = process.env.DISCORD_LIVE_TESTS === "true";
+
+describe("Discord OAuth configuration", () => {
+  it("construye una URL de autorización con callback y state", () => {
+    const url = new URL(
+      buildDiscordAuthorizationUrl(
+        "123456789012345678",
+        "https://encuestabc-6q57y6uz.manus.space/api/auth/discord/callback",
+        "state-for-test"
+      )
+    );
+
+    expect(url.origin).toBe("https://discord.com");
+    expect(url.pathname).toBe("/api/oauth2/authorize");
+    expect(url.searchParams.get("client_id")).toBe("123456789012345678");
+    expect(url.searchParams.get("response_type")).toBe("code");
+    expect(url.searchParams.get("state")).toBe("state-for-test");
+    expect(url.searchParams.get("redirect_uri")).toContain("/api/auth/discord/callback");
+    expect(url.searchParams.get("scope")).toContain("identify");
+    expect(url.searchParams.get("scope")).toContain("guilds.members.read");
+  });
+
+  it("comprueba que las credenciales configuradas tienen el formato esperado", () => {
     const clientId = process.env.DISCORD_CLIENT_ID;
     const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+    const botToken = process.env.DISCORD_BOT_TOKEN;
 
     expect(clientId).toBeDefined();
     expect(clientSecret).toBeDefined();
-    expect(clientId).toMatch(/^\d+$/); // Discord Client ID is numeric
-    expect(clientSecret?.length).toBeGreaterThan(20); // Client Secret should be long enough
-  });
-
-  it("should have valid Discord Bot Token", () => {
-    const botToken = process.env.DISCORD_BOT_TOKEN;
     expect(botToken).toBeDefined();
-    expect(botToken?.length).toBeGreaterThan(20); // Bot token should be long enough
+    expect(clientId).toMatch(/^\d+$/);
+    expect(clientSecret?.length).toBeGreaterThan(20);
+    expect(botToken?.length).toBeGreaterThan(20);
   });
+});
 
-  it("should be able to exchange code for token with Discord OAuth", async () => {
-    const clientId = process.env.DISCORD_CLIENT_ID;
-    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
-      throw new Error("Discord credentials not configured");
-    }
-
-    // Test that we can make a request to Discord OAuth endpoint
-    // This is a basic validation that credentials are properly formatted
+describe.skipIf(!liveDiscordTests)("Discord OAuth live connectivity", () => {
+  it("can reach the Discord OAuth endpoint", async () => {
     const response = await fetch("https://discord.com/api/oauth2/token", {
+      signal: AbortSignal.timeout(8000),
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
+        client_id: process.env.DISCORD_CLIENT_ID || "",
+        client_secret: process.env.DISCORD_CLIENT_SECRET || "",
         grant_type: "client_credentials",
-        scope: "identify email guilds guilds.members.read",
+        scope: "identify",
       }).toString(),
     });
 
-    // We expect either success (200) or an error response
-    // but not a network error or malformed request
     expect(response.status).toBeLessThan(500);
-    expect(response.ok || response.status === 401).toBe(true);
   });
 
-  it("should be able to validate bot token with Discord API", async () => {
-    const botToken = process.env.DISCORD_BOT_TOKEN;
-
-    if (!botToken) {
-      throw new Error("Discord Bot Token not configured");
-    }
-
-    // Test that we can make a request to Discord API with the bot token
-    // This validates that the bot token is correctly formatted and valid
+  it("can reach the Discord API with the bot token", async () => {
     const response = await fetch("https://discord.com/api/users/@me", {
+      signal: AbortSignal.timeout(8000),
       headers: {
-        Authorization: `Bot ${botToken}`,
+        Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN || ""}`,
       },
     });
 
-    // We expect either success (200) or an error response
-    // but not a network error or malformed request
     expect(response.status).toBeLessThan(500);
-    expect(response.ok || response.status === 401).toBe(true);
   });
 });

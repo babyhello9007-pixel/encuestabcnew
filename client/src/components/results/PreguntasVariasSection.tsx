@@ -131,24 +131,28 @@ export default function PreguntasVariasSection({ partyMeta = {} }: { partyMeta?:
 
   useEffect(() => {
     const loadBreakdown = async () => {
-      const { data, error } = await supabase
-        .from('preguntas_varias_party_breakdown')
-        .select('question_key, option_value, party_vote, votes_count')
-        .order('votes_count', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('preguntas_varias_party_breakdown')
+          .select('question_key, option_value, party_vote, votes_count')
+          .order('votes_count', { ascending: false });
 
-      if (error) {
-        console.error('Error loading preguntas varias party breakdown:', error);
-        return;
+        if (error) {
+          // Si no existe la tabla o vista, no rompemos la UI, simplemente lo omitimos de manera silenciosa
+          return;
+        }
+
+        const grouped: Record<string, OptionPartyBreakdown[]> = {};
+        (data || []).forEach((row: any) => {
+          const key = `${row.question_key}::${row.option_value}`;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(row as OptionPartyBreakdown);
+        });
+
+        setPartyBreakdownMap(grouped);
+      } catch (err) {
+        // Ignorar si la tabla no está creada aún
       }
-
-      const grouped: Record<string, OptionPartyBreakdown[]> = {};
-      (data || []).forEach((row: any) => {
-        const key = `${row.question_key}::${row.option_value}`;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(row as OptionPartyBreakdown);
-      });
-
-      setPartyBreakdownMap(grouped);
     };
 
     const loadBranding = async () => {

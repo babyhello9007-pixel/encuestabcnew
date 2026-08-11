@@ -17,6 +17,7 @@ interface NanoSurveyResponse {
   comunidad_autonoma?: string;
   nacionalidad?: string;
   anteriores_eegg?: string;
+  opinion_crisismigratoria?: string;
   voto_generales?: string;
   voto_autonomicas?: string;
   voto_municipales?: string;

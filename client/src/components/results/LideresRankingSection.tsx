@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   Star,
   TrendingUp,
@@ -10,6 +10,9 @@ import {
   Search,
   User,
   Sparkles,
+  ArrowUp,
+  ArrowDown,
+  Minus,
 } from "lucide-react";
 
 import {
@@ -17,18 +20,34 @@ import {
   subscribeToLeaderRatings,
   type LiderRanking,
 } from "@/lib/leaderRanking";
+import {
+  compareLeaderPositions,
+  type PositionIndicator,
+} from "@/lib/leaderPosition";
 
 export function LideresRankingSection() {
   const [lideres, setLideres] = useState<LiderRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const previousRankingRef = useRef<string[]>([]);
+  const [positionIndicators, setPositionIndicators] = useState<Record<string, PositionIndicator>>({});
 
   const fetchLideresRanking = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const ranking = await fetchLeaderRanking();
+      const previousRanking = previousRankingRef.current;
+      if (previousRanking.length > 0) {
+        setPositionIndicators(
+          compareLeaderPositions(
+            previousRanking,
+            ranking.map((leader) => leader.leader_name)
+          )
+        );
+      }
+      previousRankingRef.current = ranking.map((leader) => leader.leader_name);
       setLideres(ranking);
     } catch (err) {
       console.error("Error fetching leaders ranking:", err);
@@ -145,6 +164,7 @@ export function LideresRankingSection() {
                 key={lider.leader_name}
                 lider={lider}
                 rank={lider.originalIndex + 1}
+                positionIndicator={positionIndicators[lider.leader_name.trim().toLocaleLowerCase()]}
               />
             ))}
           </div>
@@ -187,7 +207,8 @@ export function LideresRankingSection() {
                   <RankingRow
                     key={lider.leader_name}
                     lider={lider}
-                    index={index}
+                    index={lideres.findIndex((item) => item.leader_name === lider.leader_name)}
+                    positionIndicator={positionIndicators[lider.leader_name.trim().toLocaleLowerCase()]}
                   />
                 ))
               ) : (
@@ -206,7 +227,15 @@ export function LideresRankingSection() {
 }
 
 // Subcomponente PodioCard
-function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
+function PodioCard({
+  lider,
+  rank,
+  positionIndicator,
+}: {
+  lider: LiderRanking;
+  rank: number;
+  positionIndicator?: PositionIndicator;
+}) {
   const cardConfig = {
     1: {
       border: "border-amber-400/80 dark:border-amber-400/60 ring-4 ring-amber-400/15",
@@ -254,12 +283,13 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
         </div>
       </div>
 
-      <div className="text-center mt-2 mb-4">
+      <div className="text-center mt-2 mb-4 flex items-center justify-center gap-2">
         <span
           className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-black text-sm shadow-md ${cardConfig.badgeBg}`}
         >
           {rank}
         </span>
+        <PositionMovementBadge indicator={positionIndicator} />
       </div>
 
       <div className="relative mx-auto mb-4 w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-inner group-hover:scale-105 transition-transform duration-300">
@@ -349,8 +379,55 @@ function PodioCard({ lider, rank }: { lider: LiderRanking; rank: number }) {
   );
 }
 
+function PositionMovementBadge({
+  indicator,
+  compact = false,
+}: {
+  indicator?: PositionIndicator;
+  compact?: boolean;
+}) {
+  if (!indicator || indicator.movement === "same") return null;
+
+  const isUp = indicator.movement === "up";
+  const isNew = indicator.movement === "new";
+  const label = isNew
+    ? "Nuevo"
+    : `${isUp ? "Sube" : "Baja"} ${Math.abs(indicator.delta)}`;
+  const Icon = isNew ? Minus : isUp ? ArrowUp : ArrowDown;
+
+  return (
+    <span
+      title={
+        isNew
+          ? "Líder incorporado desde la última actualización"
+          : `${label} posiciones desde la última actualización`
+      }
+      className={`inline-flex items-center gap-0.5 rounded-full font-bold ${
+        compact ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-1 text-[10px]"
+      } ${
+        isNew
+          ? "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
+          : isUp
+            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+            : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400"
+      }`}
+    >
+      <Icon className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
+      {label}
+    </span>
+  );
+}
+
 // Subcomponente RankingRow
-function RankingRow({ lider, index }: { lider: LiderRanking; index: number }) {
+function RankingRow({
+  lider,
+  index,
+  positionIndicator,
+}: {
+  lider: LiderRanking;
+  index: number;
+  positionIndicator?: PositionIndicator;
+}) {
   return (
     <tr className="hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors group">
       <td className="px-6 py-4 text-center">
@@ -367,6 +444,7 @@ function RankingRow({ lider, index }: { lider: LiderRanking; index: number }) {
         >
           #{index + 1}
         </span>
+        <PositionMovementBadge indicator={positionIndicator} compact />
       </td>
 
       <td className="px-6 py-4">

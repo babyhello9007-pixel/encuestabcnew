@@ -1,4 +1,5 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { randomBytes } from "node:crypto";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
@@ -6,6 +7,8 @@ import { sdk } from "./sdk";
 
 const DISCORD_SERVER_ID = "1360701189108535366";
 const DISCORD_WRITER_ROLE_ID = "1360701814953218200";
+const DISCORD_STATE_COOKIE = "discord_oauth_state";
+const DISCORD_STATE_MAX_AGE_MS = 10 * 60 * 1000;
 
 interface DiscordUser {
   id: string;
@@ -24,10 +27,46 @@ function getQueryParam(req: Request, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function getCookie(req: Request, name: string): string | undefined {
+  const header = req.headers.cookie;
+  if (!header) return undefined;
+
+  const prefix = `${name}=`;
+  const entry = header.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix));
+  return entry ? decodeURIComponent(entry.slice(prefix.length)) : undefined;
+}
+
+function getFrontendUrl(req: Request): string {
+  const configured = process.env.FRONTEND_URL?.trim().replace(/\/$/, "");
+  if (configured) return configured;
+
+  const protocol = req.headers["x-forwarded-proto"]?.toString().split(",")[0]?.trim() || req.protocol;
+  const host = req.get("host");
+  return `${protocol}://${host || "localhost:3000"}`;
+}
+
+export function getDiscordRedirectUri(req: Request): string {
+  return `${getFrontendUrl(req)}/api/auth/discord/callback`;
+}
+
+export function buildDiscordAuthorizationUrl(
+  clientId: string,
+  redirectUri: string,
+  state: string
+): string {
+  const loginUrl = new URL("https://discord.com/api/oauth2/authorize");
+  loginUrl.searchParams.set("client_id", clientId);
+  loginUrl.searchParams.set("redirect_uri", redirectUri);
+  loginUrl.searchParams.set("response_type", "code");
+  loginUrl.searchParams.set("scope", "identify email guilds guilds.members.read");
+  loginUrl.searchParams.set("state", state);
+  return loginUrl.toString();
+}
+
 /**
  * Exchange Discord authorization code for access token
  */
-async function exchangeDiscordCode(code: string): Promise<string> {
+async function exchangeDiscordCode(code: string, redirectUri: string): Promise<string> {
   const clientId = process.env.DISCORD_CLIENT_ID;
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 
@@ -35,9 +74,6 @@ async function exchangeDiscordCode(code: string): Promise<string> {
     throw new Error("Discord OAuth credentials not configured");
   }
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const redirectUri = `${frontendUrl}/api/auth/discord/callback`;
-  console.log("[Discord OAuth] Frontend URL from env:", frontendUrl);
   console.log("[Discord OAuth] Exchanging code with redirect_uri:", redirectUri);
 
   const response = await fetch("https://discord.com/api/oauth2/token", {
@@ -163,7 +199,14 @@ export function registerDiscordOAuthRoutes(app: Express) {
       console.log("[Discord OAuth] Callback received with code:", code);
       
       // Exchange code for access token
-      const accessToken = await exchangeDiscordCode(code);
+      const expectedState = getCookie(req, DISCORD_STATE_COOKIE);
+      if (!state || !expectedState || state !== expectedState) {
+        res.status(400).json({ error: "Invalid Discord OAuth state" });
+        return;
+      }
+      res.clearCookie(DISCORD_STATE_COOKIE, getSessionCookieOptions(req));
+
+      const accessToken = await exchangeDiscordCode(code, getDiscordRedirectUri(req));
       console.log("[Discord OAuth] Access token obtained");
 
       // Get Discord user info
@@ -224,7 +267,7 @@ export function registerDiscordOAuthRoutes(app: Express) {
   /**
    * Get Discord OAuth login URL
    */
-  app.get("/api/auth/discord/login-url", (_req: Request, res: Response) => {
+  app.get("/api/auth/discord/login-url", (req: Request, res: Response) => {
     const clientId = process.env.DISCORD_CLIENT_ID;
 
     if (!clientId) {
@@ -232,20 +275,17 @@ export function registerDiscordOAuthRoutes(app: Express) {
       return;
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const redirectUri = `${frontendUrl}/api/auth/discord/callback`;
-    console.log("[Discord OAuth] Frontend URL from env:", frontendUrl);
+    const redirectUri = getDiscordRedirectUri(req);
     console.log("[Discord OAuth] Redirect URI:", redirectUri);
     const scopes = ["identify", "email", "guilds", "guilds.members.read"];
-    const state = Math.random().toString(36).substring(7);
+    const state = randomBytes(32).toString("hex");
+    res.cookie(DISCORD_STATE_COOKIE, state, {
+      ...getSessionCookieOptions(req),
+      maxAge: DISCORD_STATE_MAX_AGE_MS,
+    });
 
-    const loginUrl = new URL("https://discord.com/api/oauth2/authorize");
-    loginUrl.searchParams.append("client_id", clientId);
-    loginUrl.searchParams.append("redirect_uri", redirectUri);
-    loginUrl.searchParams.append("response_type", "code");
-    loginUrl.searchParams.append("scope", scopes.join(" "));
-    loginUrl.searchParams.append("state", state);
-
-    res.json({ url: loginUrl.toString() });
+    res.json({
+      url: buildDiscordAuthorizationUrl(clientId, redirectUri, state),
+    });
   });
 }
