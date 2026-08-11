@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
 import {
   Star,
   TrendingUp,
@@ -13,39 +12,11 @@ import {
   Sparkles,
 } from "lucide-react";
 
-interface PartyBadge {
-  party_key: string;
-  display_name: string;
-  color: string;
-  logo_url: string;
-}
-
-interface LiderRanking {
-  leader_name: string;
-  media_valoracion: number;
-  total_valoraciones: number;
-  photo_url: string;
-  parties: PartyBadge[];
-  primary_color: string;
-}
-
-interface MediaValoracionRow {
-  party_key: string;
-  leader_name: string;
-  media_valoracion: number;
-  total_valoraciones: number;
-}
-
-interface PartyLeaderRow {
-  party_key: string;
-  leader_name: string;
-  photo_url: string | null;
-  party_configuration: {
-    display_name: string;
-    color: string;
-    logo_url: string;
-  } | null;
-}
+import {
+  fetchLeaderRanking,
+  subscribeToLeaderRatings,
+  type LiderRanking,
+} from "@/lib/leaderRanking";
 
 export function LideresRankingSection() {
   const [lideres, setLideres] = useState<LiderRanking[]>([]);
@@ -57,115 +28,8 @@ export function LideresRankingSection() {
     try {
       setLoading(true);
       setError(null);
-
-      const [mediaRes, leadersRes] = await Promise.all([
-        supabase
-          .from("media_valoraciones_lideres")
-          .select("*"),
-        supabase
-          .from("party_leaders")
-          .select(
-            `
-            party_key,
-            leader_name,
-            photo_url,
-            party_configuration(display_name, color, logo_url)
-          `
-          )
-          .eq("is_active", true),
-      ]);
-
-      if (mediaRes.error) throw mediaRes.error;
-      if (leadersRes.error) throw leadersRes.error;
-
-      const mediaData = (mediaRes.data as MediaValoracionRow[]) || [];
-      const leadersData = (leadersRes.data as unknown as PartyLeaderRow[]) || [];
-
-      // Mapa para obtener metadatos rápidamente por party_key + leader_name
-      const leadersMap = new Map<string, PartyLeaderRow>();
-      leadersData.forEach((leader) => {
-        const key = `${leader.party_key}_${leader.leader_name}`;
-        leadersMap.set(key, leader);
-      });
-
-      // Agrupación por nombre de líder (leader_name)
-      const groupedMap = new Map<
-        string,
-        {
-          totalPuntosPonderados: number;
-          totalVotos: number;
-          photo_url: string;
-          partiesMap: Map<string, PartyBadge>;
-        }
-      >();
-
-      mediaData.forEach((media) => {
-        const leaderName = media.leader_name.trim();
-        const key = `${media.party_key}_${media.leader_name}`;
-        const leaderInfo = leadersMap.get(key);
-
-        const votos = media.total_valoraciones ?? 0;
-        const mediaVal = media.media_valoracion ?? 0;
-
-        if (!groupedMap.has(leaderName)) {
-          groupedMap.set(leaderName, {
-            totalPuntosPonderados: 0,
-            totalVotos: 0,
-            photo_url: leaderInfo?.photo_url || "",
-            partiesMap: new Map(),
-          });
-        }
-
-        const currentGroup = groupedMap.get(leaderName)!;
-
-        // Suma ponderada de puntos
-        currentGroup.totalPuntosPonderados += mediaVal * votos;
-        currentGroup.totalVotos += votos;
-
-        // Conservar imagen válida si no se ha asignado aún
-        if (!currentGroup.photo_url && leaderInfo?.photo_url) {
-          currentGroup.photo_url = leaderInfo.photo_url;
-        }
-
-        // Registrar partido asociado
-        const partyKey = media.party_key;
-        if (!currentGroup.partiesMap.has(partyKey)) {
-          currentGroup.partiesMap.set(partyKey, {
-            party_key: partyKey,
-            display_name: leaderInfo?.party_configuration?.display_name || partyKey,
-            color: leaderInfo?.party_configuration?.color || "#6366f1",
-            logo_url: leaderInfo?.party_configuration?.logo_url || "",
-          });
-        }
-      });
-
-      // Construcción y cálculo de medias ponderadas
-      const combined: LiderRanking[] = Array.from(groupedMap.entries()).map(
-        ([leader_name, data]) => {
-          const parties = Array.from(data.partiesMap.values());
-          const mediaPonderada =
-            data.totalVotos > 0 ? data.totalPuntosPonderados / data.totalVotos : 0;
-
-          return {
-            leader_name,
-            media_valoracion: mediaPonderada,
-            total_valoraciones: data.totalVotos,
-            photo_url: data.photo_url,
-            parties,
-            primary_color: parties[0]?.color || "#6366f1",
-          };
-        }
-      );
-
-      // Ordenar por media ponderada (descendente) y secundariamente por total de votos
-      combined.sort((a, b) => {
-        if (b.media_valoracion !== a.media_valoracion) {
-          return b.media_valoracion - a.media_valoracion;
-        }
-        return b.total_valoraciones - a.total_valoraciones;
-      });
-
-      setLideres(combined);
+      const ranking = await fetchLeaderRanking();
+      setLideres(ranking);
     } catch (err) {
       console.error("Error fetching leaders ranking:", err);
       setError("No se pudieron cargar los datos del ranking.");
@@ -177,24 +41,11 @@ export function LideresRankingSection() {
   useEffect(() => {
     fetchLideresRanking();
 
-    const channel = supabase
-      .channel("media_valoraciones_lideres")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "valoraciones_lideres",
-        },
-        () => {
-          fetchLideresRanking();
-        }
-      )
-      .subscribe();
+    const unsubscribe = subscribeToLeaderRatings(() => {
+      void fetchLideresRanking();
+    });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return unsubscribe;
   }, [fetchLideresRanking]);
 
   // Reorganizar Top 3 para el podio visual: [2º, 1º, 3º]

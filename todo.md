@@ -692,3 +692,8 @@
 - [ ] Integrar estadísticas en Results.tsx
 - [ ] Crear endpoint para obtener estadísticas
 - [ ] Pruebas unitarias para nuevos endpoints
+
+## Corrección pendiente: Top 5 de líderes
+- [x] Sincronizar el Top 5 de líderes con el ranking completo usando exactamente la misma agrupación, medias y orden
+- [x] Verificar que nombres, posiciones y valoraciones coincidan entre ambos componentes
+- [x] Ejecutar pruebas y guardar checkpoint de la corrección
