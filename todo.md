@@ -704,11 +704,11 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
-- [ ] Reparar los errores de sintaxis de GovernmentBuilder.tsx y dejar el diagnóstico TypeScript limpio en ese archivo
+- [x] Reparar los errores de sintaxis de GovernmentBuilder.tsx y dejar el diagnóstico TypeScript limpio en ese archivo
 - [x] Revisar y corregir el flujo de autenticación OAuth de Discord y sus pruebas
-- [ ] Añadir indicadores visuales de subida o bajada de posición en el ranking de líderes
-- [ ] Hacer clicables las tarjetas del Top 5 y mostrar un modal con el desglose de valoraciones
-- [ ] Cohesionar el diseño de ranking, tarjetas, indicadores y modal
-- [ ] Escribir y ejecutar pruebas para las nuevas funcionalidades
+- [x] Añadir indicadores visuales de subida o bajada de posición en el ranking de líderes
+- [x] Hacer clicables las tarjetas del Top 5 y mostrar un modal con el desglose de valoraciones
+- [x] Cohesionar el diseño de ranking, tarjetas, indicadores y modal
+- [x] Escribir y ejecutar pruebas para las nuevas funcionalidades
 - [x] Guardar checkpoint de la entrega
 - [ ] Auditar y corregir el siguiente bloque de errores de diagnóstico TypeScript y flujos de Resultados
