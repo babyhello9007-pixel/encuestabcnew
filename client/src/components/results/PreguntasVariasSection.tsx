@@ -215,7 +215,7 @@ export default function PreguntasVariasSection({ partyMeta = {} }: { partyMeta?:
                     {item.percentage > 10 && `${item.percentage.toFixed(1)}%`}
                   </div>
                 </div>
-                {partyBreakdownMap[getBreakdownKey('monarquia_republica', item.label)]?.length > 0 && (
+                {partyBreakdownMap[getBreakdownKey('monarquia_republica', item.label)]?.length > 0 ? (
                   <div className="mt-3 grid gap-2 md:grid-cols-2">
                     {partyBreakdownMap[getBreakdownKey('monarquia_republica', item.label)].slice(0, 6).map((entry) => {
                       const style = getPartyStyle(entry.party_vote);
@@ -233,6 +233,11 @@ export default function PreguntasVariasSection({ partyMeta = {} }: { partyMeta?:
                         </div>
                       );
                     })}
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-slate-400 italic flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    Desglose por partido en sincronización o sin votos registrados en esta opción.
                   </div>
                 )}
               </div>

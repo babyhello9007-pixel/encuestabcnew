@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Star, Crown, TrendingUp, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Crown, TrendingUp } from "lucide-react";
 import {
   fetchLeaderRanking,
   subscribeToLeaderRatings,
@@ -13,13 +13,12 @@ function MovementBadge({ indicator }: { indicator?: PositionIndicator }) {
 
   const isUp = indicator.movement === "up";
   const isNew = indicator.movement === "new";
-  const Icon = isNew ? Minus : isUp ? ArrowUp : ArrowDown;
   const label = isNew ? "Nuevo" : `${isUp ? "+" : "−"}${Math.abs(indicator.delta)}`;
 
   return (
     <span
-      title={isNew ? "Líder incorporado desde la última actualización" : `${isUp ? "Sube" : "Baja"} ${Math.abs(indicator.delta)} posiciones`}
-      className={`inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-[10px] font-bold ${
+      title={isNew ? "Líder incorporado" : `${isUp ? "Sube" : "Baja"} ${Math.abs(indicator.delta)}`}
+      className={`inline-flex items-center rounded px-1 py-0.5 text-[9px] font-bold ${
         isNew
           ? "bg-slate-100 text-slate-600"
           : isUp
@@ -27,7 +26,7 @@ function MovementBadge({ indicator }: { indicator?: PositionIndicator }) {
             : "bg-rose-100 text-rose-700"
       }`}
     >
-      <Icon className="h-3 w-3" /> {label}
+      {label}
     </span>
   );
 }
@@ -77,114 +76,79 @@ export function Top5LideresWidget() {
 
   return (
     <>
-    <div className="mb-8 liquid-glass p-6 rounded-2xl border border-white/10">
-      {/* Encabezado */}
-      <div className="flex items-center gap-3 mb-6">
-        <Crown className="w-6 h-6 text-yellow-400" />
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Top 5 Líderes Valorados</h3>
-        <TrendingUp className="w-5 h-5 text-[#C41E3A] ml-auto" />
-      </div>
+      <div className="mb-6 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        {/* Encabezado compacto */}
+        <div className="flex items-center justify-between mb-2 px-1">
+          <div className="flex items-center gap-2">
+            <Crown className="w-4 h-4 text-yellow-500" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">Top 5 Líderes (Generales)</h4>
+          </div>
+          <span className="text-[10px] text-gray-500">Haz clic en cualquier líder para ver su desglose</span>
+        </div>
 
-      {/* Grid de top 5 */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {lideres.map((lider, index) => (
-          <button
-            type="button"
-            key={lider.leader_name}
-            onClick={() => setSelectedLeader(lider)}
-            title={`Ver desglose de valoraciones de ${lider.leader_name}`}
-            aria-label={`Abrir desglose de valoraciones de ${lider.leader_name}`}
-            className={`frosted-glass p-4 rounded-xl border-2 transition text-center cursor-pointer hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[#C41E3A]/50 ${
-              index === 0
-                ? "border-yellow-400 ring-2 ring-yellow-400/20 md:col-span-2 md:row-span-2"
-                : "border-white/10"
-            }`}
-          >
-            {/* Posición y evolución */}
-            <div className="mb-3 flex items-center justify-center gap-2">
-              <span
-                className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-white text-sm ${
-                  index === 0
-                    ? "bg-yellow-400"
-                    : index === 1
-                      ? "bg-gray-300 text-gray-800"
-                      : index === 2
-                        ? "bg-orange-600"
-                        : "bg-slate-600"
-                }`}
-              >
-                {index + 1}
-              </span>
-              <MovementBadge indicator={positionIndicators[lider.leader_name.trim().toLocaleLowerCase()]} />
-            </div>
-
-            {/* Foto */}
-            {lider.photo_url && (
-              <div className={`mb-3 rounded-lg overflow-hidden ${index === 0 ? "h-32" : "h-20"}`}>
-                <img
-                  src={lider.photo_url}
-                  alt={lider.leader_name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            {/* Nombre */}
-            <h4 className={`font-bold text-gray-900 dark:text-white ${index === 0 ? "text-base" : "text-sm"}`}>
-              {lider.leader_name}
-            </h4>
-
-            {/* Partidos */}
-            <div className="flex flex-wrap justify-center gap-1 mb-2 mt-1">
-              {lider.parties.map((party) => (
-                <div key={party.party_key} className="flex items-center gap-0.5">
-                  {party.logo_url && (
-                    <img
-                      src={party.logo_url}
-                      alt={party.display_name}
-                      className="w-4 h-4 rounded"
-                      title={party.display_name}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Valoración */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-1">
-                <span
-                  className={`font-bold ${index === 0 ? "text-2xl" : "text-lg"}`}
-                  style={{ color: lider.primary_color }}
-                >
-                  {lider.media_valoracion.toFixed(1)}
-                </span>
-                <span className="text-xs text-[#999999]">/10</span>
-              </div>
-              <div className="flex justify-center gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`${index === 0 ? "w-4 h-4" : "w-3 h-3"} ${
-                      i < Math.round(lider.media_valoracion / 2)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
+        {/* Grid horizontal compacto de 5 columnas */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {lideres.map((lider, index) => (
+            <button
+              type="button"
+              key={lider.leader_name}
+              onClick={() => setSelectedLeader(lider)}
+              title={`Ver desglose de valoraciones de ${lider.leader_name}`}
+              aria-label={`Abrir desglose de valoraciones de ${lider.leader_name}`}
+              className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#C41E3A]/50 hover:shadow transition text-left cursor-pointer group"
+            >
+              {/* Mini avatar y medalla */}
+              <div className="relative flex-shrink-0">
+                {lider.photo_url ? (
+                  <img
+                    src={lider.photo_url}
+                    alt={lider.leader_name}
+                    className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                   />
-                ))}
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
+                    {lider.leader_name.charAt(0)}
+                  </div>
+                )}
+                <span
+                  className={`absolute -bottom-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold text-white shadow ${
+                    index === 0
+                      ? "bg-yellow-500"
+                      : index === 1
+                        ? "bg-slate-400"
+                        : index === 2
+                          ? "bg-amber-700"
+                          : "bg-slate-600"
+                  }`}
+                >
+                  {index + 1}
+                </span>
               </div>
-              <p className={`text-[#999999] ${index === 0 ? "text-xs" : "text-[10px]"}`}>
-                {lider.total_valoraciones} votos
-              </p>
-            </div>
-          </button>
-        ))}
+
+              {/* Info principal compacta */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white truncate group-hover:text-[#C41E3A] transition">
+                    {lider.leader_name}
+                  </span>
+                  <MovementBadge indicator={positionIndicators[lider.leader_name.trim().toLocaleLowerCase()]} />
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs font-extrabold" style={{ color: lider.primary_color }}>
+                    ★ {lider.media_valoracion.toFixed(1)}
+                  </span>
+                  <span className="text-[10px] text-gray-500">({lider.total_valoraciones || lider.total_votos})</span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-    <LeaderRatingBreakdownModal
-      leader={selectedLeader}
-      onClose={() => setSelectedLeader(null)}
-    />
+      <LeaderRatingBreakdownModal
+        leader={selectedLeader}
+        isOpen={!!selectedLeader}
+        onClose={() => setSelectedLeader(null)}
+      />
     </>
   );
 }
