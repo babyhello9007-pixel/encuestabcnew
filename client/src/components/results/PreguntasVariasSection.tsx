@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import PartyLogo from '@/components/PartyLogo';
-import { Filter, RefreshCw } from 'lucide-react';
+import { Filter, RefreshCw, X } from 'lucide-react';
 
 interface QuestionData {
   label: string;
@@ -19,16 +19,6 @@ interface OptionPartyBreakdown {
   votes_count: number;
 }
 
-interface ResponseRow {
-  monarquia_republica: string | null;
-  division_territorial: string | null;
-  sistema_pensiones: string | null;
-  edad_media: number | null;
-  ideologia_media: number | null;
-  edad?: number | null;
-  ccaa?: string | null;
-}
-
 export default function PreguntasVariasSection({
   partyMeta = {}
 }: {
@@ -42,9 +32,9 @@ export default function PreguntasVariasSection({
   const [loading, setLoading] = useState(true);
   const [breakdownLoading, setBreakdownLoading] = useState(true);
 
-  // Filtros interactivos
+  // Filtros interactivos avanzados
   const [selectedEdad, setSelectedEdad] = useState<string>("todos");
-  const [selectedCCAA, setSelectedCCAA] = useState<string>("todas");
+  const [selectedCCAAs, setSelectedCCAAs] = useState<string[]>([]);
 
   const ccaaList = [
     "Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria",
@@ -58,14 +48,13 @@ export default function PreguntasVariasSection({
       setLoading(true);
       let query = supabase.from('respuestas').select('monarquia_republica, division_territorial, sistema_pensiones, edad, ccaa');
 
-      if (selectedCCAA !== "todas") {
-        query = query.eq('ccaa', selectedCCAA);
+      if (selectedCCAAs.length > 0) {
+        query = query.in('ccaa', selectedCCAAs);
       }
 
       const { data, error } = await query;
 
       if (error) {
-        // Fallback a vista si la tabla directa no está accesible
         const { data: viewData, error: viewError } = await supabase
           .from('preguntas_varias_view')
           .select('monarquia_republica, division_territorial, sistema_pensiones, edad_media, ideologia_media');
@@ -75,7 +64,6 @@ export default function PreguntasVariasSection({
         return;
       }
 
-      // Filtrar por edad en memoria si es necesario
       let filtered = data || [];
       if (selectedEdad !== "todos") {
         filtered = filtered.filter((row: any) => {
@@ -149,7 +137,7 @@ export default function PreguntasVariasSection({
 
   useEffect(() => {
     loadDataFiltered();
-  }, [selectedEdad, selectedCCAA]);
+  }, [selectedEdad, selectedCCAAs]);
 
   useEffect(() => {
     const loadBreakdown = async () => {
@@ -212,23 +200,45 @@ export default function PreguntasVariasSection({
     return partyBranding[key] || { color: "#9CA3AF", logo: "" };
   };
 
+  const toggleCCAA = (ccaa: string) => {
+    setSelectedCCAAs(prev =>
+      prev.includes(ccaa) ? prev.filter(c => c !== ccaa) : [...prev, ccaa]
+    );
+  };
+
+  const resetAllFilters = () => {
+    setSelectedEdad("todos");
+    setSelectedCCAAs([]);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Barra de filtros interactivos */}
-      <div className="bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800 flex flex-wrap items-center gap-4 justify-between">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-[#C41E3A]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Segmentar Preguntas Varias:</span>
+      {/* Barra de filtros avanzados con selección múltiple y restablecimiento rápido */}
+      <div className="bg-slate-900/70 backdrop-blur-md p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-[#C41E3A]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-200">Segmentación Avanzada de Preguntas Varias</span>
+          </div>
+
+          {(selectedEdad !== "todos" || selectedCCAAs.length > 0) && (
+            <button
+              onClick={resetAllFilters}
+              className="flex items-center gap-1 text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 px-3 py-1 rounded-lg transition font-semibold"
+            >
+              <X className="w-3.5 h-3.5" /> Restablecer todos los filtros
+            </button>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Filtro Edad */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Edad:</span>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-800">
+          {/* Edad */}
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-400 mb-1">Rango de Edad:</label>
             <select
               value={selectedEdad}
               onChange={(e) => setSelectedEdad(e.target.value)}
-              className="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#C41E3A]"
+              className="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-[#C41E3A]"
             >
               <option value="todos">Todas las edades</option>
               <option value="18-30">18 - 30 años</option>
@@ -238,45 +248,57 @@ export default function PreguntasVariasSection({
             </select>
           </div>
 
-          {/* Filtro CCAA */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">CCAA:</span>
-            <select
-              value={selectedCCAA}
-              onChange={(e) => setSelectedCCAA(e.target.value)}
-              className="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#C41E3A]"
-            >
-              <option value="todas">Todas las CCAA</option>
-              {ccaaList.map((ccaa) => (
-                <option key={ccaa} value={ccaa}>{ccaa}</option>
-              ))}
-            </select>
+          {/* Comunidades Autónomas Múltiples */}
+          <div className="md:col-span-3">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-semibold text-slate-400">
+                Comunidades Autónomas (Selección Múltiple {selectedCCAAs.length > 0 ? `(${selectedCCAAs.length})` : ''}):
+              </label>
+              {selectedCCAAs.length > 0 && (
+                <button
+                  onClick={() => setSelectedCCAAs([])}
+                  className="text-[10px] text-sky-400 hover:underline"
+                >
+                  Seleccionar todas
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1.5 bg-slate-950/50 rounded-lg border border-slate-800">
+              {ccaaList.map((ccaa) => {
+                const isSelected = selectedCCAAs.includes(ccaa);
+                return (
+                  <button
+                    key={ccaa}
+                    type="button"
+                    onClick={() => toggleCCAA(ccaa)}
+                    className={`text-[11px] px-2.5 py-1 rounded-md transition font-medium border ${
+                      isSelected
+                        ? "bg-[#C41E3A] text-white border-[#C41E3A] shadow"
+                        : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
+                    }`}
+                  >
+                    {ccaa} {isSelected && "✓"}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-
-          {(selectedEdad !== "todos" || selectedCCAA !== "todas") && (
-            <button
-              onClick={() => { setSelectedEdad("todos"); setSelectedCCAA("todas"); }}
-              className="text-xs text-[#C41E3A] hover:underline font-semibold"
-            >
-              Limpiar filtros
-            </button>
-          )}
         </div>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-[#C41E3A]" />
-          <p className="text-xs text-slate-400">Calculando respuestas segmentadas...</p>
+          <p className="text-xs text-slate-400">Aplicando filtros y calculando resultados...</p>
         </div>
       ) : (
         <div className="space-y-8">
           {/* Pregunta 21 */}
           {monarquia.length > 0 && (
-            <Card className="p-6 bg-slate-900/40 border-slate-800 text-white">
+            <Card className="p-6 bg-slate-900/40 border-slate-800 text-white shadow-xl">
               <h3 className="text-base font-bold mb-4 flex items-center justify-between">
                 <span>Forma del Estado (Monarquía vs República)</span>
-                <span className="text-xs font-normal text-slate-400">Total respuestas filtradas</span>
+                <span className="text-xs font-normal text-slate-400">Desglose filtrado en tiempo real</span>
               </h3>
               <div className="space-y-4">
                 {monarquia.map((item) => (
@@ -294,11 +316,10 @@ export default function PreguntasVariasSection({
                       </div>
                     </div>
 
-                    {/* Desglose por partido con estado de carga claro */}
                     {breakdownLoading ? (
                       <div className="mt-2 text-xs text-slate-400 flex items-center gap-2 italic">
                         <RefreshCw className="w-3 h-3 animate-spin text-sky-400" />
-                        Sincronizando desglose político por opción...
+                        Sincronizando desglose político...
                       </div>
                     ) : partyBreakdownMap[getBreakdownKey('monarquia_republica', item.label)]?.length > 0 ? (
                       <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -333,10 +354,10 @@ export default function PreguntasVariasSection({
 
           {/* Pregunta 22 */}
           {division.length > 0 && (
-            <Card className="p-6 bg-slate-900/40 border-slate-800 text-white">
+            <Card className="p-6 bg-slate-900/40 border-slate-800 text-white shadow-xl">
               <h3 className="text-base font-bold mb-4 flex items-center justify-between">
                 <span>Modelo de División Territorial</span>
-                <span className="text-xs font-normal text-slate-400">Total respuestas filtradas</span>
+                <span className="text-xs font-normal text-slate-400">Desglose filtrado en tiempo real</span>
               </h3>
               <div className="space-y-4">
                 {division.map((item) => (
@@ -392,10 +413,10 @@ export default function PreguntasVariasSection({
 
           {/* Pregunta 23 */}
           {pensiones.length > 0 && (
-            <Card className="p-6 bg-slate-900/40 border-slate-800 text-white">
+            <Card className="p-6 bg-slate-900/40 border-slate-800 text-white shadow-xl">
               <h3 className="text-base font-bold mb-4 flex items-center justify-between">
                 <span>Sistema de Pensiones</span>
-                <span className="text-xs font-normal text-slate-400">Total respuestas filtradas</span>
+                <span className="text-xs font-normal text-slate-400">Desglose filtrado en tiempo real</span>
               </h3>
               <div className="space-y-4">
                 {pensiones.map((item) => (

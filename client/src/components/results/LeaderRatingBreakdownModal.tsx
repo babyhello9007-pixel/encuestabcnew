@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { BarChart3, Loader2, Star, X } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { BarChart3, Clock, Loader2, Star, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { LiderRanking } from "@/lib/leaderRanking";
 
@@ -21,6 +21,7 @@ export function LeaderRatingBreakdownModal({
   const [ratings, setRatings] = useState<RawRating[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"distribucion" | "historial">("distribucion");
 
   useEffect(() => {
     if (!leader) return;
@@ -99,7 +100,7 @@ export function LeaderRatingBreakdownModal({
           </div>
           <div>
             <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-              Desglose de valoración
+              Historial y Desglose de Valoración
             </p>
             <h3 className="text-xl font-black tracking-tight sm:text-2xl">{leader.leader_name}</h3>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -116,15 +117,41 @@ export function LeaderRatingBreakdownModal({
           </div>
         </div>
 
+        {/* Pestañas de Navegación Modal */}
+        <div className="mt-6 flex gap-2 border-b border-white/10 pb-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab("distribucion")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+              activeTab === "distribucion"
+                ? "bg-[#C41E3A] text-white shadow-lg"
+                : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <BarChart3 className="h-3.5 w-3.5" /> Distribución de Notas
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("historial")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+              activeTab === "historial"
+                ? "bg-[#C41E3A] text-white shadow-lg"
+                : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Clock className="h-3.5 w-3.5" /> Historial Detallado ({ratings.length})
+          </button>
+        </div>
+
         {loading ? (
           <div className="flex min-h-48 items-center justify-center text-white/60">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Cargando valoraciones…
+            <Loader2 className="h-6 w-6 animate-spin text-[#C41E3A]" />
           </div>
         ) : error ? (
           <p className="mt-8 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">{error}</p>
-        ) : (
+        ) : activeTab === "distribucion" ? (
           <>
-            <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Metric label="Media" value={`${leader.media_valoracion.toFixed(2)} / 10`} accent={leader.primary_color} />
               <Metric label="Valoraciones" value={String(ratings.length || leader.total_valoraciones)} />
               <Metric label="Mínima" value={ratings.length ? String(Math.min(...ratings.map((item) => item.valoracion))) : "—"} />
@@ -156,9 +183,34 @@ export function LeaderRatingBreakdownModal({
 
             <div className="mt-5 flex items-center gap-2 text-xs text-white/45">
               <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              Datos agregados de valoraciones públicas; el desglose no muestra información personal.
+              Datos agregados de valoraciones públicas en tiempo real.
             </div>
           </>
+        ) : (
+          <div className="mt-6 space-y-3">
+            <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
+              {ratings.length === 0 ? (
+                <p className="text-center text-xs text-white/50 py-8">No hay registros detallados en el historial.</p>
+              ) : (
+                ratings.map((r, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold">
+                        {r.valoracion}★
+                      </span>
+                      <div>
+                        <p className="font-semibold text-white">Partido: {r.party_key || "General"}</p>
+                        <p className="text-[10px] text-white/45">
+                          {r.created_at ? new Date(r.created_at).toLocaleString("es-ES") : "Fecha no disponible"}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] uppercase px-2 py-1 rounded bg-white/10 text-white/70">Registrado</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>

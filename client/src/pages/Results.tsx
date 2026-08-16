@@ -2334,12 +2334,25 @@ export default function Results() {
             <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
               <Image size={12} /><span>Infografía</span>
             </button>
-            <button className="r-hbtn r-hbtn-pdf" onClick={() => downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null)}>
+            <button className="r-hbtn r-hbtn-pdf" onClick={async () => {
+              const btn = document.getElementById('btn-export-pdf');
+              if (btn) btn.innerHTML = '<span class="animate-spin">⏳</span> Generando PDF...';
+              try {
+                await downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null);
+                alert("¡PDF generado y descargado con éxito!");
+              } catch (e) {
+                alert("Error generando PDF.");
+              } finally {
+                if (btn) btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><span>PDF</span>';
+              }
+            }} id="btn-export-pdf" title="Exportar informe oficial en PDF">
               <FileText size={12} /><span>PDF</span>
             </button>
             <button className="r-hbtn r-hbtn-ai" onClick={async () => {
               const node = document.querySelector('.r-main') as HTMLElement;
               if (!node) return;
+              const btn = document.getElementById('btn-export-png');
+              if (btn) btn.innerHTML = '<span class="animate-spin">⏳</span> Capturando PNG...';
               try {
                 const html2canvas = (await import('html2canvas')).default;
                 const canvas = await html2canvas(node, { scale: 2, backgroundColor: '#0a0a0f', useCORS: true });
@@ -2347,11 +2360,14 @@ export default function Results() {
                 link.download = `batalla-cultural-resultados-${activeTab}-${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
+                alert("¡Imagen PNG de alta calidad descargada con éxito!");
               } catch (err) {
                 console.error("Error exportando imagen:", err);
                 alert("No se pudo exportar la imagen. Inténtalo de nuevo.");
+              } finally {
+                if (btn) btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg><span>Exportar PNG</span>';
               }
-            }} title="Exportar vista actual en imagen PNG de alta calidad">
+            }} id="btn-export-png" title="Exportar vista actual en imagen PNG de alta calidad">
               <Download size={12} /><span>Exportar PNG</span>
             </button>
             
