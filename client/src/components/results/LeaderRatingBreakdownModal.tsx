@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { BarChart3, Clock, Loader2, Star, X, Calendar } from "lucide-react";
+import { BarChart3, Clock, Loader2, Star, X, Calendar, Download, FileText, HelpCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { LiderRanking } from "@/lib/leaderRanking";
 
@@ -83,6 +83,53 @@ export function LeaderRatingBreakdownModal({
     return counts.map((item) => ({ ...item, percentage: (item.count / max) * 100 }));
   }, [ratings]);
 
+  const handleExportModalPNG = async () => {
+    const modalNode = document.getElementById('modal-top5-container');
+    if (!modalNode) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(modalNode, { scale: 2, backgroundColor: '#030712', useCORS: true, logging: false });
+      const link = document.createElement('a');
+      link.download = `lider-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}-desglose-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      alert("¡Imagen PNG del desglose del líder descargada con éxito!");
+    } catch (err) {
+      console.error("Error exportando modal PNG:", err);
+      alert("No se pudo exportar la imagen del modal.");
+    }
+  };
+
+  const handleExportModalPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      doc.setFillColor(3, 7, 18);
+      doc.rect(0, 0, 210, 297, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.text(`Informe de Líder: ${leader?.leader_name}`, 20, 25);
+
+      doc.setFontSize(11);
+      doc.setTextColor(196, 30, 58);
+      doc.text("Batalla Cultural - Análisis de Valoraciones", 20, 33);
+
+      doc.setTextColor(200, 200, 200);
+      doc.setFontSize(10);
+      doc.text(`Media general: ${leader?.media_valoracion.toFixed(2)} / 10`, 20, 45);
+      doc.text(`Total valoraciones: ${ratings.length || leader?.total_valoraciones}`, 20, 52);
+      doc.text(`Período de análisis: ${dateFilter.toUpperCase()}`, 20, 59);
+      doc.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, 20, 66);
+
+      doc.save(`informe-lider-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      alert("¡Informe PDF del líder generado con éxito!");
+    } catch (e) {
+      console.error("Error generando PDF de líder:", e);
+      alert("No se pudo generar el PDF del líder.");
+    }
+  };
+
   if (!leader) return null;
 
   return (
@@ -95,7 +142,7 @@ export function LeaderRatingBreakdownModal({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/15 bg-slate-950/95 p-5 text-white shadow-2xl shadow-black/40 sm:p-7">
+      <div id="modal-top5-container" className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/15 bg-slate-950/95 p-5 text-white shadow-2xl shadow-black/40 sm:p-7">
         <button
           type="button"
           onClick={onClose}
@@ -105,7 +152,7 @@ export function LeaderRatingBreakdownModal({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="flex items-start gap-4 pr-10">
+        <div className="flex items-start gap-4 pr-16">
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white/15 bg-white/10">
             {leader.photo_url ? (
               <img src={leader.photo_url} alt={leader.leader_name} className="h-full w-full object-cover object-top" />
@@ -134,8 +181,25 @@ export function LeaderRatingBreakdownModal({
           </div>
         </div>
 
+        {/* Botones de exportación específica del modal */}
+        <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-white/10">
+          <span className="text-[11px] text-white/50 font-semibold">Exportar ficha:</span>
+          <button
+            onClick={handleExportModalPNG}
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
+          >
+            <Download className="w-3.5 h-3.5 text-[#C41E3A]" /> Imagen PNG
+          </button>
+          <button
+            onClick={handleExportModalPDF}
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
+          >
+            <FileText className="w-3.5 h-3.5 text-sky-400" /> Informe PDF
+          </button>
+        </div>
+
         {/* Pestañas de Navegación Modal */}
-        <div className="mt-6 flex gap-2 border-b border-white/10 pb-3">
+        <div className="mt-4 flex gap-2 border-b border-white/10 pb-3">
           <button
             type="button"
             onClick={() => setActiveTab("distribucion")}
@@ -211,8 +275,8 @@ export function LeaderRatingBreakdownModal({
                 <span className="font-black text-sky-400 text-sm">{leader.media_valoracion.toFixed(2)} / 10 ⭐</span>
               </div>
 
-              {/* Selector de rango de fechas */}
-              <div className="flex items-center gap-2">
+              {/* Selector de rango de fechas con tooltip explicativo */}
+              <div className="flex items-center gap-2 relative group">
                 <Calendar className="w-3.5 h-3.5 text-sky-300" />
                 <select
                   value={dateFilter}
@@ -224,6 +288,13 @@ export function LeaderRatingBreakdownModal({
                   <option value="7dias">Últimos 7 días</option>
                   <option value="30dias">Últimos 30 días</option>
                 </select>
+                <div className="cursor-help text-sky-300 hover:text-white">
+                  <HelpCircle className="w-4 h-4" />
+                </div>
+                {/* Tooltip flotante explicativo */}
+                <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 text-[11px] text-slate-200 rounded-lg shadow-xl border border-sky-500/40 z-20">
+                  Filtra las valoraciones por rango de tiempo para analizar tendencias recientes.
+                </div>
               </div>
             </div>
 
