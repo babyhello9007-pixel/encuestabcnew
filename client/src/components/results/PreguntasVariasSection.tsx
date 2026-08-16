@@ -206,6 +206,11 @@ export default function PreguntasVariasSection({
     );
   };
 
+  const removeCCAA = (ccaa: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedCCAAs(prev => prev.filter(c => c !== ccaa));
+  };
+
   const resetAllFilters = () => {
     setSelectedEdad("todos");
     setSelectedCCAAs([]);
@@ -213,7 +218,7 @@ export default function PreguntasVariasSection({
 
   return (
     <div className="space-y-6">
-      {/* Barra de filtros avanzados con selección múltiple y restablecimiento rápido */}
+      {/* Barra de filtros avanzados con selección múltiple, chips eliminables y restablecimiento */}
       <div className="bg-slate-900/70 backdrop-blur-md p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -230,6 +235,29 @@ export default function PreguntasVariasSection({
             </button>
           )}
         </div>
+
+        {/* Etiquetas visuales de CCAA seleccionadas para eliminar individualmente */}
+        {selectedCCAAs.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 p-2 bg-slate-950/60 rounded-lg border border-slate-800">
+            <span className="text-[11px] text-slate-400 font-semibold mr-1">CCAA Activas:</span>
+            {selectedCCAAs.map((ccaa) => (
+              <span
+                key={ccaa}
+                className="inline-flex items-center gap-1 text-xs bg-[#C41E3A]/20 text-rose-200 border border-[#C41E3A]/40 px-2.5 py-1 rounded-md font-medium"
+              >
+                {ccaa}
+                <button
+                  type="button"
+                  onClick={(e) => removeCCAA(ccaa, e)}
+                  className="hover:text-white transition p-0.5 rounded-full"
+                  title={`Eliminar filtro ${ccaa}`}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-800">
           {/* Edad */}
@@ -252,14 +280,14 @@ export default function PreguntasVariasSection({
           <div className="md:col-span-3">
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[11px] font-semibold text-slate-400">
-                Comunidades Autónomas (Selección Múltiple {selectedCCAAs.length > 0 ? `(${selectedCCAAs.length})` : ''}):
+                Seleccionar Comunidades Autónomas:
               </label>
               {selectedCCAAs.length > 0 && (
                 <button
                   onClick={() => setSelectedCCAAs([])}
                   className="text-[10px] text-sky-400 hover:underline"
                 >
-                  Seleccionar todas
+                  Limpiar CCAA
                 </button>
               )}
             </div>

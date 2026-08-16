@@ -2361,6 +2361,11 @@ export default function Results() {
                 link.href = canvas.toDataURL('image/png');
                 link.click();
                 alert("¡Imagen PNG de alta calidad descargada con éxito!");
+                if (confirm("¿Deseas compartir los resultados en Twitter / X o WhatsApp ahora?")) {
+                  const text = encodeURIComponent("¡Mira los resultados en tiempo real de la III Encuesta de Batalla Cultural!");
+                  const url = encodeURIComponent(window.location.href);
+                  window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+                }
               } catch (err) {
                 console.error("Error exportando imagen:", err);
                 alert("No se pudo exportar la imagen. Inténtalo de nuevo.");

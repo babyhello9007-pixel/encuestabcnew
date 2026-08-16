@@ -187,8 +187,12 @@ export function LeaderRatingBreakdownModal({
             </div>
           </>
         ) : (
-          <div className="mt-6 space-y-3">
-            <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
+          <div className="mt-6 space-y-4">
+            <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-between text-xs">
+              <span className="text-sky-300 font-semibold">Promedio general de este líder:</span>
+              <span className="font-black text-sky-400 text-sm">{leader.media_valoracion.toFixed(2)} / 10 ⭐</span>
+            </div>
+            <div className="max-h-60 overflow-y-auto pr-2 space-y-2">
               {ratings.length === 0 ? (
                 <p className="text-center text-xs text-white/50 py-8">No hay registros detallados en el historial.</p>
               ) : (
