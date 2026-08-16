@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
-import { BarChart3, Clock, Loader2, Star, X, Calendar, Download, FileText, HelpCircle } from "lucide-react";
+import { BarChart3, Clock, Loader2, Star, X, Calendar, Download, FileText, HelpCircle, GitCompare, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import type { LiderRanking } from "@/lib/leaderRanking";
+import { fetchLeaderRanking, type LiderRanking } from "@/lib/leaderRanking";
 
 interface RawRating {
   valoracion: number;
@@ -11,11 +11,13 @@ interface RawRating {
 
 interface LeaderRatingBreakdownModalProps {
   leader: LiderRanking | null;
+  isOpen?: boolean;
   onClose: () => void;
 }
 
 export function LeaderRatingBreakdownModal({
   leader,
+  isOpen = true,
   onClose,
 }: LeaderRatingBreakdownModalProps) {
   const [ratings, setRatings] = useState<RawRating[]>([]);
@@ -26,8 +28,13 @@ export function LeaderRatingBreakdownModal({
   // Filtro de rango de fechas para el historial
   const [dateFilter, setDateFilter] = useState<"todos" | "hoy" | "7dias" | "30dias">("todos");
 
+  // Comparación con otro líder
+  const [allLeaders, setAllLeaders] = useState<LiderRanking[]>([]);
+  const [compareLeaderName, setCompareLeaderName] = useState<string>("");
+  const [compareRatings, setCompareRatings] = useState<RawRating[]>([]);
+
   useEffect(() => {
-    if (!leader) return;
+    if (!isOpen || !leader) return;
 
     let cancelled = false;
     const loadRatings = async () => {
@@ -50,16 +57,48 @@ export function LeaderRatingBreakdownModal({
       setLoading(false);
     };
 
+    const loadAllLeaders = async () => {
+      try {
+        const ranking = await fetchLeaderRanking();
+        if (!cancelled) setAllLeaders(ranking.filter(l => l.leader_name !== leader.leader_name));
+      } catch (e) {
+        // Ignorar
+      }
+    };
+
     void loadRatings();
+    void loadAllLeaders();
     return () => {
       cancelled = true;
     };
-  }, [leader]);
+  }, [leader, isOpen]);
 
-  const filteredRatings = useMemo(() => {
-    if (dateFilter === "todos") return ratings;
+  // Cargar valoraciones del líder a comparar
+  useEffect(() => {
+    if (!compareLeaderName) {
+      setCompareRatings([]);
+      return;
+    }
+    let cancelled = false;
+    const loadCompare = async () => {
+      const { data } = await supabase
+        .from("valoraciones_lideres")
+        .select("valoracion, party_key, created_at")
+        .eq("leader_name", compareLeaderName)
+        .order("created_at", { ascending: false });
+
+      if (!cancelled) setCompareRatings((data as RawRating[]) || []);
+    };
+    void loadCompare();
+    return () => {
+      cancelled = true;
+    };
+  }, [compareLeaderName]);
+
+  const filterByDate = (items: RawRating[]) => {
+    if (dateFilter === "todos") return items;
     const now = new Date().getTime();
-    return ratings.filter((r) => {
+    return items.filter((r) => {
       if (!r.created_at) return false;
       const t = new Date(r.created_at).getTime();
       const diffDays = (now - t) / (1000 * 60 * 60 * 24);
@@ -68,7 +107,16 @@ export function LeaderRatingBreakdownModal({
       if (dateFilter === "30dias") return diffDays <= 30;
       return true;
     });
-  }, [ratings, dateFilter]);
+  };
+
+  const filteredRatings = useMemo(() => filterByDate(ratings), [ratings, dateFilter]);
+  const filteredCompareRatings = useMemo(() => filterByDate(compareRatings), [compareRatings, dateFilter]);
+
+  const compareAverage = useMemo(() => {
+    if (filteredCompareRatings.length === 0) return null;
+    const sum = filteredCompareRatings.reduce((acc, r) => acc + Number(r.valoracion), 0);
+    return sum / filteredCompareRatings.length;
+  }, [filteredCompareRatings]);
 
   const distribution = useMemo(() => {
     const counts = Array.from({ length: 10 }, (_, index) => ({
@@ -90,10 +138,10 @@ export function LeaderRatingBreakdownModal({
       const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(modalNode, { scale: 2, backgroundColor: '#030712', useCORS: true, logging: false });
       const link = document.createElement('a');
-      link.download = `lider-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}-desglose-${Date.now()}.png`;
+      link.download = `ficha-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-      alert("¡Imagen PNG del desglose del líder descargada con éxito!");
+      alert("¡Imagen PNG del desglose descargada con éxito!");
     } catch (err) {
       console.error("Error exportando modal PNG:", err);
       alert("No se pudo exportar la imagen del modal.");
@@ -104,25 +152,33 @@ export function LeaderRatingBreakdownModal({
     try {
       const { jsPDF } = await import('jspdf');
       const doc = new jsPDF();
+      
+      // Fondo oscuro institucional
       doc.setFillColor(3, 7, 18);
       doc.rect(0, 0, 210, 297, 'F');
-      
+
+      // Cabecera institucional con logotipo y fecha
+      doc.setFillColor(196, 30, 58);
+      doc.rect(0, 0, 210, 18, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
-      doc.text(`Informe de Líder: ${leader?.leader_name}`, 20, 25);
-
-      doc.setFontSize(11);
-      doc.setTextColor(196, 30, 58);
-      doc.text("Batalla Cultural - Análisis de Valoraciones", 20, 33);
-
-      doc.setTextColor(200, 200, 200);
       doc.setFontSize(10);
-      doc.text(`Media general: ${leader?.media_valoracion.toFixed(2)} / 10`, 20, 45);
-      doc.text(`Total valoraciones: ${ratings.length || leader?.total_valoraciones}`, 20, 52);
-      doc.text(`Período de análisis: ${dateFilter.toUpperCase()}`, 20, 59);
-      doc.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-ES')}`, 20, 66);
+      doc.text("BATALLA CULTURAL — INFORME OFICIAL DE LÍDER", 14, 12);
+      doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 165, 12);
 
-      doc.save(`informe-lider-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      // Título principal
+      doc.setFontSize(18);
+      doc.text(`Ficha de Análisis: ${leader?.leader_name}`, 14, 32);
+
+      doc.setFontSize(10);
+      doc.setTextColor(180, 180, 180);
+      doc.text(`Media general: ${leader?.media_valoracion.toFixed(2)} / 10`, 14, 42);
+      doc.text(`Total valoraciones analizadas: ${filteredRatings.length}`, 14, 49);
+      doc.text(`Rango temporal aplicado: ${dateFilter.toUpperCase()}`, 14, 56);
+      if (compareLeaderName) {
+        doc.text(`Comparado con: ${compareLeaderName} (Media: ${compareAverage ? compareAverage.toFixed(2) : 'N/A'})`, 14, 63);
+      }
+
+      doc.save(`informe-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
       alert("¡Informe PDF del líder generado con éxito!");
     } catch (e) {
       console.error("Error generando PDF de líder:", e);
@@ -130,11 +186,38 @@ export function LeaderRatingBreakdownModal({
     }
   };
 
-  if (!leader) return null;
+  const handleExportCSV = () => {
+    try {
+      let csvContent = "data:text/csv;charset=utf-8,Lider,Valoracion,Partido,Fecha\n";
+      filteredRatings.forEach(r => {
+        const row = [
+          `"${leader?.leader_name}"`,
+          r.valoracion,
+          `"${r.party_key || 'General'}"`,
+          `"${r.created_at ? new Date(r.created_at).toISOString() : ''}"`
+        ].join(",");
+        csvContent += row + "\r\n";
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `datos-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}-${dateFilter}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      alert("¡Archivo CSV descargado con éxito!");
+    } catch (e) {
+      console.error("Error descargando CSV:", e);
+      alert("No se pudo generar el archivo CSV.");
+    }
+  };
+
+  if (!isOpen || !leader) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
       aria-label={`Desglose de valoraciones de ${leader.leader_name}`}
@@ -164,7 +247,7 @@ export function LeaderRatingBreakdownModal({
           </div>
           <div>
             <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-              Historial y Desglose de Valoración
+              Ficha Analítica e Historial
             </p>
             <h3 className="text-xl font-black tracking-tight sm:text-2xl">{leader.leader_name}</h3>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -181,20 +264,26 @@ export function LeaderRatingBreakdownModal({
           </div>
         </div>
 
-        {/* Botones de exportación específica del modal */}
+        {/* Botones de exportación y descarga CSV */}
         <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-white/10">
-          <span className="text-[11px] text-white/50 font-semibold">Exportar ficha:</span>
+          <span className="text-[11px] text-white/50 font-semibold">Acciones:</span>
           <button
             onClick={handleExportModalPNG}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
           >
             <Download className="w-3.5 h-3.5 text-[#C41E3A]" /> Imagen PNG
           </button>
           <button
             onClick={handleExportModalPDF}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
           >
             <FileText className="w-3.5 h-3.5 text-sky-400" /> Informe PDF
+          </button>
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" /> Exportar CSV
           </button>
         </div>
 
@@ -220,7 +309,7 @@ export function LeaderRatingBreakdownModal({
                 : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <Clock className="h-3.5 w-3.5" /> Historial Tendencias ({filteredRatings.length})
+            <Clock className="h-3.5 w-3.5" /> Historial y Comparativa ({filteredRatings.length})
           </button>
         </div>
 
@@ -271,7 +360,7 @@ export function LeaderRatingBreakdownModal({
           <div className="mt-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-xs">
               <div className="flex items-center gap-2">
-                <span className="text-sky-300 font-semibold">Promedio general:</span>
+                <span className="text-sky-300 font-semibold">Promedio ({leader.leader_name}):</span>
                 <span className="font-black text-sky-400 text-sm">{leader.media_valoracion.toFixed(2)} / 10 ⭐</span>
               </div>
 
@@ -288,17 +377,36 @@ export function LeaderRatingBreakdownModal({
                   <option value="7dias">Últimos 7 días</option>
                   <option value="30dias">Últimos 30 días</option>
                 </select>
-                <div className="cursor-help text-sky-300 hover:text-white">
+                <div className="cursor-help text-sky-300 hover:text-white" title="Filtra las valoraciones por rango temporal">
                   <HelpCircle className="w-4 h-4" />
-                </div>
-                {/* Tooltip flotante explicativo */}
-                <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 text-[11px] text-slate-200 rounded-lg shadow-xl border border-sky-500/40 z-20">
-                  Filtra las valoraciones por rango de tiempo para analizar tendencias recientes.
                 </div>
               </div>
             </div>
 
-            <div className="max-h-60 overflow-y-auto pr-2 space-y-2">
+            {/* Selector secundario para superponer y comparar otro líder */}
+            <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs">
+              <div className="flex items-center gap-2">
+                <GitCompare className="w-4 h-4 text-purple-400" />
+                <span className="text-purple-200 font-semibold">Comparar con:</span>
+              </div>
+              <select
+                value={compareLeaderName}
+                onChange={(e) => setCompareLeaderName(e.target.value)}
+                className="bg-slate-900 border border-purple-500/30 text-purple-200 text-xs rounded-lg px-2.5 py-1 focus:outline-none flex-1 min-w-[180px]"
+              >
+                <option value="">-- Ninguno (Sin comparar) --</option>
+                {allLeaders.map((l) => (
+                  <option key={l.leader_name} value={l.leader_name}>{l.leader_name} ({l.media_valoracion.toFixed(2)})</option>
+                ))}
+              </select>
+              {compareLeaderName && compareAverage !== null && (
+                <div className="text-purple-300 font-bold">
+                  Media {compareLeaderName}: {compareAverage.toFixed(2)} / 10
+                </div>
+              )}
+            </div>
+
+            <div className="max-h-56 overflow-y-auto pr-2 space-y-2">
               {filteredRatings.length === 0 ? (
                 <p className="text-center text-xs text-white/50 py-8">No hay registros en el rango de fechas seleccionado.</p>
               ) : (
