@@ -89,14 +89,17 @@ export function Top5LideresWidget() {
         {/* Grid horizontal compacto de 5 columnas */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {lideres.map((lider, index) => (
-            <button
-              type="button"
+            <div
               key={lider.leader_name}
-              onClick={() => setSelectedLeader(lider)}
-              title={`Ver desglose de valoraciones de ${lider.leader_name}`}
-              aria-label={`Abrir desglose de valoraciones de ${lider.leader_name}`}
-              className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#C41E3A]/50 hover:shadow transition text-left cursor-pointer group"
+              className="relative group/card"
             >
+              <button
+                type="button"
+                onClick={() => setSelectedLeader(lider)}
+                title={`Ver desglose de valoraciones de ${lider.leader_name}`}
+                aria-label={`Abrir desglose de valoraciones de ${lider.leader_name}`}
+                className="w-full flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#C41E3A]/50 hover:shadow transition text-left cursor-pointer group"
+              >
               {/* Mini avatar y medalla */}
               <div className="relative flex-shrink-0">
                 {lider.photo_url ? (
@@ -141,6 +144,16 @@ export function Top5LideresWidget() {
                 </div>
               </div>
             </button>
+
+            {/* Tooltip flotante al hacer hover */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/card:flex flex-col items-center z-50 pointer-events-none w-48 p-2.5 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl border border-slate-700">
+              <p className="font-bold text-yellow-400 mb-0.5">{lider.leader_name}</p>
+              <p className="text-slate-300">Valoración media: <span className="font-bold text-white">{lider.media_valoracion.toFixed(1)} / 10</span></p>
+              <p className="text-slate-300">Total valoraciones: <span className="font-bold text-white">{lider.total_valoraciones || lider.total_votos}</span></p>
+              <p className="text-[10px] text-sky-400 mt-1">Haz clic para ver desglose completo</p>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+            </div>
+          </div>
           ))}
         </div>
       </div>

@@ -2337,6 +2337,23 @@ export default function Results() {
             <button className="r-hbtn r-hbtn-pdf" onClick={() => downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null)}>
               <FileText size={12} /><span>PDF</span>
             </button>
+            <button className="r-hbtn r-hbtn-ai" onClick={async () => {
+              const node = document.querySelector('.r-main') as HTMLElement;
+              if (!node) return;
+              try {
+                const html2canvas = (await import('html2canvas')).default;
+                const canvas = await html2canvas(node, { scale: 2, backgroundColor: '#0a0a0f', useCORS: true });
+                const link = document.createElement('a');
+                link.download = `batalla-cultural-resultados-${activeTab}-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+              } catch (err) {
+                console.error("Error exportando imagen:", err);
+                alert("No se pudo exportar la imagen. Inténtalo de nuevo.");
+              }
+            }} title="Exportar vista actual en imagen PNG de alta calidad">
+              <Download size={12} /><span>Exportar PNG</span>
+            </button>
             
             <button className="r-hbtn r-hbtn-outline" onClick={() => setLocation("/")}>← Volver</button>
             <div className="hidden md:block"><FollowUsMenu /></div>
