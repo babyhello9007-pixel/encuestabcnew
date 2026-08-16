@@ -18,6 +18,9 @@
 - [x] Crear página de resultados con visualización de datos
 - [x] Implementar gráficos interactivos para resultados
 - [x] Crear página "Acerca de" / Metodología
+- [x] Añadir tooltips interactivos con valores exactos en las vistas de barras y tendencias del modal Top 5
+- [x] Permitir personalizar los colores de los líderes en el gráfico comparativo del Top 5
+- [x] Guardar y recuperar configuraciones favoritas de filtros y comparativas del Top 5
 
 ## Cálculo de Escaños (Ley d'Hondt)
 - [x] Implementar función de cálculo de escaños para elecciones generales (350 escaños, umbral 3%)

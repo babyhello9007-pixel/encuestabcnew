@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { BarChart3, Clock, Loader2, Star, X, Calendar, Download, FileText, HelpCircle, GitCompare, FileSpreadsheet, LineChart as LineChartIcon, BarChart2 } from "lucide-react";
+import { BarChart3, Clock, Loader2, Star, X, Calendar, Download, FileText, HelpCircle, GitCompare, FileSpreadsheet, LineChart as LineChartIcon, BarChart2, Bookmark, Palette } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { fetchLeaderRanking, type LiderRanking } from "@/lib/leaderRanking";
+import { calculateComparisonDifference, getFavoritesForLeader } from "@/lib/leaderComparisonUtils";
 
 interface RawRating {
   valoracion: number;
@@ -13,6 +14,17 @@ interface LeaderRatingBreakdownModalProps {
   leader: LiderRanking | null;
   isOpen?: boolean;
   onClose: () => void;
+}
+
+interface FavoriteComparison {
+  id: string;
+  label: string;
+  leaderName: string;
+  compareLeaderName: string;
+  dateFilter: "todos" | "hoy" | "7dias" | "30dias";
+  chartMode: "lineas" | "barras";
+  leaderColor: string;
+  compareColor: string;
 }
 
 export function LeaderRatingBreakdownModal({
@@ -33,6 +45,23 @@ export function LeaderRatingBreakdownModal({
   const [compareLeaderName, setCompareLeaderName] = useState<string>("");
   const [compareRatings, setCompareRatings] = useState<RawRating[]>([]);
   const [chartMode, setChartMode] = useState<"lineas" | "barras">("lineas");
+  const [leaderColor, setLeaderColor] = useState("#0ea5e9");
+  const [compareColor, setCompareColor] = useState("#a855f7");
+  const [favorites, setFavorites] = useState<FavoriteComparison[]>([]);
+
+  useEffect(() => {
+    if (!leader) return;
+    setLeaderColor(leader.primary_color || "#0ea5e9");
+  }, [leader]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("bc_top5_favorite_comparisons");
+      setFavorites(saved ? JSON.parse(saved) : []);
+    } catch {
+      setFavorites([]);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isOpen || !leader) return;
@@ -127,9 +156,7 @@ export function LeaderRatingBreakdownModal({
 
   // Diferencia porcentual exacta
   const percentageDiff = useMemo(() => {
-    if (compareAverage === null || compareAverage === 0) return null;
-    const diff = ((leaderAverage - compareAverage) / compareAverage) * 100;
-    return diff;
+    return calculateComparisonDifference(leaderAverage, compareAverage);
   }, [leaderAverage, compareAverage]);
 
   const distribution = useMemo(() => {
@@ -236,6 +263,35 @@ export function LeaderRatingBreakdownModal({
     }
   };
 
+  const saveFavorite = () => {
+    if (!leader) return;
+    const label = window.prompt("Nombre para esta configuración favorita:", `${leader.leader_name} · ${compareLeaderName || "sin comparar"}`);
+    if (!label) return;
+    const favorite: FavoriteComparison = {
+      id: `${Date.now()}`,
+      label,
+      leaderName: leader.leader_name,
+      compareLeaderName,
+      dateFilter,
+      chartMode,
+      leaderColor,
+      compareColor,
+    };
+    const updated = [...favorites, favorite].slice(-12);
+    setFavorites(updated);
+    localStorage.setItem("bc_top5_favorite_comparisons", JSON.stringify(updated));
+  };
+
+  const applyFavorite = (id: string) => {
+    const favorite = favorites.find((item) => item.id === id);
+    if (!favorite || favorite.leaderName !== leader?.leader_name) return;
+    setCompareLeaderName(favorite.compareLeaderName);
+    setDateFilter(favorite.dateFilter);
+    setChartMode(favorite.chartMode);
+    setLeaderColor(favorite.leaderColor);
+    setCompareColor(favorite.compareColor);
+  };
+
   if (!isOpen || !leader) return null;
 
   return (
@@ -308,6 +364,28 @@ export function LeaderRatingBreakdownModal({
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" /> Exportar CSV (con filtros)
           </button>
+          <button
+            onClick={saveFavorite}
+            className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-100 text-xs px-3 py-1.5 rounded-lg transition font-medium border border-amber-400/30"
+          >
+            <Bookmark className="w-3.5 h-3.5 text-amber-300" /> Guardar favorita
+          </button>
+          {getFavoritesForLeader(favorites, leader.leader_name).length > 0 && (
+            <select
+              defaultValue=""
+              onChange={(event) => {
+                if (event.target.value) applyFavorite(event.target.value);
+                event.currentTarget.value = "";
+              }}
+              className="bg-slate-900 border border-amber-400/30 text-amber-100 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none max-w-48"
+              aria-label="Cargar una configuración favorita"
+            >
+              <option value="">Cargar favorita…</option>
+              {getFavoritesForLeader(favorites, leader.leader_name).map((item) => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Pestañas de Navegación Modal */}
@@ -363,10 +441,13 @@ export function LeaderRatingBreakdownModal({
                     <span className="text-[9px] font-semibold text-white/50">{item.count || ""}</span>
                     <div className="flex h-28 w-full items-end rounded-lg bg-white/5 p-1">
                       <div
-                        className="w-full rounded-md transition-all"
+                        className="group relative w-full rounded-md transition-all cursor-help"
                         style={{ height: `${Math.max(item.count ? item.percentage : 3, 3)}%`, backgroundColor: leader.primary_color }}
-                        title={`${item.count} valoraciones de ${item.score}`}
-                      />
+                      >
+                        <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden w-36 -translate-x-1/2 rounded-lg border border-white/15 bg-slate-950 px-2 py-1.5 text-center text-[10px] text-white shadow-xl group-hover:block">
+                          Nota {item.score}: <strong>{item.count}</strong> valoración{item.count === 1 ? "" : "es"}
+                        </span>
+                      </div>
                     </div>
                     <span className="text-[10px] font-bold text-white/65">{item.score}</span>
                   </div>
@@ -422,6 +503,34 @@ export function LeaderRatingBreakdownModal({
                 </select>
               </div>
 
+              <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5" title={`Color de ${leader.leader_name}`}>
+                <Palette className="h-3.5 w-3.5 text-sky-300" />
+                <label className="text-[10px] text-white/60" htmlFor="leader-primary-color">{leader.leader_name}</label>
+                <input
+                  id="leader-primary-color"
+                  type="color"
+                  value={leaderColor}
+                  onChange={(event) => setLeaderColor(event.target.value)}
+                  className="h-5 w-7 cursor-pointer rounded border-0 bg-transparent p-0"
+                  aria-label={`Elegir color de ${leader.leader_name}`}
+                />
+              </div>
+
+              {compareLeaderName && (
+                <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5" title={`Color de ${compareLeaderName}`}>
+                  <Palette className="h-3.5 w-3.5 text-purple-300" />
+                  <label className="text-[10px] text-white/60" htmlFor="leader-compare-color">Comparativa</label>
+                  <input
+                    id="leader-compare-color"
+                    type="color"
+                    value={compareColor}
+                    onChange={(event) => setCompareColor(event.target.value)}
+                    className="h-5 w-7 cursor-pointer rounded border-0 bg-transparent p-0"
+                    aria-label={`Elegir color de ${compareLeaderName}`}
+                  />
+                </div>
+              )}
+
               {compareLeaderName && compareAverage !== null && percentageDiff !== null && (
                 <div className="flex items-center gap-2 bg-purple-900/40 px-3 py-1.5 rounded-lg border border-purple-500/40">
                   <span className="text-purple-300">Diferencia:</span>
@@ -461,25 +570,31 @@ export function LeaderRatingBreakdownModal({
 
               {chartMode === "barras" ? (
                 <div className="space-y-3 py-2">
-                  <div>
+                  <div className="group relative">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-bold text-sky-300">{leader.leader_name}</span>
+                      <span className="font-bold" style={{ color: leaderColor }}>{leader.leader_name}</span>
                       <span className="font-mono">{leaderAverage.toFixed(2)} / 10</span>
                     </div>
                     <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden border border-slate-700">
-                      <div className="bg-sky-500 h-full rounded-full transition-all" style={{ width: `${(leaderAverage / 10) * 100}%` }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${(leaderAverage / 10) * 100}%`, backgroundColor: leaderColor }} />
                     </div>
+                    <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-white/15 bg-slate-950 px-2 py-1 text-[10px] text-white shadow-xl group-hover:block">
+                      {leader.leader_name}: {leaderAverage.toFixed(2)} / 10 · {filteredRatings.length} valoraciones
+                    </span>
                   </div>
 
                   {compareLeaderName && compareAverage !== null && (
-                    <div>
+                    <div className="group relative">
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="font-bold text-purple-300">{compareLeaderName}</span>
+                        <span className="font-bold" style={{ color: compareColor }}>{compareLeaderName}</span>
                         <span className="font-mono">{compareAverage.toFixed(2)} / 10</span>
                       </div>
                       <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden border border-slate-700">
-                        <div className="bg-purple-500 h-full rounded-full transition-all" style={{ width: `${(compareAverage / 10) * 100}%` }} />
+                        <div className="h-full rounded-full transition-all" style={{ width: `${(compareAverage / 10) * 100}%`, backgroundColor: compareColor }} />
                       </div>
+                      <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-white/15 bg-slate-950 px-2 py-1 text-[10px] text-white shadow-xl group-hover:block">
+                        {compareLeaderName}: {compareAverage.toFixed(2)} / 10 · {filteredCompareRatings.length} valoraciones
+                      </span>
                     </div>
                   )}
                 </div>
@@ -489,7 +604,7 @@ export function LeaderRatingBreakdownModal({
                     <p className="text-center text-xs text-white/50 py-8">No hay registros en el rango de fechas seleccionado.</p>
                   ) : (
                     filteredRatings.map((r, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
+                      <div key={i} className="group relative flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-xs hover:bg-white/10 transition cursor-help">
                         <div className="flex items-center gap-3">
                           <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold">
                             {r.valoracion}★
@@ -502,6 +617,9 @@ export function LeaderRatingBreakdownModal({
                           </div>
                         </div>
                         <span className="text-[10px] uppercase px-2 py-1 rounded bg-white/10 text-white/70">Tendencia</span>
+                        <span className="pointer-events-none absolute bottom-full right-0 z-30 mb-2 hidden whitespace-nowrap rounded-lg border border-white/15 bg-slate-950 px-2 py-1 text-[10px] text-white shadow-xl group-hover:block">
+                          Valor exacto: {r.valoracion}/10 · {r.created_at ? new Date(r.created_at).toLocaleString("es-ES") : "Sin fecha"}
+                        </span>
                       </div>
                     ))
                   )}
