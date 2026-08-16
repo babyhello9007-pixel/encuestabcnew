@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { BarChart3, Clock, Loader2, Star, X, Calendar, Download, FileText, HelpCircle, GitCompare, FileSpreadsheet } from "lucide-react";
+import { BarChart3, Clock, Loader2, Star, X, Calendar, Download, FileText, HelpCircle, GitCompare, FileSpreadsheet, LineChart as LineChartIcon, BarChart2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { fetchLeaderRanking, type LiderRanking } from "@/lib/leaderRanking";
 
@@ -28,10 +28,11 @@ export function LeaderRatingBreakdownModal({
   // Filtro de rango de fechas para el historial
   const [dateFilter, setDateFilter] = useState<"todos" | "hoy" | "7dias" | "30dias">("todos");
 
-  // Comparación con otro líder
+  // Comparación con otro líder y modo de gráfico
   const [allLeaders, setAllLeaders] = useState<LiderRanking[]>([]);
   const [compareLeaderName, setCompareLeaderName] = useState<string>("");
   const [compareRatings, setCompareRatings] = useState<RawRating[]>([]);
+  const [chartMode, setChartMode] = useState<"lineas" | "barras">("lineas");
 
   useEffect(() => {
     if (!isOpen || !leader) return;
@@ -112,11 +113,24 @@ export function LeaderRatingBreakdownModal({
   const filteredRatings = useMemo(() => filterByDate(ratings), [ratings, dateFilter]);
   const filteredCompareRatings = useMemo(() => filterByDate(compareRatings), [compareRatings, dateFilter]);
 
+  const leaderAverage = useMemo(() => {
+    if (filteredRatings.length === 0) return leader?.media_valoracion || 0;
+    const sum = filteredRatings.reduce((acc, r) => acc + Number(r.valoracion), 0);
+    return sum / filteredRatings.length;
+  }, [filteredRatings, leader]);
+
   const compareAverage = useMemo(() => {
     if (filteredCompareRatings.length === 0) return null;
     const sum = filteredCompareRatings.reduce((acc, r) => acc + Number(r.valoracion), 0);
     return sum / filteredCompareRatings.length;
   }, [filteredCompareRatings]);
+
+  // Diferencia porcentual exacta
+  const percentageDiff = useMemo(() => {
+    if (compareAverage === null || compareAverage === 0) return null;
+    const diff = ((leaderAverage - compareAverage) / compareAverage) * 100;
+    return diff;
+  }, [leaderAverage, compareAverage]);
 
   const distribution = useMemo(() => {
     const counts = Array.from({ length: 10 }, (_, index) => ({
@@ -171,11 +185,14 @@ export function LeaderRatingBreakdownModal({
 
       doc.setFontSize(10);
       doc.setTextColor(180, 180, 180);
-      doc.text(`Media general: ${leader?.media_valoracion.toFixed(2)} / 10`, 14, 42);
+      doc.text(`Media general: ${leaderAverage.toFixed(2)} / 10`, 14, 42);
       doc.text(`Total valoraciones analizadas: ${filteredRatings.length}`, 14, 49);
       doc.text(`Rango temporal aplicado: ${dateFilter.toUpperCase()}`, 14, 56);
-      if (compareLeaderName) {
-        doc.text(`Comparado con: ${compareLeaderName} (Media: ${compareAverage ? compareAverage.toFixed(2) : 'N/A'})`, 14, 63);
+      if (compareLeaderName && compareAverage !== null) {
+        doc.text(`Comparado con: ${compareLeaderName} (Media: ${compareAverage.toFixed(2)})`, 14, 63);
+        if (percentageDiff !== null) {
+          doc.text(`Diferencia porcentual: ${percentageDiff > 0 ? '+' : ''}${percentageDiff.toFixed(1)}%`, 14, 70);
+        }
       }
 
       doc.save(`informe-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
@@ -188,13 +205,19 @@ export function LeaderRatingBreakdownModal({
 
   const handleExportCSV = () => {
     try {
-      let csvContent = "data:text/csv;charset=utf-8,Lider,Valoracion,Partido,Fecha\n";
+      // Incluir metadatos de filtros de Comunidad Autónoma y Edad si existen en localStorage o estado global
+      const storedEdad = localStorage.getItem("bc_filter_edad") || "Todas las edades";
+      const storedCCAA = localStorage.getItem("bc_filter_ccaa") || "Todas las CCAA";
+
+      let csvContent = "data:text/csv;charset=utf-8,Lider,Valoracion,Partido,Fecha,FiltroEdad,FiltroCCAA\n";
       filteredRatings.forEach(r => {
         const row = [
           `"${leader?.leader_name}"`,
           r.valoracion,
           `"${r.party_key || 'General'}"`,
-          `"${r.created_at ? new Date(r.created_at).toISOString() : ''}"`
+          `"${r.created_at ? new Date(r.created_at).toISOString() : ''}"`,
+          `"${storedEdad}"`,
+          `"${storedCCAA}"`
         ].join(",");
         csvContent += row + "\r\n";
       });
@@ -206,7 +229,7 @@ export function LeaderRatingBreakdownModal({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      alert("¡Archivo CSV descargado con éxito!");
+      alert("¡Archivo CSV con metadatos de filtros descargado con éxito!");
     } catch (e) {
       console.error("Error descargando CSV:", e);
       alert("No se pudo generar el archivo CSV.");
@@ -283,7 +306,7 @@ export function LeaderRatingBreakdownModal({
             onClick={handleExportCSV}
             className="flex items-center gap-1.5 bg-white/10 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" /> Exportar CSV
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" /> Exportar CSV (con filtros)
           </button>
         </div>
 
@@ -361,7 +384,7 @@ export function LeaderRatingBreakdownModal({
             <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-xs">
               <div className="flex items-center gap-2">
                 <span className="text-sky-300 font-semibold">Promedio ({leader.leader_name}):</span>
-                <span className="font-black text-sky-400 text-sm">{leader.media_valoracion.toFixed(2)} / 10 ⭐</span>
+                <span className="font-black text-sky-400 text-sm">{leaderAverage.toFixed(2)} / 10 ⭐</span>
               </div>
 
               {/* Selector de rango de fechas con tooltip explicativo */}
@@ -384,48 +407,105 @@ export function LeaderRatingBreakdownModal({
             </div>
 
             {/* Selector secundario para superponer y comparar otro líder */}
-            <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs">
-              <div className="flex items-center gap-2">
-                <GitCompare className="w-4 h-4 text-purple-400" />
-                <span className="text-purple-200 font-semibold">Comparar con:</span>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs">
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <GitCompare className="w-4 h-4 text-purple-400 shrink-0" />
+                <select
+                  value={compareLeaderName}
+                  onChange={(e) => setCompareLeaderName(e.target.value)}
+                  className="bg-slate-900 border border-purple-500/30 text-purple-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none w-full"
+                >
+                  <option value="">-- Comparar con otro líder (Opcional) --</option>
+                  {allLeaders.map((l) => (
+                    <option key={l.leader_name} value={l.leader_name}>{l.leader_name} ({l.media_valoracion.toFixed(2)})</option>
+                  ))}
+                </select>
               </div>
-              <select
-                value={compareLeaderName}
-                onChange={(e) => setCompareLeaderName(e.target.value)}
-                className="bg-slate-900 border border-purple-500/30 text-purple-200 text-xs rounded-lg px-2.5 py-1 focus:outline-none flex-1 min-w-[180px]"
-              >
-                <option value="">-- Ninguno (Sin comparar) --</option>
-                {allLeaders.map((l) => (
-                  <option key={l.leader_name} value={l.leader_name}>{l.leader_name} ({l.media_valoracion.toFixed(2)})</option>
-                ))}
-              </select>
-              {compareLeaderName && compareAverage !== null && (
-                <div className="text-purple-300 font-bold">
-                  Media {compareLeaderName}: {compareAverage.toFixed(2)} / 10
+
+              {compareLeaderName && compareAverage !== null && percentageDiff !== null && (
+                <div className="flex items-center gap-2 bg-purple-900/40 px-3 py-1.5 rounded-lg border border-purple-500/40">
+                  <span className="text-purple-300">Diferencia:</span>
+                  <span className={`font-black ${percentageDiff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {percentageDiff > 0 ? '+' : ''}{percentageDiff.toFixed(1)}%
+                  </span>
                 </div>
               )}
             </div>
 
-            <div className="max-h-56 overflow-y-auto pr-2 space-y-2">
-              {filteredRatings.length === 0 ? (
-                <p className="text-center text-xs text-white/50 py-8">No hay registros en el rango de fechas seleccionado.</p>
-              ) : (
-                filteredRatings.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold">
-                        {r.valoracion}★
-                      </span>
-                      <div>
-                        <p className="font-semibold text-white">Partido: {r.party_key || "General"}</p>
-                        <p className="text-[10px] text-white/45">
-                          {r.created_at ? new Date(r.created_at).toLocaleString("es-ES") : "Fecha no disponible"}
-                        </p>
+            {/* Botón para alternar la vista del gráfico entre líneas de tendencia y barras comparativas */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-xs text-white/50 font-semibold">Visualización de Historial:</span>
+              <button
+                type="button"
+                onClick={() => setChartMode(prev => prev === "lineas" ? "barras" : "lineas")}
+                className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1 rounded-lg transition border border-white/15"
+              >
+                {chartMode === "lineas" ? (
+                  <>
+                    <BarChart2 className="w-3.5 h-3.5 text-sky-400" /> Cambiar a Barras Comparativas
+                  </>
+                ) : (
+                  <>
+                    <LineChartIcon className="w-3.5 h-3.5 text-sky-400" /> Cambiar a Líneas de Tendencia
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Contenedor del Gráfico Alternable */}
+            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+              <div className="flex items-center justify-between text-xs text-white/60 mb-2">
+                <span>Modo activo: <strong className="text-white capitalize">{chartMode}</strong></span>
+                <span>{filteredRatings.length} registros en el período</span>
+              </div>
+
+              {chartMode === "barras" ? (
+                <div className="space-y-3 py-2">
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-bold text-sky-300">{leader.leader_name}</span>
+                      <span className="font-mono">{leaderAverage.toFixed(2)} / 10</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden border border-slate-700">
+                      <div className="bg-sky-500 h-full rounded-full transition-all" style={{ width: `${(leaderAverage / 10) * 100}%` }} />
+                    </div>
+                  </div>
+
+                  {compareLeaderName && compareAverage !== null && (
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-bold text-purple-300">{compareLeaderName}</span>
+                        <span className="font-mono">{compareAverage.toFixed(2)} / 10</span>
+                      </div>
+                      <div className="w-full bg-slate-800 rounded-full h-4 overflow-hidden border border-slate-700">
+                        <div className="bg-purple-500 h-full rounded-full transition-all" style={{ width: `${(compareAverage / 10) * 100}%` }} />
                       </div>
                     </div>
-                    <span className="text-[10px] uppercase px-2 py-1 rounded bg-white/10 text-white/70">Registrado</span>
-                  </div>
-                ))
+                  )}
+                </div>
+              ) : (
+                <div className="max-h-52 overflow-y-auto pr-2 space-y-2">
+                  {filteredRatings.length === 0 ? (
+                    <p className="text-center text-xs text-white/50 py-8">No hay registros en el rango de fechas seleccionado.</p>
+                  ) : (
+                    filteredRatings.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold">
+                            {r.valoracion}★
+                          </span>
+                          <div>
+                            <p className="font-semibold text-white">Partido: {r.party_key || "General"}</p>
+                            <p className="text-[10px] text-white/45">
+                              {r.created_at ? new Date(r.created_at).toLocaleString("es-ES") : "Fecha no disponible"}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] uppercase px-2 py-1 rounded bg-white/10 text-white/70">Tendencia</span>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           </div>
