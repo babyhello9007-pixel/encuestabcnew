@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { BarChart3, Clock, Loader2, Star, X } from "lucide-react";
+import { BarChart3, Clock, Loader2, Star, X, Calendar } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { LiderRanking } from "@/lib/leaderRanking";
 
@@ -22,6 +22,9 @@ export function LeaderRatingBreakdownModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"distribucion" | "historial">("distribucion");
+
+  // Filtro de rango de fechas para el historial
+  const [dateFilter, setDateFilter] = useState<"todos" | "hoy" | "7dias" | "30dias">("todos");
 
   useEffect(() => {
     if (!leader) return;
@@ -52,6 +55,20 @@ export function LeaderRatingBreakdownModal({
       cancelled = true;
     };
   }, [leader]);
+
+  const filteredRatings = useMemo(() => {
+    if (dateFilter === "todos") return ratings;
+    const now = new Date().getTime();
+    return ratings.filter((r) => {
+      if (!r.created_at) return false;
+      const t = new Date(r.created_at).getTime();
+      const diffDays = (now - t) / (1000 * 60 * 60 * 24);
+      if (dateFilter === "hoy") return diffDays <= 1;
+      if (dateFilter === "7dias") return diffDays <= 7;
+      if (dateFilter === "30dias") return diffDays <= 30;
+      return true;
+    });
+  }, [ratings, dateFilter]);
 
   const distribution = useMemo(() => {
     const counts = Array.from({ length: 10 }, (_, index) => ({
@@ -139,7 +156,7 @@ export function LeaderRatingBreakdownModal({
                 : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <Clock className="h-3.5 w-3.5" /> Historial Detallado ({ratings.length})
+            <Clock className="h-3.5 w-3.5" /> Historial Tendencias ({filteredRatings.length})
           </button>
         </div>
 
@@ -188,15 +205,33 @@ export function LeaderRatingBreakdownModal({
           </>
         ) : (
           <div className="mt-6 space-y-4">
-            <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-between text-xs">
-              <span className="text-sky-300 font-semibold">Promedio general de este líder:</span>
-              <span className="font-black text-sky-400 text-sm">{leader.media_valoracion.toFixed(2)} / 10 ⭐</span>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-sky-300 font-semibold">Promedio general:</span>
+                <span className="font-black text-sky-400 text-sm">{leader.media_valoracion.toFixed(2)} / 10 ⭐</span>
+              </div>
+
+              {/* Selector de rango de fechas */}
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 text-sky-300" />
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value as any)}
+                  className="bg-slate-900 border border-sky-500/30 text-sky-200 text-xs rounded-lg px-2.5 py-1 focus:outline-none"
+                >
+                  <option value="todos">Todo el período</option>
+                  <option value="hoy">Últimas 24 horas</option>
+                  <option value="7dias">Últimos 7 días</option>
+                  <option value="30dias">Últimos 30 días</option>
+                </select>
+              </div>
             </div>
+
             <div className="max-h-60 overflow-y-auto pr-2 space-y-2">
-              {ratings.length === 0 ? (
-                <p className="text-center text-xs text-white/50 py-8">No hay registros detallados en el historial.</p>
+              {filteredRatings.length === 0 ? (
+                <p className="text-center text-xs text-white/50 py-8">No hay registros en el rango de fechas seleccionado.</p>
               ) : (
-                ratings.map((r, i) => (
+                filteredRatings.map((r, i) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 text-xs">
                     <div className="flex items-center gap-3">
                       <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 font-bold">
