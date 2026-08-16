@@ -4,6 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Loader2 } from "lucide-react";
 
+interface PartyStatistic {
+  partyKey: string;
+  totalVotes: number;
+  totalMentions: number;
+}
+
+interface PartyHistoryEntry {
+  partyKey: string;
+  changeType: string;
+  timestamp: string | Date;
+  changedByName?: string | null;
+  changeReason?: string | null;
+}
+
 export default function AdminStatistics() {
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   
@@ -15,19 +29,21 @@ export default function AdminStatistics() {
     partyKey: selectedParty || undefined,
     limit: 100,
   });
+  const typedStats = (stats ?? []) as PartyStatistic[];
+  const typedHistory = (history ?? []) as PartyHistoryEntry[];
 
   // Colores para gráficos
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D", "#FFC658", "#FF7C7C"];
 
   // Preparar datos para gráfico de votos por partido
-  const votesByPartyData = stats?.map((stat) => ({
+  const votesByPartyData = typedStats.map((stat) => ({
     name: stat.partyKey,
     votes: stat.totalVotes,
     mentions: stat.totalMentions,
-  })) || [];
+  }));
 
   // Preparar datos para gráfico de cambios por día
-  const changesByDayData = history?.reduce((acc: any[], change) => {
+  const changesByDayData = typedHistory.reduce((acc: Array<{ date: string; changes: number }>, change: PartyHistoryEntry) => {
     const date = new Date(change.timestamp).toLocaleDateString();
     const existing = acc.find((d) => d.date === date);
     if (existing) {
@@ -36,10 +52,10 @@ export default function AdminStatistics() {
       acc.push({ date, changes: 1 });
     }
     return acc;
-  }, []) || [];
+  }, []);
 
   // Preparar datos para gráfico de tipos de cambios
-  const changeTypeData = history?.reduce((acc: any[], change) => {
+  const changeTypeData = typedHistory.reduce((acc: Array<{ name: string; value: number }>, change: PartyHistoryEntry) => {
     const existing = acc.find((d) => d.name === change.changeType);
     if (existing) {
       existing.value += 1;
@@ -47,7 +63,7 @@ export default function AdminStatistics() {
       acc.push({ name: change.changeType, value: 1 });
     }
     return acc;
-  }, []) || [];
+  }, []);
 
   if (statsLoading) {
     return (
@@ -74,7 +90,7 @@ export default function AdminStatistics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats?.reduce((sum, s) => sum + s.totalVotes, 0) || 0}
+                {typedStats.reduce((sum, stat) => sum + stat.totalVotes, 0)}
               </div>
             </CardContent>
           </Card>
@@ -85,7 +101,7 @@ export default function AdminStatistics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats?.reduce((sum, s) => sum + s.totalMentions, 0) || 0}
+                {typedStats.reduce((sum, stat) => sum + stat.totalMentions, 0)}
               </div>
             </CardContent>
           </Card>
@@ -95,7 +111,7 @@ export default function AdminStatistics() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Partidos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.length || 0}</div>
+              <div className="text-2xl font-bold">{typedStats.length}</div>
             </CardContent>
           </Card>
 
@@ -104,7 +120,7 @@ export default function AdminStatistics() {
               <CardTitle className="text-sm font-medium text-muted-foreground">Cambios Registrados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{history?.length || 0}</div>
+              <div className="text-2xl font-bold">{typedHistory.length}</div>
             </CardContent>
           </Card>
         </div>
@@ -149,7 +165,7 @@ export default function AdminStatistics() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {changeTypeData.map((entry, index) => (
+                    {changeTypeData.map((_entry: { name: string; value: number }, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -191,8 +207,8 @@ export default function AdminStatistics() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="animate-spin w-6 h-6" />
                 </div>
-              ) : history && history.length > 0 ? (
-                history.map((change, idx) => (
+              ) : typedHistory.length > 0 ? (
+                typedHistory.map((change: PartyHistoryEntry, idx: number) => (
                   <div key={idx} className="border-b pb-3 last:border-b-0">
                     <div className="flex justify-between items-start">
                       <div>

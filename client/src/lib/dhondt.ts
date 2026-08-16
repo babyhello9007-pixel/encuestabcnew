@@ -109,4 +109,3 @@ export function obtenerEstadisticas(
     }))
     .sort((a, b) => b.votos - a.votos);
 }
-

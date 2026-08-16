@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import PartyLogo from '@/components/PartyLogo';
-import { Filter, RefreshCw, X } from 'lucide-react';
+import { Filter, RefreshCw, X, Loader2 } from 'lucide-react';
 
 interface QuestionData {
   label: string;

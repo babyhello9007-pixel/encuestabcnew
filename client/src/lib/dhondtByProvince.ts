@@ -90,6 +90,18 @@ export function calcularEscanosGeneralesPorProvincia(
   return escanosTotal;
 }
 
+/** Devuelve el desglose provincial que necesita el simulador electoral. */
+export function calcularEscanosGeneralesDesglosadosPorProvincia(
+  votosPorProvincia: Record<string, Record<string, number>>
+): Record<string, Record<string, number>> {
+  return Object.fromEntries(
+    Object.entries(votosPorProvincia).map(([provincia, votos]) => [
+      provincia,
+      calcularEscanosProvincia(provincia, votos),
+    ])
+  );
+}
+
 /**
  * Obtiene la distribución de escaños por provincia
  */

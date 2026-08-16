@@ -261,6 +261,8 @@
 - [x] Reducir espacios y padding para dar más espacio al mapa
 
 ## Redes Sociales en Footer - NUEVO
+- [x] Crear página Linktree de Batalla Cultural con enlaces a Quorum, encuesta, resultados y redes oficiales
+- [x] Sustituir iconos genéricos por logotipos oficiales de Quorum y de las redes sociales en el Linktree
 - [x] Crear componente Footer reutilizable con enlaces de redes sociales
 - [x] Agregar enlace a X: https://x.com/bcultural_es
 - [x] Agregar enlace a Discord: https://discord.gg/Tc8JabgY3T
@@ -708,4 +710,5 @@
 - [ ] Hacer clicables las tarjetas del Top 5 y mostrar un modal con el desglose de valoraciones
 - [ ] Cohesionar el diseño de ranking, tarjetas, indicadores y modal
 - [ ] Escribir y ejecutar pruebas para las nuevas funcionalidades
-- [ ] Guardar checkpoint de la entrega
+- [x] Guardar checkpoint de la entrega
+- [ ] Auditar y corregir el siguiente bloque de errores de diagnóstico TypeScript y flujos de Resultados

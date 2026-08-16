@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   calcularEscanosGeneralesPorProvincia,
+  calcularEscanosGeneralesDesglosadosPorProvincia,
   calcularEscanosProvincia,
   getEscanosPorProvincia,
   getTotalEscanos,
@@ -78,6 +79,16 @@ describe('Ley d\'Hondt por Provincia', () => {
   });
 
   describe('calcularEscanosGeneralesPorProvincia', () => {
+    it('debe mantener el desglose por provincia necesario para el simulador', () => {
+      const desglose = calcularEscanosGeneralesDesglosadosPorProvincia({
+        Madrid: { PP: 100, PSOE: 80 },
+        Barcelona: { PP: 50, PSOE: 100 },
+      });
+
+      expect(Object.values(desglose.Madrid).reduce((a, b) => a + b, 0)).toBe(37);
+      expect(Object.values(desglose.Barcelona).reduce((a, b) => a + b, 0)).toBe(32);
+    });
+
     it('debe calcular escaños totales a nivel nacional', () => {
       const votosPorProvincia: Record<string, Record<string, number>> = {
         'Madrid': {

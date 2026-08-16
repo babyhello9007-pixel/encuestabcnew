@@ -1,4 +1,5 @@
 import { PARTIES_GENERAL, YOUTH_ASSOCIATIONS } from './surveyData';
+import html2canvas from "html2canvas";
 
 interface PartyStats {
   id?: string;

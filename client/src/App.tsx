@@ -48,6 +48,7 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/editor"} component={CodeEditor} />
       <Route path={"/bio"} component={Bio} />
+      <Route path={"/linktree"} component={Bio} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/blog/:id"} component={BlogPost} />
       <Route path={"/coaliciones-comparar"} component={CoalitionsComparison} />
@@ -83,4 +84,3 @@ function App() {
 }
 
 export default App;
-

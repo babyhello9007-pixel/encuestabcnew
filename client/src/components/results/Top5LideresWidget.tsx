@@ -140,7 +140,7 @@ export function Top5LideresWidget() {
                   <span className="text-xs font-extrabold" style={{ color: lider.primary_color }}>
                     ★ {lider.media_valoracion.toFixed(1)}
                   </span>
-                  <span className="text-[10px] text-gray-500">({lider.total_valoraciones || lider.total_votos})</span>
+                  <span className="text-[10px] text-gray-500">({lider.total_valoraciones})</span>
                 </div>
               </div>
             </button>
@@ -149,7 +149,7 @@ export function Top5LideresWidget() {
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/card:flex flex-col items-center z-50 pointer-events-none w-48 p-2.5 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl border border-slate-700">
               <p className="font-bold text-yellow-400 mb-0.5">{lider.leader_name}</p>
               <p className="text-slate-300">Valoración media: <span className="font-bold text-white">{lider.media_valoracion.toFixed(1)} / 10</span></p>
-              <p className="text-slate-300">Total valoraciones: <span className="font-bold text-white">{lider.total_valoraciones || lider.total_votos}</span></p>
+              <p className="text-slate-300">Total valoraciones: <span className="font-bold text-white">{lider.total_valoraciones}</span></p>
               <p className="text-[10px] text-sky-400 mt-1">Haz clic para ver desglose completo</p>
               <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
             </div>

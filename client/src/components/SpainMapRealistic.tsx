@@ -18,16 +18,22 @@ interface SpainMapRealisticProps {
   selectedProvince: string | null;
 }
 
+type Coordinate = [number, number];
+type TopologyArc = Coordinate[];
+type PolygonArcs = number[][];
+type MultiPolygonArcs = number[][][];
+
 interface TopoJSON {
   type: string;
-  bbox: number[];
-  transform: { scale: number[]; translate: number[] };
+  bbox: [number, number, number, number];
+  transform: { scale: [number, number]; translate: [number, number] };
+  arcs: TopologyArc[];
   objects: {
     provinces: {
       type: string;
       geometries: Array<{
         type: string;
-        arcs: number[][][];
+        arcs: PolygonArcs | MultiPolygonArcs;
         id: string;
         properties: { name: string };
       }>;
@@ -38,11 +44,11 @@ interface TopoJSON {
 type MapTheme = "night" | "satellite" | "cyberpunk";
 
 // Decodificación TopoJSON
-function decodeArcs(arcs: number[][], transform: { scale: number[]; translate: number[] }): number[][][] {
+function decodeArcs(arcs: TopologyArc[], transform: { scale: [number, number]; translate: [number, number] }): TopologyArc[] {
   const { scale, translate } = transform;
   return arcs.map((arc) => {
     let x = 0, y = 0;
-    return arc.map(([dx, dy]) => {
+    return arc.map(([dx, dy]: Coordinate) => {
       x += dx;
       y += dy;
       return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
@@ -99,29 +105,19 @@ export function SpainMapRealistic({
 
   const processedGeometries = useMemo(() => {
     if (!topoData) return [];
-    const { bbox, transform, objects } = topoData;
-    const allArcs = objects.provinces.geometries.flatMap((g) => g.arcs as unknown as number[][]);
-    const decodedArcs = decodeArcs(allArcs, transform);
+    const { bbox, transform, objects, arcs } = topoData;
+    const decodedArcs = decodeArcs(arcs, transform);
 
-    const arcMap: { [key: number]: number[][] } = {};
-    let arcIdxCounter = 0;
+    const buildPath = (arcIndices: PolygonArcs | MultiPolygonArcs): string => {
+      const rings: PolygonArcs = Array.isArray(arcIndices[0]?.[0])
+        ? (arcIndices as MultiPolygonArcs).flat()
+        : (arcIndices as PolygonArcs);
 
-    objects.provinces.geometries.forEach((geom) => {
-      geom.arcs.forEach((ring) => {
-        ring.forEach((arcIdx) => {
-          if (!arcMap[arcIdx]) {
-            arcMap[arcIdx] = decodedArcs[arcIdxCounter++];
-          }
-        });
-      });
-    });
-
-    const buildPath = (arcIndices: any): string => {
-      return arcIndices
+      return rings
         .map((ring) => {
           return ring
-            .flatMap((arcIdx, pIdx) => {
-              const arc = arcMap[Math.abs(arcIdx)];
+            .flatMap((arcIdx: number, pIdx: number) => {
+              const arc = decodedArcs[arcIdx >= 0 ? arcIdx : ~arcIdx];
               if (!arc) return [];
               const points = arcIdx < 0 ? [...arc].reverse() : arc;
               return points.map((p, i) => {

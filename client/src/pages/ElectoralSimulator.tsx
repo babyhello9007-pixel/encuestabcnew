@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { RefreshCw, Plus, Trash2 } from "lucide-react";
-import { calcularEscanosGeneralesPorProvincia, obtenerEstadisticas } from "@/lib/dhondt";
+import { obtenerEstadisticas } from "@/lib/dhondt";
+import { calcularEscanosGeneralesDesglosadosPorProvincia } from "@/lib/dhondtByProvince";
 
 interface SimulatorProps {
   generalStats: any[];
@@ -84,7 +85,7 @@ export default function ElectoralSimulator({ generalStats, generalPartyMap, voto
   // Calcular escaños por provincia
   const simulatorEscanosByProvince = useMemo(() => {
     if (!Object.keys(effectiveVotesByProvince).length) return {};
-    return calcularEscanosGeneralesPorProvincia(effectiveVotesByProvince);
+    return calcularEscanosGeneralesDesglosadosPorProvincia(effectiveVotesByProvince);
   }, [effectiveVotesByProvince]);
 
   // Calcular estadísticas finales
