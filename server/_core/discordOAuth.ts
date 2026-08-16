@@ -1,5 +1,5 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { randomBytes } from "node:crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
@@ -34,6 +34,17 @@ function getCookie(req: Request, name: string): string | undefined {
   const prefix = `${name}=`;
   const entry = header.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix));
   return entry ? decodeURIComponent(entry.slice(prefix.length)) : undefined;
+}
+
+export function isValidDiscordOAuthState(
+  receivedState: string | undefined,
+  expectedState: string | undefined
+): boolean {
+  if (!receivedState || !expectedState) return false;
+
+  const receivedBuffer = Buffer.from(receivedState, "utf8");
+  const expectedBuffer = Buffer.from(expectedState, "utf8");
+  return receivedBuffer.length === expectedBuffer.length && timingSafeEqual(receivedBuffer, expectedBuffer);
 }
 
 function getFrontendUrl(req: Request): string {
@@ -120,8 +131,7 @@ async function getDiscordUser(accessToken: string): Promise<DiscordUser> {
  */
 async function getDiscordGuildMember(
   guildId: string,
-  userId: string,
-  accessToken: string
+  userId: string
 ): Promise<DiscordGuildMember | null> {
   const clientId = process.env.DISCORD_CLIENT_ID;
 
@@ -164,11 +174,10 @@ async function getDiscordGuildMember(
  */
 async function hasWriterRole(
   guildId: string,
-  userId: string,
-  accessToken: string
+  userId: string
 ): Promise<boolean> {
   try {
-    const member = await getDiscordGuildMember(guildId, userId, accessToken);
+    const member = await getDiscordGuildMember(guildId, userId);
 
     if (!member) {
       return false; // User not in guild
@@ -196,11 +205,9 @@ export function registerDiscordOAuthRoutes(app: Express) {
     }
 
     try {
-      console.log("[Discord OAuth] Callback received with code:", code);
-      
       // Exchange code for access token
       const expectedState = getCookie(req, DISCORD_STATE_COOKIE);
-      if (!state || !expectedState || state !== expectedState) {
+      if (!isValidDiscordOAuthState(state, expectedState)) {
         res.status(400).json({ error: "Invalid Discord OAuth state" });
         return;
       }
@@ -216,8 +223,7 @@ export function registerDiscordOAuthRoutes(app: Express) {
       // Check if user is in the server and has writer role
       const isWriter = await hasWriterRole(
         DISCORD_SERVER_ID,
-        discordUser.id,
-        accessToken
+        discordUser.id
       );
       console.log("[Discord OAuth] Is writer:", isWriter);
 
@@ -260,7 +266,10 @@ export function registerDiscordOAuthRoutes(app: Express) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("[Discord OAuth] Error details:", errorMessage);
       console.error("[Discord OAuth] Full error:", JSON.stringify(error, null, 2));
-      res.status(500).json({ error: "Discord OAuth callback failed", details: errorMessage });
+      res.status(500).json({
+        error: "Discord OAuth callback failed",
+        ...(process.env.NODE_ENV === "production" ? {} : { details: errorMessage }),
+      });
     }
   });
 
@@ -277,7 +286,6 @@ export function registerDiscordOAuthRoutes(app: Express) {
 
     const redirectUri = getDiscordRedirectUri(req);
     console.log("[Discord OAuth] Redirect URI:", redirectUri);
-    const scopes = ["identify", "email", "guilds", "guilds.members.read"];
     const state = randomBytes(32).toString("hex");
     res.cookie(DISCORD_STATE_COOKIE, state, {
       ...getSessionCookieOptions(req),

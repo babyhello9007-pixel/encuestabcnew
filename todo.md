@@ -705,7 +705,7 @@
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
 - [ ] Reparar los errores de sintaxis de GovernmentBuilder.tsx y dejar el diagnóstico TypeScript limpio en ese archivo
-- [ ] Revisar y corregir el flujo de autenticación OAuth de Discord y sus pruebas
+- [x] Revisar y corregir el flujo de autenticación OAuth de Discord y sus pruebas
 - [ ] Añadir indicadores visuales de subida o bajada de posición en el ranking de líderes
 - [ ] Hacer clicables las tarjetas del Top 5 y mostrar un modal con el desglose de valoraciones
 - [ ] Cohesionar el diseño de ranking, tarjetas, indicadores y modal
