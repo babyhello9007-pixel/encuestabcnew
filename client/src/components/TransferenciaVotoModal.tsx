@@ -88,6 +88,15 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
+function loadCanvasImage(source: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = source;
+  });
+}
+
 /** Convierte las imágenes externas del SVG en data URL para que Canvas no las omita al exportar. */
 async function inlineSvgLogos(svgElement: SVGSVGElement): Promise<SVGSVGElement> {
   const clone = svgElement.cloneNode(true) as SVGSVGElement;
@@ -427,10 +436,28 @@ export function TransferenciaVotoModal({
         context.fillStyle = "#a5b4fc";
         context.font = "600 12px Arial, sans-serif";
         context.fillText("Batalla Cultural · Diagrama Sankey", 28, 58);
+        const watermark = await loadCanvasImage(new URL("/favicon.png", window.location.origin).href);
+        context.save();
+        context.globalAlpha = 0.9;
+        context.beginPath();
+        context.arc(width - 58, 30, 18, 0, Math.PI * 2);
+        context.clip();
+        if (watermark) {
+          context.drawImage(watermark, width - 76, 12, 36, 36);
+        } else {
+          context.fillStyle = "#e8465a";
+          context.fillRect(width - 76, 12, 36, 36);
+          context.fillStyle = "#ffffff";
+          context.font = "800 14px Arial, sans-serif";
+          context.textAlign = "center";
+          context.fillText("BC", width - 58, 35);
+          context.textAlign = "left";
+        }
+        context.restore();
         context.textAlign = "right";
         context.fillStyle = "#cbd5e1";
         context.font = "500 12px Arial, sans-serif";
-        context.fillText(`Generado el ${new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}`, width - 28, 48);
+        context.fillText(`Batalla Cultural · ${new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}`, width - 88, 48);
         context.textAlign = "left";
         context.fillStyle = "rgba(255,255,255,.12)";
         context.fillRect(28, headerHeight - 1, width - 56, 1);
@@ -959,6 +986,7 @@ function SankeyChart({
   svgRef,
 }: SankeyChartProps) {
   const [activeLink, setActiveLink] = useState<TransferenciaVotoData | null>(null);
+  const [linkTooltip, setLinkTooltip] = useState<{ link: TransferenciaVotoData; x: number; y: number } | null>(null);
 
   const layout = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -1153,10 +1181,18 @@ function SankeyChart({
                   : link.isFidelity ? 0.95 : 0.75
               }
               style={{ transition: "fill-opacity 0.2s ease", cursor: "pointer" }}
-              onMouseEnter={() => setActiveLink(link.data)}
-              onMouseLeave={() => setActiveLink(null)}
-              onFocus={() => setActiveLink(link.data)}
-              onBlur={() => setActiveLink(null)}
+              onMouseEnter={(event) => {
+                setActiveLink(link.data);
+                const rect = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                setLinkTooltip({ link: link.data, x: event.clientX - (rect?.left || 0), y: event.clientY - (rect?.top || 0) });
+              }}
+              onMouseMove={(event) => {
+                const rect = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                setLinkTooltip({ link: link.data, x: event.clientX - (rect?.left || 0), y: event.clientY - (rect?.top || 0) });
+              }}
+              onMouseLeave={() => { setActiveLink(null); setLinkTooltip(null); }}
+              onFocus={() => { setActiveLink(link.data); setLinkTooltip({ link: link.data, x: layout.width / 2, y: layout.height / 2 }); }}
+              onBlur={() => { setActiveLink(null); setLinkTooltip(null); }}
               tabIndex={0}
               role="img"
               aria-label={`${getPartyDisplayName(link.data.origen_partido)} a ${getPartyDisplayName(link.data.destino_partido)}: ${link.data.votos_transferidos.toLocaleString("es-ES")} votos, ${link.data.porcentaje.toFixed(2)}%`}
@@ -1235,34 +1271,30 @@ function SankeyChart({
         })}
       </svg>
 
-      {/* Tooltip flotante */}
-      {activeLink && (
+      {linkTooltip && (
         <div
-          role="status"
+          role="tooltip"
           style={{
             position: "absolute",
-            bottom: 12,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "rgba(15, 23, 42, 0.95)",
-            border: "1px solid rgba(255,255,255,0.15)",
+            left: linkTooltip.x,
+            top: linkTooltip.y,
+            transform: "translate(14px, -112%)",
+            minWidth: 190,
+            background: "rgba(7, 10, 18, 0.97)",
+            border: `1px solid ${getPartyColor(linkTooltip.link.origen_partido)}`,
             borderRadius: 10,
-            padding: "8px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
+            padding: "10px 12px",
             zIndex: 10,
-            boxShadow: "0 10px 25px -5px rgba(0,0,0,0.5)"
+            boxShadow: "0 14px 30px rgba(0,0,0,0.48)",
+            color: "#f8fafc",
+            fontSize: 11,
+            pointerEvents: "none",
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>
-            {activeLink.origen_partido === activeLink.destino_partido
-              ? `🛡️ Fidelidad ${getPartyDisplayName(activeLink.origen_partido)}:`
-              : `${getPartyDisplayName(activeLink.origen_partido)} → ${getPartyDisplayName(activeLink.destino_partido)}:`}
-          </span>
-          <span style={{ fontSize: 12, fontWeight: 800, color: "#818cf8" }}>
-            {activeLink.votos_transferidos.toLocaleString("es-ES")} votos ({activeLink.porcentaje.toFixed(2)}%)
-          </span>
+          <div style={{ color: "#a5b4fc", fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>Transferencia de voto</div>
+          <div style={{ marginTop: 4, fontWeight: 800 }}>{getPartyDisplayName(linkTooltip.link.origen_partido)} <span style={{ color: "#94a3b8" }}>→</span> {getPartyDisplayName(linkTooltip.link.destino_partido)}</div>
+          <div style={{ marginTop: 7, display: "flex", justifyContent: "space-between", gap: 16 }}><span style={{ color: "#cbd5e1" }}>Votos</span><strong>{linkTooltip.link.votos_transferidos.toLocaleString("es-ES")}</strong></div>
+          <div style={{ marginTop: 3, display: "flex", justifyContent: "space-between", gap: 16 }}><span style={{ color: "#cbd5e1" }}>Porcentaje</span><strong style={{ color: getPartyColor(linkTooltip.link.origen_partido) }}>{linkTooltip.link.porcentaje.toFixed(2)}%</strong></div>
         </div>
       )}
     </div>

@@ -994,6 +994,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
   const [subTab, setSubTab] = useState<"candidatos" | "gobierno">("candidatos");
   const [candidateSearch, setCandidateSearch] = useState("");
   const [candidatePartyFilter, setCandidatePartyFilter] = useState("ALL");
+  const [candidateSort, setCandidateSort] = useState<"votes" | "percentage" | "alphabetical">("votes");
   const [hoveredCandidateId, setHoveredCandidateId] = useState<number | null>(null);
   const [logoB64, setLogoB64] = useState("");
   const [showGobModal, setShowGobModal] = useState(false);
@@ -1119,9 +1120,9 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.025)" }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 800, color: "#f0eff8" }}>Buscar candidato</div>
-              <div style={{ fontSize: 10, color: "#7a7990", marginTop: 2 }}>Los candidatos se ordenan automáticamente de mayor a menor número de votos.</div>
+              <div style={{ fontSize: 10, color: "#7a7990", marginTop: 2 }}>Filtra, busca y ordena el listado de candidatos según el criterio que prefieras.</div>
             </div>
-            <div style={{ display: "flex", gap: 8, width: "min(500px, 100%)", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, width: "min(680px, 100%)", flexWrap: "wrap" }}>
               <label style={{ flex: "1 1 175px" }}>
                 <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Filtrar por partido</span>
                 <select value={candidatePartyFilter} onChange={(event) => setCandidatePartyFilter(event.target.value)} style={{ width: "100%", border: "1px solid rgba(255,255,255,.14)", borderRadius: 9, background: "#101019", color: "#f0eff8", padding: "9px 12px", fontSize: 12, outline: "none" }}>
@@ -1138,6 +1139,14 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                   placeholder="Buscar por nombre, ej. Abreu"
                   style={{ width: "100%", border: "1px solid rgba(255,255,255,.14)", borderRadius: 9, background: "rgba(10,10,16,.72)", color: "#f0eff8", padding: "9px 12px", fontSize: 12, outline: "none" }}
                 />
+              </label>
+              <label style={{ flex: "1 1 170px" }}>
+                <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Ordenar candidatos</span>
+                <select value={candidateSort} onChange={(event) => setCandidateSort(event.target.value as "votes" | "percentage" | "alphabetical")} style={{ width: "100%", border: "1px solid rgba(255,255,255,.14)", borderRadius: 9, background: "#101019", color: "#f0eff8", padding: "9px 12px", fontSize: 12, outline: "none" }}>
+                  <option value="votes">Ordenar: más votos</option>
+                  <option value="percentage">Ordenar: mayor porcentaje</option>
+                  <option value="alphabetical">Ordenar: A–Z</option>
+                </select>
               </label>
             </div>
           </div>
@@ -1176,7 +1185,15 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                 return { ...l, votos: pref?.votos ?? 0, porcentaje: pref?.porcentaje ?? 0 };
               })
               .filter(leader => !candidateSearch.trim() || leader.leader_name.toLocaleLowerCase("es").includes(candidateSearch.trim().toLocaleLowerCase("es")))
-              .sort((a, b) => b.votos - a.votos || a.leader_name.localeCompare(b.leader_name, "es"));
+              .sort((a, b) => {
+                if (candidateSort === "alphabetical") return a.leader_name.localeCompare(b.leader_name, "es");
+                if (candidateSort === "percentage") {
+                  const aPct = tot > 0 ? a.votos / tot : 0;
+                  const bPct = tot > 0 ? b.votos / tot : 0;
+                  return bPct - aPct || b.votos - a.votos || a.leader_name.localeCompare(b.leader_name, "es");
+                }
+                return b.votos - a.votos || a.leader_name.localeCompare(b.leader_name, "es");
+              });
             const extraPrefs = partyPrefs.filter(p => !partyLeaders.some(l => l.leader_name === p.lider_preferido));
             const chartData = [...leadersWithVotes.filter(l => l.votos > 0).map(l => ({ name: l.leader_name, votos: l.votos, porcentaje: l.porcentaje })), ...extraPrefs.map(e => ({ name: e.lider_preferido, votos: e.votos, porcentaje: e.porcentaje }))].sort((a, b) => b.votos - a.votos).slice(0, 10);
 
