@@ -67,6 +67,13 @@ interface LiderPreferido {
   partido: string; lider_preferido: string; votos: number; porcentaje: number;
   photo_url?: string; color?: string; display_name?: string; logo_url?: string;
 }
+interface CandidateVoteHistoryTarget {
+  id: number; party_key: string; leader_name: string; photo_url: string;
+  display_name: string; color: string; votos: number; porcentaje: number;
+}
+interface CandidateVoteHistoryPoint {
+  fecha: string; etiqueta: string; votosDia: number; acumulado: number;
+}
 interface PartyMeta {
   key: string; name: string; color: string; logo: string;
 }
@@ -996,6 +1003,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
   const [candidatePartyFilter, setCandidatePartyFilter] = useState("ALL");
   const [candidateSort, setCandidateSort] = useState<"votes" | "percentage" | "alphabetical">("votes");
   const [hoveredCandidateId, setHoveredCandidateId] = useState<number | null>(null);
+  const [selectedCandidateHistory, setSelectedCandidateHistory] = useState<CandidateVoteHistoryTarget | null>(null);
   const [logoB64, setLogoB64] = useState("");
   const [showGobModal, setShowGobModal] = useState(false);
 
@@ -1216,12 +1224,15 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                     <div key={leader.id} style={{ textAlign: "center" }}>
                       <div
                         tabIndex={0}
+                        role="button"
+                        onClick={() => setSelectedCandidateHistory({ ...leader, votos: leader.votos, porcentaje: leader.porcentaje })}
+                        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedCandidateHistory({ ...leader, votos: leader.votos, porcentaje: leader.porcentaje }); } }}
                         onMouseEnter={() => setHoveredCandidateId(leader.id)}
                         onMouseLeave={() => setHoveredCandidateId(null)}
                         onFocus={() => setHoveredCandidateId(leader.id)}
                         onBlur={() => setHoveredCandidateId(null)}
                         aria-label={`${leader.leader_name}: ${leader.votos} votos, ${percentageOfParty.toFixed(1)}% del total del partido`}
-                        style={{ position: "relative", width: 82, height: 94, margin: "0 auto 6px", overflow: "visible", borderRadius: 10, outline: "none", cursor: "help" }}
+                        style={{ position: "relative", width: 82, height: 94, margin: "0 auto 6px", overflow: "visible", borderRadius: 10, outline: "none", cursor: "pointer" }}
                       >
                         <div style={{ width: 76, height: 76, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto", background: `${color}1a`, boxShadow: `0 7px 18px ${color}30` }}>
                           {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
@@ -1289,7 +1300,74 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           initialParty={selectedParty}
         />
       )}
+      {selectedCandidateHistory && <CandidateVoteHistoryModal target={selectedCandidateHistory} onClose={() => setSelectedCandidateHistory(null)} />}
     </div>
+  );
+}
+
+function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteHistoryTarget; onClose: () => void }) {
+  const [history, setHistory] = useState<CandidateVoteHistoryPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadHistory = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const partyCandidates = Array.from(new Set([target.party_key, target.display_name].filter(Boolean)));
+        const { data, error: queryError } = await supabase
+          .from("lideres_preferidos")
+          .select("created_at")
+          .in("partido", partyCandidates)
+          .eq("lider_preferido", target.leader_name)
+          .order("created_at", { ascending: true });
+        if (queryError) throw queryError;
+        const byDay: Record<string, number> = {};
+        (data || []).forEach((row: { created_at?: string | null }) => {
+          const day = row.created_at?.slice(0, 10);
+          if (day) byDay[day] = (byDay[day] || 0) + 1;
+        });
+        let accumulated = 0;
+        const points = Object.entries(byDay).sort(([a], [b]) => a.localeCompare(b)).map(([date, votosDia]) => {
+          accumulated += votosDia;
+          return { fecha: date, etiqueta: new Date(`${date}T12:00:00`).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }), votosDia, acumulado: accumulated };
+        });
+        if (!cancelled) setHistory(points);
+      } catch (historyError) {
+        console.error("Error loading candidate vote history:", historyError);
+        if (!cancelled) setError("No se pudo cargar el historial temporal de votos de este candidato.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    loadHistory();
+    return () => { cancelled = true; };
+  }, [target.party_key, target.display_name, target.leader_name]);
+
+  return createPortal(
+    <div role="presentation" onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1300, padding: 18, background: "rgba(3,5,11,.78)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="candidate-history-title" onClick={(event) => event.stopPropagation()} style={{ width: "min(680px, 100%)", maxHeight: "88vh", overflowY: "auto", borderRadius: 20, border: `1px solid ${target.color}66`, background: "linear-gradient(145deg, #171923, #0b0d14)", boxShadow: "0 28px 90px rgba(0,0,0,.65)", padding: 22, position: "relative" }}>
+        <button onClick={onClose} aria-label="Cerrar evolución de votos" style={{ position: "absolute", top: 14, right: 14, width: 34, height: 34, borderRadius: 10, border: "1px solid rgba(255,255,255,.12)", background: "rgba(255,255,255,.06)", color: "#f8fafc", cursor: "pointer" }}><X size={17} /></button>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, paddingRight: 44 }}>
+          <div style={{ width: 62, height: 62, overflow: "hidden", borderRadius: "50%", border: `3px solid ${target.color}`, background: `${target.color}26`, flexShrink: 0 }}>
+            {target.photo_url ? <img src={target.photo_url} alt={target.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", color: "#fff", fontWeight: 900, background: target.color }}>{target.leader_name.charAt(0)}</div>}
+          </div>
+          <div>
+            <div style={{ color: target.color, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em" }}>{target.display_name}</div>
+            <h3 id="candidate-history-title" style={{ margin: "3px 0 0", color: "#f8fafc", fontSize: 22, fontWeight: 900 }}>{target.leader_name}</h3>
+            <p style={{ margin: "4px 0 0", color: "#9ca3af", fontSize: 12 }}>Evolución acumulada de votos registrados</p>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, margin: "20px 0 16px" }}>
+          <div style={{ padding: 13, borderRadius: 12, background: `${target.color}16`, border: `1px solid ${target.color}35` }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Votos actuales</div><div style={{ color: "#f8fafc", marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.votos.toLocaleString("es-ES")}</div></div>
+          <div style={{ padding: 13, borderRadius: 12, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Apoyo en su partido</div><div style={{ color: target.color, marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.porcentaje.toFixed(1)}%</div></div>
+        </div>
+        {loading ? <div style={{ minHeight: 220, display: "grid", placeItems: "center", color: "#9ca3af" }}><Loader2 size={28} className="animate-spin" /></div> : error ? <div role="alert" style={{ padding: 22, borderRadius: 12, color: "#fecaca", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", fontSize: 13 }}>{error}</div> : history.length ? <ResponsiveContainer width="100%" height={270}><LineChart data={history} margin={{ top: 12, right: 20, bottom: 0, left: -18 }}><CartesianGrid stroke="rgba(255,255,255,.07)" strokeDasharray="3 3" /><XAxis dataKey="etiqueta" tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ background: "#11131c", border: `1px solid ${target.color}66`, borderRadius: 10, fontSize: 12 }} labelStyle={{ color: "#f8fafc" }} formatter={(value: number, _name: string, context: any) => [`${value} acumulados · ${context.payload.votosDia} nuevos`, "Votos"]} /><Line type="monotone" dataKey="acumulado" stroke={target.color} strokeWidth={3} dot={{ r: 4, fill: target.color, stroke: "#0b0d14", strokeWidth: 2 }} activeDot={{ r: 6 }} /></LineChart></ResponsiveContainer> : <div style={{ padding: 28, textAlign: "center", color: "#9ca3af", borderRadius: 12, background: "rgba(255,255,255,.03)", border: "1px dashed rgba(255,255,255,.13)", fontSize: 13 }}>Aún no hay registros temporales suficientes para representar la evolución de este candidato.</div>}
+      </section>
+    </div>,
+    document.body,
   );
 }
 

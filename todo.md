@@ -712,6 +712,9 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Añadir selector claro/oscuro para el PNG de Transferencia de voto
+- [x] Resaltar al hacer clic las transferencias de un partido en el Sankey
+- [x] Abrir un modal con evolución de votos al seleccionar un candidato
 - [x] Añadir marca de agua o logo institucional al PNG de Transferencia de voto
 - [x] Añadir opciones de ordenación alfabética y por porcentaje en Líderes por partido
 - [x] Añadir tooltips con votos y porcentaje exactos en enlaces del Sankey

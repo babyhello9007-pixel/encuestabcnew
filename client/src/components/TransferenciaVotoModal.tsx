@@ -51,6 +51,7 @@ interface TransferenciaVotoModalProps {
 }
 
 type ModeFilter = "ALL" | "FIDELITY" | "LEAKAGE";
+type ExportTheme = "dark" | "light";
 
 const FALLBACK_COLORS: Record<string, string> = {
   PP: "#1e40af",
@@ -133,6 +134,7 @@ export function TransferenciaVotoModal({
   const [error, setError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportTheme, setExportTheme] = useState<ExportTheme>("dark");
 
   const [selectedOrigen, setSelectedOrigen] = useState<string>("GLOBAL");
   const [modeFilter, setModeFilter] = useState<ModeFilter>("ALL");
@@ -399,6 +401,17 @@ export function TransferenciaVotoModal({
     try {
       const svgElement = sankeyRef.current;
       const exportSvg = await inlineSvgLogos(svgElement);
+      if (exportTheme === "light") {
+        const svgNamespace = "http://www.w3.org/2000/svg";
+        const background = document.createElementNS(svgNamespace, "rect");
+        background.setAttribute("x", "0");
+        background.setAttribute("y", "0");
+        background.setAttribute("width", "100%");
+        background.setAttribute("height", "100%");
+        background.setAttribute("fill", "#f8fafc");
+        exportSvg.insertBefore(background, exportSvg.firstChild);
+        exportSvg.querySelectorAll("text").forEach((node) => node.setAttribute("fill", "#0f172a"));
+      }
       const svgString = new XMLSerializer().serializeToString(exportSvg);
       const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
       blobURL = URL.createObjectURL(svgBlob);
@@ -423,17 +436,20 @@ export function TransferenciaVotoModal({
         if (!context) throw new Error("No se pudo crear el lienzo de exportación.");
 
         context.scale(scale, scale);
-        context.fillStyle = "#0c0c14";
+        const palette = exportTheme === "light"
+          ? { background: "#f8fafc", headerStart: "#ffffff", headerEnd: "#e0e7ff", title: "#111827", subtitle: "#4338ca", metadata: "#475569", rule: "rgba(15,23,42,.14)" }
+          : { background: "#0c0c14", headerStart: "#16162a", headerEnd: "#161b31", title: "#f8fafc", subtitle: "#a5b4fc", metadata: "#cbd5e1", rule: "rgba(255,255,255,.12)" };
+        context.fillStyle = palette.background;
         context.fillRect(0, 0, width, height + headerHeight);
         const headerGradient = context.createLinearGradient(0, 0, width, 0);
-        headerGradient.addColorStop(0, "#16162a");
-        headerGradient.addColorStop(1, "#161b31");
+        headerGradient.addColorStop(0, palette.headerStart);
+        headerGradient.addColorStop(1, palette.headerEnd);
         context.fillStyle = headerGradient;
         context.fillRect(0, 0, width, headerHeight);
-        context.fillStyle = "#f8fafc";
+        context.fillStyle = palette.title;
         context.font = "700 22px Arial, sans-serif";
         context.fillText("Transferencia y Matriz de Voto", 28, 36);
-        context.fillStyle = "#a5b4fc";
+        context.fillStyle = palette.subtitle;
         context.font = "600 12px Arial, sans-serif";
         context.fillText("Batalla Cultural · Diagrama Sankey", 28, 58);
         const watermark = await loadCanvasImage(new URL("/favicon.png", window.location.origin).href);
@@ -455,11 +471,11 @@ export function TransferenciaVotoModal({
         }
         context.restore();
         context.textAlign = "right";
-        context.fillStyle = "#cbd5e1";
+        context.fillStyle = palette.metadata;
         context.font = "500 12px Arial, sans-serif";
         context.fillText(`Batalla Cultural · ${new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}`, width - 88, 48);
         context.textAlign = "left";
-        context.fillStyle = "rgba(255,255,255,.12)";
+        context.fillStyle = palette.rule;
         context.fillRect(28, headerHeight - 1, width - 56, 1);
         context.drawImage(image, 0, headerHeight, width, height);
 
@@ -469,7 +485,7 @@ export function TransferenciaVotoModal({
         const pngURL = URL.createObjectURL(pngBlob);
           const downloadLink = document.createElement("a");
           downloadLink.href = pngURL;
-          downloadLink.download = `grafica_transferencia_${selectedOrigen}_${modeFilter}.png`;
+          downloadLink.download = `grafica_transferencia_${selectedOrigen}_${modeFilter}_${exportTheme}.png`;
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
@@ -563,7 +579,14 @@ export function TransferenciaVotoModal({
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-            <div style={{ display: "flex", gap: 10, marginRight: 40 }}>
+            <div style={{ display: "flex", gap: 10, marginRight: 40, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#94a3b8", fontSize: 11, fontWeight: 700 }}>
+                Tema PNG
+                <select aria-label="Tema para exportar PNG" value={exportTheme} onChange={(event) => setExportTheme(event.target.value as ExportTheme)} style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.12)", color: "#f8fafc", borderRadius: 8, padding: "7px 9px", fontSize: 12 }}>
+                  <option value="dark">Oscuro</option>
+                  <option value="light">Claro</option>
+                </select>
+              </label>
               <button
                 onClick={handleExportPNG}
                 disabled={filteredData.length === 0 || isExporting}
@@ -987,6 +1010,7 @@ function SankeyChart({
 }: SankeyChartProps) {
   const [activeLink, setActiveLink] = useState<TransferenciaVotoData | null>(null);
   const [linkTooltip, setLinkTooltip] = useState<{ link: TransferenciaVotoData; x: number; y: number } | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
   const layout = useMemo(() => {
     if (!data || data.length === 0) return null;
@@ -1163,10 +1187,12 @@ function SankeyChart({
 
         {/* Flujos */}
         {layout.links.map((link) => {
-          const isHighlighted =
+          const isHovered =
             hoveredNode === link.data.origen_partido ||
             hoveredNode === link.data.destino_partido ||
             (activeLink?.origen_partido === link.data.origen_partido && activeLink?.destino_partido === link.data.destino_partido);
+          const isSelected = selectedNode === link.data.origen_partido || selectedNode === link.data.destino_partido;
+          const isHighlighted = selectedNode ? isSelected : isHovered;
 
           return (
             <path
@@ -1176,7 +1202,7 @@ function SankeyChart({
               stroke="rgba(255,255,255,0.06)"
               strokeWidth={0.5}
               fillOpacity={
-                hoveredNode || activeLink
+                selectedNode || hoveredNode || activeLink
                   ? isHighlighted ? 1 : 0.1
                   : link.isFidelity ? 0.95 : 0.75
               }
@@ -1204,7 +1230,7 @@ function SankeyChart({
         {Object.entries(layout.origNodes).map(([party, pos]) => {
           const logo = getPartyLogo(party);
           return (
-            <g key={`orig-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
+            <g key={`orig-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} onClick={() => setSelectedNode((current) => current === party ? null : party)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedNode((current) => current === party ? null : party); } }} role="button" tabIndex={0} aria-pressed={selectedNode === party} style={{ cursor: "pointer", opacity: selectedNode && selectedNode !== party ? 0.45 : 1, transition: "opacity .2s ease" }}>
               <rect
                 x={layout.leftX}
                 y={pos.y}
@@ -1239,7 +1265,7 @@ function SankeyChart({
         {Object.entries(layout.destNodes).map(([party, pos]) => {
           const logo = getPartyLogo(party);
           return (
-            <g key={`dest-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} style={{ cursor: "pointer" }}>
+            <g key={`dest-${party}`} onMouseEnter={() => setHoveredNode(party)} onMouseLeave={() => setHoveredNode(null)} onClick={() => setSelectedNode((current) => current === party ? null : party)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedNode((current) => current === party ? null : party); } }} role="button" tabIndex={0} aria-pressed={selectedNode === party} style={{ cursor: "pointer", opacity: selectedNode && selectedNode !== party ? 0.45 : 1, transition: "opacity .2s ease" }}>
               <rect
                 x={layout.rightX}
                 y={pos.y}
@@ -1270,6 +1296,11 @@ function SankeyChart({
           );
         })}
       </svg>
+      {selectedNode && (
+        <button onClick={() => setSelectedNode(null)} style={{ position: "absolute", top: 10, left: 12, zIndex: 9, background: "rgba(7,10,18,.9)", color: "#f8fafc", border: `1px solid ${getPartyColor(selectedNode)}`, borderRadius: 8, padding: "6px 9px", fontSize: 10, fontWeight: 800, cursor: "pointer" }}>
+          Mostrando transferencias de {getPartyDisplayName(selectedNode)} · Ver todas
+        </button>
+      )}
 
       {linkTooltip && (
         <div
