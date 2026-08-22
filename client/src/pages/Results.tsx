@@ -1158,12 +1158,14 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                     <div style={{ fontSize: 11, color: "#7a7990" }}>{partyLeaders.length} candidato{partyLeaders.length !== 1 ? "s" : ""} · {tot > 0 ? `${tot} votos` : "Sin votos aún"}</div>
                   </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 14, marginBottom: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 16, marginBottom: 16 }}>
                   {leadersWithVotes.map(leader => (
                     <div key={leader.id} style={{ textAlign: "center" }}>
-                      <div style={{ position: "relative", width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto 8px" }}>
-                        {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
-                        {leader.votos > 0 && <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", background: color, color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 999, boxShadow: "0 6px 12px rgba(0,0,0,.28)" }}>{leader.votos}</div>}
+                      <div style={{ position: "relative", width: 82, height: 94, margin: "0 auto 6px", overflow: "visible" }}>
+                        <div style={{ width: 76, height: 76, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto", background: `${color}1a`, boxShadow: `0 7px 18px ${color}30` }}>
+                          {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
+                        </div>
+                        {leader.votos > 0 && <div role="status" aria-label={`${leader.votos} votos para ${leader.leader_name}`} title={`${leader.votos} votos`} style={{ position: "absolute", top: 62, left: "50%", transform: "translateX(-50%)", zIndex: 2, minWidth: 42, background: color, color: "#fff", fontSize: 10, lineHeight: "18px", fontWeight: 900, whiteSpace: "nowrap", padding: "1px 8px", borderRadius: 999, border: "2px solid #17161e", boxShadow: "0 6px 14px rgba(0,0,0,.42)" }}>{leader.votos} voto{leader.votos === 1 ? "" : "s"}</div>}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#f0eff8", marginBottom: 4, lineHeight: 1.3 }}>{leader.leader_name}</div>
                       {leader.votos > 0 ? (
@@ -1904,7 +1906,12 @@ export default function Results() {
   const [youthStats, setYouthStats] = useState<PartyStats[]>([]);
   const [totalResponses, setTotalResponses] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabKey>("general");
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    if (typeof window === "undefined") return "general";
+    return new URLSearchParams(window.location.search).get("tab") === "lideres-partidos"
+      ? "lideres-partidos"
+      : "general";
+  });
   const [leaderRatings, setLeaderRatings] = useState<LeaderRating[]>([]);
   const [edadPromedio, setEdadPromedio] = useState<number | null>(null);
   const [ideologiaPromedio, setIdeologiaPromedio] = useState<number | null>(null);

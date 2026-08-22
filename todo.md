@@ -712,6 +712,7 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Corregir la visibilidad del contador de votos en candidatos de Líderes por partido
 - [x] Convertir el desglose de partido de Resultados en modal emergente de pantalla completa
 - [x] Corregir color hexadecimal inválido en la generación de infografías de Resultados
 - [x] Evitar el error 404 cuando no exista la vista top_region_por_partido
