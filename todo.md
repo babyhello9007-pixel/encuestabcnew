@@ -712,6 +712,9 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Comparar la evolución temporal de dos candidatos en el modal de historial
+- [x] Exportar datos filtrados del Sankey en CSV y Excel
+- [x] Animar suavemente el recálculo del Sankey al cambiar el periodo
 - [x] Exportar a PNG la evolución temporal de un candidato
 - [x] Mostrar tooltips con votos exactos por fecha en la evolución de candidato
 - [x] Añadir filtros de fechas al gráfico Sankey de Transferencia de voto

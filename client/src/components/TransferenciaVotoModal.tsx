@@ -140,6 +140,7 @@ export function TransferenciaVotoModal({
   const [dateEnd, setDateEnd] = useState("");
   const [temporalData, setTemporalData] = useState<TransferenciaVotoData[] | null>(null);
   const [temporalLoading, setTemporalLoading] = useState(false);
+  const [sankeyMotionKey, setSankeyMotionKey] = useState(0);
 
   const [selectedOrigen, setSelectedOrigen] = useState<string>("GLOBAL");
   const [modeFilter, setModeFilter] = useState<ModeFilter>("ALL");
@@ -429,6 +430,10 @@ export function TransferenciaVotoModal({
     setDateEnd("");
   }, []);
 
+  useEffect(() => {
+    setSankeyMotionKey((key) => key + 1);
+  }, [dateStart, dateEnd, selectedOrigen, modeFilter, searchTerm, activeTransferData]);
+
   const handleExportCSV = () => {
     if (filteredData.length === 0) return;
     const headers = ["Origen Partido", "Destino Partido", "Votos Transferidos", "Porcentaje (%)"];
@@ -445,6 +450,22 @@ export function TransferenciaVotoModal({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) return;
+    const rows = filteredData.map((item) => `<tr><td>${getPartyDisplayName(item.origen_partido)}</td><td>${getPartyDisplayName(item.destino_partido)}</td><td>${item.votos_transferidos}</td><td>${item.porcentaje.toFixed(2)}%</td></tr>`).join("");
+    const period = `${dateStart || "inicio"} — ${dateEnd || "actualidad"}`;
+    const table = `<html><head><meta charset="UTF-8"></head><body><table><thead><tr><th colspan="4">Transferencia de voto · ${period}</th></tr><tr><th>Origen</th><th>Destino</th><th>Votos transferidos</th><th>Porcentaje</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+    const blob = new Blob([table], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `transferencia_voto_${selectedOrigen}_${modeFilter}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
   };
 
   const handleExportPNG = async () => {
@@ -692,6 +713,19 @@ export function TransferenciaVotoModal({
               >
                 <Download size={16} /> Exportar CSV
               </button>
+              <button
+                onClick={handleExportExcel}
+                disabled={filteredData.length === 0}
+                aria-label="Exportar datos como Excel"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  background: "rgba(34, 197, 94, 0.10)", border: "1px solid rgba(34, 197, 94, 0.3)",
+                  borderRadius: 10, padding: "8px 16px", color: "#86efac", fontSize: 13, fontWeight: 600,
+                  cursor: filteredData.length === 0 ? "not-allowed" : "pointer", opacity: filteredData.length === 0 ? 0.5 : 1,
+                }}
+              >
+                <Download size={16} /> Exportar Excel
+              </button>
             </div>
             {exportError && (
               <span role="alert" style={{ fontSize: 11, color: "#f87171", marginRight: 40 }}>
@@ -886,15 +920,17 @@ export function TransferenciaVotoModal({
                       </button>
                     </div>
 
-                    <SankeyChart
-                      data={filteredData}
-                      getPartyColor={getPartyColor}
-                      getPartyLogo={getPartyLogo}
-                      getPartyDisplayName={getPartyDisplayName}
-                      hoveredNode={hoveredNode}
-                      setHoveredNode={setHoveredNode}
-                      svgRef={sankeyRef}
-                    />
+                    <div key={sankeyMotionKey} className="sankey-recalculate">
+                      <SankeyChart
+                        data={filteredData}
+                        getPartyColor={getPartyColor}
+                        getPartyLogo={getPartyLogo}
+                        getPartyDisplayName={getPartyDisplayName}
+                        hoveredNode={hoveredNode}
+                        setHoveredNode={setHoveredNode}
+                        svgRef={sankeyRef}
+                      />
+                    </div>
                   </div>
 
                   {/* Tabla Detallada */}

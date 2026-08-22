@@ -71,6 +71,7 @@ interface LiderPreferido {
 interface CandidateVoteHistoryTarget {
   id: number; party_key: string; leader_name: string; photo_url: string;
   display_name: string; color: string; votos: number; porcentaje: number;
+  comparisonCandidates?: Omit<CandidateVoteHistoryTarget, "comparisonCandidates">[];
 }
 interface CandidateVoteHistoryPoint {
   fecha: string; etiqueta: string; votosDia: number; acumulado: number;
@@ -1069,6 +1070,11 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
     return m;
   }, [lideresPreferidos]);
 
+  const historyComparisonCandidates = useMemo(() => leaders.map((leader) => {
+    const preference = (prefByParty[leader.party_key] || []).find((item) => item.lider_preferido === leader.leader_name);
+    return { ...leader, votos: preference?.votos ?? 0, porcentaje: preference?.porcentaje ?? 0 };
+  }), [leaders, prefByParty]);
+
   const allLeadersForGov: PartyLeader[] = leaders;
 
   if (loading) return <div className="r-loader"><div className="r-spin" /></div>;
@@ -1226,8 +1232,8 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                       <div
                         tabIndex={0}
                         role="button"
-                        onClick={() => setSelectedCandidateHistory({ ...leader, votos: leader.votos, porcentaje: leader.porcentaje })}
-                        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedCandidateHistory({ ...leader, votos: leader.votos, porcentaje: leader.porcentaje }); } }}
+                        onClick={() => setSelectedCandidateHistory({ ...leader, votos: leader.votos, porcentaje: leader.porcentaje, comparisonCandidates: historyComparisonCandidates })}
+                        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedCandidateHistory({ ...leader, votos: leader.votos, porcentaje: leader.porcentaje, comparisonCandidates: historyComparisonCandidates }); } }}
                         onMouseEnter={() => setHoveredCandidateId(leader.id)}
                         onMouseLeave={() => setHoveredCandidateId(null)}
                         onFocus={() => setHoveredCandidateId(leader.id)}
@@ -1308,10 +1314,13 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
 
 function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteHistoryTarget; onClose: () => void }) {
   const [history, setHistory] = useState<CandidateVoteHistoryPoint[]>([]);
+  const [comparisonId, setComparisonId] = useState("");
+  const [comparisonHistory, setComparisonHistory] = useState<CandidateVoteHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const comparisonTarget = useMemo(() => target.comparisonCandidates?.find((candidate) => String(candidate.id) === comparisonId), [target.comparisonCandidates, comparisonId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1348,6 +1357,44 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
     loadHistory();
     return () => { cancelled = true; };
   }, [target.party_key, target.display_name, target.leader_name]);
+
+  useEffect(() => {
+    if (!comparisonTarget) { setComparisonHistory([]); return; }
+    let cancelled = false;
+    const loadComparison = async () => {
+      try {
+        const partyCandidates = Array.from(new Set([comparisonTarget.party_key, comparisonTarget.display_name].filter(Boolean)));
+        const { data, error: queryError } = await supabase.from("lideres_preferidos").select("created_at").in("partido", partyCandidates).eq("lider_preferido", comparisonTarget.leader_name).order("created_at", { ascending: true });
+        if (queryError) throw queryError;
+        const byDay: Record<string, number> = {};
+        (data || []).forEach((row: { created_at?: string | null }) => { const day = row.created_at?.slice(0, 10); if (day) byDay[day] = (byDay[day] || 0) + 1; });
+        let accumulated = 0;
+        const points = Object.entries(byDay).sort(([a], [b]) => a.localeCompare(b)).map(([date, votosDia]) => ({ fecha: date, etiqueta: new Date(`${date}T12:00:00`).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }), votosDia, acumulado: accumulated += votosDia }));
+        if (!cancelled) setComparisonHistory(points);
+      } catch (comparisonError) {
+        console.error("Error loading comparison candidate history:", comparisonError);
+        if (!cancelled) setComparisonHistory([]);
+      }
+    };
+    loadComparison();
+    return () => { cancelled = true; };
+  }, [comparisonTarget?.party_key, comparisonTarget?.display_name, comparisonTarget?.leader_name]);
+
+  const chartData = useMemo(() => {
+    if (!comparisonTarget) return history;
+    const primary = new globalThis.Map(history.map((point) => [point.fecha, point]));
+    const secondary = new globalThis.Map(comparisonHistory.map((point) => [point.fecha, point]));
+    const dates = Array.from(new Set([...Array.from(primary.keys()), ...Array.from(secondary.keys())])).sort();
+    let primaryAccumulated = 0;
+    let comparisonAccumulated = 0;
+    return dates.map((date) => {
+      const primaryPoint = primary.get(date);
+      const comparisonPoint = secondary.get(date);
+      if (primaryPoint) primaryAccumulated = primaryPoint.acumulado;
+      if (comparisonPoint) comparisonAccumulated = comparisonPoint.acumulado;
+      return { fecha: date, etiqueta: new Date(`${date}T12:00:00`).toLocaleDateString("es-ES", { day: "2-digit", month: "short" }), votosDia: primaryPoint?.votosDia ?? 0, acumulado: primaryAccumulated, comparacion: comparisonAccumulated };
+    });
+  }, [history, comparisonHistory, comparisonTarget]);
 
   const handleExportHistoryPng = async () => {
     if (!chartRef.current || isExporting || !history.length) return;
@@ -1407,7 +1454,8 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
           <div style={{ padding: 13, borderRadius: 12, background: `${target.color}16`, border: `1px solid ${target.color}35` }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Votos actuales</div><div style={{ color: "#f8fafc", marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.votos.toLocaleString("es-ES")}</div></div>
           <div style={{ padding: 13, borderRadius: 12, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Apoyo en su partido</div><div style={{ color: target.color, marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.porcentaje.toFixed(1)}%</div></div>
         </div>
-        {loading ? <div style={{ minHeight: 220, display: "grid", placeItems: "center", color: "#9ca3af" }}><Loader2 size={28} className="animate-spin" /></div> : error ? <div role="alert" style={{ padding: 22, borderRadius: 12, color: "#fecaca", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", fontSize: 13 }}>{error}</div> : history.length ? <div ref={chartRef} style={{ borderRadius: 14, padding: "12px 8px 4px", background: "linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01))", border: "1px solid rgba(255,255,255,.07)" }}><div style={{ padding: "0 10px 8px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}><div><div style={{ fontSize: 12, color: "#f8fafc", fontWeight: 900 }}>Línea temporal de votos</div><div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>Acumulado de preferencias registradas por día.</div></div><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: target.color, fontSize: 11, fontWeight: 900 }}>{history.length} hitos</span><button onClick={handleExportHistoryPng} disabled={isExporting} style={{ border: `1px solid ${target.color}66`, background: `${target.color}1a`, color: "#f8fafc", borderRadius: 7, padding: "5px 8px", fontSize: 10, fontWeight: 800, cursor: isExporting ? "wait" : "pointer", opacity: isExporting ? .6 : 1 }}>{isExporting ? "Generando…" : "Exportar PNG"}</button></div></div><ResponsiveContainer width="100%" height={286}><ComposedChart data={history} margin={{ top: 14, right: 20, bottom: 0, left: -18 }}><defs><linearGradient id={`candidate-votes-${target.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={target.color} stopOpacity={0.45} /><stop offset="100%" stopColor={target.color} stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="rgba(255,255,255,.07)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="etiqueta" tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><Tooltip cursor={{ stroke: target.color, strokeWidth: 1, strokeDasharray: "4 4" }} content={({ active, payload }) => { const point = payload?.[0]?.payload as CandidateVoteHistoryPoint | undefined; return active && point ? <div style={{ background: "#0b0d14", border: `1px solid ${target.color}88`, borderRadius: 9, padding: "9px 10px", color: "#f8fafc", fontSize: 11, boxShadow: "0 12px 28px rgba(0,0,0,.35)" }}><div style={{ color: "#cbd5e1", fontWeight: 800 }}>{new Date(`${point.fecha}T12:00:00`).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}</div><div style={{ marginTop: 5 }}>Votos nuevos: <strong>{point.votosDia.toLocaleString("es-ES")}</strong></div><div style={{ marginTop: 2, color: target.color }}>Acumulado: <strong>{point.acumulado.toLocaleString("es-ES")}</strong></div></div> : null; }} /><Area type="monotone" dataKey="acumulado" name="Área acumulada" stroke="transparent" fill={`url(#candidate-votes-${target.id})`} /><Line type="monotone" dataKey="acumulado" name="Votos acumulados" stroke="#f8fafc" strokeWidth={5} strokeOpacity={0.38} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="acumulado" name="Votos acumulados" stroke={target.color} strokeWidth={3} dot={{ r: 4, fill: target.color, stroke: "#f8fafc", strokeWidth: 2 }} activeDot={{ r: 7, fill: target.color, stroke: "#ffffff", strokeWidth: 2 }} /></ComposedChart></ResponsiveContainer></div> : <div style={{ padding: 28, textAlign: "center", color: "#9ca3af", borderRadius: 12, background: "rgba(255,255,255,.03)", border: "1px dashed rgba(255,255,255,.13)", fontSize: 13 }}>Aún no hay registros temporales suficientes para representar la evolución de este candidato.</div>}
+        {(target.comparisonCandidates?.filter((candidate) => candidate.id !== target.id && candidate.votos > 0).length || 0) > 0 && <label style={{ display: "flex", alignItems: "center", gap: 9, margin: "0 0 14px", padding: "9px 11px", borderRadius: 10, background: "rgba(255,255,255,.035)", border: "1px solid rgba(255,255,255,.08)", color: "#cbd5e1", fontSize: 11, fontWeight: 800 }}>Comparar con <select aria-label="Comparar evolución con otro candidato" value={comparisonId} onChange={(event) => setComparisonId(event.target.value)} style={{ flex: 1, minWidth: 0, background: "#11131c", color: "#f8fafc", border: "1px solid rgba(255,255,255,.15)", borderRadius: 7, padding: "6px 8px", fontSize: 11 }}><option value="">Sin comparación</option>{target.comparisonCandidates?.filter((candidate) => candidate.id !== target.id && candidate.votos > 0).sort((a, b) => a.leader_name.localeCompare(b.leader_name, "es")).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.leader_name} · {candidate.display_name}</option>)}</select></label>}
+        {loading ? <div style={{ minHeight: 220, display: "grid", placeItems: "center", color: "#9ca3af" }}><Loader2 size={28} className="animate-spin" /></div> : error ? <div role="alert" style={{ padding: 22, borderRadius: 12, color: "#fecaca", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", fontSize: 13 }}>{error}</div> : history.length ? <div ref={chartRef} style={{ borderRadius: 14, padding: "12px 8px 4px", background: "linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01))", border: "1px solid rgba(255,255,255,.07)" }}><div style={{ padding: "0 10px 8px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}><div><div style={{ fontSize: 12, color: "#f8fafc", fontWeight: 900 }}>Línea temporal de votos</div><div style={{ fontSize: 10, color: comparisonTarget && comparisonHistory.length === 0 ? "#fbbf24" : "#9ca3af", marginTop: 2 }}>{comparisonTarget ? (comparisonHistory.length ? `Comparando con ${comparisonTarget.leader_name}.` : `${comparisonTarget.leader_name} no tiene registros temporales suficientes para trazar su serie.`) : "Acumulado de preferencias registradas por día."}</div></div><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: target.color, fontSize: 11, fontWeight: 900 }}>{history.length} hitos</span><button onClick={handleExportHistoryPng} disabled={isExporting} style={{ border: `1px solid ${target.color}66`, background: `${target.color}1a`, color: "#f8fafc", borderRadius: 7, padding: "5px 8px", fontSize: 10, fontWeight: 800, cursor: isExporting ? "wait" : "pointer", opacity: isExporting ? .6 : 1 }}>{isExporting ? "Generando…" : "Exportar PNG"}</button></div></div><ResponsiveContainer width="100%" height={286}><ComposedChart data={chartData} margin={{ top: 14, right: 20, bottom: 0, left: -18 }}><defs><linearGradient id={`candidate-votes-${target.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={target.color} stopOpacity={0.45} /><stop offset="100%" stopColor={target.color} stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="rgba(255,255,255,.07)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="etiqueta" tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><Tooltip cursor={{ stroke: target.color, strokeWidth: 1, strokeDasharray: "4 4" }} content={({ active, payload }) => { const point = payload?.[0]?.payload as (CandidateVoteHistoryPoint & { comparacion?: number }) | undefined; return active && point ? <div style={{ background: "#0b0d14", border: `1px solid ${target.color}88`, borderRadius: 9, padding: "9px 10px", color: "#f8fafc", fontSize: 11, boxShadow: "0 12px 28px rgba(0,0,0,.35)" }}><div style={{ color: "#cbd5e1", fontWeight: 800 }}>{new Date(`${point.fecha}T12:00:00`).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}</div><div style={{ marginTop: 5 }}>Votos nuevos: <strong>{point.votosDia.toLocaleString("es-ES")}</strong></div><div style={{ marginTop: 2, color: target.color }}>{target.leader_name}: <strong>{point.acumulado.toLocaleString("es-ES")}</strong></div>{comparisonTarget && <div style={{ marginTop: 2, color: comparisonTarget.color }}>{comparisonTarget.leader_name}: <strong>{(point.comparacion ?? 0).toLocaleString("es-ES")}</strong></div>}</div> : null; }} /><Area type="monotone" dataKey="acumulado" name="Área acumulada" stroke="transparent" fill={`url(#candidate-votes-${target.id})`} /><Line type="monotone" dataKey="acumulado" name={target.leader_name} stroke="#f8fafc" strokeWidth={5} strokeOpacity={0.38} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="acumulado" name={target.leader_name} stroke={target.color} strokeWidth={3} dot={{ r: 4, fill: target.color, stroke: "#f8fafc", strokeWidth: 2 }} activeDot={{ r: 7, fill: target.color, stroke: "#ffffff", strokeWidth: 2 }} />{comparisonTarget && comparisonHistory.length > 0 && <Line type="monotone" dataKey="comparacion" name={comparisonTarget.leader_name} stroke={comparisonTarget.color || "#fbbf24"} strokeWidth={3} strokeDasharray="7 5" dot={{ r: 3, fill: comparisonTarget.color || "#fbbf24", stroke: "#0b0d14", strokeWidth: 2 }} activeDot={{ r: 6 }} />}</ComposedChart></ResponsiveContainer></div> : <div style={{ padding: 28, textAlign: "center", color: "#9ca3af", borderRadius: 12, background: "rgba(255,255,255,.03)", border: "1px dashed rgba(255,255,255,.13)", fontSize: 13 }}>Aún no hay registros temporales suficientes para representar la evolución de este candidato.</div>}
       </section>
     </div>,
     document.body,

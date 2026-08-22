@@ -1022,3 +1022,16 @@
 @media (prefers-reduced-motion: reduce) {
   .linktree-quorum-pulse::after { animation: none; }
 }
+
+@keyframes sankey-recalculate {
+  from { opacity: 0.28; transform: translateY(8px) scale(0.992); filter: saturate(0.7); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: saturate(1); }
+}
+
+.sankey-recalculate {
+  animation: sankey-recalculate 420ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sankey-recalculate { animation: none; }
+}
