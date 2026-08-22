@@ -316,6 +316,9 @@
 - [x] Probar en todos los modos (Individual, Completo, Líderes)
 
 ## Página Bio (Linktree) - NUEVO
+- [x] Añadir animaciones de transición y efectos hover accesibles a los enlaces del Linktree
+- [x] Añadir botón de compartir con Web Share API y copia de enlace como alternativa
+- [x] Reforzar los eslóganes descriptivos bajo cada enlace del Linktree
 - [x] Crear página Bio.tsx con diseño Linktree
 - [x] Agregar logo de Batalla Cultural
 - [x] Agregar enlace a Versión Rápida (NanoEncuestaBC)
