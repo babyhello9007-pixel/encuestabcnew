@@ -1,9 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Loader2, Search } from "lucide-react";
 import { PROVINCES } from "@/lib/surveyData";
 import PartyLogo from "@/components/PartyLogo";
+import {
+  createCanonicalPartyIndex,
+  resolveCanonicalPartyFromReferences,
+  type CanonicalPartyConfigRow,
+} from "@/lib/canonicalPartyConfig";
 
 interface ProvinceResults {
   provincia: string;
@@ -14,15 +19,6 @@ interface ProvinceResults {
   edad_promedio: number;
   ideologia_promedio: number;
 }
-
-interface PartyConfig {
-  party_key: string;
-  display_name: string;
-  color: string;
-  logo_url: string;
-}
-
-const partyLookupKey = (value?: string) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
 interface ProvinceSummary {
   provincia: string;
@@ -43,7 +39,7 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"summary" | "detail">("summary");
-  const [partyConfigs, setPartyConfigs] = useState<Record<string, PartyConfig>>({});
+  const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);
 
   useEffect(() => {
     const fetchProvinceResults = async () => {
@@ -85,13 +81,7 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
         console.warn("No se pudo cargar party_configuration para provincias:", error.message);
         return;
       }
-      const configByName: Record<string, PartyConfig> = {};
-      (data || []).forEach((party) => {
-        const config = party as PartyConfig;
-        configByName[partyLookupKey(config.party_key)] = config;
-        configByName[partyLookupKey(config.display_name)] = config;
-      });
-      setPartyConfigs(configByName);
+      setPartyConfigs((data || []) as CanonicalPartyConfigRow[]);
     };
     loadPartyConfigurations();
   }, []);
@@ -112,10 +102,15 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
     ? provinceResults.filter(r => r.provincia === selectedProvince)
     : [];
 
+  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
+
   const getPartyMeta = (result: ProvinceResults) => {
-    const dbParty = partyConfigs[partyLookupKey(result.party_key)] || partyConfigs[partyLookupKey(result.partido)];
-    const provided = partyMeta[result.partido] || partyMeta[result.party_key || ""];
-    return { name: dbParty?.display_name || result.partido, color: dbParty?.color || provided?.color || "#9CA3AF", logo: dbParty?.logo_url || provided?.logo || "" };
+    const dbParty = resolveCanonicalPartyFromReferences([result.party_key, result.partido], partyIndex);
+    return {
+      name: dbParty?.display_name || result.partido,
+      color: dbParty?.color || "#64748B",
+      logo: dbParty?.logo_url || "",
+    };
   };
 
   const chartData = selectedProvinceResults.map(r => {

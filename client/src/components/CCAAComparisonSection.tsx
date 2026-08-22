@@ -3,6 +3,11 @@ import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Loader2 } from "lucide-react";
 import PartyLogo from "@/components/PartyLogo";
+import {
+  createCanonicalPartyIndex,
+  resolveCanonicalPartyFromReferences,
+  type CanonicalPartyConfigRow,
+} from "@/lib/canonicalPartyConfig";
 
 export interface PartyConfig {
   id: number;
@@ -41,12 +46,10 @@ export interface CCAAComparisonSectionProps {
 export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionProps) {
   const [ccaaResults, setCCAAReslts] = useState<CCAAReslts[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
-  const [partyConfigs, setPartyConfigs] = useState<Record<string, PartyConfig>>({});
+  const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);
   const [selectedCCAAs, setSelectedCCAAs] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [analysisType, setAnalysisType] = useState<"generales" | "autonomicas">("generales");
-
-  const partyLookupKey = (value?: string) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
   // 1. Cargar la configuración de partidos de party_configuration
   useEffect(() => {
@@ -59,18 +62,7 @@ export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionP
 
         if (error) throw error;
 
-        if (data) {
-          const configMap: Record<string, PartyConfig> = {};
-          data.forEach((party: PartyConfig) => {
-            if (party.party_key) {
-              configMap[partyLookupKey(party.party_key)] = party;
-            }
-            if (party.display_name) {
-              configMap[partyLookupKey(party.display_name)] = party;
-            }
-          });
-          setPartyConfigs(configMap);
-        }
+        if (data) setPartyConfigs(data as CanonicalPartyConfigRow[]);
       } catch (err) {
         console.error("Error fetching party configuration:", err);
       }
@@ -115,18 +107,16 @@ export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionP
     fetchCCAAResults();
   }, [analysisType]);
 
-  // Helper para resolver metadatos de partidos
+  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
+
+  // party_configuration es la fuente canónica de identidad visual.
   const getPartyMeta = (result: CCAAReslts) => {
-    const partyName = result.partido;
-    const key = partyLookupKey(result.party_key || partyName);
-    const nameKey = partyLookupKey(partyName);
-    
-    const dbParty = partyConfigs[key] || partyConfigs[nameKey];
+    const dbParty = resolveCanonicalPartyFromReferences([result.party_key, result.partido], partyIndex);
 
     return {
-      color: dbParty?.color || "#9CA3AF",
+      color: dbParty?.color || "#64748B",
       logo: dbParty?.logo_url || "",
-      displayName: dbParty?.display_name || result.partido
+      displayName: dbParty?.display_name || result.partido,
     };
   };
 

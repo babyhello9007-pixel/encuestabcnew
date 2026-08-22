@@ -8,10 +8,13 @@ import { normalizeProvinceName } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
 import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 import { checkVotingCooldown, recordVote, getUserIP } from "@/lib/votingCooldown";
-import ImageLoader from "@/components/ImageLoader";
 import { getLeaderIdentityKey } from "@/lib/leaderIdentity";
 import { matchesPartySearch, sortPartiesByCurrentVote } from "@/lib/partyOrdering";
 import { SpainMapRealistic } from "@/components/SpainMapRealistic";
+import {
+  createCanonicalPartyIndex,
+  resolveCanonicalParty,
+} from "@/lib/canonicalPartyConfig";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,7 +141,7 @@ function ThankYouScreen({ onResults, onRateLeaders, onHome }: { onResults: () =>
         </div>
         <h2 className="nc-thankyou-title" style={{ fontSize: "32px", fontWeight: "700", marginBottom: "15px", color: "#fff" }}>¡Gracias por participar!</h2>
         <p className="nc-thankyou-sub" style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "10px", lineHeight: "1.6" }}>Tu respuesta ha sido registrada correctamente.</p>
-        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "35px", lineHeight: "1.6" }}>Tu opinión construye el mapa real de la opinión española. Vuelve en 15 minutos para participar de nuevo.</p>
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "35px", lineHeight: "1.6" }}>Tu opinión construye el mapa real de la opinión española. Vuelve en 30 minutos para participar de nuevo.</p>
         
         <div className="nc-thankyou-btns" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <button className="nc-btn-primary" onClick={onRateLeaders} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(124,58,237,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; }}>★ Valorar a los líderes</button>
@@ -195,15 +198,13 @@ export default function NanoEncuestaBC() {
   const [loadingParties, setLoadingParties] = useState(true);
   const [partySearch, setPartySearch] = useState("");
   const [unavailablePartyLogos, setUnavailablePartyLogos] = useState<Record<string, boolean>>({});
+  const [unavailableLeaderPhotos, setUnavailableLeaderPhotos] = useState<Record<number, boolean>>({});
   const provinceSelectorData = useMemo(() => Object.fromEntries(PROVINCES.map((province) => [province, { name: province }])), []);
   const ccaaSelectorData = useMemo(() => Object.fromEntries(CCAA.map((ccaa) => [ccaa, { name: ccaa }])), []);
-  const normalizePartyReference = (value?: string) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
+  const partyIndex = useMemo(() => createCanonicalPartyIndex(parties), [parties]);
   const getSelectedParty = (value?: string) => {
-    const reference = normalizePartyReference(value);
-    return parties.find((party) =>
-      normalizePartyReference(party.party_key) === reference ||
-      normalizePartyReference(party.display_name) === reference
-    );
+    const brand = resolveCanonicalParty(value, partyIndex);
+    return parties.find((party) => party.party_key === brand?.party_key);
   };
 
   // Fetch party configuration and leaders from Supabase
@@ -399,11 +400,11 @@ export default function NanoEncuestaBC() {
 
       if (responses.lider_partido) {
         const selectedParty = getSelectedParty(responses.voto_generales);
-        const partyLeaders = leaders.filter((leader) => normalizePartyReference(leader.party_key) === normalizePartyReference(selectedParty?.party_key));
+        const partyLeaders = leaders.filter((leader) => leader.party_key === selectedParty?.party_key);
         const isCustom = !partyLeaders.some(l => l.leader_name === responses.lider_partido);
         try {
           const { error: leaderError } = await supabase.from("lideres_preferidos").insert({
-            partido: responses.voto_generales || null,
+            partido: selectedParty?.party_key || responses.voto_generales || null,
             lider_preferido: responses.lider_partido,
             es_personalizado: isCustom,
           });
@@ -440,7 +441,7 @@ export default function NanoEncuestaBC() {
   const selectedParty = getSelectedParty(responses.voto_generales);
   const partyLeaders = Array.from(new Map(
     leaders
-      .filter((leader) => normalizePartyReference(leader.party_key) === normalizePartyReference(selectedParty?.party_key))
+      .filter((leader) => leader.party_key === selectedParty?.party_key)
       .map(leader => [getLeaderIdentityKey(leader.leader_name), leader])
   ).values());
   const accentColor = selectedParty?.color || "#e8465a";
@@ -1374,13 +1375,14 @@ export default function NanoEncuestaBC() {
                                 <div className="nc-leader-check">
                                   <Check size={10} color="#fff" strokeWidth={3} />
                                 </div>
-                                {leader.photo_url ? (
-                                <ImageLoader
+                                {leader.photo_url && !unavailableLeaderPhotos[leader.id] ? (
+                                <img
                                   src={leader.photo_url}
                                   alt={leader.leader_name}
-                                  fallbackText={leader.leader_name}
-                                  size={64}
                                   className="nc-leader-photo"
+                                  loading="eager"
+                                  decoding="async"
+                                  onError={() => setUnavailableLeaderPhotos((previous) => ({ ...previous, [leader.id]: true }))}
                                   style={isSelected && selectedParty ? { borderColor: selectedParty.color, borderRadius: "50%" } : { borderRadius: "50%" }}
                                 />
                                 ) : (

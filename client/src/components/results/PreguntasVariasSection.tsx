@@ -3,6 +3,11 @@ import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import PartyLogo from '@/components/PartyLogo';
 import { Filter, RefreshCw, X, Loader2 } from 'lucide-react';
+import {
+  createCanonicalPartyIndex,
+  resolveCanonicalParty,
+  type CanonicalPartyConfigRow,
+} from '@/lib/canonicalPartyConfig';
 
 interface QuestionData {
   label: string;
@@ -19,8 +24,6 @@ interface OptionPartyBreakdown {
   votes_count: number;
 }
 
-const normalizePartyKey = (value?: string) => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
-
 export default function PreguntasVariasSection({
   partyMeta = {}
 }: {
@@ -30,7 +33,7 @@ export default function PreguntasVariasSection({
   const [division, setDivision] = useState<QuestionData[]>([]);
   const [pensiones, setPensiones] = useState<QuestionData[]>([]);
   const [partyBreakdownMap, setPartyBreakdownMap] = useState<Record<string, OptionPartyBreakdown[]>>({});
-  const [partyBranding, setPartyBranding] = useState<Record<string, { color: string; logo: string }>>({});
+  const [partyConfiguration, setPartyConfiguration] = useState<CanonicalPartyConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [breakdownLoading, setBreakdownLoading] = useState(true);
 
@@ -213,16 +216,7 @@ export default function PreguntasVariasSection({
 
       if (error) return;
 
-      const map: Record<string, { color: string; logo: string }> = {};
-      (data || []).forEach((row: any) => {
-        const color = typeof row.color === 'string' ? row.color.trim() : '#9CA3AF';
-        const logo = typeof row.logo_url === 'string' ? row.logo_url : '';
-        const key = normalizePartyKey(row.party_key);
-        const display = normalizePartyKey(row.display_name);
-        if (key) map[key] = { color, logo };
-        if (display) map[display] = { color, logo };
-      });
-      setPartyBranding(map);
+      setPartyConfiguration((data || []) as CanonicalPartyConfigRow[]);
     };
 
     loadBreakdown();
@@ -231,8 +225,8 @@ export default function PreguntasVariasSection({
 
   const getBreakdownKey = (questionKey: string, label: string) => `${questionKey}::${label}`;
   const getPartyStyle = (party: string) => {
-    const key = normalizePartyKey(party);
-    return partyBranding[key] || { color: "#9CA3AF", logo: "" };
+    const brand = resolveCanonicalParty(party, createCanonicalPartyIndex(partyConfiguration));
+    return { color: brand?.color || "#64748B", logo: brand?.logo_url || "", name: brand?.display_name || party };
   };
 
   const toggleCCAA = (ccaa: string) => {
@@ -391,12 +385,13 @@ export default function PreguntasVariasSection({
                           return (
                             <div
                               key={`monarquia-party-${item.label}-${entry.party_vote}`}
+                              data-question="monarquia_republica"
                               className="flex items-center justify-between rounded-lg px-3 py-2 bg-slate-800/60 border border-slate-700"
                               style={{ borderLeftColor: style.color, borderLeftWidth: '4px' }}
                             >
                               <div className="flex items-center gap-2">
-                                <PartyLogo src={style.logo} partyName={entry.party_vote} size={18} strictExternal />
-                                <span className="text-xs font-semibold text-slate-200">{entry.party_vote}</span>
+                                <PartyLogo src={style.logo} partyName={style.name} size={18} strictExternal />
+                                <span className="text-xs font-semibold text-slate-200">{style.name}</span>
                               </div>
                               <span className="text-xs text-slate-400 font-mono">{entry.votes_count} votos</span>
                             </div>
@@ -406,7 +401,7 @@ export default function PreguntasVariasSection({
                     ) : (
                       <div className="mt-2 text-xs text-amber-400/90 italic flex items-center gap-1.5 bg-amber-950/20 px-3 py-1.5 rounded-lg border border-amber-500/20">
                         <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                        Desglose por partidos disponible próximamente para esta opción específica.
+                        No hay respuestas con voto general registrado para esta opción y los filtros actuales.
                       </div>
                     )}
                   </div>
@@ -450,12 +445,13 @@ export default function PreguntasVariasSection({
                           return (
                             <div
                               key={`division-party-${item.label}-${entry.party_vote}`}
+                              data-question="division_territorial"
                               className="flex items-center justify-between rounded-lg px-3 py-2 bg-slate-800/60 border border-slate-700"
                               style={{ borderLeftColor: style.color, borderLeftWidth: '4px' }}
                             >
                               <div className="flex items-center gap-2">
-                                <PartyLogo src={style.logo} partyName={entry.party_vote} size={18} strictExternal />
-                                <span className="text-xs font-semibold text-slate-200">{entry.party_vote}</span>
+                                <PartyLogo src={style.logo} partyName={style.name} size={18} strictExternal />
+                                <span className="text-xs font-semibold text-slate-200">{style.name}</span>
                               </div>
                               <span className="text-xs text-slate-400 font-mono">{entry.votes_count} votos</span>
                             </div>
@@ -465,7 +461,7 @@ export default function PreguntasVariasSection({
                     ) : (
                       <div className="mt-2 text-xs text-amber-400/90 italic flex items-center gap-1.5 bg-amber-950/20 px-3 py-1.5 rounded-lg border border-amber-500/20">
                         <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                        Desglose por partidos disponible próximamente para esta opción específica.
+                        No hay respuestas con voto general registrado para esta opción y los filtros actuales.
                       </div>
                     )}
                   </div>
@@ -509,12 +505,13 @@ export default function PreguntasVariasSection({
                           return (
                             <div
                               key={`pensiones-party-${item.label}-${entry.party_vote}`}
+                              data-question="sistema_pensiones"
                               className="flex items-center justify-between rounded-lg px-3 py-2 bg-slate-800/60 border border-slate-700"
                               style={{ borderLeftColor: style.color, borderLeftWidth: '4px' }}
                             >
                               <div className="flex items-center gap-2">
-                                <PartyLogo src={style.logo} partyName={entry.party_vote} size={18} strictExternal />
-                                <span className="text-xs font-semibold text-slate-200">{entry.party_vote}</span>
+                                <PartyLogo src={style.logo} partyName={style.name} size={18} strictExternal />
+                                <span className="text-xs font-semibold text-slate-200">{style.name}</span>
                               </div>
                               <span className="text-xs text-slate-400 font-mono">{entry.votes_count} votos</span>
                             </div>
@@ -524,7 +521,7 @@ export default function PreguntasVariasSection({
                     ) : (
                       <div className="mt-2 text-xs text-amber-400/90 italic flex items-center gap-1.5 bg-amber-950/20 px-3 py-1.5 rounded-lg border border-amber-500/20">
                         <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                        Desglose por partidos disponible próximamente para esta opción específica.
+                        No hay respuestas con voto general registrado para esta opción y los filtros actuales.
                       </div>
                     )}
                   </div>

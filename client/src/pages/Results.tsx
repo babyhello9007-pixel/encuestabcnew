@@ -51,6 +51,7 @@ import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
+import { normalizePartyReference, sanitizePartyColor } from "@/lib/canonicalPartyConfig";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -2309,12 +2310,12 @@ export default function Results() {
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
-  const normalizePartyKey = (v: string) => v?.trim().toUpperCase();
+  const normalizePartyKey = (v: string) => normalizePartyReference(v);
 
   const generalPartyMap = useMemo((): Record<string, PartyMeta> => {
     const d: Record<string, PartyMeta> = {};
     partyConfigData.parties.forEach(p => {
-      d[String(p.partyKey || "")] = { key: p.partyKey, name: p.displayName, color: p.color, logo: p.logoUrl };
+      d[String(p.partyKey || "")] = { key: p.partyKey, name: p.displayName, color: sanitizePartyColor(p.color), logo: p.logoUrl };
     });
     return d;
   }, [partyConfigData]);
@@ -2322,7 +2323,7 @@ export default function Results() {
   const youthPartyMap = useMemo((): Record<string, PartyMeta> => {
     const d: Record<string, PartyMeta> = {};
     partyConfigData.youth.forEach(p => {
-      d[String(p.partyKey || "")] = { key: p.partyKey, name: p.displayName, color: p.color, logo: p.logoUrl };
+      d[String(p.partyKey || "")] = { key: p.partyKey, name: p.displayName, color: sanitizePartyColor(p.color), logo: p.logoUrl };
     });
     return d;
   }, [partyConfigData]);

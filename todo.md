@@ -786,3 +786,10 @@
 - [x] Usar party_configuration como única fuente de nombre, color y logo en las vistas afectadas
 - [x] Validar con datos reales los líderes de NanoEncuesta y el Top 5 de Resultados
 - [x] Restaurar el cooldown efectivo de treinta minutos y corregir su prueba de bloqueo
+- [x] Reproducir el fallo persistente de logos, líderes o Top 5 con consultas reales de Supabase
+- [x] Eliminar cualquier fallback visual no canónico que contradiga party_configuration o party_leaders
+- [x] Verificar recurso por recurso los logos, colores y fotos de líder devueltos por Supabase (161/163 URL cargan; dos fotos externas fallan y tienen fallback de iniciales veraz)
+- [x] Crear y probar un resolver canónico común para party_key, display_name, acentos y color hexadecimal inválido
+- [x] Aplicar el resolver canónico en NanoEncuesta, CCAA, Comparar CCAA, Provincia y Preguntas Varias
+- [x] Aplicar el resolver canónico a la composición general de Resultados y verificar las vistas restantes
+- [x] Cargar en NanoEncuesta las fotos de party_leaders sin bloquear dominios externos; usar iniciales solo ante error real de imagen

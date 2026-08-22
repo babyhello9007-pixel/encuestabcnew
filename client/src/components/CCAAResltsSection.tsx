@@ -3,6 +3,11 @@ import { supabase } from "@/lib/supabase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 import { Loader2, AlertCircle } from "lucide-react";
 import PartyLogo from "@/components/PartyLogo";
+import {
+  createCanonicalPartyIndex,
+  resolveCanonicalPartyFromReferences,
+  type CanonicalPartyConfigRow,
+} from "@/lib/canonicalPartyConfig";
 
 export interface PartyConfig {
   id: number;
@@ -38,12 +43,10 @@ export interface CCAAResultsSectionProps {
   partyMeta?: Record<string, { color?: string; logo?: string }>;
 }
 
-const partyLookupKey = (value?: string) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-
 export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
   const [ccaaResults, setCCAAResults] = useState<CCAAResults[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
-  const [partyConfigs, setPartyConfigs] = useState<Record<string, PartyConfig>>({});
+  const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);
   
   const [selectedCCAA, setSelectedCCAA] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,18 +65,7 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
 
         if (error) throw error;
 
-        if (data) {
-          const configMap: Record<string, PartyConfig> = {};
-          data.forEach((party: PartyConfig) => {
-            if (party.party_key) {
-              configMap[partyLookupKey(party.party_key)] = party;
-            }
-            if (party.display_name) {
-              configMap[partyLookupKey(party.display_name)] = party;
-            }
-          });
-          setPartyConfigs(configMap);
-        }
+        if (data) setPartyConfigs(data as CanonicalPartyConfigRow[]);
       } catch (err) {
         console.error("Error fetching party configuration:", err);
       }
@@ -132,18 +124,16 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
     fetchCCAAResults();
   }, [analysisType]);
 
+  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
+
   // party_configuration es la fuente canónica de identidad visual.
   const getPartyMeta = (result: CCAAResults) => {
-    const partyName = result.partido;
-    const key = partyLookupKey(result.party_key || partyName);
-    const nameKey = partyLookupKey(partyName);
-    
-    const dbParty = partyConfigs[key] || partyConfigs[nameKey];
+    const dbParty = resolveCanonicalPartyFromReferences([result.party_key, result.partido], partyIndex);
 
     return {
-      color: dbParty?.color || "#9CA3AF",
+      color: dbParty?.color || "#64748B",
       logo: dbParty?.logo_url || "",
-      displayName: dbParty?.display_name || result.partido
+      displayName: dbParty?.display_name || result.partido,
     };
   };
 
