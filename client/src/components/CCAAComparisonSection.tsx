@@ -39,11 +39,7 @@ export interface CCAASummary {
   ideologia_promedio: number;
 }
 
-export interface CCAAComparisonSectionProps {
-  partyMeta?: Record<string, { color?: string; logo?: string }>;
-}
-
-export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionProps) {
+export function CCAAComparisonSection() {
   const [ccaaResults, setCCAAReslts] = useState<CCAAReslts[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
   const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);

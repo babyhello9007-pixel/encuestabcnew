@@ -24,11 +24,7 @@ interface OptionPartyBreakdown {
   votes_count: number;
 }
 
-export default function PreguntasVariasSection({
-  partyMeta = {}
-}: {
-  partyMeta?: Record<string, { color?: string; logo?: string }>
-}) {
+export default function PreguntasVariasSection() {
   const [monarquia, setMonarquia] = useState<QuestionData[]>([]);
   const [division, setDivision] = useState<QuestionData[]>([]);
   const [pensiones, setPensiones] = useState<QuestionData[]>([]);

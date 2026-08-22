@@ -16,3 +16,7 @@ El código no vuelve a utilizar colores ni logotipos procedentes de vistas elect
 NanoEncuesta carga ahora directamente la `photo_url` de `party_leaders`, incluso cuando el origen sea X u otro CDN. Solo si esa URL falla de verdad muestra iniciales del mismo líder; no recurre a un catálogo estático o a una persona diferente. Las dos URL externas fallidas deberán sustituirse en `party_leaders.photo_url` por enlaces de imagen públicos y persistentes para recuperar sus retratos.
 
 La comprobación móvil de Resultados mostró el Top 5 completo, las cinco puntuaciones y las tarjetas de partido sin solapamientos en un viewport de 390 × 844 px.
+
+Tras retirar los props de branding heredados, se verificó en Resultados el montaje de Provincia y el detalle de CCAA. La tabla de Andalucía mostró NÚCLEO NACIONAL, ADELANTE ANDALUCÍA, Se Acabó la Fiesta, VOX y PP con los nombres, colores y logotipos resueltos desde `party_configuration`; no se produjo ningún error de hooks.
+
+Preguntas Varias se abrió con datos reales y mostró el desglose de «República» con ERC, Se Acabó la Fiesta, VOX, Frente Obrero, PSOE y SUMAR. Cada tarjeta tomó su nombre visible, color y logotipo del índice de `party_configuration`; los componentes no reciben ya `partyMeta` desde Resultados.

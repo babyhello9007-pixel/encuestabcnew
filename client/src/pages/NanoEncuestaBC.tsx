@@ -63,8 +63,8 @@ interface PartyLeader {
 
 // ─── Cooldown Screen ──────────────────────────────────────────────────────────
 
-function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number; onBack: () => void }) {
-  const [timeLeft, setTimeLeft] = useState(remainingMinutes * 60);
+function CooldownScreen({ remainingSeconds, onBack }: { remainingSeconds: number; onBack: () => void }) {
+  const [timeLeft, setTimeLeft] = useState(remainingSeconds);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -81,7 +81,7 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
   const secs = timeLeft % 60;
   const pad = (n: number) => String(n).padStart(2, "0");
 
-  const progressPercent = (1 - (timeLeft / (remainingMinutes * 60))) * 100;
+  const progressPercent = remainingSeconds > 0 ? (1 - (timeLeft / remainingSeconds)) * 100 : 100;
 
   return (
     <div className="nc-cooldown-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
@@ -115,7 +115,7 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
           </div>
         </div>
         
-        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "25px" }}>Vuelve en {remainingMinutes} minuto{remainingMinutes !== 1 ? 's' : ''}</p>
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "25px" }}>Vuelve en {remainingSeconds} segundos</p>
         <button className="nc-btn-outline" onClick={onBack} style={{ width: "100%", padding: "12px 20px", background: "rgba(196,30,58,0.15)", border: "1px solid #C41E3A", color: "#C41E3A", borderRadius: "10px", fontSize: "14px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.3)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.15)"; }}>← Volver al inicio</button>
       </div>
       <style>{`
@@ -177,7 +177,7 @@ export default function NanoEncuestaBC() {
   const [direction, setDirection] = useState<"next" | "prev">("next");
   const [animKey, setAnimKey] = useState(0);
   const [showCooldown, setShowCooldown] = useState(false);
-  const [cooldownMinutes, setCooldownMinutes] = useState(0);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   // Mapeo dinámico e hiper-optimizado de imágenes locales para la sección de valoraciones
   const LEADER_IMAGES: Record<string, string> = {
@@ -242,10 +242,10 @@ export default function NanoEncuestaBC() {
     const checkCooldown = async () => {
       try {
         const userIP = await getUserIP();
-        const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+        const { canVote, remainingSeconds } = await checkVotingCooldown(userIP);
         if (!canVote) {
           setShowCooldown(true);
-          setCooldownMinutes(remainingMinutes);
+          setCooldownSeconds(remainingSeconds);
         }
       } catch (error) {
         console.error("Error checking cooldown:", error);
@@ -344,10 +344,10 @@ export default function NanoEncuestaBC() {
   const handleSubmit = async () => {
     try {
       const userIP = await getUserIP();
-      const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+      const { canVote, remainingSeconds } = await checkVotingCooldown(userIP);
       if (!canVote) {
         setShowCooldown(true);
-        setCooldownMinutes(remainingMinutes);
+        setCooldownSeconds(remainingSeconds);
         return;
       }
     } catch (error) { console.error("Cooldown check error:", error); }
@@ -426,7 +426,7 @@ export default function NanoEncuestaBC() {
 
   // ─── Screens ──────────────────────────────────────────────────────────────
 
-  if (showCooldown) return <CooldownScreen remainingMinutes={cooldownMinutes} onBack={() => setLocation("/")} />;
+  if (showCooldown) return <CooldownScreen remainingSeconds={cooldownSeconds} onBack={() => setLocation("/")} />;
   if (showThankYou) return <ThankYouScreen onResults={() => setLocation("/resultados")} onRateLeaders={() => setLocation("/valorar-lideres")} onHome={() => setLocation("/")} />;
   if (showReview) return (
     <ReviewNanoEncuesta

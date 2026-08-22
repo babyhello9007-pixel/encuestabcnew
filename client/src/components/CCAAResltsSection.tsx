@@ -39,11 +39,7 @@ export interface CCAASummary {
   ideologia_promedio: number;
 }
 
-export interface CCAAResultsSectionProps {
-  partyMeta?: Record<string, { color?: string; logo?: string }>;
-}
-
-export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
+export function CCAAResltsSection() {
   const [ccaaResults, setCCAAResults] = useState<CCAAResults[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
   const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);
@@ -152,7 +148,7 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
         logo: meta.logo
       };
     });
-  }, [selectedCCAAResults, partyConfigs, partyMeta]);
+  }, [selectedCCAAResults, partyConfigs]);
 
   const formatNumber = (num: number) => new Intl.NumberFormat("es-ES").format(num);
 

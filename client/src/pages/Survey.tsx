@@ -130,10 +130,10 @@ function SurveyOld() {
     // Verificar cooldown por IP
     try {
       const userIP = await getUserIP();
-      const { canVote, remainingMinutes } = await checkVotingCooldown(userIP);
+      const { canVote, remainingSeconds } = await checkVotingCooldown(userIP);
       
       if (!canVote) {
-        toast.error(`Debes esperar ${remainingMinutes} minutos antes de votar de nuevo.`);
+        toast.error(`Debes esperar ${remainingSeconds} segundos antes de votar de nuevo.`);
         return;
       }
     } catch (error) {

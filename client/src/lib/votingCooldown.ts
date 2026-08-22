@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const COOLDOWN_MINUTES = 30;
+export const COOLDOWN_SECONDS = 15;
 
 export async function getUserIP(): Promise<string> {
   try {
@@ -13,9 +13,8 @@ export async function getUserIP(): Promise<string> {
   }
 }
 
-export async function checkVotingCooldown(userIP: string): Promise<{ canVote: boolean; remainingMinutes: number }> {
+export async function checkVotingCooldown(userIP: string): Promise<{ canVote: boolean; remainingSeconds: number }> {
   try {
-    // Consultar el último voto del usuario
     const { data, error } = await supabase
       .from('voting_cooldown')
       .select('last_vote')
@@ -24,47 +23,33 @@ export async function checkVotingCooldown(userIP: string): Promise<{ canVote: bo
 
     if (error) {
       console.error('Error checking cooldown:', error);
-      return { canVote: true, remainingMinutes: 0 };
+      return { canVote: true, remainingSeconds: 0 };
     }
 
     if (!data) {
-      // No hay registro previo, puede votar
-      return { canVote: true, remainingMinutes: 0 };
+      return { canVote: true, remainingSeconds: 0 };
     }
 
-    const lastVoteTime = new Date(data.last_vote).getTime();
-    const now = new Date().getTime();
-    const minutesElapsed = (now - lastVoteTime) / (1000 * 60);
-
-    if (minutesElapsed < COOLDOWN_MINUTES) {
-      const remainingMinutes = Math.ceil(COOLDOWN_MINUTES - minutesElapsed);
-      return { canVote: false, remainingMinutes };
+    const secondsElapsed = (Date.now() - new Date(data.last_vote).getTime()) / 1000;
+    if (secondsElapsed < COOLDOWN_SECONDS) {
+      return { canVote: false, remainingSeconds: Math.ceil(COOLDOWN_SECONDS - secondsElapsed) };
     }
 
-    return { canVote: true, remainingMinutes: 0 };
+    return { canVote: true, remainingSeconds: 0 };
   } catch (error) {
     console.error('Error in checkVotingCooldown:', error);
-    // En caso de error, permitir votar (no bloquear)
-    return { canVote: true, remainingMinutes: 0 };
+    return { canVote: true, remainingSeconds: 0 };
   }
 }
 
 export async function recordVote(userIP: string): Promise<boolean> {
   try {
     const now = new Date().toISOString();
-
-    // Usar upsert para actualizar si existe o crear si no existe
     const { error } = await supabase
       .from('voting_cooldown')
       .upsert(
-        {
-          ip_address: userIP,
-          last_vote: now,
-          updated_at: now,
-        },
-        {
-          onConflict: 'ip_address',
-        }
+        { ip_address: userIP, last_vote: now, updated_at: now },
+        { onConflict: 'ip_address' },
       );
 
     if (error) {

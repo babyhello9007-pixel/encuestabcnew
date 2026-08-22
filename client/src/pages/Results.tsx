@@ -3050,12 +3050,12 @@ export default function Results() {
                 </div>
               )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
-              {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "preguntas-varias" && <PreguntasVariasSection />}
               {activeTab === "crisis-ceuta" && <CrisisCeutaSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "lideres-ranking" && <LideresRankingSection />}
-              {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyMeta={generalPartyMetaLookup} />}
+              {activeTab === "ccaa" && <CCAAResltsSection />}
+              {activeTab === "provincias" && <ProvincesResultsSection />}
+              {activeTab === "comparacion-ccaa" && <CCAAComparisonSection />}
               {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa />}
               {activeTab === "lideres-partidos" && <LideresDePartidosSection partyMeta={generalPartyMetaLookup} />}
 

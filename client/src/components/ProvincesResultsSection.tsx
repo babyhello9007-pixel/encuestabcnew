@@ -28,11 +28,7 @@ interface ProvinceSummary {
   ideologia_promedio: number;
 }
 
-interface ProvincesResultsSectionProps {
-  partyMeta?: Record<string, { color?: string; logo?: string }>;
-}
-
-export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSectionProps) {
+export function ProvincesResultsSection() {
   const [provinceResults, setProvinceResults] = useState<ProvinceResults[]>([]);
   const [provinceSummary, setProvinceSummary] = useState<ProvinceSummary[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
@@ -86,6 +82,8 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
     loadPartyConfigurations();
   }, []);
 
+  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -101,8 +99,6 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
   const selectedProvinceResults = selectedProvince
     ? provinceResults.filter(r => r.provincia === selectedProvince)
     : [];
-
-  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
 
   const getPartyMeta = (result: ProvinceResults) => {
     const dbParty = resolveCanonicalPartyFromReferences([result.party_key, result.partido], partyIndex);

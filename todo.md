@@ -793,3 +793,7 @@
 - [x] Aplicar el resolver canónico en NanoEncuesta, CCAA, Comparar CCAA, Provincia y Preguntas Varias
 - [x] Aplicar el resolver canónico a la composición general de Resultados y verificar las vistas restantes
 - [x] Cargar en NanoEncuesta las fotos de party_leaders sin bloquear dominios externos; usar iniciales solo ante error real de imagen
+- [x] Ajustar el cooldown de voto a 15 segundos y validar el bloqueo y la liberación con pruebas
+- [x] Corregir el orden condicional de hooks en ProvincesResultsSection y reproducir Resultados sin error
+- [x] Auditar y forzar que Provincia, CCAA y Preguntas Varias resuelvan identidad visual solo con party_configuration; cualquier líder mostrado en la aplicación se limita a party_leaders
+- [x] Validar en navegador Provincia, CCAA y Preguntas Varias contra filas reales de party_configuration; no muestran líderes propios fuera de party_leaders
