@@ -4,9 +4,8 @@ import { Card } from '@/components/ui/card';
 import PartyLogo from '@/components/PartyLogo';
 import { Filter, RefreshCw, X, Loader2 } from 'lucide-react';
 import {
-  createCanonicalPartyIndex,
   resolveCanonicalParty,
-  type CanonicalPartyConfigRow,
+  type CanonicalPartyIndex,
 } from '@/lib/canonicalPartyConfig';
 
 interface QuestionData {
@@ -24,12 +23,15 @@ interface OptionPartyBreakdown {
   votes_count: number;
 }
 
-export default function PreguntasVariasSection() {
+interface PreguntasVariasSectionProps {
+  partyIndex: CanonicalPartyIndex;
+}
+
+export default function PreguntasVariasSection({ partyIndex }: PreguntasVariasSectionProps) {
   const [monarquia, setMonarquia] = useState<QuestionData[]>([]);
   const [division, setDivision] = useState<QuestionData[]>([]);
   const [pensiones, setPensiones] = useState<QuestionData[]>([]);
   const [partyBreakdownMap, setPartyBreakdownMap] = useState<Record<string, OptionPartyBreakdown[]>>({});
-  const [partyConfiguration, setPartyConfiguration] = useState<CanonicalPartyConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [breakdownLoading, setBreakdownLoading] = useState(true);
 
@@ -204,24 +206,12 @@ export default function PreguntasVariasSection() {
       }
     };
 
-    const loadBranding = async () => {
-      const { data, error } = await supabase
-        .from('party_configuration')
-        .select('party_key, display_name, color, logo_url')
-        .eq('is_active', true);
-
-      if (error) return;
-
-      setPartyConfiguration((data || []) as CanonicalPartyConfigRow[]);
-    };
-
     loadBreakdown();
-    loadBranding();
   }, [selectedEdad, selectedCCAAs]);
 
   const getBreakdownKey = (questionKey: string, label: string) => `${questionKey}::${label}`;
   const getPartyStyle = (party: string) => {
-    const brand = resolveCanonicalParty(party, createCanonicalPartyIndex(partyConfiguration));
+    const brand = resolveCanonicalParty(party, partyIndex);
     return { color: brand?.color || "#64748B", logo: brand?.logo_url || "", name: brand?.display_name || party };
   };
 

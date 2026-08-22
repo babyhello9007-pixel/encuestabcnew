@@ -13,10 +13,17 @@ describe("fuentes canónicas de resultados territoriales", () => {
     "results/PreguntasVariasSection.tsx",
   ];
 
-  it.each(components)("%s consulta party_configuration y resuelve identidad canónica", (component) => {
+  it.each(components)("%s recibe el índice canónico de Results.tsx y resuelve identidad canónica", (component) => {
     const source = readComponent(component);
-    expect(source).toContain("party_configuration");
-    expect(source).toMatch(/createCanonicalPartyIndex|resolveCanonicalParty/);
+    expect(source).toMatch(/partyIndex: CanonicalPartyIndex|partyIndex\?: CanonicalPartyIndex/);
+    expect(source).toMatch(/resolveCanonicalParty|resolveCanonicalPartyFromReferences/);
+  });
+
+  it("Results.tsx consulta una sola fuente canónica de partidos y líderes para las secciones territoriales", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/pages/Results.tsx"), "utf8");
+    expect(source).toContain('from("party_configuration")');
+    expect(source).toContain('from("party_leaders")');
+    expect(source).toContain("partyIndex={canonicalPartyIndex}");
   });
 
   it.each(components)("%s no recibe partyMeta heredado", (component) => {

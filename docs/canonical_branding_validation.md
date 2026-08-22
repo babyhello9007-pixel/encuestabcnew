@@ -20,3 +20,11 @@ La comprobación móvil de Resultados mostró el Top 5 completo, las cinco puntu
 Tras retirar los props de branding heredados, se verificó en Resultados el montaje de Provincia y el detalle de CCAA. La tabla de Andalucía mostró NÚCLEO NACIONAL, ADELANTE ANDALUCÍA, Se Acabó la Fiesta, VOX y PP con los nombres, colores y logotipos resueltos desde `party_configuration`; no se produjo ningún error de hooks.
 
 Preguntas Varias se abrió con datos reales y mostró el desglose de «República» con ERC, Se Acabó la Fiesta, VOX, Frente Obrero, PSOE y SUMAR. Cada tarjeta tomó su nombre visible, color y logotipo del índice de `party_configuration`; los componentes no reciben ya `partyMeta` desde Resultados.
+
+## Reproducción abierta de logotipos antiguos
+
+El 22 de agosto se volvió a abrir Resultados tras el aviso de persistencia. La pantalla principal mostró URL de `party_configuration` para PP, PSOE, VOX, ERC, Se Acabó la Fiesta, UPN y Aliança Catalana. La auditoría de DOM contrastó 22 logos visibles de tarjetas: los 22 coincidieron exactamente con `party_configuration.logo_url`.
+
+En Preguntas Varias se encontró una ruta visual heredada real: `ImageLoader` convertía `src` externos en logos embebidos aun cuando `PartyLogo` recibía `strictExternal`. El modo estricto se propagó al cargador y deja de exigir `crossOrigin="anonymous"`, de modo que los `logo_url` de la tabla se renderizan directamente. Se verificó que `Frente Amplio` y `Abstención - Ninguno` son filas activas de la tabla y que sus URL —respectivamente `iuleon.org/.../triangulo.png` y el icono de Flaticon— proceden de la configuración canónica actual, no de un catálogo cliente.
+
+La validación final en pantalla montó las tres secciones afectadas desde Results.tsx. CCAA mostró Andalucía y su detalle por partido; Preguntas Varias mostró los desgloses reales de forma del Estado, territorial y pensiones; y Provincia mostró la tabla de Sevilla. En la tabla provincial, las tres imágenes visibles (VOX, Falange y Se Acabó la Fiesta) se compararon directamente con los `logo_url` activos de `party_configuration`: las tres coincidieron y no quedó ninguna URL visual no canónica.

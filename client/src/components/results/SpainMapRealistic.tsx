@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 
 import { geoJsonToSpanish } from '@/lib/provinceGeoJsonMapper';
 import { calcularEscanosProvincia, calcularEscanosJuvenilesProvincia } from '@/lib/dhondtByProvince';
+import { resolveCanonicalParty, type CanonicalPartyIndex } from '@/lib/canonicalPartyConfig';
 
 interface ProvinceData {
   name: string;
@@ -18,7 +19,7 @@ interface SpainMapRealisticProps {
   provinciaMetricsMap?: Record<string, { edad_promedio: number; ideologia_promedio: number }>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
   isYouthAssociations?: boolean;
-  partyMeta?: Record<string, { color?: string }>;
+  partyIndex: CanonicalPartyIndex;
 }
 
 export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
@@ -26,15 +27,23 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
   provinciaMetricsMap = {},
   onProvinceClick,
   isYouthAssociations = false,
-  partyMeta = {},
+  partyIndex,
 }) => {
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getPartyBrand = useCallback(
+    (partyId: string) => resolveCanonicalParty(partyId, partyIndex),
+    [partyIndex],
+  );
   const getColorForParty = useCallback(
-    (partyId: string) => partyMeta[partyId]?.color || '#6B7280',
-    [partyMeta]
+    (partyId: string) => getPartyBrand(partyId)?.color || '#6B7280',
+    [getPartyBrand],
+  );
+  const getPartyDisplayName = useCallback(
+    (partyId: string) => getPartyBrand(partyId)?.display_name || partyId,
+    [getPartyBrand],
   );
 
   // Carga diferida del GeoJSON
@@ -186,12 +195,17 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
                 const porcentaje = totalVotos > 0 ? ((votos / totalVotos) * 100).toFixed(1) : '0.0';
                 const escanosPartido = escanos[partido] || 0;
                 const partyColor = getColorForParty(partido);
+                const partyBrand = getPartyBrand(partido);
+                const logo = partyBrand?.logo_url
+                  ? `<img src="${partyBrand.logo_url}" alt="" style="width:18px;height:18px;object-fit:contain;border-radius:50%;background:#fff;flex:0 0 auto;" onerror="this.style.display='none'" />`
+                  : `<span style="width:8px;height:8px;border-radius:50%;background:${partyColor};display:inline-block;flex:0 0 auto;"></span>`;
 
                 return `
                   <div style="display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; font-size: 10px;">
+                    ${logo}
                     <div style="flex: 1; min-width: 0;">
                       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                        <p style="font-weight: 600; color: #e2e8f0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${partido}</p>
+                        <p style="font-weight: 600; color: #e2e8f0; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${getPartyDisplayName(partido)}</p>
                         <span style="font-weight: 700; color: #cbd5e1; margin-left: 4px;">${porcentaje}%</span>
                       </div>
                       <div style="height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden;">

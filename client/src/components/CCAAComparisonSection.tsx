@@ -4,9 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Loader2 } from "lucide-react";
 import PartyLogo from "@/components/PartyLogo";
 import {
-  createCanonicalPartyIndex,
   resolveCanonicalPartyFromReferences,
-  type CanonicalPartyConfigRow,
+  type CanonicalPartyIndex,
 } from "@/lib/canonicalPartyConfig";
 
 export interface PartyConfig {
@@ -39,35 +38,18 @@ export interface CCAASummary {
   ideologia_promedio: number;
 }
 
-export function CCAAComparisonSection() {
+interface CCAAComparisonSectionProps {
+  partyIndex: CanonicalPartyIndex;
+}
+
+export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps) {
   const [ccaaResults, setCCAAReslts] = useState<CCAAReslts[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
-  const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);
   const [selectedCCAAs, setSelectedCCAAs] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [analysisType, setAnalysisType] = useState<"generales" | "autonomicas">("generales");
 
-  // 1. Cargar la configuración de partidos de party_configuration
-  useEffect(() => {
-    const fetchPartyConfigurations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("party_configuration")
-          .select("*")
-          .eq("is_active", true);
-
-        if (error) throw error;
-
-        if (data) setPartyConfigs(data as CanonicalPartyConfigRow[]);
-      } catch (err) {
-        console.error("Error fetching party configuration:", err);
-      }
-    };
-
-    fetchPartyConfigurations();
-  }, []);
-
-  // 2. Cargar datos de resumen y detalle de las CCAA
+  // Los votos proceden de vistas; la identidad visual llega desde Results.tsx.
   useEffect(() => {
     const fetchCCAAResults = async () => {
       try {
@@ -102,8 +84,6 @@ export function CCAAComparisonSection() {
 
     fetchCCAAResults();
   }, [analysisType]);
-
-  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
 
   // party_configuration es la fuente canónica de identidad visual.
   const getPartyMeta = (result: CCAAReslts) => {
@@ -154,7 +134,7 @@ export function CCAAComparisonSection() {
       });
       return data;
     });
-  }, [uniquePartidos, selectedCCAAResults, selectedCCAAs, partyConfigs]);
+  }, [uniquePartidos, selectedCCAAResults, selectedCCAAs, partyIndex]);
 
   const summaryComparison = useMemo(() => {
     return selectedCCAAs

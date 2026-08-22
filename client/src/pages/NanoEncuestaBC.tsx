@@ -165,6 +165,7 @@ function ThankYouScreen({ onResults, onRateLeaders, onHome }: { onResults: () =>
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function NanoEncuestaBC() {
+  const navigationRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(0);
   const [responses, setResponses] = useState<NanoSurveyResponse>({});
@@ -323,6 +324,11 @@ export default function NanoEncuestaBC() {
         setResponses(prev => ({ ...prev, provincia: undefined }));
         setCCAAWarning(`${prov} no pertenece a ${value}; selecciona una provincia de la nueva comunidad.`);
       } else setCCAAWarning(null);
+    }
+    if (currentStepData.type === "party" || currentStepData.type === "youth_party") {
+      window.requestAnimationFrame(() => {
+        navigationRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
     }
   };
 
@@ -1054,8 +1060,8 @@ export default function NanoEncuestaBC() {
           .nc-ideology-grid { grid-template-columns: repeat(4, 1fr); gap: 3px; }
           .nc-ideology-btn { font-size: 10px; }
           .nc-nav { flex-direction: column; gap: 6px; }
-          .nc-btn-prev { padding: 10px 12px; font-size: 12px; }
-          .nc-btn-next { padding: 10px 12px; font-size: 13px; }
+          .nc-btn-next { order: 1; padding: 11px 12px; font-size: 13px; }
+          .nc-btn-prev { order: 2; align-self: flex-start; padding: 7px 10px; font-size: 11px; }
           .nc-btn-primary { padding: 10px 16px; font-size: 13px; }
           .nc-btn-outline { padding: 10px 16px; font-size: 13px; }
           .nc-cooldown-card, .nc-thankyou-card { padding: 24px 16px; }
@@ -1482,7 +1488,7 @@ export default function NanoEncuestaBC() {
             </div>
 
             {/* Navigation */}
-            <div className="nc-nav">
+            <div className="nc-nav" ref={navigationRef}>
               <button className="nc-btn-prev" onClick={() => navigate("prev")} disabled={currentStep === 0}>
                 <ChevronLeft size={16} />
                 Anterior

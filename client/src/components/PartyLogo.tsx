@@ -60,6 +60,7 @@ export default function PartyLogo({ src, alt, partyName, partyId, size = 48, str
         alt={finalAlt} 
         fallbackText={finalPartyName.substring(0, 2).toUpperCase()}
         size={size}
+        strictExternal={strictExternal}
       />
     </div>
   );

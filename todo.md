@@ -797,3 +797,11 @@
 - [x] Corregir el orden condicional de hooks en ProvincesResultsSection y reproducir Resultados sin error
 - [x] Auditar y forzar que Provincia, CCAA y Preguntas Varias resuelvan identidad visual solo con party_configuration; cualquier líder mostrado en la aplicación se limita a party_leaders
 - [x] Validar en navegador Provincia, CCAA y Preguntas Varias contra filas reales de party_configuration; no muestran líderes propios fuera de party_leaders
+- [x] Reproducir en Results.tsx el fallo persistente de Provincia, CCAA y Preguntas Varias con las claves reales de party_configuration y party_leaders
+- [x] Hacer que Results.tsx entregue un único índice canónico de party_configuration y party_leaders a Provincia, CCAA y Preguntas Varias, sin rutas visuales heredadas
+- [x] Verificar visualmente en las tres secciones los alias UPN, Se Acabó La Fiesta, Aliança Catalana y los colores #00000 saneados
+- [x] Corregir el partyIndex indefinido de SpainMapRealistic y reproducir el mapa territorial sin excepción
+- [ ] En móvil, colocar Siguiente antes de Anterior y reducir visualmente el botón Anterior de NanoEncuesta
+- [ ] Desplazar NanoEncuesta al botón Siguiente al seleccionar una opción de partidos o asociaciones juveniles
+- [x] Prioridad absoluta: no cerrar hasta que Results.tsx inyecte party_configuration y party_leaders canónicos en Provincia, CCAA y Preguntas Varias y se reproduzca sin fallos
+- [x] Localizar y eliminar la ruta exacta que aún muestra logos antiguos en Results.tsx, comparando cada src visible con party_configuration.logo_url

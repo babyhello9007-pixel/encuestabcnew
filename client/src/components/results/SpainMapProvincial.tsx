@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { PARTIES_GENERAL } from '@/lib/surveyData';
 import { getEscanosPorProvincia, calcularEscanosProvincia, calcularEscanosJuvenilesProvincia } from '@/lib/dhondtByProvince';
 import { VerifySeatsModal } from '@/components/VerifySeatsModal';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Grid3x3, Map } from 'lucide-react';
+import { resolveCanonicalParty, type CanonicalPartyIndex } from '@/lib/canonicalPartyConfig';
 
 interface ProvinceData {
   name: string;
@@ -16,7 +16,7 @@ interface SpainMapProvincialProps {
   votosPorProvincia: Record<string, Record<string, number>>;
   onProvinceClick?: (province: string, data: ProvinceData, votos: Record<string, number>, escanos: Record<string, number>) => void;
   isYouthAssociations?: boolean;  // true para Asociaciones Juveniles, false para Elecciones Generales
-  partyMeta?: Record<string, { color?: string }>;
+  partyIndex: CanonicalPartyIndex;
 }
 
 // Coordenadas aproximadas del centroide de cada provincia para el mapa realista
@@ -81,7 +81,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
   votosPorProvincia,
   onProvinceClick,
   isYouthAssociations = false,
-  partyMeta = {},
+  partyIndex,
 }) => {
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -143,7 +143,9 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
     tieneData: Object.keys(votosPorProvincia).includes(province),
   }));
 
-  const getColorForParty = (partyId: string) => partyMeta[partyId]?.color || "#9CA3AF";
+  const getPartyBrand = (partyId: string) => resolveCanonicalParty(partyId, partyIndex);
+  const getColorForParty = (partyId: string) => getPartyBrand(partyId)?.color || "#9CA3AF";
+  const getPartyDisplayName = (partyId: string) => getPartyBrand(partyId)?.display_name || partyId;
 
   return (
     <div className="w-full space-y-4">
@@ -202,11 +204,11 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
                 backgroundColor: tieneData ? getColorForParty(data.ganador) : '#4B5563',
                 opacity: selectedProvince === province ? 1 : (tieneData ? 0.8 : 0.4),
               }}
-              title={tieneData ? `${province}: ${data.ganador} (${data.porcentajeGanador.toFixed(1)}%)` : `${province}: Sin datos - Responde la encuesta`}
+              title={tieneData ? `${province}: ${getPartyDisplayName(data.ganador)} (${data.porcentajeGanador.toFixed(1)}%)` : `${province}: Sin datos - Responde la encuesta`}
             >
               <div className="text-white truncate">{province}</div>
               <div className="text-gray-200 text-xs mt-1">
-                {tieneData ? (data.ganador || 'N/A') : '?'}
+                {tieneData ? (getPartyDisplayName(data.ganador) || 'N/A') : '?'}
               </div>
             </button>
           ))}
@@ -298,7 +300,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
                         textAnchor="middle"
                         className="text-xs fill-[#555555]"
                       >
-                        {data.ganador}
+                        {getPartyDisplayName(data.ganador)}
                       </text>
                     </g>
                   )}
@@ -353,15 +355,17 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
                 ).reduce((a, b) => a + b, 0);
                 const porcentaje = total > 0 ? (votos / total) * 100 : 0;
                 const escanosPart = calcularEscanosPorProvinciaCorrecta(selectedProvince, votosPorProvincia[selectedProvince] || {})[partido] || 0;
-                const partyName = PARTIES_GENERAL[partido as keyof typeof PARTIES_GENERAL]?.name || partido;
+                const partyName = getPartyDisplayName(partido);
 
+                const partyBrand = getPartyBrand(partido);
                 return (
                   <div key={partido} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded"
-                        style={{ backgroundColor: getColorForParty(partido) }}
-                      />
+                      {partyBrand?.logo_url ? (
+                        <img src={partyBrand.logo_url} alt="" className="w-5 h-5 rounded object-contain bg-white/90" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+                      ) : (
+                        <div className="w-3 h-3 rounded" style={{ backgroundColor: getColorForParty(partido) }} />
+                      )}
                       <span className="text-gray-300">{partyName}</span>
                     </div>
                     <div className="text-right">

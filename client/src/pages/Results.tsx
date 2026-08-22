@@ -9,8 +9,6 @@ import html2canvas from "html2canvas";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { LEADERS } from '@/lib/surveyData';
-import { EMBEDDED_LEADERS } from '@/lib/embeddedLeaders';
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
 import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
 import {
@@ -51,7 +49,7 @@ import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
-import { normalizePartyReference, sanitizePartyColor } from "@/lib/canonicalPartyConfig";
+import { createCanonicalPartyIndex, normalizePartyReference, resolveCanonicalParty, sanitizePartyColor, type CanonicalPartyConfigRow } from "@/lib/canonicalPartyConfig";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -63,6 +61,12 @@ interface CustomSimulatorParty { key: string; name: string; color: string; }
 interface PartyLeader {
   id: number; party_key: string; leader_name: string; photo_url: string;
   is_active: boolean; display_name: string; color: string; logo_url: string;
+}
+interface CanonicalPartyLeaderRow {
+  party_key: string;
+  leader_name: string;
+  photo_url: string;
+  is_active?: boolean | null;
 }
 interface LiderPreferido {
   partido: string; lider_preferido: string; votos: number; porcentaje: number;
@@ -1747,6 +1751,18 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     return m;
   }, [generalPartyMap, customParties]);
 
+  const simulatorPartyIndex = useMemo(
+    () => createCanonicalPartyIndex(
+      Object.values(simulatorPartyMap).map((party) => ({
+        party_key: party.key,
+        display_name: party.name,
+        color: party.color,
+        logo_url: party.logo,
+      })) as CanonicalPartyConfigRow[],
+    ),
+    [simulatorPartyMap],
+  );
+
   useEffect(() => {
     if (!Object.keys(votosPorProvincia).length) return;
     setProvinciaVotes(prev => {
@@ -1978,8 +1994,8 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
           </div>
         </div>
         {mapView === "schematic"
-          ? <SpainMapProvincial votosPorProvincia={effectiveVotesByProvince} isYouthAssociations={false} partyMeta={simulatorPartyMap} onProvinceClick={(p, d, v, e) => { setSimProvinciaSeleccionada(p); setSimVotosProvincia(v); setSimEscanosProvincia(e); }} />
-          : <SpainMapRealistic votosPorProvincia={effectiveVotesByProvince} provinciaMetricsMap={provinciaMetricsMap} isYouthAssociations={false} partyMeta={simulatorPartyMap} onProvinceClick={(p, d, v, e) => { setSimProvinciaSeleccionada(p); setSimVotosProvincia(v); setSimEscanosProvincia(e); }} />}
+          ? <SpainMapProvincial votosPorProvincia={effectiveVotesByProvince} isYouthAssociations={false} partyIndex={simulatorPartyIndex} onProvinceClick={(p, d, v, e) => { setSimProvinciaSeleccionada(p); setSimVotosProvincia(v); setSimEscanosProvincia(e); }} />
+          : <SpainMapRealistic votosPorProvincia={effectiveVotesByProvince} provinciaMetricsMap={provinciaMetricsMap} isYouthAssociations={false} partyIndex={simulatorPartyIndex} onProvinceClick={(p, d, v, e) => { setSimProvinciaSeleccionada(p); setSimVotosProvincia(v); setSimEscanosProvincia(e); }} />}
       </div>
 
       <div className="r-section">
@@ -2293,6 +2309,7 @@ export default function Results() {
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("transferencia") === "1"
   );
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
+  const [canonicalPartyRows, setCanonicalPartyRows] = useState<CanonicalPartyConfigRow[]>([]);
   const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
   const [leadersSubTab, setLeadersSubTab] = useState<"individual" | "porpartido">("individual");
   const [coherenciaRows, setCoherenciaRows] = useState<any[]>([]);
@@ -2327,6 +2344,11 @@ export default function Results() {
     });
     return d;
   }, [partyConfigData]);
+
+  const canonicalPartyIndex = useMemo(
+    () => createCanonicalPartyIndex(canonicalPartyRows),
+    [canonicalPartyRows],
+  );
 
   const resolvePartyKey = (value: string, metaMap: Record<string, PartyMeta>) => {
     if (metaMap[value]) return value;
@@ -2367,16 +2389,33 @@ export default function Results() {
 
   useEffect(() => {
     const loadPartyConfig = async () => {
-      const { data } = await supabase.from("party_configuration").select("party_key, display_name, color, logo_url, party_type, is_active").eq("is_active", true);
-      const all = data || [];
+      const [partyConfigResult, leadersResult] = await Promise.all([
+        supabase.from("party_configuration").select("party_key, display_name, color, logo_url, party_type, is_active").eq("is_active", true),
+        supabase.from("party_leaders").select("party_key, leader_name, photo_url, is_active").eq("is_active", true),
+      ]);
+      const all = (partyConfigResult.data || []) as CanonicalPartyConfigRow[];
+      setCanonicalPartyRows(all);
       setRuntimePartyConfig(all.map((r: any) => ({ key: r.party_key, displayName: r.display_name, color: r.color, logoUrl: r.logo_url, partyType: r.party_type })));
       setPartyConfigData({
         parties: all.filter((r: any) => r.party_type === "general").map((r: any) => ({ partyKey: r.party_key, displayName: r.display_name, color: r.color, logoUrl: r.logo_url })),
         youth: all.filter((r: any) => ["youth", "asociacion_juvenil", "juvenile"].includes(r.party_type)).map((r: any) => ({ partyKey: r.party_key, displayName: r.display_name, color: r.color, logoUrl: r.logo_url }))
       });
+      const leaderPhotoIndex: Record<string, string> = {};
+      (leadersResult.data || []).forEach((leader: any) => {
+        const partyKey = normalizePartyReference(leader.party_key);
+        const leaderName = normalizePartyReference(leader.leader_name);
+        const photoUrl = String(leader.photo_url || "").trim();
+        if (!leaderName || !photoUrl) return;
+        if (partyKey) leaderPhotoIndex[`${partyKey}::${leaderName}`] = photoUrl;
+        if (!leaderPhotoIndex[leaderName]) leaderPhotoIndex[leaderName] = photoUrl;
+      });
+      setLeaderPhotoByName(leaderPhotoIndex);
     };
     loadPartyConfig();
-    const ch = supabase.channel("party-config-results").on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, loadPartyConfig).subscribe();
+    const ch = supabase.channel("party-and-leaders-results")
+      .on("postgres_changes", { event: "*", schema: "public", table: "party_configuration" }, loadPartyConfig)
+      .on("postgres_changes", { event: "*", schema: "public", table: "party_leaders" }, loadPartyConfig)
+      .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
 
@@ -2603,12 +2642,6 @@ export default function Results() {
             })),
           }));
           setNocheElectoralRows(normalized as NocheElectoralRow[]);
-        } catch {}
-        try {
-          const { data } = await supabase.from("party_leaders").select("leader_name, photo_url").eq("is_active", true);
-          const map: Record<string, string> = {};
-          (data || []).forEach((l: any) => { if (l.leader_name && l.photo_url) map[String(l.leader_name).trim().toLowerCase()] = l.photo_url; });
-          setLeaderPhotoByName(map);
         } catch {}
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
@@ -2885,19 +2918,19 @@ export default function Results() {
               {showPartyList && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {(sortBy === "votos" ? [...stats].sort((a, b) => b.votos - a.votos) : sortBy === "escanos" ? [...stats].sort((a, b) => b.escanos - a.escanos) : sortBy === "barometro" ? [...stats].sort((a, b) => (barometroBC[b.id] ?? 0) - (barometroBC[a.id] ?? 0)) : [...stats].sort((a, b) => (mediaEncuestas[b.id] ?? 0) - (mediaEncuestas[a.id] ?? 0))).map(party => {
-                    const lookup = activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup;
-                    const rk = resolvePartyKey(party.id, lookup);
-                    const logoUrl = lookup[rk]?.logo || party.logo || "";
-                    const partyColor = lookup[rk]?.color || party.color || "#e8465a";
-                    const edadMedia = edadMediaPorPartido[party.nombre] || edadMediaPorPartido[party.id];
+                    const canonicalParty = resolveCanonicalParty(party.id, canonicalPartyIndex) || resolveCanonicalParty(party.nombre, canonicalPartyIndex);
+                    const displayName = canonicalParty?.display_name || party.nombre;
+                    const logoUrl = canonicalParty?.logo_url || "";
+                    const partyColor = canonicalParty?.color || "#64748B";
+                    const edadMedia = edadMediaPorPartido[displayName] || edadMediaPorPartido[party.id] || edadMediaPorPartido[party.nombre];
                     return (
-                      <div key={party.id} className="r-party-card" style={{ borderColor: `${partyColor}45`, ["--party-accent" as any]: partyColor }} onClick={() => setSelectedPartyForStats(party.nombre)}>
+                      <div key={party.id} className="r-party-card" style={{ borderColor: `${partyColor}45`, ["--party-accent" as any]: partyColor }} onClick={() => setSelectedPartyForStats(displayName)}>
                         <div className="r-party-card-top">
                           <div className="r-party-logo-wrap" style={{ background: `${partyColor}18` }}>
-                            <PartyLogoImg src={logoUrl} name={party.nombre} color={partyColor} size={48} />
+                            <PartyLogoImg src={logoUrl} name={displayName} color={partyColor} size={48} />
                           </div>
                           <div className="r-party-info">
-                            <div className="r-party-name">{party.nombre}</div>
+                            <div className="r-party-name">{displayName}</div>
                             <div className="r-party-votes">{party.votos.toLocaleString("es-ES")} votos</div>
                             {activeTab === "general" && edadMedia && (
                               <div className="r-party-edad">
@@ -3050,12 +3083,12 @@ export default function Results() {
                 </div>
               )}
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
-              {activeTab === "preguntas-varias" && <PreguntasVariasSection />}
+              {activeTab === "preguntas-varias" && <PreguntasVariasSection partyIndex={canonicalPartyIndex} />}
               {activeTab === "crisis-ceuta" && <CrisisCeutaSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "lideres-ranking" && <LideresRankingSection />}
-              {activeTab === "ccaa" && <CCAAResltsSection />}
-              {activeTab === "provincias" && <ProvincesResultsSection />}
-              {activeTab === "comparacion-ccaa" && <CCAAComparisonSection />}
+              {activeTab === "ccaa" && <CCAAResltsSection partyIndex={canonicalPartyIndex} />}
+              {activeTab === "provincias" && <ProvincesResultsSection partyIndex={canonicalPartyIndex} />}
+              {activeTab === "comparacion-ccaa" && <CCAAComparisonSection partyIndex={canonicalPartyIndex} />}
               {activeTab === "encuestadoras-externas" && <EncuestadorasComparativa />}
               {activeTab === "lideres-partidos" && <LideresDePartidosSection partyMeta={generalPartyMetaLookup} />}
 
@@ -3076,10 +3109,10 @@ export default function Results() {
                         <>
                           <div className="r-leader-grid">
                             {leaderRatings.map(leader => {
-                              const km: Record<string, keyof typeof LEADERS> = { val_feijoo: "FEIJOO", val_sanchez: "SANCHEZ", val_abascal: "ABASCAL", val_alvise: "ALVISE", val_yolanda_diaz: "YOLANDA", val_irene_montero: "IRENE", val_ayuso: "AYUSO", val_buxade: "BUXADE" };
-                              const lk = km[leader.fieldName]; const ld = lk ? LEADERS[lk] : null; let li: string | undefined;
-                              if (ld?.image) { const fn = ld.image.split("/").pop(); if (fn) { const ek = Object.keys(EMBEDDED_LEADERS).find(k => k.toLowerCase().includes(fn.toLowerCase().replace(/\.[^/.]+$/, ""))); if (ek) li = EMBEDDED_LEADERS[ek]; } }
-                              if (!li && ld?.image) li = ld.image;
+                              const [partyKey, ...leaderNameParts] = leader.fieldName.split("::");
+                              const canonicalLeaderName = leaderNameParts.join("::") || leader.name;
+                              const normalizedLeaderName = normalizePartyReference(canonicalLeaderName);
+                              const li = leaderPhotoByName[`${normalizePartyReference(partyKey)}::${normalizedLeaderName}`] || leaderPhotoByName[normalizedLeaderName];
                               const scoreColor = leader.average >= 7 ? "#22c55e" : leader.average >= 4 ? "#f59e0b" : "#e8465a";
                               return (
                                 <div key={leader.fieldName} className="r-leader-card">
@@ -3133,8 +3166,8 @@ export default function Results() {
                           </div>
                         </div>
                         {mapView === "schematic"
-                          ? <SpainMapProvincial votosPorProvincia={votosPorProvincia} isYouthAssociations={false} partyMeta={generalPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionada(p); setVotosPorPartidoProvincia(v); setEscanosProvincia(e); }} />
-                          : <SpainMapRealistic votosPorProvincia={votosPorProvincia} provinciaMetricsMap={provinciaMetricsMap} isYouthAssociations={false} partyMeta={generalPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionada(p); setVotosPorPartidoProvincia(v); setEscanosProvincia(e); }} />}
+                          ? <SpainMapProvincial votosPorProvincia={votosPorProvincia} isYouthAssociations={false} partyIndex={canonicalPartyIndex} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionada(p); setVotosPorPartidoProvincia(v); setEscanosProvincia(e); }} />
+                          : <SpainMapRealistic votosPorProvincia={votosPorProvincia} provinciaMetricsMap={provinciaMetricsMap} isYouthAssociations={false} partyIndex={canonicalPartyIndex} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionada(p); setVotosPorPartidoProvincia(v); setEscanosProvincia(e); }} />}
                       </div>
                       <div className="r-section">
                         <div className="r-section-title">Pactómetro</div>
@@ -3165,8 +3198,8 @@ export default function Results() {
                           </div>
                         </div>
                         {mapView === "schematic"
-                          ? <SpainMapProvincial votosPorProvincia={votosPorProvinciaJuveniles} isYouthAssociations={true} partyMeta={youthPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionadaJuveniles(p); setVotosPorPartidoProvinciaJuveniles(v); setEscanosProvinciaJuveniles(e); }} />
-                          : <SpainMapRealistic votosPorProvincia={votosPorProvinciaJuveniles} provinciaMetricsMap={{}} isYouthAssociations={true} partyMeta={youthPartyMetaLookup} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionadaJuveniles(p); setVotosPorPartidoProvinciaJuveniles(v); setEscanosProvinciaJuveniles(e); }} />}
+                          ? <SpainMapProvincial votosPorProvincia={votosPorProvinciaJuveniles} isYouthAssociations={true} partyIndex={canonicalPartyIndex} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionadaJuveniles(p); setVotosPorPartidoProvinciaJuveniles(v); setEscanosProvinciaJuveniles(e); }} />
+                          : <SpainMapRealistic votosPorProvincia={votosPorProvinciaJuveniles} provinciaMetricsMap={{}} isYouthAssociations={true} partyIndex={canonicalPartyIndex} onProvinceClick={(p, d, v, e) => { setProvinciaSeleccionadaJuveniles(p); setVotosPorPartidoProvinciaJuveniles(v); setEscanosProvinciaJuveniles(e); }} />}
                       </div>
                       <div className="r-section">
                         {youthStats.length > 0 && <PactometerInteractive stats={youthStats.map(s => ({ id: s.id, nombre: s.nombre, escanos: s.escanos, porcentaje: s.porcentaje, color: s.color }))} totalSeats={100} requiredForMajority={51} />}

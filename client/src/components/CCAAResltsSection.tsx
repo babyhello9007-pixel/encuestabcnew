@@ -4,9 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Loader2, AlertCircle } from "lucide-react";
 import PartyLogo from "@/components/PartyLogo";
 import {
-  createCanonicalPartyIndex,
   resolveCanonicalPartyFromReferences,
-  type CanonicalPartyConfigRow,
+  type CanonicalPartyIndex,
 } from "@/lib/canonicalPartyConfig";
 
 export interface PartyConfig {
@@ -39,10 +38,13 @@ export interface CCAASummary {
   ideologia_promedio: number;
 }
 
-export function CCAAResltsSection() {
+interface CCAAResltsSectionProps {
+  partyIndex: CanonicalPartyIndex;
+}
+
+export function CCAAResltsSection({ partyIndex }: CCAAResltsSectionProps) {
   const [ccaaResults, setCCAAResults] = useState<CCAAResults[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
-  const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);
   
   const [selectedCCAA, setSelectedCCAA] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -50,27 +52,7 @@ export function CCAAResltsSection() {
   const [viewMode, setViewMode] = useState<"summary" | "detail">("summary");
   const [analysisType, setAnalysisType] = useState<"generales" | "autonomicas">("generales");
 
-  // 1. Cargar la configuración de partidos de party_configuration
-  useEffect(() => {
-    const fetchPartyConfigurations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("party_configuration")
-          .select("*")
-          .eq("is_active", true);
-
-        if (error) throw error;
-
-        if (data) setPartyConfigs(data as CanonicalPartyConfigRow[]);
-      } catch (err) {
-        console.error("Error fetching party configuration:", err);
-      }
-    };
-
-    fetchPartyConfigurations();
-  }, []);
-
-  // 2. Cargar datos según el tipo de análisis (Generales o Autonómicas)
+  // Los votos proceden de las vistas; la identidad visual llega desde Results.tsx.
   useEffect(() => {
     const fetchCCAAResults = async () => {
       try {
@@ -120,8 +102,6 @@ export function CCAAResltsSection() {
     fetchCCAAResults();
   }, [analysisType]);
 
-  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
-
   // party_configuration es la fuente canónica de identidad visual.
   const getPartyMeta = (result: CCAAResults) => {
     const dbParty = resolveCanonicalPartyFromReferences([result.party_key, result.partido], partyIndex);
@@ -148,7 +128,7 @@ export function CCAAResltsSection() {
         logo: meta.logo
       };
     });
-  }, [selectedCCAAResults, partyConfigs]);
+  }, [selectedCCAAResults, partyIndex]);
 
   const formatNumber = (num: number) => new Intl.NumberFormat("es-ES").format(num);
 

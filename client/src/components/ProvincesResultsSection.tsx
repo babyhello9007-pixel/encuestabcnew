@@ -5,9 +5,8 @@ import { Loader2, Search } from "lucide-react";
 import { PROVINCES } from "@/lib/surveyData";
 import PartyLogo from "@/components/PartyLogo";
 import {
-  createCanonicalPartyIndex,
   resolveCanonicalPartyFromReferences,
-  type CanonicalPartyConfigRow,
+  type CanonicalPartyIndex,
 } from "@/lib/canonicalPartyConfig";
 
 interface ProvinceResults {
@@ -28,14 +27,17 @@ interface ProvinceSummary {
   ideologia_promedio: number;
 }
 
-export function ProvincesResultsSection() {
+interface ProvincesResultsSectionProps {
+  partyIndex: CanonicalPartyIndex;
+}
+
+export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionProps) {
   const [provinceResults, setProvinceResults] = useState<ProvinceResults[]>([]);
   const [provinceSummary, setProvinceSummary] = useState<ProvinceSummary[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"summary" | "detail">("summary");
-  const [partyConfigs, setPartyConfigs] = useState<CanonicalPartyConfigRow[]>([]);
 
   useEffect(() => {
     const fetchProvinceResults = async () => {
@@ -69,20 +71,6 @@ export function ProvincesResultsSection() {
 
     fetchProvinceResults();
   }, []);
-
-  useEffect(() => {
-    const loadPartyConfigurations = async () => {
-      const { data, error } = await supabase.from("party_configuration").select("party_key, display_name, color, logo_url").eq("is_active", true);
-      if (error) {
-        console.warn("No se pudo cargar party_configuration para provincias:", error.message);
-        return;
-      }
-      setPartyConfigs((data || []) as CanonicalPartyConfigRow[]);
-    };
-    loadPartyConfigurations();
-  }, []);
-
-  const partyIndex = useMemo(() => createCanonicalPartyIndex(partyConfigs), [partyConfigs]);
 
   if (loading) {
     return (

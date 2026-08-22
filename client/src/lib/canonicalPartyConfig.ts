@@ -24,6 +24,11 @@ export interface CanonicalPartyIndex {
   byDisplayName: Map<string, CanonicalPartyConfigRow>;
 }
 
+const EMPTY_CANONICAL_PARTY_INDEX: CanonicalPartyIndex = {
+  byKey: new Map<string, CanonicalPartyConfigRow>(),
+  byDisplayName: new Map<string, CanonicalPartyConfigRow>(),
+};
+
 export function normalizePartyReference(value?: string | null): string {
   return String(value || "")
     .normalize("NFD")
@@ -59,12 +64,13 @@ export function createCanonicalPartyIndex(rows: CanonicalPartyConfigRow[]): Cano
 
 export function resolveCanonicalParty(
   reference: string | null | undefined,
-  index: CanonicalPartyIndex,
+  index?: CanonicalPartyIndex | null,
 ): CanonicalPartyBrand | null {
   const normalized = normalizePartyReference(reference);
   if (!normalized) return null;
 
-  const party = index.byKey.get(normalized) || index.byDisplayName.get(normalized);
+  const activeIndex = index || EMPTY_CANONICAL_PARTY_INDEX;
+  const party = activeIndex.byKey.get(normalized) || activeIndex.byDisplayName.get(normalized);
   if (!party) return null;
 
   return {
@@ -77,7 +83,7 @@ export function resolveCanonicalParty(
 
 export function resolveCanonicalPartyFromReferences(
   references: Array<string | null | undefined>,
-  index: CanonicalPartyIndex,
+  index?: CanonicalPartyIndex | null,
 ): CanonicalPartyBrand | null {
   for (const reference of references) {
     const result = resolveCanonicalParty(reference, index);

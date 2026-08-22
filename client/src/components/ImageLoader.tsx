@@ -8,6 +8,7 @@ interface ImageLoaderProps {
   size?: number;
   className?: string;
   style?: React.CSSProperties;
+  strictExternal?: boolean;
 }
 
 export default function ImageLoader({ 
@@ -16,7 +17,8 @@ export default function ImageLoader({
   fallbackText = '?',
   size = 48,
   className = '',
-  style = {}
+  style = {},
+  strictExternal = false,
 }: ImageLoaderProps) {
   const isValidImageSource = (value: string) => {
     if (!value) return false;
@@ -33,7 +35,8 @@ export default function ImageLoader({
   const isEphemeralProfileUrl = (value: string) => /(^|\/\/)(pbs\.twimg\.com|media\.licdn\.com)\//i.test(value);
 
   const [currentSrc, setCurrentSrc] = useState<string>(() => {
-    if (!isValidImageSource(src) || isEphemeralProfileUrl(src)) return '';
+    if (!isValidImageSource(src) || (!strictExternal && isEphemeralProfileUrl(src))) return '';
+    if (strictExternal) return src;
     // Primero intenta obtener desde logos embebidos
     const filename = src.split('/').pop() || '';
     if (filename && EMBEDDED_LOGOS[filename]) {
@@ -54,10 +57,17 @@ export default function ImageLoader({
   const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
-    if (!isValidImageSource(src) || isEphemeralProfileUrl(src)) {
+    if (!isValidImageSource(src) || (!strictExternal && isEphemeralProfileUrl(src))) {
       setCurrentSrc('');
       setHasError(true);
       setIsLoading(false);
+      return;
+    }
+    if (strictExternal) {
+      setCurrentSrc(src);
+      setHasError(false);
+      setIsLoading(true);
+      setAttemptCount(0);
       return;
     }
     const filename = src.split('/').pop() || '';
@@ -78,7 +88,7 @@ export default function ImageLoader({
     setHasError(false);
     setIsLoading(true);
     setAttemptCount(0);
-  }, [src]);
+  }, [src, strictExternal]);
 
   const generateFallbacks = (originalSrc: string): string[] => {
     const fallbacks = [originalSrc];
@@ -129,6 +139,11 @@ export default function ImageLoader({
 
   const handleError = () => {
     if (!currentSrc) {
+      setHasError(true);
+      setIsLoading(false);
+      return;
+    }
+    if (strictExternal) {
       setHasError(true);
       setIsLoading(false);
       return;
@@ -250,7 +265,7 @@ export default function ImageLoader({
       }}
       loading="eager"
       decoding="async"
-      crossOrigin="anonymous"
+      crossOrigin={strictExternal ? undefined : "anonymous"}
       className={className}
     />
   );
