@@ -420,7 +420,7 @@
 - [x] Mantener consistencia visual con botones de Elecciones Generales
 
 ## Sugerencias de Mejoras Futuras
-- [ ] Agregar análisis de segmentación demográfica por provincia (edad e ideología)
+- [x] Agregar análisis de segmentación demográfica por provincia (edad e ideología)
 - [ ] Implementar sistema de notificaciones para cambios significativos en resultados
 - [ ] Crear página de comparativa histórica si hay datos de encuestas anteriores
 - [ ] Agregar filtros avanzados en página de resultados (por CCAA, provincia, rango de edad)
@@ -428,16 +428,16 @@
 - [ ] Crear dashboard de administrador con estadísticas de participación
 
 ## Integración de Líderes en NanoEncuestaBC - NUEVO
-- [ ] Agregar pregunta 20 de valoración de líderes en NanoEncuestaBC
-- [ ] Filtrar líderes según partido votado en Elecciones Generales
-- [ ] Mostrar solo líderes relevantes del partido seleccionado
-- [ ] Mantener página original de líderes (/lideres) sin cambios
-- [ ] Guardar checkpoint con integración de líderes
+- [x] Agregar pregunta 20 de valoración de líderes en NanoEncuestaBC
+- [x] Filtrar líderes según partido votado en Elecciones Generales
+- [x] Mostrar solo líderes relevantes del partido seleccionado
+- [x] Mantener página original de líderes (/lideres) sin cambios
+- [x] Guardar checkpoint con integración de líderes
 
 
 ## Tareas Nuevas - Enero 2026
 - [x] Eliminar PARTIDO NACIONAL ALONSISTA de la encuesta
-- [ ] Forzar visualización de TODOS los logos de partidos (no emojis)
+- [x] Forzar visualización de TODOS los logos de partidos (no emojis)
 - [x] Mejorar opción de compartir resultados (infografía y PDF) - Agregadas opciones WhatsApp, Telegram, LinkedIn
 - [x] Implementar correctamente tablas SQL de Encuestas Varias - Tablas encuestas_varias y respuestas_encuestas_varias creadas
 - [x] Agregar pactómetros en Mapa y Hemiciclo - Componente Pactometer.tsx creado
@@ -716,7 +716,7 @@
 - [x] Mostrar una tabla con las tres mayores transferencias bajo el Sankey
 - [x] Mostrar indicador visual durante el recálculo del Sankey por fechas
 - [x] Reparar el desglose por partido de Preguntas Varias con datos o vista Supabase compatibles
-- [ ] Corregir logotipos y presentación de Provincia, CCAA y secciones territoriales
+- [x] Corregir logotipos y presentación de Provincia, CCAA y secciones territoriales
 - [x] Ocultar Primarias de la navegación pública de Resultados
 - [x] Reparar y mejorar visual y datos del Contexto Histórico
 - [x] Reparar el botón superior de exportación PNG de Resultados
