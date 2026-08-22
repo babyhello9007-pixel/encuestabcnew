@@ -79,6 +79,38 @@ function csvEscape(value: string | number): string {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer el logotipo para la exportación."));
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Convierte las imágenes externas del SVG en data URL para que Canvas no las omita al exportar. */
+async function inlineSvgLogos(svgElement: SVGSVGElement): Promise<SVGSVGElement> {
+  const clone = svgElement.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  await Promise.all(Array.from(clone.querySelectorAll("image")).map(async (imageNode) => {
+    const source = imageNode.getAttribute("href") || imageNode.getAttributeNS("http://www.w3.org/1999/xlink", "href");
+    if (!source || source.startsWith("data:")) return;
+
+    try {
+      const response = await fetch(source, { cache: "force-cache" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const dataUrl = await blobToDataUrl(await response.blob());
+      imageNode.setAttribute("href", dataUrl);
+      imageNode.setAttributeNS("http://www.w3.org/1999/xlink", "href", dataUrl);
+    } catch {
+      // Se mantiene la URL original para no eliminar un logo que el navegador sí pueda resolver.
+    }
+  }));
+
+  return clone;
+}
+
 export function TransferenciaVotoModal({
   isOpen,
   onClose,
@@ -346,12 +378,13 @@ export function TransferenciaVotoModal({
     document.body.removeChild(link);
   };
 
-  const handleExportPNG = () => {
+  const handleExportPNG = async () => {
     if (!sankeyRef.current) return;
     setExportError(null);
 
     const svgElement = sankeyRef.current;
-    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const exportSvg = await inlineSvgLogos(svgElement);
+    const svgString = new XMLSerializer().serializeToString(exportSvg);
     const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
     const URLObject = window.URL || window.webkitURL || window;
     const blobURL = URLObject.createObjectURL(svgBlob);

@@ -712,6 +712,9 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Añadir hover con porcentaje de votos en fotos de Líderes por partido
+- [x] Añadir búsqueda rápida y ordenación descendente por votos en Líderes por partido
+- [x] Mostrar logotipos correctamente en el PNG de Transferencia de voto
 - [x] Corregir la visibilidad del contador de votos en candidatos de Líderes por partido
 - [x] Convertir el desglose de partido de Resultados en modal emergente de pantalla completa
 - [x] Corregir color hexadecimal inválido en la generación de infografías de Resultados

@@ -992,6 +992,8 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
   const [loading, setLoading] = useState(true);
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<"candidatos" | "gobierno">("candidatos");
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [hoveredCandidateId, setHoveredCandidateId] = useState<number | null>(null);
   const [logoB64, setLogoB64] = useState("");
   const [showGobModal, setShowGobModal] = useState(false);
 
@@ -1113,6 +1115,22 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
       {/* Sub-tab: Candidatos */}
       {subTab === "candidatos" && (
         <>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, padding: "10px 12px", borderRadius: 12, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.025)" }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#f0eff8" }}>Buscar candidato</div>
+              <div style={{ fontSize: 10, color: "#7a7990", marginTop: 2 }}>Los candidatos se ordenan automáticamente de mayor a menor número de votos.</div>
+            </div>
+            <label style={{ minWidth: 240, maxWidth: "100%" }}>
+              <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Buscar por nombre de candidato</span>
+              <input
+                type="search"
+                value={candidateSearch}
+                onChange={(event) => setCandidateSearch(event.target.value)}
+                placeholder="Ej. Abreu"
+                style={{ width: "100%", border: "1px solid rgba(255,255,255,.14)", borderRadius: 9, background: "rgba(10,10,16,.72)", color: "#f0eff8", padding: "9px 12px", fontSize: 12, outline: "none" }}
+              />
+            </label>
+          </div>
           {!selectedParty && (
             <div className="r-subtab-bar">
               {partyKeys.map(pk => {
@@ -1142,12 +1160,17 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
             const name = pm?.name || info.display_name;
             const logo = pm?.logo || info.logo_url;
             const tot = partyPrefs.reduce((a, b) => a + b.votos, 0);
-            const leadersWithVotes = partyLeaders.map(l => {
-              const pref = partyPrefs.find(p => p.lider_preferido === l.leader_name);
-              return { ...l, votos: pref?.votos ?? 0, porcentaje: pref?.porcentaje ?? 0 };
-            }).sort((a, b) => b.votos - a.votos);
+            const leadersWithVotes = partyLeaders
+              .map(l => {
+                const pref = partyPrefs.find(p => p.lider_preferido === l.leader_name);
+                return { ...l, votos: pref?.votos ?? 0, porcentaje: pref?.porcentaje ?? 0 };
+              })
+              .filter(leader => !candidateSearch.trim() || leader.leader_name.toLocaleLowerCase("es").includes(candidateSearch.trim().toLocaleLowerCase("es")))
+              .sort((a, b) => b.votos - a.votos || a.leader_name.localeCompare(b.leader_name, "es"));
             const extraPrefs = partyPrefs.filter(p => !partyLeaders.some(l => l.leader_name === p.lider_preferido));
             const chartData = [...leadersWithVotes.filter(l => l.votos > 0).map(l => ({ name: l.leader_name, votos: l.votos, porcentaje: l.porcentaje })), ...extraPrefs.map(e => ({ name: e.lider_preferido, votos: e.votos, porcentaje: e.porcentaje }))].sort((a, b) => b.votos - a.votos).slice(0, 10);
+
+            if (candidateSearch.trim() && leadersWithVotes.length === 0) return null;
 
             return (
               <div key={partyKey} className="r-section" style={{ borderColor: `${color}25` }}>
@@ -1161,11 +1184,22 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 16, marginBottom: 16 }}>
                   {leadersWithVotes.map(leader => (
                     <div key={leader.id} style={{ textAlign: "center" }}>
-                      <div style={{ position: "relative", width: 82, height: 94, margin: "0 auto 6px", overflow: "visible" }}>
+                      <div
+                        tabIndex={0}
+                        onMouseEnter={() => setHoveredCandidateId(leader.id)}
+                        onMouseLeave={() => setHoveredCandidateId(null)}
+                        onFocus={() => setHoveredCandidateId(leader.id)}
+                        onBlur={() => setHoveredCandidateId(null)}
+                        aria-label={`${leader.leader_name}: ${leader.votos} votos, ${tot > 0 ? ((leader.votos / tot) * 100).toFixed(1) : "0.0"}% del total del partido`}
+                        style={{ position: "relative", width: 82, height: 94, margin: "0 auto 6px", overflow: "visible", borderRadius: 10, outline: "none", cursor: "help" }}
+                      >
                         <div style={{ width: 76, height: 76, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto", background: `${color}1a`, boxShadow: `0 7px 18px ${color}30` }}>
                           {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
                         </div>
                         {leader.votos > 0 && <div role="status" aria-label={`${leader.votos} votos para ${leader.leader_name}`} title={`${leader.votos} votos`} style={{ position: "absolute", top: 62, left: "50%", transform: "translateX(-50%)", zIndex: 2, minWidth: 42, background: color, color: "#fff", fontSize: 10, lineHeight: "18px", fontWeight: 900, whiteSpace: "nowrap", padding: "1px 8px", borderRadius: 999, border: "2px solid #17161e", boxShadow: "0 6px 14px rgba(0,0,0,.42)" }}>{leader.votos} voto{leader.votos === 1 ? "" : "s"}</div>}
+                        <div aria-hidden={hoveredCandidateId !== leader.id} style={{ position: "absolute", zIndex: 4, bottom: "100%", left: "50%", transform: `translateX(-50%) translateY(${hoveredCandidateId === leader.id ? "-4px" : "2px"})`, width: 150, padding: "7px 9px", borderRadius: 9, background: "rgba(8,11,20,.96)", border: `1px solid ${color}88`, boxShadow: "0 12px 24px rgba(0,0,0,.42)", color: "#f8fafc", fontSize: 10, fontWeight: 700, lineHeight: 1.35, opacity: hoveredCandidateId === leader.id ? 1 : 0, pointerEvents: "none", transition: "opacity .18s ease, transform .18s ease" }}>
+                          {tot > 0 ? `${((leader.votos / tot) * 100).toFixed(1)}% del total del partido` : "Sin votos contabilizados"}
+                        </div>
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#f0eff8", marginBottom: 4, lineHeight: 1.3 }}>{leader.leader_name}</div>
                       {leader.votos > 0 ? (
@@ -1931,7 +1965,9 @@ export default function Results() {
   const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showInfografiaModal, setShowInfografiaModal] = useState(false);
-  const [showTransferenciaModal, setShowTransferenciaModal] = useState(false);
+  const [showTransferenciaModal, setShowTransferenciaModal] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("transferencia") === "1"
+  );
   const [partyConfigData, setPartyConfigData] = useState<{ parties: any[]; youth: any[] }>({ parties: [], youth: [] });
   const [edadMediaPorPartido, setEdadMediaPorPartido] = useState<Record<string, number>>({});
   const [leadersSubTab, setLeadersSubTab] = useState<"individual" | "porpartido">("individual");
