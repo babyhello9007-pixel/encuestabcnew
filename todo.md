@@ -712,6 +712,9 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Reparar la descarga PNG de Transferencia de voto y añadir cabecera con título y fecha
+- [x] Añadir filtro desplegable por partido en Líderes por partido
+- [x] Reforzar el hover del porcentaje de candidatos con fondo oscuro y animación
 - [x] Añadir hover con porcentaje de votos en fotos de Líderes por partido
 - [x] Añadir búsqueda rápida y ordenación descendente por votos en Líderes por partido
 - [x] Mostrar logotipos correctamente en el PNG de Transferencia de voto

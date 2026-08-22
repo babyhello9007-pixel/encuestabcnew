@@ -104,7 +104,9 @@ async function inlineSvgLogos(svgElement: SVGSVGElement): Promise<SVGSVGElement>
       imageNode.setAttribute("href", dataUrl);
       imageNode.setAttributeNS("http://www.w3.org/1999/xlink", "href", dataUrl);
     } catch {
-      // Se mantiene la URL original para no eliminar un logo que el navegador sí pueda resolver.
+      // Una imagen externa sin CORS invalida Canvas y hace fallar toda la descarga.
+      // Se retira solo si no se puede convertir a data URL de forma segura.
+      imageNode.remove();
     }
   }));
 
@@ -121,6 +123,7 @@ export function TransferenciaVotoModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [selectedOrigen, setSelectedOrigen] = useState<string>("GLOBAL");
   const [modeFilter, setModeFilter] = useState<ModeFilter>("ALL");
@@ -379,58 +382,85 @@ export function TransferenciaVotoModal({
   };
 
   const handleExportPNG = async () => {
-    if (!sankeyRef.current) return;
+    if (!sankeyRef.current || isExporting) return;
     setExportError(null);
+    setIsExporting(true);
 
-    const svgElement = sankeyRef.current;
-    const exportSvg = await inlineSvgLogos(svgElement);
-    const svgString = new XMLSerializer().serializeToString(exportSvg);
-    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const URLObject = window.URL || window.webkitURL || window;
-    const blobURL = URLObject.createObjectURL(svgBlob);
+    let blobURL: string | null = null;
+    try {
+      const svgElement = sankeyRef.current;
+      const exportSvg = await inlineSvgLogos(svgElement);
+      const svgString = new XMLSerializer().serializeToString(exportSvg);
+      const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+      blobURL = URL.createObjectURL(svgBlob);
+      const svgUrl = blobURL;
 
-    const image = new Image();
-
-    image.onerror = () => {
-      URLObject.revokeObjectURL(blobURL);
-      setExportError("No se pudo generar la imagen PNG. Inténtalo de nuevo.");
-    };
-
-    image.onload = () => {
-      try {
+      await new Promise<void>((resolve, reject) => {
+        const image = new Image();
+        image.onerror = () => reject(new Error("El diagrama SVG no se pudo convertir en imagen."));
+        image.onload = async () => {
+          try {
         const canvas = document.createElement("canvas");
         const scale = 2;
         const viewBox = svgElement.viewBox.baseVal;
         const width = viewBox?.width || svgElement.clientWidth || 950;
         const height = viewBox?.height || svgElement.clientHeight || 400;
+        const headerHeight = 88;
 
         canvas.width = width * scale;
-        canvas.height = height * scale;
+        canvas.height = (height + headerHeight) * scale;
 
         const context = canvas.getContext("2d");
-        if (context) {
-          context.scale(scale, scale);
-          context.fillStyle = "#111118";
-          context.fillRect(0, 0, width, height);
-          context.drawImage(image, 0, 0, width, height);
+        if (!context) throw new Error("No se pudo crear el lienzo de exportación.");
 
-          const pngURL = canvas.toDataURL("image/png");
+        context.scale(scale, scale);
+        context.fillStyle = "#0c0c14";
+        context.fillRect(0, 0, width, height + headerHeight);
+        const headerGradient = context.createLinearGradient(0, 0, width, 0);
+        headerGradient.addColorStop(0, "#16162a");
+        headerGradient.addColorStop(1, "#161b31");
+        context.fillStyle = headerGradient;
+        context.fillRect(0, 0, width, headerHeight);
+        context.fillStyle = "#f8fafc";
+        context.font = "700 22px Arial, sans-serif";
+        context.fillText("Transferencia y Matriz de Voto", 28, 36);
+        context.fillStyle = "#a5b4fc";
+        context.font = "600 12px Arial, sans-serif";
+        context.fillText("Batalla Cultural · Diagrama Sankey", 28, 58);
+        context.textAlign = "right";
+        context.fillStyle = "#cbd5e1";
+        context.font = "500 12px Arial, sans-serif";
+        context.fillText(`Generado el ${new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}`, width - 28, 48);
+        context.textAlign = "left";
+        context.fillStyle = "rgba(255,255,255,.12)";
+        context.fillRect(28, headerHeight - 1, width - 56, 1);
+        context.drawImage(image, 0, headerHeight, width, height);
+
+        const pngBlob = await new Promise<Blob>((resolveBlob, rejectBlob) => {
+          canvas.toBlob((result) => result ? resolveBlob(result) : rejectBlob(new Error("No se pudo convertir el gráfico a PNG.")), "image/png");
+        });
+        const pngURL = URL.createObjectURL(pngBlob);
           const downloadLink = document.createElement("a");
           downloadLink.href = pngURL;
           downloadLink.download = `grafica_transferencia_${selectedOrigen}_${modeFilter}.png`;
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
-        }
-      } catch (err) {
-        console.error("Error exporting PNG:", err);
-        setExportError("No se pudo generar la imagen PNG. Inténtalo de nuevo.");
-      } finally {
-        URLObject.revokeObjectURL(blobURL);
-      }
-    };
-
-    image.src = blobURL;
+        window.setTimeout(() => URL.revokeObjectURL(pngURL), 1_000);
+        resolve();
+          } catch (exportErr) {
+            reject(exportErr);
+          }
+        };
+        image.src = svgUrl;
+      });
+    } catch (exportErr) {
+      console.error("Error exporting PNG:", exportErr);
+      setExportError("No se pudo generar la imagen PNG. Inténtalo de nuevo.");
+    } finally {
+      if (blobURL) URL.revokeObjectURL(blobURL);
+      setIsExporting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -509,7 +539,7 @@ export function TransferenciaVotoModal({
             <div style={{ display: "flex", gap: 10, marginRight: 40 }}>
               <button
                 onClick={handleExportPNG}
-                disabled={filteredData.length === 0}
+                disabled={filteredData.length === 0 || isExporting}
                 aria-label="Descargar gráfico como PNG"
                 style={{
                   display: "inline-flex",
@@ -522,11 +552,11 @@ export function TransferenciaVotoModal({
                   color: "#818cf8",
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: filteredData.length === 0 ? "not-allowed" : "pointer",
-                  opacity: filteredData.length === 0 ? 0.5 : 1,
+                  cursor: filteredData.length === 0 || isExporting ? "not-allowed" : "pointer",
+                  opacity: filteredData.length === 0 || isExporting ? 0.5 : 1,
                 }}
               >
-                <ImageIcon size={16} /> Descargar PNG
+                <ImageIcon size={16} /> {isExporting ? "Generando PNG…" : "Descargar PNG"}
               </button>
 
               <button
@@ -715,6 +745,7 @@ export function TransferenciaVotoModal({
                       </h3>
                       <button
                         onClick={handleExportPNG}
+                        disabled={isExporting}
                         style={{
                           background: "rgba(255,255,255,0.05)",
                           border: "1px solid rgba(255,255,255,0.1)",
@@ -723,13 +754,14 @@ export function TransferenciaVotoModal({
                           color: "#94a3b8",
                           fontSize: 11,
                           fontWeight: 600,
-                          cursor: "pointer",
+                          cursor: isExporting ? "not-allowed" : "pointer",
+                          opacity: isExporting ? 0.6 : 1,
                           display: "flex",
                           alignItems: "center",
                           gap: 4
                         }}
                       >
-                        <ImageIcon size={12} /> Guardar PNG
+                        <ImageIcon size={12} /> {isExporting ? "Generando…" : "Guardar PNG"}
                       </button>
                     </div>
 

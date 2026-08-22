@@ -993,6 +993,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<"candidatos" | "gobierno">("candidatos");
   const [candidateSearch, setCandidateSearch] = useState("");
+  const [candidatePartyFilter, setCandidatePartyFilter] = useState("ALL");
   const [hoveredCandidateId, setHoveredCandidateId] = useState<number | null>(null);
   const [logoB64, setLogoB64] = useState("");
   const [showGobModal, setShowGobModal] = useState(false);
@@ -1120,16 +1121,25 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
               <div style={{ fontSize: 12, fontWeight: 800, color: "#f0eff8" }}>Buscar candidato</div>
               <div style={{ fontSize: 10, color: "#7a7990", marginTop: 2 }}>Los candidatos se ordenan automáticamente de mayor a menor número de votos.</div>
             </div>
-            <label style={{ minWidth: 240, maxWidth: "100%" }}>
-              <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Buscar por nombre de candidato</span>
-              <input
-                type="search"
-                value={candidateSearch}
-                onChange={(event) => setCandidateSearch(event.target.value)}
-                placeholder="Ej. Abreu"
-                style={{ width: "100%", border: "1px solid rgba(255,255,255,.14)", borderRadius: 9, background: "rgba(10,10,16,.72)", color: "#f0eff8", padding: "9px 12px", fontSize: 12, outline: "none" }}
-              />
-            </label>
+            <div style={{ display: "flex", gap: 8, width: "min(500px, 100%)", flexWrap: "wrap" }}>
+              <label style={{ flex: "1 1 175px" }}>
+                <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Filtrar por partido</span>
+                <select value={candidatePartyFilter} onChange={(event) => setCandidatePartyFilter(event.target.value)} style={{ width: "100%", border: "1px solid rgba(255,255,255,.14)", borderRadius: 9, background: "#101019", color: "#f0eff8", padding: "9px 12px", fontSize: 12, outline: "none" }}>
+                  <option value="ALL">Todos los partidos</option>
+                  {partyKeys.map((partyKey) => <option key={partyKey} value={partyKey}>{partyMeta[partyKey]?.name || byParty[partyKey]?.[0]?.display_name || partyKey}</option>)}
+                </select>
+              </label>
+              <label style={{ flex: "1 1 220px" }}>
+                <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Buscar por nombre de candidato</span>
+                <input
+                  type="search"
+                  value={candidateSearch}
+                  onChange={(event) => setCandidateSearch(event.target.value)}
+                  placeholder="Buscar por nombre, ej. Abreu"
+                  style={{ width: "100%", border: "1px solid rgba(255,255,255,.14)", borderRadius: 9, background: "rgba(10,10,16,.72)", color: "#f0eff8", padding: "9px 12px", fontSize: 12, outline: "none" }}
+                />
+              </label>
+            </div>
           </div>
           {!selectedParty && (
             <div className="r-subtab-bar">
@@ -1151,7 +1161,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
               })}
             </div>
           )}
-          {(selectedParty ? [selectedParty] : partyKeys).map(partyKey => {
+          {(selectedParty ? [selectedParty] : partyKeys).filter((partyKey) => candidatePartyFilter === "ALL" || partyKey === candidatePartyFilter).map(partyKey => {
             const partyLeaders = byParty[partyKey] || [];
             const partyPrefs = prefByParty[partyKey] || [];
             const info = partyLeaders[0]; if (!info) return null;
@@ -1182,7 +1192,10 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 16, marginBottom: 16 }}>
-                  {leadersWithVotes.map(leader => (
+                  {leadersWithVotes.map(leader => {
+                    const isHovered = hoveredCandidateId === leader.id;
+                    const percentageOfParty = tot > 0 ? (leader.votos / tot) * 100 : 0;
+                    return (
                     <div key={leader.id} style={{ textAlign: "center" }}>
                       <div
                         tabIndex={0}
@@ -1190,15 +1203,17 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                         onMouseLeave={() => setHoveredCandidateId(null)}
                         onFocus={() => setHoveredCandidateId(leader.id)}
                         onBlur={() => setHoveredCandidateId(null)}
-                        aria-label={`${leader.leader_name}: ${leader.votos} votos, ${tot > 0 ? ((leader.votos / tot) * 100).toFixed(1) : "0.0"}% del total del partido`}
+                        aria-label={`${leader.leader_name}: ${leader.votos} votos, ${percentageOfParty.toFixed(1)}% del total del partido`}
                         style={{ position: "relative", width: 82, height: 94, margin: "0 auto 6px", overflow: "visible", borderRadius: 10, outline: "none", cursor: "help" }}
                       >
                         <div style={{ width: 76, height: 76, borderRadius: "50%", overflow: "hidden", border: `2px solid ${color}`, margin: "0 auto", background: `${color}1a`, boxShadow: `0 7px 18px ${color}30` }}>
                           {leader.photo_url ? <img src={leader.photo_url} alt={leader.leader_name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div style={{ width: "100%", height: "100%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, color: "#fff" }}>{leader.leader_name.charAt(0)}</div>}
                         </div>
                         {leader.votos > 0 && <div role="status" aria-label={`${leader.votos} votos para ${leader.leader_name}`} title={`${leader.votos} votos`} style={{ position: "absolute", top: 62, left: "50%", transform: "translateX(-50%)", zIndex: 2, minWidth: 42, background: color, color: "#fff", fontSize: 10, lineHeight: "18px", fontWeight: 900, whiteSpace: "nowrap", padding: "1px 8px", borderRadius: 999, border: "2px solid #17161e", boxShadow: "0 6px 14px rgba(0,0,0,.42)" }}>{leader.votos} voto{leader.votos === 1 ? "" : "s"}</div>}
-                        <div aria-hidden={hoveredCandidateId !== leader.id} style={{ position: "absolute", zIndex: 4, bottom: "100%", left: "50%", transform: `translateX(-50%) translateY(${hoveredCandidateId === leader.id ? "-4px" : "2px"})`, width: 150, padding: "7px 9px", borderRadius: 9, background: "rgba(8,11,20,.96)", border: `1px solid ${color}88`, boxShadow: "0 12px 24px rgba(0,0,0,.42)", color: "#f8fafc", fontSize: 10, fontWeight: 700, lineHeight: 1.35, opacity: hoveredCandidateId === leader.id ? 1 : 0, pointerEvents: "none", transition: "opacity .18s ease, transform .18s ease" }}>
-                          {tot > 0 ? `${((leader.votos / tot) * 100).toFixed(1)}% del total del partido` : "Sin votos contabilizados"}
+                        <div role="tooltip" aria-hidden={!isHovered} style={{ position: "absolute", zIndex: 4, bottom: "calc(100% + 7px)", left: "50%", transform: `translateX(-50%) translateY(${isHovered ? "0" : "8px"}) scale(${isHovered ? 1 : .92})`, width: 158, padding: "9px 10px", borderRadius: 11, background: "linear-gradient(145deg, rgba(3,5,11,.98), rgba(15,18,29,.98))", border: `1px solid ${color}`, borderTop: `3px solid ${color}`, boxShadow: `0 16px 30px rgba(0,0,0,.58), 0 0 22px ${color}55`, color: "#f8fafc", textAlign: "center", opacity: isHovered ? 1 : 0, pointerEvents: "none", transition: "opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s ease" }}>
+                          <div style={{ color, fontSize: 20, lineHeight: 1, fontWeight: 900, letterSpacing: "-.03em" }}>{percentageOfParty.toFixed(1)}%</div>
+                          <div style={{ marginTop: 4, color: "#e8e9ef", fontSize: 10, fontWeight: 800 }}>del total del partido</div>
+                          <div style={{ marginTop: 5, color: "#9ca3af", fontSize: 9, fontWeight: 700 }}>{leader.votos} voto{leader.votos === 1 ? "" : "s"} registrados</div>
                         </div>
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: "#f0eff8", marginBottom: 4, lineHeight: 1.3 }}>{leader.leader_name}</div>
@@ -1211,7 +1226,8 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                         </>
                       ) : <div style={{ fontSize: 10, color: "#5a596a" }}>Sin votos</div>}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {chartData.length > 0 && (
                   <div>
