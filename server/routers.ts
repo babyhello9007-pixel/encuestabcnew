@@ -8,6 +8,7 @@ import { elAnalisisRouter } from "./routes/el-analisis";
 import { timeRouter } from "./routers/time";
 import { bcapiRouter } from "./routers/bcapi";
 import { partiesRouter } from "./routers/parties";
+import { quorumRouter } from "./routers/quorum";
 
 export const appRouter = router({
   system: systemRouter,
@@ -29,6 +30,7 @@ export const appRouter = router({
   time: timeRouter,
   bcapi: bcapiRouter,
   parties: partiesRouter,
+  quorum: quorumRouter,
 });
 
 export type AppRouter = typeof appRouter;

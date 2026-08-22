@@ -316,6 +316,9 @@
 - [x] Probar en todos los modos (Individual, Completo, Líderes)
 
 ## Página Bio (Linktree) - NUEVO
+- [x] Añadir un código QR descargable del Linktree para compartir presencialmente
+- [x] Implementar interruptor de modo oscuro con preferencia persistente en el Linktree
+- [x] Incorporar una tarjeta destacada con el último artículo de Quorum
 - [x] Añadir animaciones de transición y efectos hover accesibles a los enlaces del Linktree
 - [x] Añadir botón de compartir con Web Share API y copia de enlace como alternativa
 - [x] Reforzar los eslóganes descriptivos bajo cada enlace del Linktree

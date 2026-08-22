@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowRight,
@@ -7,12 +7,19 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Crown,
-  ExternalLink,
+  Download,
   Heart,
+  Moon,
+  Newspaper,
+  QrCode,
   Share2,
+  Sun,
   Vote,
+  X,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { APP_LOGO } from "@/const";
+import { trpc } from "@/lib/trpc";
 
 type InternalLink = {
   title: string;
@@ -28,13 +35,37 @@ type InternalLink = {
 export const QUORUM_URL = "https://batallaperi-avauhaz8.manus.space/";
 export const LINKTREE_SHARE_TITLE = "Batalla Cultural";
 export const LINKTREE_SHARE_TEXT = "Encuesta, análisis y comunidad para entender la opinión política y cultural de España.";
+export const LINKTREE_THEME_STORAGE_KEY = "bc-linktree-theme";
+export const LINKTREE_QUORUM_FALLBACK = {
+  title: "Ceuta ha dicho basta.",
+  excerpt: "Análisis de la actualidad política y social desde Quorum.",
+  publishedAt: "2026-08-01T10:45:25.000Z",
+  readingTime: 5,
+  articleUrl: "https://batallaperi-avauhaz8.manus.space/articulo/22",
+};
 
 export function getLinktreeShareData(url: string) {
-  return {
-    title: LINKTREE_SHARE_TITLE,
-    text: LINKTREE_SHARE_TEXT,
-    url,
-  };
+  return { title: LINKTREE_SHARE_TITLE, text: LINKTREE_SHARE_TEXT, url };
+}
+
+export function getLinktreeQrFilename() {
+  return "batalla-cultural-linktree-qr.png";
+}
+
+export function generateLinktreeQrDataUrl(url: string) {
+  return QRCode.toDataURL(url, {
+    width: 720,
+    margin: 2,
+    errorCorrectionLevel: "M",
+    color: { dark: "#0a1022", light: "#ffffff" },
+  });
+}
+
+export function formatQuorumArticleDate(value: string | null) {
+  if (!value) return "Última publicación";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Última publicación";
+  return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
 export const PRIMARY_LINKS: InternalLink[] = [
@@ -88,6 +119,28 @@ export const SOCIAL_LINKS = [
 export default function Bio() {
   const [, setLocation] = useLocation();
   const [shareFeedback, setShareFeedback] = useState<"copied" | "shared" | null>(null);
+  const [isDark, setIsDark] = useState(true);
+  const [isQrOpen, setIsQrOpen] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const latestQuorum = trpc.quorum.getLatest.useQuery(undefined, { staleTime: 5 * 60 * 1000, retry: 1 });
+
+  useEffect(() => {
+    const preference = window.localStorage.getItem(LINKTREE_THEME_STORAGE_KEY);
+    if (preference === "dark" || preference === "light") {
+      setIsDark(preference === "dark");
+      return;
+    }
+    setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }, []);
+
+  const toggleTheme = () => {
+    setIsDark((current) => {
+      const next = !current;
+      window.localStorage.setItem(LINKTREE_THEME_STORAGE_KEY, next ? "dark" : "light");
+      return next;
+    });
+  };
 
   const showShareFeedback = (feedback: "copied" | "shared") => {
     setShareFeedback(feedback);
@@ -106,7 +159,6 @@ export default function Bio() {
 
   const shareLink = async () => {
     const shareData = getLinktreeShareData(window.location.href);
-
     if (navigator.share) {
       try {
         await navigator.share(shareData);
@@ -116,27 +168,90 @@ export default function Bio() {
         if (error instanceof DOMException && error.name === "AbortError") return;
       }
     }
-
     await copyLink();
   };
 
+  const openQr = async () => {
+    setIsQrOpen(true);
+    if (qrDataUrl || isGeneratingQr) return;
+
+    setIsGeneratingQr(true);
+    try {
+      setQrDataUrl(await generateLinktreeQrDataUrl(window.location.href));
+    } finally {
+      setIsGeneratingQr(false);
+    }
+  };
+
+  const downloadQr = () => {
+    if (!qrDataUrl) return;
+    const anchor = document.createElement("a");
+    anchor.href = qrDataUrl;
+    anchor.download = getLinktreeQrFilename();
+    anchor.click();
+  };
+
+  const article = latestQuorum.data ?? LINKTREE_QUORUM_FALLBACK;
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#050816] px-4 py-10 text-white sm:py-14">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_rgba(196,30,58,0.24),transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.18),transparent_38%)]" />
+    <main className={`linktree-page min-h-screen overflow-hidden px-4 py-10 sm:py-14 ${isDark ? "linktree-dark bg-[#050816] text-white" : "linktree-light bg-slate-100 text-slate-950"}`}>
+      <div className={`pointer-events-none fixed inset-0 ${isDark ? "bg-[radial-gradient(circle_at_top,_rgba(196,30,58,0.24),transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.18),transparent_38%)]" : "bg-[radial-gradient(circle_at_top,_rgba(251,113,133,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(96,165,250,0.18),transparent_38%)]"}`} />
 
       <section className="relative mx-auto w-full max-w-xl">
         <header className="mb-7 text-center">
-          <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-[2rem] border border-white/20 bg-white/10 p-2 shadow-2xl shadow-rose-950/30 backdrop-blur-xl">
-            <img src={APP_LOGO} alt="Batalla Cultural" className="h-full w-full rounded-[1.45rem] object-contain" />
+          <div className="mb-4 flex items-start justify-between">
+            <span className="h-11 w-11" aria-hidden="true" />
+            <div className={`linktree-logo-shell flex h-24 w-24 items-center justify-center rounded-[2rem] border p-2 shadow-2xl backdrop-blur-xl ${isDark ? "border-white/20 bg-white/10 shadow-rose-950/30" : "border-slate-200 bg-white shadow-slate-300/40"}`}>
+              <img src={APP_LOGO} alt="Batalla Cultural" className="h-full w-full rounded-[1.45rem] object-contain" />
+            </div>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={`linktree-utility inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+              aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+              title={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
           </div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-rose-300/25 bg-rose-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-rose-100">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-300 animate-pulse" /> Comunidad en directo
           </div>
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Batalla Cultural</h1>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-300 sm:text-base">
+          <h1 className="linktree-heading text-3xl font-black tracking-tight sm:text-4xl">Batalla Cultural</h1>
+          <p className="linktree-subtitle mx-auto mt-3 max-w-md text-sm leading-6 sm:text-base">
             Encuesta, análisis y comunidad para entender la opinión política y cultural de España.
           </p>
         </header>
+
+        <a
+          href={article.articleUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`linktree-reveal linktree-quorum-feature group mb-4 block overflow-hidden rounded-2xl border p-4 shadow-lg transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 motion-reduce:transform-none motion-reduce:transition-none ${isDark ? "border-emerald-300/25 bg-emerald-400/[0.08]" : "border-emerald-200 bg-emerald-50"}`}
+          style={{ animationDelay: "60ms" }}
+        >
+          <span className="flex items-start gap-3">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDark ? "bg-emerald-300/10 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`}>
+              <Newspaper className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] ${isDark ? "text-emerald-200" : "text-emerald-700"}`}>
+                Quorum · Última publicación
+              </span>
+              <span className="linktree-feature-title mt-1 block line-clamp-2 text-sm font-bold sm:text-base">
+                {article.title}
+              </span>
+              <span className="linktree-feature-excerpt mt-1 block line-clamp-2 text-xs leading-5">
+                {article.excerpt}
+              </span>
+              <span className={`mt-2 flex items-center gap-2 text-[10px] font-medium ${isDark ? "text-emerald-100/80" : "text-emerald-800"}`}>
+                {formatQuorumArticleDate(article.publishedAt)}
+                {article.readingTime ? <><span aria-hidden="true">·</span>{article.readingTime} min de lectura</> : null}
+              </span>
+            </span>
+            <ArrowRight className={`mt-1 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 ${isDark ? "text-emerald-100" : "text-emerald-700"}`} />
+          </span>
+        </a>
 
         <div className="space-y-3">
           {PRIMARY_LINKS.map((link, index) => {
@@ -149,26 +264,22 @@ export default function Bio() {
                   if (link.externalUrl) window.open(link.externalUrl, "_blank", "noopener,noreferrer");
                   else if (link.route) setLocation(link.route);
                 }}
-                className={`linktree-reveal group flex w-full items-center gap-4 rounded-2xl border p-4 text-left shadow-lg backdrop-blur-xl transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-1 hover:scale-[1.01] hover:shadow-2xl active:translate-y-0 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none ${link.accent}`}
-                style={{ animationDelay: `${100 + index * 70}ms` }}
+                className={`linktree-reveal linktree-card group flex w-full items-center gap-4 rounded-2xl border p-4 text-left shadow-lg backdrop-blur-xl transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-1 hover:scale-[1.01] hover:shadow-2xl active:translate-y-0 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none ${link.accent}`}
+                style={{ animationDelay: `${120 + index * 70}ms` }}
               >
-                <span className={`flex h-11 shrink-0 items-center justify-center rounded-xl border border-white/15 ${link.logo ? "w-28 bg-white/90 px-2" : "w-11 bg-slate-950/35"}`}>
+                <span className={`linktree-icon-shell flex h-11 shrink-0 items-center justify-center rounded-xl border border-white/15 ${link.logo ? "w-28 bg-white/90 px-2" : "w-11 bg-slate-950/35"}`}>
                   {link.logo ? (
-                    <img
-                      src={link.logo}
-                      alt="Logotipo Quorum"
-                      className="h-7 w-full object-contain"
-                    />
+                    <img src={link.logo} alt="Logotipo Quorum" className="h-7 w-full object-contain" />
                   ) : (
                     <Icon className="h-5 w-5" />
                   )}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2 text-sm font-bold sm:text-base">
+                  <span className="linktree-title flex items-center gap-2 text-sm font-bold sm:text-base">
                     {link.title}
                     {link.featured && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] uppercase tracking-wider text-white/75">Destacado</span>}
                   </span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-200/90">{link.description}</span>
+                  <span className="linktree-description mt-1 block text-xs leading-5 text-slate-200/90">{link.description}</span>
                 </span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
               </button>
@@ -176,55 +287,83 @@ export default function Bio() {
           })}
         </div>
 
-        <section className="mt-8 rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-xl backdrop-blur-xl">
+        <section className={`linktree-surface mt-8 rounded-3xl border p-5 shadow-xl backdrop-blur-xl ${isDark ? "border-white/10 bg-white/[0.06]" : "border-slate-200 bg-white/85"}`}>
           <div className="mb-4 flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-sm font-bold">Redes oficiales</h2>
-              <p className="mt-1 text-xs text-slate-400">Sigue a la comunidad de Batalla Cultural.</p>
+              <h2 className="linktree-heading text-sm font-bold">Redes oficiales</h2>
+              <p className="linktree-muted mt-1 text-xs">Sigue a la comunidad de Batalla Cultural.</p>
             </div>
-            <button
-              type="button"
-              onClick={shareLink}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-[10px] font-semibold text-slate-200 transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 hover:border-rose-200/50 hover:bg-white/10 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-rose-300/70"
-              aria-label="Compartir el enlace de Batalla Cultural"
-            >
-              {shareFeedback ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" /> : <Share2 className="h-3.5 w-3.5" />}
-              {shareFeedback === "shared" ? "Compartido" : shareFeedback === "copied" ? "Enlace copiado" : "Compartir"}
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={openQr}
+                className={`linktree-utility inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-200 hover:border-white/30 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
+                aria-label="Generar código QR descargable del Linktree"
+              >
+                <QrCode className="h-3.5 w-3.5" /> QR
+              </button>
+              <button
+                type="button"
+                onClick={shareLink}
+                className={`linktree-utility inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 hover:border-rose-200/50 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+                aria-label="Compartir el enlace de Batalla Cultural"
+              >
+                {shareFeedback ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
+                {shareFeedback === "shared" ? "Compartido" : shareFeedback === "copied" ? "Copiado" : "Compartir"}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {SOCIAL_LINKS.map((social) => {
-              return (
-                <a
-                  key={social.name}
-                  href={social.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="linktree-reveal group rounded-2xl border border-white/10 bg-slate-950/35 p-3 text-center transition-[transform,background-color,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-rose-200/50 hover:bg-white/10 hover:shadow-lg hover:shadow-rose-950/20 focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none"
-                  style={{ animationDelay: `${500 + SOCIAL_LINKS.indexOf(social) * 70}ms` }}
-                  aria-label={`${social.name}: ${social.label}`}
-                >
-                  <span className="mx-auto flex h-5 w-5 items-center justify-center">
-                    <img
-                      src={social.logo}
-                      alt={`Logotipo de ${social.name}`}
-                      className={`h-5 w-5 object-contain ${social.invertOnDark ? "brightness-0 invert" : ""}`}
-                    />
-                  </span>
-                  <span className="mt-2 block text-xs font-bold">{social.name}</span>
-                  <span className="mt-0.5 block text-[9px] leading-3 text-slate-400">{social.label}</span>
-                </a>
-              );
-            })}
+            {SOCIAL_LINKS.map((social, index) => (
+              <a
+                key={social.name}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`linktree-reveal linktree-social-card group rounded-2xl border p-3 text-center transition-[transform,background-color,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none ${isDark ? "border-white/10 bg-slate-950/35 hover:border-rose-200/50 hover:bg-white/10 hover:shadow-rose-950/20" : "border-slate-200 bg-slate-50 hover:border-rose-300 hover:bg-white hover:shadow-slate-300/40"}`}
+                style={{ animationDelay: `${560 + index * 70}ms` }}
+                aria-label={`${social.name}: ${social.label}`}
+              >
+                <span className="mx-auto flex h-5 w-5 items-center justify-center">
+                  <img src={social.logo} alt={`Logotipo de ${social.name}`} className={`h-5 w-5 object-contain ${social.invertOnDark && isDark ? "brightness-0 invert" : ""}`} />
+                </span>
+                <span className="linktree-title mt-2 block text-xs font-bold">{social.name}</span>
+                <span className="linktree-muted mt-0.5 block text-[9px] leading-3">{social.label}</span>
+              </a>
+            ))}
           </div>
         </section>
 
-        <footer className="mt-7 flex items-center justify-center gap-2 text-center text-[11px] text-slate-500">
+        <footer className="linktree-muted mt-7 flex items-center justify-center gap-2 text-center text-[11px]">
           <Heart className="h-3.5 w-3.5 text-rose-300" />
           <span>Batalla Cultural · Datos anónimos, conversación pública</span>
         </footer>
       </section>
+
+      {isQrOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Código QR del Linktree">
+          <section className={`w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl ${isDark ? "border-white/15 bg-[#11172a] text-white" : "border-slate-200 bg-white text-slate-950"}`}>
+            <div className="mb-4 flex items-center justify-between gap-4 text-left">
+              <div>
+                <p className={`text-xs font-bold uppercase tracking-[0.14em] ${isDark ? "text-rose-200" : "text-rose-600"}`}>Compartir presencialmente</p>
+                <h2 className="mt-1 text-lg font-black">Código QR de Batalla Cultural</h2>
+              </div>
+              <button type="button" onClick={() => setIsQrOpen(false)} className={`rounded-lg p-2 transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "hover:bg-white/10" : "hover:bg-slate-100"}`} aria-label="Cerrar código QR">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className={`mb-5 text-sm leading-5 ${isDark ? "text-slate-300" : "text-slate-600"}`}>Escanea el código para abrir esta página o descárgalo para carteles y materiales impresos.</p>
+            <div className="mx-auto flex aspect-square w-full max-w-[260px] items-center justify-center rounded-2xl bg-white p-3 shadow-inner">
+              {qrDataUrl ? <img src={qrDataUrl} alt="Código QR del Linktree de Batalla Cultural" className="h-full w-full object-contain" /> : <QrCode className="h-16 w-16 animate-pulse text-slate-400" aria-hidden="true" />}
+            </div>
+            <button type="button" onClick={downloadQr} disabled={!qrDataUrl || isGeneratingQr} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-rose-300/70">
+              <Download className="h-4 w-4" />
+              {isGeneratingQr ? "Generando QR…" : "Descargar PNG"}
+            </button>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

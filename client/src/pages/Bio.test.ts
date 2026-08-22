@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatQuorumArticleDate,
+  generateLinktreeQrDataUrl,
+  getLinktreeQrFilename,
   getLinktreeShareData,
+  LINKTREE_QUORUM_FALLBACK,
   LINKTREE_SHARE_TEXT,
   LINKTREE_SHARE_TITLE,
   PRIMARY_LINKS,
@@ -29,4 +33,21 @@ describe("configuración del Linktree de Batalla Cultural", () => {
       url: "https://encuestabc.example/linktree",
     });
   });
+
+  it("prepara un nombre descargable de QR y formatea las fechas de Quorum de forma legible", () => {
+    expect(getLinktreeQrFilename()).toBe("batalla-cultural-linktree-qr.png");
+    expect(formatQuorumArticleDate("2026-08-01T10:45:25.000Z")).toContain("2026");
+    expect(formatQuorumArticleDate(null)).toBe("Última publicación");
+  });
+
+  it("mantiene una publicación de Quorum utilizable si la actualización remota tarda", () => {
+    expect(LINKTREE_QUORUM_FALLBACK.title).toBeTruthy();
+    expect(LINKTREE_QUORUM_FALLBACK.articleUrl).toContain("/articulo/");
+  });
+
+  it("genera un QR PNG descargable para el enlace público", async () => {
+    const result = await generateLinktreeQrDataUrl("https://encuestabc.example/linktree");
+    expect(result.startsWith("data:image/png;base64,")).toBe(true);
+  });
+
 });

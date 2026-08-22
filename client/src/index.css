@@ -975,3 +975,23 @@
     animation: linktree-card-in 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
+
+.linktree-light .linktree-card,
+.linktree-light .linktree-surface,
+.linktree-light .linktree-quorum-feature {
+  color: #0f172a;
+}
+
+.linktree-light .linktree-card .linktree-title,
+.linktree-light .linktree-social-card > span {
+  color: #0f172a;
+}
+
+.linktree-light .linktree-card .linktree-description {
+  color: #475569;
+}
+
+.linktree-light .linktree-card .linktree-icon-shell {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+}
