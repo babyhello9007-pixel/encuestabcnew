@@ -718,7 +718,7 @@
 - [x] Añadir fallback visible para las fotos externas rotas de líderes en NanoEncuesta
 - [x] Cohesionar personas duplicadas entre partidos en la valoración de líderes
 - [x] Ordenar partidos y asociaciones de NanoEncuesta según resultados y orden alfabético
-- [ ] Mejorar la experiencia, recuperación y orientación de la NanoEncuesta
+- [x] Mejorar la experiencia, recuperación y orientación de la NanoEncuesta
 - [x] Restaurar en NanoEncuesta los logotipos oficiales de party_configuration.logo_url
 - [x] Corregir la lista de Aliança Catalana y eliminar mezclas de líderes entre partidos
 - [x] Mejorar la visualización del desglose de valoración de líderes
