@@ -9,6 +9,7 @@ import {
   Crown,
   Download,
   Heart,
+  Instagram,
   Moon,
   Newspaper,
   QrCode,
@@ -32,10 +33,20 @@ type InternalLink = {
   featured?: boolean;
 };
 
+type SocialLink = {
+  name: string;
+  url: string;
+  label: string;
+  logo?: string;
+  icon?: typeof Instagram;
+  invertOnDark: boolean;
+};
+
 export const QUORUM_URL = "https://batallaperi-avauhaz8.manus.space/";
 export const LINKTREE_SHARE_TITLE = "Batalla Cultural";
 export const LINKTREE_SHARE_TEXT = "Encuesta, análisis y comunidad para entender la opinión política y cultural de España.";
 export const LINKTREE_THEME_STORAGE_KEY = "bc-linktree-theme";
+export const LINKTREE_CLICK_STORAGE_KEY = "bc-linktree-click-counts";
 export const LINKTREE_QUORUM_FALLBACK = {
   title: "Ceuta ha dicho basta.",
   excerpt: "Análisis de la actualidad política y social desde Quorum.",
@@ -66,6 +77,14 @@ export function formatQuorumArticleDate(value: string | null) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Última publicación";
   return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", year: "numeric" }).format(date);
+}
+
+export function incrementLinktreeClickCount(counts: Record<string, number>, key: string) {
+  return { ...counts, [key]: Math.max(0, counts[key] || 0) + 1 };
+}
+
+export function formatLinktreeClickCount(count: number) {
+  return `${count} ${count === 1 ? "clic" : "clics"}`;
 }
 
 export const PRIMARY_LINKS: InternalLink[] = [
@@ -109,11 +128,11 @@ export const PRIMARY_LINKS: InternalLink[] = [
   },
 ];
 
-export const SOCIAL_LINKS = [
+export const SOCIAL_LINKS: SocialLink[] = [
   { name: "X", url: "https://x.com/bcultural_es", label: "Actualidad y opinión", logo: "/assets/icons/x-logo.png", invertOnDark: true },
   { name: "Discord", url: "https://discord.gg/Tc8JabgY3T", label: "Comunidad BC", logo: "/assets/icons/discord-logo.png", invertOnDark: true },
   { name: "Bluesky", url: "https://bsky.app/profile/bcultural-es.bsky.social", label: "Síguenos en Bluesky", logo: "/assets/icons/bluesky-logo.png", invertOnDark: false },
-  { name: "Instagram", url: "https://www.instagram.com/bcultural_es/", label: "Contenido visual", logo: "/assets/icons/instagram-logo.gif", invertOnDark: false },
+  { name: "Instagram", url: "https://www.instagram.com/bcultural_es/", label: "Contenido visual", icon: Instagram, invertOnDark: false },
 ];
 
 export default function Bio() {
@@ -123,6 +142,10 @@ export default function Bio() {
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  const [clickCounts, setClickCounts] = useState<Record<string, number>>({});
+  const [isNewsOpen, setIsNewsOpen] = useState(true);
+  const [isResourcesOpen, setIsResourcesOpen] = useState(true);
+  const [isSocialOpen, setIsSocialOpen] = useState(true);
   const latestQuorum = trpc.quorum.getLatest.useQuery(undefined, { staleTime: 5 * 60 * 1000, retry: 1 });
 
   useEffect(() => {
@@ -133,6 +156,23 @@ export default function Bio() {
     }
     setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
   }, []);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(LINKTREE_CLICK_STORAGE_KEY);
+      if (stored) setClickCounts(JSON.parse(stored) as Record<string, number>);
+    } catch {
+      setClickCounts({});
+    }
+  }, []);
+
+  const registerClick = (key: string) => {
+    setClickCounts((current) => {
+      const next = incrementLinktreeClickCount(current, key);
+      window.localStorage.setItem(LINKTREE_CLICK_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
 
   const toggleTheme = () => {
     setIsDark((current) => {
@@ -223,11 +263,21 @@ export default function Bio() {
           </p>
         </header>
 
-        <a
+        <section className="mb-4">
+          <button
+            type="button"
+            onClick={() => setIsNewsOpen((current) => !current)}
+            className={`mb-2 flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-[11px] font-bold uppercase tracking-[0.14em] transition focus:outline-none focus:ring-2 focus:ring-emerald-300/70 ${isDark ? "text-emerald-100 hover:bg-white/5" : "text-emerald-800 hover:bg-emerald-100/70"}`}
+            aria-expanded={isNewsOpen}
+          >
+            Noticias de Quorum <span aria-hidden="true">{isNewsOpen ? "−" : "+"}</span>
+          </button>
+          {isNewsOpen && <a
           href={article.articleUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`linktree-reveal linktree-quorum-feature group mb-4 block overflow-hidden rounded-2xl border p-4 shadow-lg transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 motion-reduce:transform-none motion-reduce:transition-none ${isDark ? "border-emerald-300/25 bg-emerald-400/[0.08]" : "border-emerald-200 bg-emerald-50"}`}
+          onClick={() => registerClick("quorum-latest")}
+          className={`linktree-reveal linktree-quorum-feature linktree-quorum-pulse relative group block overflow-hidden rounded-2xl border p-4 shadow-lg transition-[transform,box-shadow,border-color,background-color] duration-300 hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 motion-reduce:transform-none motion-reduce:transition-none ${isDark ? "border-emerald-300/25 bg-emerald-400/[0.08]" : "border-emerald-200 bg-emerald-50"}`}
           style={{ animationDelay: "60ms" }}
         >
           <span className="flex items-start gap-3">
@@ -247,20 +297,33 @@ export default function Bio() {
               <span className={`mt-2 flex items-center gap-2 text-[10px] font-medium ${isDark ? "text-emerald-100/80" : "text-emerald-800"}`}>
                 {formatQuorumArticleDate(article.publishedAt)}
                 {article.readingTime ? <><span aria-hidden="true">·</span>{article.readingTime} min de lectura</> : null}
+                <span aria-hidden="true">·</span><span title="Clics registrados en este dispositivo">{formatLinktreeClickCount(clickCounts["quorum-latest"] || 0)}</span>
               </span>
             </span>
             <ArrowRight className={`mt-1 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 ${isDark ? "text-emerald-100" : "text-emerald-700"}`} />
           </span>
-        </a>
+        </a>}
+        </section>
 
-        <div className="space-y-3">
+        <section className="mb-8">
+          <button
+            type="button"
+            onClick={() => setIsResourcesOpen((current) => !current)}
+            className={`mb-2 flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-[11px] font-bold uppercase tracking-[0.14em] transition focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "text-rose-100 hover:bg-white/5" : "text-rose-700 hover:bg-rose-100/70"}`}
+            aria-expanded={isResourcesOpen}
+          >
+            Participa y explora <span aria-hidden="true">{isResourcesOpen ? "−" : "+"}</span>
+          </button>
+        {isResourcesOpen && <div className="space-y-3">
           {PRIMARY_LINKS.map((link, index) => {
             const Icon = link.icon;
+            const countKey = `primary-${link.route || link.externalUrl || link.title}`;
             return (
               <button
                 key={link.title}
                 type="button"
                 onClick={() => {
+                  registerClick(countKey);
                   if (link.externalUrl) window.open(link.externalUrl, "_blank", "noopener,noreferrer");
                   else if (link.route) setLocation(link.route);
                 }}
@@ -281,18 +344,22 @@ export default function Bio() {
                   </span>
                   <span className="linktree-description mt-1 block text-xs leading-5 text-slate-200/90">{link.description}</span>
                 </span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="linktree-click-count text-[10px] font-semibold" title="Clics registrados en este dispositivo">{formatLinktreeClickCount(clickCounts[countKey] || 0)}</span>
+                  <ArrowRight className="h-4 w-4 text-white/60 transition-transform group-hover:translate-x-1" />
+                </span>
               </button>
             );
           })}
-        </div>
+        </div>}
+        </section>
 
         <section className={`linktree-surface mt-8 rounded-3xl border p-5 shadow-xl backdrop-blur-xl ${isDark ? "border-white/10 bg-white/[0.06]" : "border-slate-200 bg-white/85"}`}>
           <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 className="linktree-heading text-sm font-bold">Redes oficiales</h2>
+            <button type="button" onClick={() => setIsSocialOpen((current) => !current)} className="rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-rose-300/70" aria-expanded={isSocialOpen}>
+              <h2 className="linktree-heading text-sm font-bold">Redes oficiales <span className="ml-1 text-rose-400">{isSocialOpen ? "−" : "+"}</span></h2>
               <p className="linktree-muted mt-1 text-xs">Sigue a la comunidad de Batalla Cultural.</p>
-            </div>
+            </button>
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
@@ -314,25 +381,31 @@ export default function Bio() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {SOCIAL_LINKS.map((social, index) => (
+          {isSocialOpen && <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {SOCIAL_LINKS.map((social, index) => {
+              const SocialIcon = social.icon;
+              const countKey = `social-${social.name.toLowerCase()}`;
+              return (
               <a
                 key={social.name}
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => registerClick(countKey)}
                 className={`linktree-reveal linktree-social-card group rounded-2xl border p-3 text-center transition-[transform,background-color,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none ${isDark ? "border-white/10 bg-slate-950/35 hover:border-rose-200/50 hover:bg-white/10 hover:shadow-rose-950/20" : "border-slate-200 bg-slate-50 hover:border-rose-300 hover:bg-white hover:shadow-slate-300/40"}`}
                 style={{ animationDelay: `${560 + index * 70}ms` }}
                 aria-label={`${social.name}: ${social.label}`}
               >
                 <span className="mx-auto flex h-5 w-5 items-center justify-center">
-                  <img src={social.logo} alt={`Logotipo de ${social.name}`} className={`h-5 w-5 object-contain ${social.invertOnDark && isDark ? "brightness-0 invert" : ""}`} />
+                  {SocialIcon ? <SocialIcon className="h-5 w-5" aria-label={`Icono de ${social.name}`} /> : <img src={social.logo} alt={`Logotipo de ${social.name}`} className={`h-5 w-5 object-contain ${social.invertOnDark && isDark ? "brightness-0 invert" : ""}`} />}
                 </span>
                 <span className="linktree-title mt-2 block text-xs font-bold">{social.name}</span>
                 <span className="linktree-muted mt-0.5 block text-[9px] leading-3">{social.label}</span>
+                <span className="linktree-click-count mt-1 block text-[9px] font-semibold" title="Clics registrados en este dispositivo">{formatLinktreeClickCount(clickCounts[countKey] || 0)}</span>
               </a>
-            ))}
-          </div>
+              );
+            })}
+          </div>}
         </section>
 
         <footer className="linktree-muted mt-7 flex items-center justify-center gap-2 text-center text-[11px]">

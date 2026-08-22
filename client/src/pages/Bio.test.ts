@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   formatQuorumArticleDate,
   generateLinktreeQrDataUrl,
+  incrementLinktreeClickCount,
+  formatLinktreeClickCount,
   getLinktreeQrFilename,
   getLinktreeShareData,
   LINKTREE_QUORUM_FALLBACK,
@@ -22,7 +24,8 @@ describe("configuración del Linktree de Batalla Cultural", () => {
 
   it("incluye los cuatro perfiles sociales oficiales con sus activos visuales", () => {
     expect(SOCIAL_LINKS.map((social) => social.name)).toEqual(["X", "Discord", "Bluesky", "Instagram"]);
-    expect(SOCIAL_LINKS.every((social) => social.url.startsWith("https://") && social.logo.startsWith("/assets/icons/"))).toBe(true);
+    expect(SOCIAL_LINKS.every((social) => social.url.startsWith("https://") && Boolean(social.logo || social.icon))).toBe(true);
+    expect(SOCIAL_LINKS.find((social) => social.name === "Instagram")?.icon).toBeTruthy();
   });
 
   it("ofrece descripciones útiles y genera datos completos para compartir", () => {
@@ -48,6 +51,13 @@ describe("configuración del Linktree de Batalla Cultural", () => {
   it("genera un QR PNG descargable para el enlace público", async () => {
     const result = await generateLinktreeQrDataUrl("https://encuestabc.example/linktree");
     expect(result.startsWith("data:image/png;base64,")).toBe(true);
+  });
+
+  it("acumula y etiqueta los clics locales de forma transparente", () => {
+    const first = incrementLinktreeClickCount({}, "social-instagram");
+    const second = incrementLinktreeClickCount(first, "social-instagram");
+    expect(second["social-instagram"]).toBe(2);
+    expect(formatLinktreeClickCount(second["social-instagram"])).toBe("2 clics");
   });
 
 });

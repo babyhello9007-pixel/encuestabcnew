@@ -909,10 +909,30 @@ function GobiernoModal({
 // ─── InfografiaModal mejorada ─────────────────────────────────────────────────
 function InfografiaModal({ parties, onClose, onGenerate }: {
   parties: PartyStats[]; onClose: () => void;
-  onGenerate: (type: "general" | "party", party?: string) => void;
+  onGenerate: (type: "general" | "party", party?: string) => Promise<void>;
 }) {
   const [type, setType] = useState<"general" | "party">("general");
   const [selectedParty, setSelectedParty] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+
+  const generate = async () => {
+    if (type === "party" && !selectedParty) {
+      setGenerationError("Selecciona un partido antes de generar su infografía.");
+      return;
+    }
+    setGenerationError(null);
+    setIsGenerating(true);
+    try {
+      await onGenerate(type, selectedParty || undefined);
+      onClose();
+    } catch (error) {
+      console.error("No se pudo generar la infografía:", error);
+      setGenerationError("No se pudo generar la infografía. Prueba de nuevo en unos segundos.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
   return (
     <div className="r-infog-backdrop" onClick={onClose}>
       <div className="r-infog-modal" onClick={e => e.stopPropagation()}>
@@ -939,11 +959,12 @@ function InfografiaModal({ parties, onClose, onGenerate }: {
             {parties.map(p => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
           </select>
         )}
+        {generationError && <p style={{ margin: "0 0 12px", color: "#ff8a98", fontSize: 12 }}>{generationError}</p>}
         <div className="r-infog-footer">
-          <button className="r-infog-cancel" onClick={onClose}>Cancelar</button>
-          <button className="r-infog-generate" onClick={() => { onGenerate(type, selectedParty); onClose(); }}
+          <button className="r-infog-cancel" onClick={onClose} disabled={isGenerating}>Cancelar</button>
+          <button className="r-infog-generate" onClick={generate} disabled={isGenerating || (type === "party" && !selectedParty)}
             style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Download size={13} />Generar PNG
+            <Download size={13} />{isGenerating ? "Generando…" : "Generar PNG"}
           </button>
         </div>
       </div>
@@ -1644,6 +1665,9 @@ async function generarInfografiaPNG(
   preguntasVariasPorPartido?: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }>,
   partyLogos?: Record<string, string>
 ) {
+  if (!stats.length) {
+    throw new Error("No hay resultados disponibles para generar la infografía.");
+  }
   const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
     if (!src) return resolve(null);
     const img = new window.Image();
@@ -1853,10 +1877,21 @@ async function generarInfografiaPNG(
   ctx.fillText(`Datos: ${new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })} · La Encuesta de Batalla Cultural`, 40, 785);
   ctx.fillText(`encuestadebc.es`, 1060, 785);
 
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((result) => {
+      if (result) resolve(result);
+      else reject(new Error("No se pudo convertir la infografía a PNG."));
+    }, "image/png");
+  });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.download = `infografia-encuesta-bc-${Date.now()}.png`;
-  link.href = canvas.toDataURL("image/png", 0.95);
+  link.download = `infografia-encuesta-bc-${type === "party" && partyName ? partyName.toLowerCase().replace(/[^a-z0-9]+/gi, "-") : "general"}-${Date.now()}.png`;
+  link.href = url;
+  link.style.display = "none";
+  document.body.appendChild(link);
   link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
 // ─── Componente Principal ─────────────────────────────────────────────────────

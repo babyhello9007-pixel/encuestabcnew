@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { calculateMetricsFromResponses, uniquePartyCandidates, type PartyMetricsData } from "@/lib/partyBreakdownUtils";
 
 interface PartyStatsModalProps {
   isOpen: boolean;
@@ -12,12 +13,6 @@ interface PartyStatsModalProps {
   partyKey?: string;
 }
 
-interface PartyMetricsData {
-  edad_promedio: number;
-  ideologia_promedio: number;
-  total_votos: number;
-}
-
 export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentColor = "#C41E3A", partyLogo, partyKey }: PartyStatsModalProps) {
   const [metrics, setMetrics] = useState<PartyMetricsData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,10 +21,12 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
   useEffect(() => {
     if (!isOpen || !partyName) return;
 
+    const candidates = uniquePartyCandidates(partyName, partyKey);
+    let cancelled = false;
+
     const fetchTopLeaders = async () => {
       try {
-        const normalizedParty = (partyKey || partyName || "").trim();
-        if (!normalizedParty) {
+        if (!candidates.length) {
           setTopLeaders([]);
           return;
         }
@@ -37,11 +34,11 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
         const { data, error } = await supabase
           .from("ranking_lideres_por_partido")
           .select("lider_preferido, total_votos, porcentaje")
-          .eq("partido", normalizedParty)
+          .in("partido", candidates)
           .order("total_votos", { ascending: false })
           .limit(3);
 
-        if (error || !data?.length) {
+        if (cancelled || error || !data?.length) {
           if (error) console.error("Error fetching top leaders:", error);
           setTopLeaders([]);
           return;
@@ -55,6 +52,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
 
         const photosByName = new Map((leaderPhotos || []).map((leader) => [leader.leader_name, leader.photo_url]));
 
+        if (cancelled) return;
         setTopLeaders(
           data.map((row) => ({
             name: row.lider_preferido,
@@ -65,47 +63,55 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
         );
       } catch (err) {
         console.error("Error loading top leaders:", err);
-        setTopLeaders([]);
+        if (!cancelled) setTopLeaders([]);
       }
     };
 
     const fetchMetrics = async () => {
       setLoading(true);
+      setMetrics(null);
       try {
-        // Determinar la vista según el tipo de partido
         const viewName = partyType === "general" 
           ? "edad_ideologia_por_partido" 
           : "edad_ideologia_por_asociacion";
-        
-        // Determinar el campo de búsqueda
         const searchField = partyType === "general" ? "partido" : "asociacion";
 
         const { data, error } = await supabase
           .from(viewName)
           .select("edad_promedio, ideologia_promedio, total_votos")
-          .eq(searchField, partyName)
-          .single();
+          .in(searchField, candidates)
+          .limit(1);
 
-        if (error) {
-          console.error("Error fetching party metrics:", error);
-          // Usar datos de ejemplo si no hay datos
+        if (cancelled) return;
+        if (!error && data?.[0]) {
           setMetrics({
-            edad_promedio: 35.5,
-            ideologia_promedio: 6.2,
-            total_votos: 150,
+            edad_promedio: Number.isFinite(Number(data[0].edad_promedio)) ? Number(data[0].edad_promedio) : null,
+            ideologia_promedio: Number.isFinite(Number(data[0].ideologia_promedio)) ? Number(data[0].ideologia_promedio) : null,
+            total_votos: Number(data[0].total_votos || 0),
           });
-        } else if (data) {
-          setMetrics(data);
+          return;
         }
+
+        // La vista puede no estar disponible temporalmente; el fallback consulta las respuestas reales.
+        const voteField = partyType === "general" ? "voto_generales" : "asociacion_juvenil";
+        const { data: responseRows, error: responseError } = await supabase
+          .from("respuestas")
+          .select("edad, posicion_ideologica")
+          .in(voteField, candidates)
+          .limit(10_000);
+
+        if (responseError) console.error("Error cargando respuestas del desglose:", responseError);
+        if (!cancelled) setMetrics(calculateMetricsFromResponses(responseRows || []));
       } catch (err) {
         console.error("Error:", err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchMetrics();
     fetchTopLeaders();
+    return () => { cancelled = true; };
   }, [isOpen, partyName, partyType, partyKey]);
 
   if (!isOpen) return null;
@@ -137,13 +143,13 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#2D2D2D]">Edad Promedio</label>
                   <span className="text-2xl font-bold text-[var(--accent)]">
-                    {metrics.edad_promedio.toFixed(1)} años
+                    {metrics.edad_promedio !== null ? `${metrics.edad_promedio.toFixed(1)} años` : "—"}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min((metrics.edad_promedio / 80) * 100, 100)}%` }}
+                    style={{ width: `${metrics.edad_promedio !== null ? Math.min((metrics.edad_promedio / 80) * 100, 100) : 0}%` }}
                   ></div>
                 </div>
               </div>
@@ -153,7 +159,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-semibold text-[#2D2D2D]">Posición Ideológica</label>
                   <span className="text-2xl font-bold text-[var(--accent)]">
-                    {metrics.ideologia_promedio.toFixed(1)}/10
+                    {metrics.ideologia_promedio !== null ? `${metrics.ideologia_promedio.toFixed(1)}/10` : "—"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -161,7 +167,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
-                      style={{ width: `${(metrics.ideologia_promedio / 10) * 100}%` }}
+                      style={{ width: `${metrics.ideologia_promedio !== null ? (metrics.ideologia_promedio / 10) * 100 : 0}%` }}
                     ></div>
                   </div>
                   <span className="text-xs text-[#666666]">Derecha</span>
@@ -183,7 +189,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
             </>
           ) : (
             <div className="text-center py-8">
-              <p className="text-[#666666]">No hay datos disponibles</p>
+              <p className="text-[#666666]">Todavía no hay respuestas suficientes para mostrar este desglose.</p>
             </div>
           )}
         </div>

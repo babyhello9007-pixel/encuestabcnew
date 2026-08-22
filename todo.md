@@ -316,6 +316,8 @@
 - [x] Probar en todos los modos (Individual, Completo, Líderes)
 
 ## Página Bio (Linktree) - NUEVO
+- [x] Añadir contadores visibles de clics por destino y categorías desplegables en el Linktree
+- [x] Añadir pulso sutil a la tarjeta de última publicación de Quorum y sustituir el icono de Instagram
 - [x] Añadir un código QR descargable del Linktree para compartir presencialmente
 - [x] Implementar interruptor de modo oscuro con preferencia persistente en el Linktree
 - [x] Incorporar una tarjeta destacada con el último artículo de Quorum
@@ -710,6 +712,8 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Reparar el desglose de Resultados Generales y las infografías de exportación
+- [x] Añadir acceso a /valorar-lideres al finalizar NanoEncuesta
 - [x] Reparar los errores de sintaxis de GovernmentBuilder.tsx y dejar el diagnóstico TypeScript limpio en ese archivo
 - [x] Revisar y corregir el flujo de autenticación OAuth de Discord y sus pruebas
 - [x] Añadir indicadores visuales de subida o bajada de posición en el ranking de líderes

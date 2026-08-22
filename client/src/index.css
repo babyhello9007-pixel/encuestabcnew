@@ -995,3 +995,30 @@
   border-color: rgba(15, 23, 42, 0.12);
   background: rgba(255, 255, 255, 0.65);
 }
+
+.linktree-click-count {
+  color: rgba(148, 163, 184, 0.92);
+}
+
+.linktree-light .linktree-click-count {
+  color: #64748b;
+}
+
+.linktree-quorum-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 1px solid rgba(110, 231, 183, 0.45);
+  border-radius: inherit;
+  pointer-events: none;
+  animation: linktree-quorum-pulse 3.6s ease-in-out infinite;
+}
+
+@keyframes linktree-quorum-pulse {
+  0%, 100% { opacity: 0.18; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.012); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linktree-quorum-pulse::after { animation: none; }
+}

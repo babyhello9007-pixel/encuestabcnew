@@ -123,7 +123,7 @@ function CooldownScreen({ remainingMinutes, onBack }: { remainingMinutes: number
 
 // ─── Thank You Screen ─────────────────────────────────────────────────────────
 
-function ThankYouScreen({ onResults, onHome }: { onResults: () => void; onHome: () => void }) {
+function ThankYouScreen({ onResults, onRateLeaders, onHome }: { onResults: () => void; onRateLeaders: () => void; onHome: () => void }) {
   return (
     <div className="nc-thankyou-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div className="nc-thankyou-card" style={{ maxWidth: "500px", textAlign: "center", padding: "50px 40px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
@@ -137,6 +137,7 @@ function ThankYouScreen({ onResults, onHome }: { onResults: () => void; onHome: 
         <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "35px", lineHeight: "1.6" }}>Tu opinión construye el mapa real de la opinión española. Vuelve en 15 minutos para participar de nuevo.</p>
         
         <div className="nc-thankyou-btns" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <button className="nc-btn-primary" onClick={onRateLeaders} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(124,58,237,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; }}>★ Valorar a los líderes</button>
           <button className="nc-btn-primary" onClick={onResults} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #C41E3A, #ff6b6b)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(196,30,58,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; (e.target as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(196,30,58,0.4)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; (e.target as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(196,30,58,0.3)"; }}>📊 Ver Resultados en Vivo</button>
           <button className="nc-btn-outline" onClick={onHome} style={{ width: "100%", padding: "14px 24px", background: "rgba(196,30,58,0.15)", border: "1px solid #C41E3A", color: "#C41E3A", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.25)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.15)"; }}>← Volver al Inicio</button>
         </div>
@@ -392,7 +393,7 @@ export default function NanoEncuestaBC() {
   // ─── Screens ──────────────────────────────────────────────────────────────
 
   if (showCooldown) return <CooldownScreen remainingMinutes={cooldownMinutes} onBack={() => setLocation("/")} />;
-  if (showThankYou) return <ThankYouScreen onResults={() => setLocation("/resultados")} onHome={() => setLocation("/")} />;
+  if (showThankYou) return <ThankYouScreen onResults={() => setLocation("/resultados")} onRateLeaders={() => setLocation("/valorar-lideres")} onHome={() => setLocation("/")} />;
   if (showReview) return (
     <ReviewNanoEncuesta
       responses={responses}
