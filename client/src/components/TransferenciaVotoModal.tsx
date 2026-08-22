@@ -427,7 +427,8 @@ export function TransferenciaVotoModal({
         const viewBox = svgElement.viewBox.baseVal;
         const width = viewBox?.width || svgElement.clientWidth || 950;
         const height = viewBox?.height || svgElement.clientHeight || 400;
-        const headerHeight = 88;
+        const headerHeight = 118;
+        const totalAnalysedVotes = filteredData.reduce((sum, item) => sum + item.votos_transferidos, 0);
 
         canvas.width = width * scale;
         canvas.height = (height + headerHeight) * scale;
@@ -452,6 +453,12 @@ export function TransferenciaVotoModal({
         context.fillStyle = palette.subtitle;
         context.font = "600 12px Arial, sans-serif";
         context.fillText("Batalla Cultural · Diagrama Sankey", 28, 58);
+        context.fillStyle = palette.title;
+        context.font = "700 12px Arial, sans-serif";
+        context.fillText(`Total analizado: ${totalAnalysedVotes.toLocaleString("es-ES")} votos`, 28, 84);
+        context.fillStyle = palette.metadata;
+        context.font = "500 10px Arial, sans-serif";
+        context.fillText("Lectura: el grosor de cada enlace representa el volumen de transferencia entre partidos.", 28, 102);
         const watermark = await loadCanvasImage(new URL("/favicon.png", window.location.origin).href);
         context.save();
         context.globalAlpha = 0.9;
@@ -1297,9 +1304,12 @@ function SankeyChart({
         })}
       </svg>
       {selectedNode && (
-        <button onClick={() => setSelectedNode(null)} style={{ position: "absolute", top: 10, left: 12, zIndex: 9, background: "rgba(7,10,18,.9)", color: "#f8fafc", border: `1px solid ${getPartyColor(selectedNode)}`, borderRadius: 8, padding: "6px 9px", fontSize: 10, fontWeight: 800, cursor: "pointer" }}>
-          Mostrando transferencias de {getPartyDisplayName(selectedNode)} · Ver todas
-        </button>
+        <div style={{ position: "absolute", top: 10, left: 12, zIndex: 9, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ background: "rgba(7,10,18,.9)", color: "#f8fafc", border: `1px solid ${getPartyColor(selectedNode)}`, borderRadius: 8, padding: "6px 9px", fontSize: 10, fontWeight: 800 }}>Transferencias de {getPartyDisplayName(selectedNode)}</span>
+          <button onClick={() => setSelectedNode(null)} aria-label="Restablecer vista completa del Sankey" style={{ background: "#f8fafc", color: "#111827", border: "1px solid rgba(255,255,255,.3)", borderRadius: 8, padding: "6px 9px", fontSize: 10, fontWeight: 900, cursor: "pointer", boxShadow: "0 6px 16px rgba(0,0,0,.25)" }}>
+            Restablecer vista
+          </button>
+        </div>
       )}
 
       {linkTooltip && (

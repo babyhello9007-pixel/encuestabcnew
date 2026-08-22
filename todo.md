@@ -712,6 +712,9 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Reforzar la línea temporal visible en el modal de evolución de candidatos
+- [x] Añadir botón explícito para restablecer la vista completa del Sankey
+- [x] Añadir leyenda y total de votos analizados al PNG de Transferencia
 - [x] Añadir selector claro/oscuro para el PNG de Transferencia de voto
 - [x] Resaltar al hacer clic las transferencias de un partido en el Sankey
 - [x] Abrir un modal con evolución de votos al seleccionar un candidato
