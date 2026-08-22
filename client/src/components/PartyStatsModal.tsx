@@ -93,7 +93,7 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
         }
 
         // La vista puede no estar disponible temporalmente; el fallback consulta las respuestas reales.
-        const voteField = partyType === "general" ? "voto_generales" : "asociacion_juvenil";
+        const voteField = partyType === "general" ? "voto_generales" : "voto_asociacion_juvenil";
         const { data: responseRows, error: responseError } = await supabase
           .from("respuestas")
           .select("edad, posicion_ideologica")
@@ -114,114 +114,143 @@ export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentC
     return () => { cancelled = true; };
   }, [isOpen, partyName, partyType, partyKey]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div style={{ ["--accent" as any]: accentColor }} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95 border border-white/60">
+    <div
+      className="fixed inset-0 z-[100] bg-slate-950/70 p-0 backdrop-blur-md sm:p-3"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="party-breakdown-title"
+        style={{ ["--accent" as any]: accentColor }}
+        className="flex h-[100dvh] w-full flex-col overflow-hidden bg-slate-50 shadow-2xl animate-in fade-in zoom-in-95 sm:h-[calc(100dvh-1.5rem)] sm:rounded-3xl sm:border sm:border-white/60"
+      >
         {/* Header */}
-        <div className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">{partyLogo ? <img src={partyLogo} alt={partyName} className="w-6 h-6 rounded object-contain bg-white/15 p-0.5" /> : null}{partyName}</h2>
-          <button
-            onClick={onClose}
-            className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-all"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+        <header className="shrink-0 bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] px-5 py-4 sm:px-8 sm:py-5">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">Resultados detallados</p>
+              <h2 id="party-breakdown-title" className="flex items-center gap-3 truncate text-xl font-bold text-white sm:text-2xl">
+                {partyLogo ? <img src={partyLogo} alt="" className="h-8 w-8 shrink-0 rounded-lg bg-white/15 p-1 object-contain" /> : null}
+                <span className="truncate">{partyName}</span>
+              </h2>
             </div>
-          ) : metrics ? (
-            <>
-              {/* Edad Promedio */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-[#2D2D2D]">Edad Promedio</label>
-                  <span className="text-2xl font-bold text-[var(--accent)]">
-                    {metrics.edad_promedio !== null ? `${metrics.edad_promedio.toFixed(1)} años` : "—"}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
-                    style={{ width: `${metrics.edad_promedio !== null ? Math.min((metrics.edad_promedio / 80) * 100, 100) : 0}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Ideología Promedio */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-[#2D2D2D]">Posición Ideológica</label>
-                  <span className="text-2xl font-bold text-[var(--accent)]">
-                    {metrics.ideologia_promedio !== null ? `${metrics.ideologia_promedio.toFixed(1)}/10` : "—"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#666666]">Izquierda</span>
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-[var(--accent)] to-[color-mix(in_srgb,var(--accent),black_22%)] h-2 rounded-full transition-all"
-                      style={{ width: `${metrics.ideologia_promedio !== null ? (metrics.ideologia_promedio / 10) * 100 : 0}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-[#666666]">Derecha</span>
-                </div>
-              </div>
-
-              {/* Total Votos */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-[#666666] mb-1">Total de Votos</p>
-                <p className="text-3xl font-bold text-[#2D2D2D]">{metrics.total_votos}</p>
-              </div>
-
-              {/* Descripción */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-xs text-[#666666]">
-                  <span className="font-semibold text-[#2D2D2D]">Nota:</span> Estas métricas representan los promedios de edad e ideología de los votantes de este partido/asociación.
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-[#666666]">Todavía no hay respuestas suficientes para mostrar este desglose.</p>
-            </div>
-          )}
-        </div>
-
-        {topLeaders.length > 0 && (
-          <div className="px-6 pb-5">
-            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Top 3 líderes del partido</p>
-            <div className="grid gap-2">
-              {topLeaders.map((l, i) => (
-                <div key={l.name + i} className="flex items-center justify-between rounded-xl border border-white/60 bg-white/70 px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500">#{i + 1}</span>
-                    {l.photo ? <img src={l.photo} alt={l.name} className="w-7 h-7 rounded-full object-cover" /> : null}
-                    <span className="text-sm font-semibold text-slate-800">{l.name}</span>
-                  </div>
-                  <span className="text-xs text-slate-600">{l.votes} · {l.pct.toFixed(1)}%</span>
-                </div>
-              ))}
-            </div>
+            <button
+              onClick={onClose}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white"
+              aria-label="Cerrar desglose"
+              title="Cerrar (Esc)"
+            >
+              <X size={24} />
+            </button>
           </div>
-        )}
+        </header>
 
-        {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-[var(--accent)] text-white rounded-lg font-semibold transition-colors"
-          >
-            Cerrar
-          </button>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-6xl space-y-6 p-5 sm:p-8">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+              <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Perfil de sus votantes</h3>
+                  <p className="mt-1 text-sm text-slate-500">Promedios calculados sobre las respuestas disponibles.</p>
+                </div>
+                {!loading && metrics && <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">{metrics.total_votos.toLocaleString("es-ES")} votos</span>}
+              </div>
+
+              {loading ? (
+                <div className="flex min-h-52 flex-col items-center justify-center gap-3 text-slate-500">
+                  <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-200 border-t-[var(--accent)]"></div>
+                  <span className="text-sm font-medium">Cargando desglose real…</span>
+                </div>
+              ) : metrics ? (
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label className="text-sm font-semibold text-slate-700">Edad media</label>
+                      <span className="text-2xl font-bold text-[var(--accent)]">{metrics.edad_promedio !== null ? `${metrics.edad_promedio.toFixed(1)}` : "—"}</span>
+                    </div>
+                    <div className="mb-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-full rounded-full bg-[var(--accent)] transition-all" style={{ width: `${metrics.edad_promedio !== null ? Math.min((metrics.edad_promedio / 80) * 100, 100) : 0}%` }}></div>
+                    </div>
+                    <p className="text-xs text-slate-500">Años</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label className="text-sm font-semibold text-slate-700">Posición ideológica</label>
+                      <span className="text-2xl font-bold text-[var(--accent)]">{metrics.ideologia_promedio !== null ? `${metrics.ideologia_promedio.toFixed(1)}/10` : "—"}</span>
+                    </div>
+                    <div className="mb-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-full rounded-full bg-[var(--accent)] transition-all" style={{ width: `${metrics.ideologia_promedio !== null ? (metrics.ideologia_promedio / 10) * 100 : 0}%` }}></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-500"><span>Izquierda</span><span>Derecha</span></div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                    <p className="text-sm font-semibold text-slate-700">Total de votos</p>
+                    <p className="mt-2 text-4xl font-bold text-slate-900">{metrics.total_votos.toLocaleString("es-ES")}</p>
+                    <p className="mt-3 text-xs leading-relaxed text-slate-500">Respuestas usadas para calcular este desglose.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex min-h-52 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
+                  <p className="font-semibold text-slate-800">Aún no hay respuestas suficientes</p>
+                  <p className="mt-1 max-w-md text-sm text-slate-500">Cuando haya datos de edad o posición ideológica para este partido, aparecerán aquí.</p>
+                </div>
+              )}
+            </div>
+
+            {topLeaders.length > 0 && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+                <div className="mb-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Preferencias de liderazgo</p>
+                  <h3 className="mt-1 text-lg font-bold text-slate-900">Top 3 líderes del partido</h3>
+                </div>
+                <div className="grid gap-3 lg:grid-cols-3">
+                  {topLeaders.map((leader, index) => (
+                    <article key={leader.name + index} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-bold text-white">#{index + 1}</span>
+                      {leader.photo ? <img src={leader.photo} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" /> : <div className="h-10 w-10 shrink-0 rounded-full bg-slate-200" />}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-slate-800">{leader.name}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{leader.votes.toLocaleString("es-ES")} votos · {leader.pct.toFixed(1)}%</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+
+        <footer className="shrink-0 border-t border-slate-200 bg-white px-5 py-3 sm:px-8">
+          <div className="mx-auto flex w-full max-w-6xl justify-end">
+            <button onClick={onClose} className="rounded-xl bg-[var(--accent)] px-6 py-2.5 font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2">Cerrar desglose</button>
+          </div>
+        </footer>
+      </section>
     </div>
   );
 }

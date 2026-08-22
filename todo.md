@@ -712,6 +712,18 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Convertir el desglose de partido de Resultados en modal emergente de pantalla completa
+- [x] Corregir color hexadecimal inválido en la generación de infografías de Resultados
+- [x] Evitar el error 404 cuando no exista la vista top_region_por_partido
+- [x] Añadir fallback visible para las fotos externas rotas de líderes en NanoEncuesta
+- [x] Cohesionar personas duplicadas entre partidos en la valoración de líderes
+- [x] Ordenar partidos y asociaciones de NanoEncuesta según resultados y orden alfabético
+- [ ] Mejorar la experiencia, recuperación y orientación de la NanoEncuesta
+- [x] Restaurar en NanoEncuesta los logotipos oficiales de party_configuration.logo_url
+- [x] Corregir la lista de Aliança Catalana y eliminar mezclas de líderes entre partidos
+- [x] Mejorar la visualización del desglose de valoración de líderes
+- [x] Diagnosticar por qué la vista activa no refleja el rediseño del modal de líder
+- [x] Corregir exportación PNG oscura del desglose de líder
 - [x] Reparar el desglose de Resultados Generales y las infografías de exportación
 - [x] Añadir acceso a /valorar-lideres al finalizar NanoEncuesta
 - [x] Reparar los errores de sintaxis de GovernmentBuilder.tsx y dejar el diagnóstico TypeScript limpio en ese archivo

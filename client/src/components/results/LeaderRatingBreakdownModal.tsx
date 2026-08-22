@@ -173,15 +173,117 @@ export function LeaderRatingBreakdownModal({
   }, [ratings]);
 
   const handleExportModalPNG = async () => {
-    const modalNode = document.getElementById('modal-top5-container');
-    if (!modalNode) return;
+    if (!leader) return;
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(modalNode, { scale: 2, backgroundColor: '#030712', useCORS: true, logging: false });
+      const canvas = document.createElement("canvas");
+      canvas.width = 1800;
+      canvas.height = 1180;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("No se pudo crear el lienzo de exportación.");
+
+      const fillRoundedRect = (x: number, y: number, width: number, height: number, radius: number, fill: string) => {
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, radius);
+        ctx.fill();
+      };
+
+      // Fondo claro opaco: evita PNGs negros o transparentes al exportar.
+      ctx.fillStyle = "#F8FAFC";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#C41E3A";
+      ctx.fillRect(0, 0, canvas.width, 24);
+      ctx.fillStyle = "#111827";
+      ctx.font = "700 24px Arial, sans-serif";
+      ctx.fillText("BATALLA CULTURAL · INFORME DE VALORACIÓN", 90, 82);
+      ctx.fillStyle = "#64748B";
+      ctx.font = "400 19px Arial, sans-serif";
+      ctx.fillText(`Generado el ${new Date().toLocaleDateString("es-ES")}`, 90, 116);
+
+      ctx.fillStyle = "#0F172A";
+      ctx.font = "800 56px Georgia, serif";
+      ctx.fillText(leader.leader_name, 90, 196);
+      ctx.fillStyle = "#475569";
+      ctx.font = "600 22px Arial, sans-serif";
+      ctx.fillText(leader.parties.map((party) => party.display_name).join(" · ") || "Sin partido asignado", 90, 235);
+
+      const metrics = [
+        { label: "MEDIA", value: `${leaderAverage.toFixed(2)} / 10`, color: leaderColor },
+        { label: "VALORACIONES", value: String(filteredRatings.length || leader.total_valoraciones), color: "#0EA5E9" },
+        { label: "RANGO", value: dateFilter === "todos" ? "Todo el período" : dateFilter === "hoy" ? "Últimas 24 h" : dateFilter === "7dias" ? "Últimos 7 días" : "Últimos 30 días", color: "#7C3AED" },
+      ];
+      metrics.forEach((metric, index) => {
+        const x = 90 + index * 540;
+        fillRoundedRect(x, 285, 480, 150, 24, "#FFFFFF");
+        ctx.strokeStyle = "#E2E8F0";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x, 285, 480, 150, 24);
+        ctx.stroke();
+        ctx.fillStyle = metric.color;
+        ctx.font = "700 18px Arial, sans-serif";
+        ctx.fillText(metric.label, x + 32, 330);
+        ctx.fillStyle = "#0F172A";
+        ctx.font = "800 38px Arial, sans-serif";
+        ctx.fillText(metric.value, x + 32, 390);
+      });
+
+      fillRoundedRect(90, 485, 1620, 520, 28, "#FFFFFF");
+      ctx.strokeStyle = "#E2E8F0";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(90, 485, 1620, 520, 28);
+      ctx.stroke();
+      ctx.fillStyle = "#0F172A";
+      ctx.font = "800 28px Arial, sans-serif";
+      ctx.fillText("Distribución de valoraciones", 140, 550);
+      ctx.fillStyle = "#64748B";
+      ctx.font = "400 18px Arial, sans-serif";
+      ctx.fillText("Número de valoraciones por puntuación", 140, 582);
+
+      const chartBottom = 895;
+      const chartHeight = 250;
+      const barWidth = 108;
+      const barGap = 42;
+      distribution.forEach((item, index) => {
+        const x = 145 + index * (barWidth + barGap);
+        const barHeight = item.count ? Math.max(16, (item.percentage / 100) * chartHeight) : 8;
+        ctx.fillStyle = "#E2E8F0";
+        ctx.beginPath();
+        ctx.roundRect(x, chartBottom - chartHeight, barWidth, chartHeight, 14);
+        ctx.fill();
+        ctx.fillStyle = leaderColor;
+        ctx.beginPath();
+        ctx.roundRect(x, chartBottom - barHeight, barWidth, barHeight, 14);
+        ctx.fill();
+        ctx.fillStyle = "#0F172A";
+        ctx.font = "800 22px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(item.count), x + barWidth / 2, chartBottom - barHeight - 18);
+        ctx.fillStyle = "#475569";
+        ctx.font = "700 20px Arial, sans-serif";
+        ctx.fillText(String(item.score), x + barWidth / 2, chartBottom + 38);
+      });
+      ctx.textAlign = "left";
+
+      if (compareLeaderName && compareAverage !== null) {
+        ctx.fillStyle = "#475569";
+        ctx.font = "600 21px Arial, sans-serif";
+        const comparison = `Comparativa: ${compareLeaderName} · ${compareAverage.toFixed(2)} / 10${percentageDiff !== null ? ` · Diferencia ${percentageDiff > 0 ? "+" : ""}${percentageDiff.toFixed(1)}%` : ""}`;
+        ctx.fillText(comparison, 90, 1080);
+      }
+      ctx.fillStyle = "#94A3B8";
+      ctx.font = "400 17px Arial, sans-serif";
+      ctx.fillText("Datos agregados de valoraciones públicas · Batalla Cultural", 90, 1130);
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error("No se pudo crear el PNG.")), "image/png");
+      });
       const link = document.createElement('a');
       link.download = `ficha-${leader?.leader_name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = URL.createObjectURL(blob);
       link.click();
+      URL.revokeObjectURL(link.href);
       alert("¡Imagen PNG del desglose descargada con éxito!");
     } catch (err) {
       console.error("Error exportando modal PNG:", err);
@@ -292,30 +394,43 @@ export function LeaderRatingBreakdownModal({
     setCompareColor(favorite.compareColor);
   };
 
+  useEffect(() => {
+    if (!isOpen || !leader) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen, leader, onClose]);
+
   if (!isOpen || !leader) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-md"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Desglose de valoraciones de ${leader.leader_name}`}
+      className="fixed inset-0 z-[110] bg-slate-950/80 p-0 backdrop-blur-md sm:p-3"
+      role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div id="modal-top5-container" className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/15 bg-slate-950/95 p-5 text-white shadow-2xl shadow-black/40 sm:p-7">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-xl p-2 text-white/60 transition hover:bg-white/10 hover:text-white"
-          aria-label="Cerrar desglose"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <div className="flex items-start gap-4 pr-16">
-          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white/15 bg-white/10">
+      <section
+        id="modal-top5-container"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Desglose de valoraciones de ${leader.leader_name}`}
+        className="flex h-[100dvh] w-full flex-col overflow-hidden bg-slate-950 text-white shadow-2xl shadow-black/40 animate-in fade-in zoom-in-95 sm:h-[calc(100dvh-1.5rem)] sm:rounded-3xl sm:border sm:border-white/15"
+      >
+        <header className="shrink-0 border-b border-white/10 bg-slate-950/95 px-5 py-4 backdrop-blur-xl sm:px-8 sm:py-5">
+          <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white/15 bg-white/10">
             {leader.photo_url ? (
               <img src={leader.photo_url} alt={leader.leader_name} className="h-full w-full object-cover object-top" />
             ) : (
@@ -323,28 +438,31 @@ export function LeaderRatingBreakdownModal({
                 {leader.leader_name.charAt(0)}
               </div>
             )}
-          </div>
-          <div>
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-              Ficha Analítica e Historial
-            </p>
-            <h3 className="text-xl font-black tracking-tight sm:text-2xl">{leader.leader_name}</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {leader.parties.map((party) => (
-                <span
-                  key={party.party_key}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-white/70"
-                >
-                  {party.logo_url && <img src={party.logo_url} alt="" className="h-3.5 w-3.5 object-contain" />}
-                  {party.display_name}
-                </span>
-              ))}
+              </div>
+              <div className="min-w-0">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">Ficha Analítica e Historial</p>
+                <h3 className="truncate text-xl font-black tracking-tight sm:text-2xl">{leader.leader_name}</h3>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {leader.parties.map((party) => (
+                    <span key={party.party_key} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-white/70">
+                      {party.logo_url && <img src={party.logo_url} alt="" className="h-3.5 w-3.5 object-contain" />}
+                      {party.display_name}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
+            <button type="button" onClick={onClose} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white" aria-label="Cerrar desglose" title="Cerrar (Esc)">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-        </div>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="mx-auto w-full max-w-6xl p-5 sm:p-8">
 
         {/* Botones de exportación y descarga CSV */}
-        <div className="mt-4 flex flex-wrap items-center gap-2 pt-3 border-t border-white/10">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4">
           <span className="text-[11px] text-white/50 font-semibold">Acciones:</span>
           <button
             onClick={handleExportModalPNG}
@@ -389,7 +507,7 @@ export function LeaderRatingBreakdownModal({
         </div>
 
         {/* Pestañas de Navegación Modal */}
-        <div className="mt-4 flex gap-2 border-b border-white/10 pb-3">
+        <div className="mt-5 flex gap-2 overflow-x-auto border-b border-white/10 pb-3">
           <button
             type="button"
             onClick={() => setActiveTab("distribucion")}
@@ -422,7 +540,7 @@ export function LeaderRatingBreakdownModal({
           <p className="mt-8 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">{error}</p>
         ) : activeTab === "distribucion" ? (
           <>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
               <Metric label="Media" value={`${leader.media_valoracion.toFixed(2)} / 10`} accent={leader.primary_color} />
               <Metric label="Valoraciones" value={String(ratings.length || leader.total_valoraciones)} />
               <Metric label="Mínima" value={ratings.length ? String(Math.min(...ratings.map((item) => item.valoracion))) : "—"} />
@@ -628,7 +746,15 @@ export function LeaderRatingBreakdownModal({
             </div>
           </div>
         )}
-      </div>
+          </div>
+        </div>
+        <footer className="shrink-0 border-t border-white/10 bg-slate-950/95 px-5 py-3 sm:px-8">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+            <p className="hidden text-xs text-white/45 sm:block">Puedes cerrar con la tecla Esc o mediante este botón.</p>
+            <button type="button" onClick={onClose} className="ml-auto rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950">Cerrar desglose</button>
+          </div>
+        </footer>
+      </section>
     </div>
   );
 }

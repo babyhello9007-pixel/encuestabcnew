@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Star, ChevronLeft, Send, Loader2, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { consolidateLeaders, type ConsolidatedLeader, type LeaderCandidate } from "@/lib/leaderIdentity";
 
 interface PartyConfiguration {
   display_name: string | null;
@@ -17,21 +18,11 @@ interface RawPartyLeader {
   party_configuration: PartyConfiguration | null;
 }
 
-interface Leader {
-  id: number;
-  party_key: string;
-  leader_name: string;
-  photo_url: string;
-  display_name: string;
-  color: string;
-  logo_url: string;
-}
-
 type ValoracionMap = Record<string, number>;
 
 export default function ValorarLideres() {
   const [, setLocation] = useLocation();
-  const [leaders, setLeaders] = useState<Leader[]>([]);
+  const [leaders, setLeaders] = useState<ConsolidatedLeader[]>([]);
   const [valoraciones, setValoraciones] = useState<ValoracionMap>({});
   const [hoverRatings, setHoverRatings] = useState<Record<string, number>>({});
   
@@ -65,22 +56,24 @@ export default function ValorarLideres() {
 
       const rawData = (data || []) as unknown as RawPartyLeader[];
 
-      const formattedLeaders: Leader[] = rawData.map((item) => ({
+      const formattedLeaders: LeaderCandidate[] = rawData.map((item) => ({
         id: item.id,
         party_key: item.party_key,
-        leader_name: item.leader_name,
-        photo_url: item.photo_url || "/placeholder-avatar.png",
+        leader_name: item.leader_name.trim(),
+        photo_url: item.photo_url,
         display_name: item.party_configuration?.display_name || item.party_key,
         color: item.party_configuration?.color || "#818cf8",
         logo_url: item.party_configuration?.logo_url || "",
       }));
+      const consolidated = consolidateLeaders(formattedLeaders);
 
-      setLeaders(formattedLeaders);
+      setLeaders(consolidated);
 
-      // Inicializar valoraciones a 0
+      // Una persona solo ocupa una tarjeta y una valoración, aunque figure por
+      // error o transición organizativa en más de una configuración de partido.
       const initialVals: ValoracionMap = {};
-      formattedLeaders.forEach((leader) => {
-        initialVals[`${leader.party_key}-${leader.leader_name}`] = 0;
+      consolidated.forEach((leader) => {
+        initialVals[leader.identity_key] = 0;
       });
       setValoraciones(initialVals);
     } catch (err: any) {
@@ -126,14 +119,14 @@ export default function ValorarLideres() {
 
       const insertData = leaders
         .filter((leader) => {
-          const key = `${leader.party_key}-${leader.leader_name}`;
+          const key = leader.identity_key;
           return valoraciones[key] > 0;
         })
         .map((leader) => ({
           respuesta_id: respuestaId,
           party_key: leader.party_key,
           leader_name: leader.leader_name,
-          valoracion: valoraciones[`${leader.party_key}-${leader.leader_name}`],
+          valoracion: valoraciones[leader.identity_key],
         }));
 
       if (insertData.length === 0) {
@@ -239,14 +232,14 @@ export default function ValorarLideres() {
             Evaluación de Líderes Políticos
           </h2>
           <p className="text-gray-400 text-sm">
-            Otorga una calificación de <strong>1 a 10</strong> a los líderes de cada formación. Puedes valorar solo a los que conozcas.
+            Otorga una calificación de <strong>1 a 10</strong> a los líderes que conozcas. Cada persona aparece una sola vez, aunque esté vinculada a varias configuraciones de partido.
           </p>
         </div>
 
         {/* Grid de Líderes */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {leaders.map((leader) => {
-            const key = `${leader.party_key}-${leader.leader_name}`;
+            const key = leader.identity_key;
             const currentRating = valoraciones[key] || 0;
             const activeHover = hoverRatings[key] || 0;
             const displayRating = activeHover || currentRating;
@@ -257,25 +250,20 @@ export default function ValorarLideres() {
                 className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-white/20 transition flex flex-col justify-between"
               >
                 <div>
-                  {/* Encabezado del Partido */}
+                  {/* Encabezado de afiliación */}
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2.5">
-                      {leader.logo_url && (
-                        <img
-                          src={leader.logo_url}
-                          alt={leader.display_name}
-                          className="w-7 h-7 object-contain rounded"
-                        />
-                      )}
-                      <span
-                        className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: `${leader.color}20`,
-                          color: leader.color,
-                        }}
-                      >
-                        {leader.display_name}
-                      </span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      {leader.affiliations.map((affiliation) => (
+                        <span
+                          key={affiliation.party_key}
+                          className="inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+                          style={{ backgroundColor: `${affiliation.color}20`, color: affiliation.color }}
+                          title={affiliation.display_name}
+                        >
+                          {affiliation.logo_url && <img src={affiliation.logo_url} alt="" className="h-3.5 w-3.5 object-contain" />}
+                          <span className="truncate">{affiliation.display_name}</span>
+                        </span>
+                      ))}
                     </div>
 
                     {currentRating > 0 && (
@@ -292,9 +280,7 @@ export default function ValorarLideres() {
                         src={leader.photo_url}
                         alt={leader.leader_name}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = "none";
-                        }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/placeholder-avatar.png"; }}
                       />
                     </div>
                     <div>

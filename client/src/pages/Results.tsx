@@ -50,6 +50,7 @@ import GovernmentBuilder from "@/components/GovernmentBuilder";
 import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
+import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -1743,13 +1744,13 @@ async function generarInfografiaPNG(
     topParties.forEach((party, i) => {
       const y = 288 + i * 44;
       const barW = Math.max(4, (party.votos / maxVotos) * 580);
-      const color = party.color || "#C41E3A";
+      const color = normalizeInfographicColor(party.color);
       // Bar
       ctx.fillStyle = "rgba(255,255,255,0.04)";
       ctx.beginPath(); ctx.roundRect(60, y + 10, 580, 22, 4); ctx.fill();
       const barGrad = ctx.createLinearGradient(60, 0, 640, 0);
       barGrad.addColorStop(0, color);
-      barGrad.addColorStop(1, color + "88");
+      barGrad.addColorStop(1, withInfographicAlpha(color));
       ctx.fillStyle = barGrad;
       ctx.beginPath(); ctx.roundRect(60, y + 10, barW, 22, 4); ctx.fill();
       // Party name
@@ -1785,14 +1786,15 @@ async function generarInfografiaPNG(
   } else if (type === "party" && partyName) {
     const party = stats.find(s => s.nombre === partyName);
     if (party) {
+      const partyColor = normalizeInfographicColor(party.color);
       // Sección izquierda: Resultados principales
       ctx.fillStyle = "rgba(255,255,255,0.04)";
       ctx.beginPath(); ctx.roundRect(40, 230, 350, 520, 12); ctx.fill();
-      ctx.fillStyle = party.color || "#C41E3A";
+      ctx.fillStyle = partyColor;
       ctx.font = "bold 48px Georgia, serif"; ctx.fillText(party.porcentaje.toFixed(1) + "%", 60, 310);
       ctx.fillStyle = "#fff"; ctx.font = "14px 'DM Sans', sans-serif";
       ctx.fillText(`${party.votos.toLocaleString("es-ES")} votos`, 60, 345);
-      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 56px Georgia, serif";
+      ctx.fillStyle = partyColor; ctx.font = "bold 56px Georgia, serif";
       ctx.fillText(String(party.escanos), 60, 430);
       ctx.fillStyle = "#7a7990"; ctx.font = "14px 'DM Sans', sans-serif";
       ctx.fillText("escaños", 60, 460);
@@ -1802,7 +1804,7 @@ async function generarInfografiaPNG(
       // Sección derecha: TOP 5 líderes
       ctx.fillStyle = "rgba(255,255,255,0.04)";
       ctx.beginPath(); ctx.roundRect(410, 230, 350, 520, 12); ctx.fill();
-      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("TOP 5 LÍDERES", 430, 260);
+      ctx.fillStyle = partyColor; ctx.font = "bold 14px monospace"; ctx.fillText("TOP 5 LÍDERES", 430, 260);
       ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(430, 268, 310, 1);
       for (let i = 0; i < 5; i++) {
         const y = 295 + i * 38;
@@ -1830,7 +1832,7 @@ async function generarInfografiaPNG(
       // Sección inferior: Preguntas Varias
       ctx.fillStyle = "rgba(255,255,255,0.04)";
       ctx.beginPath(); ctx.roundRect(780, 230, 380, 520, 12); ctx.fill();
-      ctx.fillStyle = party.color || "#C41E3A"; ctx.font = "bold 14px monospace"; ctx.fillText("PREGUNTAS VARIAS", 800, 260);
+      ctx.fillStyle = partyColor; ctx.font = "bold 14px monospace"; ctx.fillText("PREGUNTAS VARIAS", 800, 260);
       ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(800, 268, 340, 1);
       const preguntasRows = [
         { q: "División territorial", a: preguntas.division_territorial || "—" },
@@ -2341,8 +2343,17 @@ export default function Results() {
         }
       }
 
-      const { data: topRegionRows } = await supabase.from("top_region_por_partido").select("partido, region_top, votos_region_top");
-      if (topRegionRows?.length) topRegionPorPartido = topRegionRows.map((r: any) => ({ partido: r.partido, region: r.region_top, votos: Number(r.votos_region_top || 0) }));
+      // Derivamos esta información de respuestas reales. Así la infografía no
+      // depende de una vista opcional de Supabase que puede no estar instalada.
+      const { data: regionRows, error: regionRowsError } = await supabase
+        .from("respuestas")
+        .select("voto_generales, comunidad_autonoma")
+        .not("voto_generales", "is", null)
+        .not("comunidad_autonoma", "is", null)
+        .limit(10_000);
+      if (!regionRowsError && regionRows?.length) {
+        topRegionPorPartido = getTopRegionsByParty(regionRows);
+      }
     } catch (e) {
       console.error("Error cargando datos extendidos para infografía:", e);
     }

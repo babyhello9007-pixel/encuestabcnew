@@ -70,6 +70,17 @@ export function Top5LideresWidget() {
     return unsubscribe;
   }, [fetchTop5]);
 
+  useEffect(() => {
+    if (!lideres.length || typeof window === "undefined") return;
+    const requestedLeader = new URLSearchParams(window.location.search).get("desgloseLider");
+    if (!requestedLeader) return;
+
+    const selected = lideres.find((leader) =>
+      leader.leader_name.localeCompare(requestedLeader, "es", { sensitivity: "base" }) === 0
+    );
+    if (selected) setSelectedLeader(selected);
+  }, [lideres]);
+
   if (loading || lideres.length === 0) {
     return null;
   }

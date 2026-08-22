@@ -44,9 +44,9 @@ export const PARTY_LEADERS: PartyLeaders = {
     { name: "Marta Lois" },
   ],
   "Aliança Catalana": [
-    { name: "Carles Puigdemont" },
-    { name: "Jordi Turull" },
-    { name: "Anna Erra" },
+    { name: "Sílvia Orriols" },
+    { name: "Oriol Gès" },
+    { name: "Lluís Areny" },
   ],
   ERC: [
     { name: "Oriol Junqueras" },
@@ -123,4 +123,3 @@ export const PARTY_LEADERS: PartyLeaders = {
 export function getLeaderOptions(partyName: string): LeaderOption[] {
   return PARTY_LEADERS[partyName] || [];
 }
-

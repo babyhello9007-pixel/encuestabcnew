@@ -27,8 +27,13 @@ export default function ImageLoader({
     return false;
   };
 
+  // Las URLs temporales de perfiles de X y LinkedIn caducan con frecuencia.
+  // En vez de generar 404 y dejar un hueco, se muestra directamente el avatar
+  // de iniciales hasta que se cargue una imagen persistente en la configuración.
+  const isEphemeralProfileUrl = (value: string) => /(^|\/\/)(pbs\.twimg\.com|media\.licdn\.com)\//i.test(value);
+
   const [currentSrc, setCurrentSrc] = useState<string>(() => {
-    if (!isValidImageSource(src)) return '';
+    if (!isValidImageSource(src) || isEphemeralProfileUrl(src)) return '';
     // Primero intenta obtener desde logos embebidos
     const filename = src.split('/').pop() || '';
     if (filename && EMBEDDED_LOGOS[filename]) {
@@ -49,7 +54,7 @@ export default function ImageLoader({
   const [attemptCount, setAttemptCount] = useState(0);
 
   useEffect(() => {
-    if (!isValidImageSource(src)) {
+    if (!isValidImageSource(src) || isEphemeralProfileUrl(src)) {
       setCurrentSrc('');
       setHasError(true);
       setIsLoading(false);
@@ -196,6 +201,7 @@ export default function ImageLoader({
     
     return (
       <div
+        className={className}
         style={{
           width: `${size}px`,
           height: `${size}px`,

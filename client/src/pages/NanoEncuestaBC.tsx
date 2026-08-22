@@ -8,6 +8,9 @@ import { normalizeProvinceName } from "@/lib/provinceNormalizer";
 import { getCCAAFromProvince, isProvinceInCCAA, getProvincesInCCAA } from "@/lib/provinceToCAA";
 import ReviewNanoEncuesta from "@/components/ReviewNanoEncuesta";
 import { checkVotingCooldown, recordVote, getUserIP } from "@/lib/votingCooldown";
+import ImageLoader from "@/components/ImageLoader";
+import { getLeaderIdentityKey } from "@/lib/leaderIdentity";
+import { matchesPartySearch, sortPartiesByCurrentVote } from "@/lib/partyOrdering";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -189,19 +192,26 @@ export default function NanoEncuestaBC() {
   const [youthParties, setYouthParties] = useState<PartyConfig[]>([]);
   const [leaders, setLeaders] = useState<PartyLeader[]>([]);
   const [loadingParties, setLoadingParties] = useState(true);
+  const [partySearch, setPartySearch] = useState("");
+  const [unavailablePartyLogos, setUnavailablePartyLogos] = useState<Record<string, boolean>>({});
 
   // Fetch party configuration and leaders from Supabase
   useEffect(() => {
     const fetchPartyData = async () => {
       try {
-        const [partiesRes, leadersRes] = await Promise.all([
+        const [partiesRes, leadersRes, generalTotalsRes, youthTotalsRes] = await Promise.all([
           supabase.from("party_configuration").select("*").eq("is_active", true).order("display_name"),
           supabase.from("party_leaders").select("*").eq("is_active", true),
+          supabase.from("votos_generales_totales").select("partido_id, votos"),
+          supabase.from("votos_juveniles_totales").select("asociacion_id, votos"),
         ]);
 
         if (partiesRes.data) {
-          setParties(partiesRes.data.filter((p: PartyConfig) => p.party_type === "general"));
-          setYouthParties(partiesRes.data.filter((p: PartyConfig) => p.party_type === "youth"));
+          const activeParties = partiesRes.data as PartyConfig[];
+          const general = activeParties.filter((party) => party.party_type === "general");
+          const youth = activeParties.filter((party) => ["youth", "asociacion_juvenil", "juvenile"].includes(party.party_type));
+          setParties(sortPartiesByCurrentVote(general, (generalTotalsRes.data || []).map((row: any) => ({ id: row.partido_id, votos: row.votos }))));
+          setYouthParties(sortPartiesByCurrentVote(youth, (youthTotalsRes.data || []).map((row: any) => ({ id: row.asociacion_id, votos: row.votos }))));
         }
         if (leadersRes.data) setLeaders(leadersRes.data);
       } catch (err) {
@@ -260,6 +270,9 @@ export default function NanoEncuestaBC() {
 
   const currentStepData = steps[currentStep];
   const progress = ((currentStep) / steps.length) * 100;
+  const currentPartyOptions = currentStepData.type === "youth_party" ? youthParties : parties;
+  const visiblePartyOptions = currentPartyOptions.filter((party) => matchesPartySearch(party, partySearch));
+  const currentPartyLabel = currentStepData.type === "youth_party" ? "asociación" : "partido";
 
   const getFilteredProvinces = () => {
     if (currentStepData.key === "provincia" && responses.comunidad_autonoma) {
@@ -281,7 +294,11 @@ export default function NanoEncuestaBC() {
   };
 
   const handleAnswer = (value: any) => {
-    setResponses(prev => ({ ...prev, [currentStepData.key]: value }));
+    setResponses(prev => ({
+      ...prev,
+      [currentStepData.key]: value,
+      ...(currentStepData.key === "voto_generales" && prev.voto_generales !== value ? { lider_partido: undefined } : {}),
+    }));
     if (currentStepData.key === "provincia") {
       const ccaa = getCCAAFromProvince(value);
       if (ccaa) { setResponses(prev => ({ ...prev, comunidad_autonoma: ccaa })); setCCAAWarning(null); }
@@ -297,6 +314,7 @@ export default function NanoEncuestaBC() {
     setDirection(dir);
     setAnimKey(k => k + 1);
     setShowOtroInput(false);
+    setPartySearch("");
     setTimeout(() => {
       if (dir === "next") {
         if (currentStep < steps.length - 1) { setCurrentStep(s => s + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
@@ -405,7 +423,11 @@ export default function NanoEncuestaBC() {
 
   // Helpers
   const selectedParty = parties.find(p => p.display_name === responses.voto_generales);
-  const partyLeaders = leaders.filter(l => l.party_key === selectedParty?.party_key);
+  const partyLeaders = Array.from(new Map(
+    leaders
+      .filter(leader => leader.party_key === selectedParty?.party_key)
+      .map(leader => [getLeaderIdentityKey(leader.leader_name), leader])
+  ).values());
   const accentColor = selectedParty?.color || "#e8465a";
   const stepVal = responses[currentStepData.key as keyof NanoSurveyResponse];
 
@@ -1117,20 +1139,39 @@ export default function NanoEncuestaBC() {
                   ) : (
                     <>
                       <div className="nc-party-grid">
-                        {(currentStepData.type === "youth_party" ? youthParties : parties).map(party => {
+                        <div className="nc-party-search-wrap" style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                          <input
+                            className="nc-input"
+                            value={partySearch}
+                            onChange={event => setPartySearch(event.target.value)}
+                            placeholder={`Buscar ${currentPartyLabel}…`}
+                            aria-label={`Buscar ${currentPartyLabel}`}
+                            style={{ minHeight: 44, padding: "10px 14px" }}
+                          />
+                          <span style={{ fontSize: 11, color: "var(--nc-muted)", whiteSpace: "nowrap" }}>Ordenado por apoyo</span>
+                        </div>
+                        {visiblePartyOptions.map(party => {
                           const isSelected = responses[currentStepData.key as keyof NanoSurveyResponse] === party.display_name;
                           return (
                             <button
                               key={party.party_key}
                               className={`nc-party-btn${isSelected ? " selected" : ""}`}
                               style={isSelected ? { borderColor: party.color, boxShadow: `0 8px 24px ${party.color}25` } : {}}
-                              onClick={() => handleAnswer(party.display_name)}
+                              onClick={() => { handleAnswer(party.display_name); setPartySearch(""); }}
+                              aria-pressed={isSelected}
                             >
                               <div className="nc-party-check">
                                 <Check size={11} color="#fff" strokeWidth={3} />
                               </div>
-                              {party.logo_url ? (
-                                <img src={party.logo_url} alt={party.display_name} className="nc-party-logo" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                              {party.logo_url && !unavailablePartyLogos[party.party_key] ? (
+                                <img
+                                  src={party.logo_url}
+                                  alt={party.display_name}
+                                  className="nc-party-logo"
+                                  loading="eager"
+                                  decoding="async"
+                                  onError={() => setUnavailablePartyLogos((previous) => ({ ...previous, [party.party_key]: true }))}
+                                />
                               ) : (
                                 <div className="nc-party-logo-placeholder" style={{ background: party.color }}>
                                   {party.display_name.slice(0, 2).toUpperCase()}
@@ -1140,6 +1181,9 @@ export default function NanoEncuestaBC() {
                             </button>
                           );
                         })}
+                        {!visiblePartyOptions.length && (
+                          <div className="nc-loading-msg" style={{ gridColumn: "1 / -1", padding: "18px 0" }}>No hay coincidencias. Prueba con otro nombre o selecciona «Otro».</div>
+                        )}
                         {/* Otro */}
                         <button
                           className={`nc-party-btn nc-party-otro${showOtroInput ? " selected" : ""}`}
@@ -1291,13 +1335,14 @@ export default function NanoEncuestaBC() {
                                   <Check size={10} color="#fff" strokeWidth={3} />
                                 </div>
                                 {leader.photo_url ? (
-                                  <img
-                                    src={leader.photo_url}
-                                    alt={leader.leader_name}
-                                    className="nc-leader-photo"
-                                    style={isSelected && selectedParty ? { borderColor: selectedParty.color } : {}}
-                                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                  />
+                                <ImageLoader
+                                  src={leader.photo_url}
+                                  alt={leader.leader_name}
+                                  fallbackText={leader.leader_name}
+                                  size={64}
+                                  className="nc-leader-photo"
+                                  style={isSelected && selectedParty ? { borderColor: selectedParty.color, borderRadius: "50%" } : { borderRadius: "50%" }}
+                                />
                                 ) : (
                                   <div className="nc-leader-photo-placeholder">
                                     {leader.leader_name.split(" ").map(w => w[0]).join("").slice(0, 2)}
