@@ -27,6 +27,7 @@ interface TransferenciaVotoDataRaw {
   total_transferencias?: number;
   votos_transferidos?: number;
   porcentaje?: number;
+  created_at?: string;
 }
 
 interface TransferenciaVotoData {
@@ -135,6 +136,10 @@ export function TransferenciaVotoModal({
   const [exportError, setExportError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportTheme, setExportTheme] = useState<ExportTheme>("dark");
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+  const [temporalData, setTemporalData] = useState<TransferenciaVotoData[] | null>(null);
+  const [temporalLoading, setTemporalLoading] = useState(false);
 
   const [selectedOrigen, setSelectedOrigen] = useState<string>("GLOBAL");
   const [modeFilter, setModeFilter] = useState<ModeFilter>("ALL");
@@ -224,6 +229,54 @@ export function TransferenciaVotoModal({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen || (!dateStart && !dateEnd)) {
+      setTemporalData(null);
+      return;
+    }
+    let cancelled = false;
+    const loadTemporalTransfers = async () => {
+      setTemporalLoading(true);
+      try {
+        let query = supabase
+          .from("respuestas")
+          .select("anteriores_eegg, voto_generales, created_at")
+          .not("anteriores_eegg", "is", null)
+          .not("voto_generales", "is", null);
+        if (dateStart) query = query.gte("created_at", `${dateStart}T00:00:00`);
+        if (dateEnd) query = query.lte("created_at", `${dateEnd}T23:59:59`);
+        const { data, error: temporalError } = await query;
+        if (temporalError) throw temporalError;
+        const grouped: Record<string, number> = {};
+        (data || []).forEach((row: { anteriores_eegg?: string | null; voto_generales?: string | null }) => {
+          const origin = normalizeParty(row.anteriores_eegg);
+          const destination = normalizeParty(row.voto_generales);
+          const key = `${origin}|||${destination}`;
+          grouped[key] = (grouped[key] || 0) + 1;
+        });
+        const totalsByOrigin: Record<string, number> = {};
+        Object.entries(grouped).forEach(([key, votes]) => {
+          const [origin] = key.split("|||");
+          totalsByOrigin[origin] = (totalsByOrigin[origin] || 0) + votes;
+        });
+        const rows = Object.entries(grouped).map(([key, votes]) => {
+          const [origin, destination] = key.split("|||");
+          return { origen_partido: origin, destino_partido: destination, votos_transferidos: votes, porcentaje: (votes / (totalsByOrigin[origin] || 1)) * 100 };
+        });
+        if (!cancelled) setTemporalData(rows);
+      } catch (temporalError) {
+        console.error("Error loading dated transfer data:", temporalError);
+        if (!cancelled) setTemporalData([]);
+      } finally {
+        if (!cancelled) setTemporalLoading(false);
+      }
+    };
+    loadTemporalTransfers();
+    return () => { cancelled = true; };
+  }, [isOpen, dateStart, dateEnd]);
+
+  const activeTransferData = temporalData ?? transferData;
+
   // Bloquea el scroll del body y permite cerrar con Escape mientras el modal está abierto
   useEffect(() => {
     if (!isOpen) return;
@@ -287,7 +340,7 @@ export function TransferenciaVotoModal({
   );
 
   const metrics = useMemo(() => {
-    if (transferData.length === 0)
+    if (activeTransferData.length === 0)
       return { totalVotos: 0, movilidadPct: 0, topFidelidad: null, topFuga: null };
 
     let totalVotosGlobal = 0;
@@ -297,7 +350,7 @@ export function TransferenciaVotoModal({
     const fugaByParty: Record<string, { origen: string; destino: string; pct: number; votos: number }> = {};
     const totalPorOrigen: Record<string, number> = {};
 
-    transferData.forEach((d) => {
+    activeTransferData.forEach((d) => {
       totalPorOrigen[d.origen_partido] = (totalPorOrigen[d.origen_partido] || 0) + d.votos_transferidos;
       totalVotosGlobal += d.votos_transferidos;
       if (d.origen_partido !== d.destino_partido) {
@@ -305,7 +358,7 @@ export function TransferenciaVotoModal({
       }
     });
 
-    transferData.forEach((d) => {
+    activeTransferData.forEach((d) => {
       const isFidelidad = d.origen_partido === d.destino_partido;
       const pct = (d.votos_transferidos / (totalPorOrigen[d.origen_partido] || 1)) * 100;
 
@@ -324,10 +377,10 @@ export function TransferenciaVotoModal({
       topFidelidad: Object.values(fidelidadByParty).sort((a, b) => b.pct - a.pct)[0] || null,
       topFuga: Object.values(fugaByParty).sort((a, b) => b.votos - a.votos)[0] || null,
     };
-  }, [transferData]);
+  }, [activeTransferData]);
 
   const filteredData = useMemo(() => {
-    return transferData.filter((item) => {
+    return activeTransferData.filter((item) => {
       if (selectedOrigen !== "GLOBAL" && item.origen_partido !== selectedOrigen) return false;
 
       const isFidelidad = item.origen_partido === item.destino_partido;
@@ -345,7 +398,7 @@ export function TransferenciaVotoModal({
 
       return true;
     });
-  }, [transferData, selectedOrigen, modeFilter, searchTerm, getPartyDisplayName]);
+  }, [activeTransferData, selectedOrigen, modeFilter, searchTerm, getPartyDisplayName]);
 
   const totalPages = Math.max(Math.ceil(filteredData.length / ITEMS_PER_PAGE), 1);
   const paginatedData = useMemo(() => {
@@ -354,10 +407,10 @@ export function TransferenciaVotoModal({
   }, [filteredData, currentPage]);
 
   const partidosOrigen = useMemo(() => {
-    return Array.from(new Set(transferData.map((d) => d.origen_partido))).sort((a, b) =>
+    return Array.from(new Set(activeTransferData.map((d) => d.origen_partido))).sort((a, b) =>
       getPartyDisplayName(a).localeCompare(getPartyDisplayName(b))
     );
-  }, [transferData, getPartyDisplayName]);
+  }, [activeTransferData, getPartyDisplayName]);
 
   const maxPorcentaje = useMemo(() => {
     if (filteredData.length === 0) return 100;
@@ -365,13 +418,15 @@ export function TransferenciaVotoModal({
     return max > 0 ? max : 100;
   }, [filteredData]);
 
-  const hasActiveFilters = selectedOrigen !== "GLOBAL" || modeFilter !== "ALL" || searchTerm.trim() !== "";
+  const hasActiveFilters = selectedOrigen !== "GLOBAL" || modeFilter !== "ALL" || searchTerm.trim() !== "" || Boolean(dateStart || dateEnd);
 
   const resetFilters = useCallback(() => {
     setSelectedOrigen("GLOBAL");
     setModeFilter("ALL");
     setSearchInput("");
     setSearchTerm("");
+    setDateStart("");
+    setDateEnd("");
   }, []);
 
   const handleExportCSV = () => {
@@ -676,7 +731,7 @@ export function TransferenciaVotoModal({
                 <RotateCcw size={14} /> Reintentar
               </button>
             </div>
-          ) : transferData.length > 0 ? (
+          ) : activeTransferData.length > 0 ? (
             <>
               {/* Tarjetas KPI */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14, marginBottom: 20 }}>
@@ -773,6 +828,15 @@ export function TransferenciaVotoModal({
                       }}
                     />
                   </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "9px 10px", borderRadius: 10, background: "rgba(129,140,248,.06)", border: "1px solid rgba(129,140,248,.16)" }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "#c7d2fe" }}>Periodo de respuestas</span>
+                  <input aria-label="Fecha de inicio de transferencias" type="date" value={dateStart} onChange={(event) => setDateStart(event.target.value)} style={{ background: "rgba(0,0,0,.2)", color: "#f8fafc", border: "1px solid rgba(255,255,255,.12)", borderRadius: 7, padding: "5px 7px", fontSize: 11 }} />
+                  <span style={{ color: "#94a3b8", fontSize: 11 }}>a</span>
+                  <input aria-label="Fecha de fin de transferencias" type="date" value={dateEnd} onChange={(event) => setDateEnd(event.target.value)} style={{ background: "rgba(0,0,0,.2)", color: "#f8fafc", border: "1px solid rgba(255,255,255,.12)", borderRadius: 7, padding: "5px 7px", fontSize: 11 }} />
+                  {(dateStart || dateEnd) && <button onClick={() => { setDateStart(""); setDateEnd(""); }} style={{ background: "transparent", color: "#c7d2fe", border: "none", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Limpiar fechas</button>}
+                  {temporalLoading && <span style={{ color: "#a5b4fc", fontSize: 11 }}>Actualizando período…</span>}
+                  {(dateStart || dateEnd) && !temporalLoading && <span style={{ color: "#94a3b8", fontSize: 10 }}>El Sankey usa respuestas registradas en el rango elegido.</span>}
                 </div>
               </div>
 

@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import html2canvas from "html2canvas";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -1309,6 +1310,8 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
   const [history, setHistory] = useState<CandidateVoteHistoryPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const chartRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -1346,6 +1349,46 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
     return () => { cancelled = true; };
   }, [target.party_key, target.display_name, target.leader_name]);
 
+  const handleExportHistoryPng = async () => {
+    if (!chartRef.current || isExporting || !history.length) return;
+    setIsExporting(true);
+    try {
+      const chartCanvas = await html2canvas(chartRef.current, { backgroundColor: "#11131c", scale: 2, useCORS: true });
+      const canvas = document.createElement("canvas");
+      const headerHeight = 104;
+      canvas.width = chartCanvas.width;
+      canvas.height = chartCanvas.height + headerHeight * 2;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("No se pudo crear el lienzo de exportación.");
+      const scale = 2;
+      context.fillStyle = "#0b0d14";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = target.color;
+      context.fillRect(0, 0, 10 * scale, canvas.height);
+      context.fillStyle = "#f8fafc";
+      context.font = `800 ${22 * scale}px Arial, sans-serif`;
+      context.fillText(`Evolución de votos · ${target.leader_name}`, 28 * scale, 38 * scale);
+      context.fillStyle = "#cbd5e1";
+      context.font = `600 ${12 * scale}px Arial, sans-serif`;
+      context.fillText(`${target.display_name} · ${target.votos.toLocaleString("es-ES")} votos actuales · Generado el ${new Date().toLocaleDateString("es-ES")}`, 28 * scale, 64 * scale);
+      context.drawImage(chartCanvas, 0, headerHeight * 2);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error("No se pudo convertir el gráfico a PNG.")), "image/png"));
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `evolucion_votos_${target.leader_name.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch (exportError) {
+      console.error("Error exporting candidate vote history:", exportError);
+      setError("No se pudo exportar la evolución en PNG. Inténtalo de nuevo.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return createPortal(
     <div role="presentation" onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1300, padding: 18, background: "rgba(3,5,11,.78)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <section role="dialog" aria-modal="true" aria-labelledby="candidate-history-title" onClick={(event) => event.stopPropagation()} style={{ width: "min(680px, 100%)", maxHeight: "88vh", overflowY: "auto", borderRadius: 20, border: `1px solid ${target.color}66`, background: "linear-gradient(145deg, #171923, #0b0d14)", boxShadow: "0 28px 90px rgba(0,0,0,.65)", padding: 22, position: "relative" }}>
@@ -1364,7 +1407,7 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
           <div style={{ padding: 13, borderRadius: 12, background: `${target.color}16`, border: `1px solid ${target.color}35` }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Votos actuales</div><div style={{ color: "#f8fafc", marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.votos.toLocaleString("es-ES")}</div></div>
           <div style={{ padding: 13, borderRadius: 12, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Apoyo en su partido</div><div style={{ color: target.color, marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.porcentaje.toFixed(1)}%</div></div>
         </div>
-        {loading ? <div style={{ minHeight: 220, display: "grid", placeItems: "center", color: "#9ca3af" }}><Loader2 size={28} className="animate-spin" /></div> : error ? <div role="alert" style={{ padding: 22, borderRadius: 12, color: "#fecaca", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", fontSize: 13 }}>{error}</div> : history.length ? <div style={{ borderRadius: 14, padding: "12px 8px 4px", background: "linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01))", border: "1px solid rgba(255,255,255,.07)" }}><div style={{ padding: "0 10px 8px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}><div><div style={{ fontSize: 12, color: "#f8fafc", fontWeight: 900 }}>Línea temporal de votos</div><div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>Acumulado de preferencias registradas por día.</div></div><span style={{ color: target.color, fontSize: 11, fontWeight: 900 }}>{history.length} hitos</span></div><ResponsiveContainer width="100%" height={286}><ComposedChart data={history} margin={{ top: 14, right: 20, bottom: 0, left: -18 }}><defs><linearGradient id={`candidate-votes-${target.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={target.color} stopOpacity={0.45} /><stop offset="100%" stopColor={target.color} stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="rgba(255,255,255,.07)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="etiqueta" tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ background: "#11131c", border: `1px solid ${target.color}66`, borderRadius: 10, fontSize: 12 }} labelStyle={{ color: "#f8fafc" }} formatter={(value: number, _name: string, context: any) => [`${value} acumulados · ${context.payload.votosDia} nuevos`, "Votos"]} /><Area type="monotone" dataKey="acumulado" name="Área acumulada" stroke="transparent" fill={`url(#candidate-votes-${target.id})`} /><Line type="monotone" dataKey="acumulado" name="Votos acumulados" stroke="#f8fafc" strokeWidth={5} strokeOpacity={0.38} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="acumulado" name="Votos acumulados" stroke={target.color} strokeWidth={3} dot={{ r: 4, fill: target.color, stroke: "#f8fafc", strokeWidth: 2 }} activeDot={{ r: 7, fill: target.color, stroke: "#ffffff", strokeWidth: 2 }} /></ComposedChart></ResponsiveContainer></div> : <div style={{ padding: 28, textAlign: "center", color: "#9ca3af", borderRadius: 12, background: "rgba(255,255,255,.03)", border: "1px dashed rgba(255,255,255,.13)", fontSize: 13 }}>Aún no hay registros temporales suficientes para representar la evolución de este candidato.</div>}
+        {loading ? <div style={{ minHeight: 220, display: "grid", placeItems: "center", color: "#9ca3af" }}><Loader2 size={28} className="animate-spin" /></div> : error ? <div role="alert" style={{ padding: 22, borderRadius: 12, color: "#fecaca", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", fontSize: 13 }}>{error}</div> : history.length ? <div ref={chartRef} style={{ borderRadius: 14, padding: "12px 8px 4px", background: "linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01))", border: "1px solid rgba(255,255,255,.07)" }}><div style={{ padding: "0 10px 8px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}><div><div style={{ fontSize: 12, color: "#f8fafc", fontWeight: 900 }}>Línea temporal de votos</div><div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>Acumulado de preferencias registradas por día.</div></div><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: target.color, fontSize: 11, fontWeight: 900 }}>{history.length} hitos</span><button onClick={handleExportHistoryPng} disabled={isExporting} style={{ border: `1px solid ${target.color}66`, background: `${target.color}1a`, color: "#f8fafc", borderRadius: 7, padding: "5px 8px", fontSize: 10, fontWeight: 800, cursor: isExporting ? "wait" : "pointer", opacity: isExporting ? .6 : 1 }}>{isExporting ? "Generando…" : "Exportar PNG"}</button></div></div><ResponsiveContainer width="100%" height={286}><ComposedChart data={history} margin={{ top: 14, right: 20, bottom: 0, left: -18 }}><defs><linearGradient id={`candidate-votes-${target.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={target.color} stopOpacity={0.45} /><stop offset="100%" stopColor={target.color} stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="rgba(255,255,255,.07)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="etiqueta" tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><Tooltip cursor={{ stroke: target.color, strokeWidth: 1, strokeDasharray: "4 4" }} content={({ active, payload }) => { const point = payload?.[0]?.payload as CandidateVoteHistoryPoint | undefined; return active && point ? <div style={{ background: "#0b0d14", border: `1px solid ${target.color}88`, borderRadius: 9, padding: "9px 10px", color: "#f8fafc", fontSize: 11, boxShadow: "0 12px 28px rgba(0,0,0,.35)" }}><div style={{ color: "#cbd5e1", fontWeight: 800 }}>{new Date(`${point.fecha}T12:00:00`).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}</div><div style={{ marginTop: 5 }}>Votos nuevos: <strong>{point.votosDia.toLocaleString("es-ES")}</strong></div><div style={{ marginTop: 2, color: target.color }}>Acumulado: <strong>{point.acumulado.toLocaleString("es-ES")}</strong></div></div> : null; }} /><Area type="monotone" dataKey="acumulado" name="Área acumulada" stroke="transparent" fill={`url(#candidate-votes-${target.id})`} /><Line type="monotone" dataKey="acumulado" name="Votos acumulados" stroke="#f8fafc" strokeWidth={5} strokeOpacity={0.38} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="acumulado" name="Votos acumulados" stroke={target.color} strokeWidth={3} dot={{ r: 4, fill: target.color, stroke: "#f8fafc", strokeWidth: 2 }} activeDot={{ r: 7, fill: target.color, stroke: "#ffffff", strokeWidth: 2 }} /></ComposedChart></ResponsiveContainer></div> : <div style={{ padding: 28, textAlign: "center", color: "#9ca3af", borderRadius: 12, background: "rgba(255,255,255,.03)", border: "1px dashed rgba(255,255,255,.13)", fontSize: 13 }}>Aún no hay registros temporales suficientes para representar la evolución de este candidato.</div>}
       </section>
     </div>,
     document.body,

@@ -712,6 +712,9 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Exportar a PNG la evolución temporal de un candidato
+- [x] Mostrar tooltips con votos exactos por fecha en la evolución de candidato
+- [x] Añadir filtros de fechas al gráfico Sankey de Transferencia de voto
 - [x] Reforzar la línea temporal visible en el modal de evolución de candidatos
 - [x] Añadir botón explícito para restablecer la vista completa del Sankey
 - [x] Añadir leyenda y total de votos analizados al PNG de Transferencia
