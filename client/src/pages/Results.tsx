@@ -42,7 +42,6 @@ import EncuestadorasComparativa from "@/components/results/EncuestadorasComparat
 import PreguntasVariasSection from "@/components/results/PreguntasVariasSection";
 import { CrisisCeutaSection } from "@/components/results/CrisisCeutaSection";
 import { TransferenciaVotoModal } from "@/components/TransferenciaVotoModal";
-import { PrimariasResultsSection } from "@/components/results/PrimariasResultsSection";
 import { LideresRankingSection } from "@/components/results/LideresRankingSection";
 import { Top5LideresWidget } from "@/components/results/Top5LideresWidget";
 import FollowUsMenu from "@/components/FollowUsMenu";
@@ -429,9 +428,6 @@ const TAB_GROUPS: TabGroup[] = [
   ]},
   { label: "Crisis Ceuta", icon: <AlertTriangle className="w-3.5 h-3.5" />, tabs: [
     { key: "crisis-ceuta", label: "Análisis de Crisis" },
-  ]},
-  { label: "Primarias", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
-    { key: "primarias", label: "Resultados Primarias" },
   ]},
 ];
 
@@ -919,9 +915,9 @@ function GobiernoModal({
 // ─── InfografiaModal mejorada ─────────────────────────────────────────────────
 function InfografiaModal({ parties, onClose, onGenerate }: {
   parties: PartyStats[]; onClose: () => void;
-  onGenerate: (type: "general" | "party", party?: string) => Promise<void>;
+  onGenerate: (type: "general" | "party" | "leaders", party?: string) => Promise<void>;
 }) {
-  const [type, setType] = useState<"general" | "party">("general");
+  const [type, setType] = useState<"general" | "party" | "leaders">("general");
   const [selectedParty, setSelectedParty] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -955,6 +951,7 @@ function InfografiaModal({ parties, onClose, onGenerate }: {
           {[
             { t: "general" as const, icon: <BarChart2 size={20} color="#e8465a" />, bg: "rgba(232,70,90,0.15)", label: "General", desc: "Resultados globales" },
             { t: "party" as const, icon: <Award size={20} color="#818cf8" />, bg: "rgba(99,102,241,0.15)", label: "Por Partido", desc: "Perfil detallado" },
+            { t: "leaders" as const, icon: <Users size={20} color="#34d399" />, bg: "rgba(52,211,153,0.15)", label: "Top 5 Líderes", desc: "Ranking de valoración" },
           ].map(opt => (
             <button key={opt.t} className={`r-infog-option${type === opt.t ? " selected" : ""}`} onClick={() => setType(opt.t)}>
               <div className="r-infog-option-icon" style={{ background: opt.bg }}>{opt.icon}</div>
@@ -1319,6 +1316,7 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
   const comparisonTarget = useMemo(() => target.comparisonCandidates?.find((candidate) => String(candidate.id) === comparisonId), [target.comparisonCandidates, comparisonId]);
 
@@ -1436,6 +1434,22 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
     }
   };
 
+  const handleShareComparison = async () => {
+    const query = new URLSearchParams({ tab: "lideres-partidos", leader: target.leader_name });
+    if (comparisonTarget) query.set("comparacion", comparisonTarget.leader_name);
+    const url = `${window.location.origin}/resultados?${query.toString()}`;
+    const text = comparisonTarget ? `Evolución de votos: ${target.leader_name} frente a ${comparisonTarget.leader_name} · Batalla Cultural.` : `Evolución de votos de ${target.leader_name} · Batalla Cultural.`;
+    const canNativeShare = typeof navigator.share === "function";
+    try {
+      if (canNativeShare) await navigator.share({ title: "Comparativa de líderes · Batalla Cultural", text, url });
+      else await navigator.clipboard.writeText(`${text} ${url}`);
+      setShareFeedback(canNativeShare ? "Comparativa compartida." : "Enlace copiado al portapapeles.");
+    } catch (shareError) {
+      if ((shareError as Error)?.name !== "AbortError") setShareFeedback("No se pudo compartir. Copia el enlace desde la barra del navegador.");
+    }
+    window.setTimeout(() => setShareFeedback(null), 3500);
+  };
+
   return createPortal(
     <div role="presentation" onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 1300, padding: 18, background: "rgba(3,5,11,.78)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <section role="dialog" aria-modal="true" aria-labelledby="candidate-history-title" onClick={(event) => event.stopPropagation()} style={{ width: "min(680px, 100%)", maxHeight: "88vh", overflowY: "auto", borderRadius: 20, border: `1px solid ${target.color}66`, background: "linear-gradient(145deg, #171923, #0b0d14)", boxShadow: "0 28px 90px rgba(0,0,0,.65)", padding: 22, position: "relative" }}>
@@ -1454,6 +1468,7 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
           <div style={{ padding: 13, borderRadius: 12, background: `${target.color}16`, border: `1px solid ${target.color}35` }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Votos actuales</div><div style={{ color: "#f8fafc", marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.votos.toLocaleString("es-ES")}</div></div>
           <div style={{ padding: 13, borderRadius: 12, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)" }}><div style={{ color: "#9ca3af", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>Apoyo en su partido</div><div style={{ color: target.color, marginTop: 4, fontSize: 24, fontWeight: 900 }}>{target.porcentaje.toFixed(1)}%</div></div>
         </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", margin: "0 0 14px", padding: "9px 11px", borderRadius: 10, background: "rgba(99,102,241,.09)", border: "1px solid rgba(129,140,248,.2)" }}><span style={{ color: "#c7d2fe", fontSize: 11, fontWeight: 700 }}>Comparte esta evolución{comparisonTarget ? ` con ${comparisonTarget.leader_name}` : ""}.</span><button type="button" onClick={handleShareComparison} style={{ border: "1px solid rgba(165,180,252,.45)", borderRadius: 7, padding: "5px 9px", background: "rgba(165,180,252,.12)", color: "#eef2ff", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Compartir enlace</button>{shareFeedback && <span role="status" style={{ width: "100%", color: "#a7f3d0", fontSize: 10, fontWeight: 700 }}>{shareFeedback}</span>}</div>
         {(target.comparisonCandidates?.filter((candidate) => candidate.id !== target.id && candidate.votos > 0).length || 0) > 0 && <label style={{ display: "flex", alignItems: "center", gap: 9, margin: "0 0 14px", padding: "9px 11px", borderRadius: 10, background: "rgba(255,255,255,.035)", border: "1px solid rgba(255,255,255,.08)", color: "#cbd5e1", fontSize: 11, fontWeight: 800 }}>Comparar con <select aria-label="Comparar evolución con otro candidato" value={comparisonId} onChange={(event) => setComparisonId(event.target.value)} style={{ flex: 1, minWidth: 0, background: "#11131c", color: "#f8fafc", border: "1px solid rgba(255,255,255,.15)", borderRadius: 7, padding: "6px 8px", fontSize: 11 }}><option value="">Sin comparación</option>{target.comparisonCandidates?.filter((candidate) => candidate.id !== target.id && candidate.votos > 0).sort((a, b) => a.leader_name.localeCompare(b.leader_name, "es")).map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.leader_name} · {candidate.display_name}</option>)}</select></label>}
         {loading ? <div style={{ minHeight: 220, display: "grid", placeItems: "center", color: "#9ca3af" }}><Loader2 size={28} className="animate-spin" /></div> : error ? <div role="alert" style={{ padding: 22, borderRadius: 12, color: "#fecaca", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.25)", fontSize: 13 }}>{error}</div> : history.length ? <div ref={chartRef} style={{ borderRadius: 14, padding: "12px 8px 4px", background: "linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01))", border: "1px solid rgba(255,255,255,.07)" }}><div style={{ padding: "0 10px 8px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}><div><div style={{ fontSize: 12, color: "#f8fafc", fontWeight: 900 }}>Línea temporal de votos</div><div style={{ fontSize: 10, color: comparisonTarget && comparisonHistory.length === 0 ? "#fbbf24" : "#9ca3af", marginTop: 2 }}>{comparisonTarget ? (comparisonHistory.length ? `Comparando con ${comparisonTarget.leader_name}.` : `${comparisonTarget.leader_name} no tiene registros temporales suficientes para trazar su serie.`) : "Acumulado de preferencias registradas por día."}</div></div><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: target.color, fontSize: 11, fontWeight: 900 }}>{history.length} hitos</span><button onClick={handleExportHistoryPng} disabled={isExporting} style={{ border: `1px solid ${target.color}66`, background: `${target.color}1a`, color: "#f8fafc", borderRadius: 7, padding: "5px 8px", fontSize: 10, fontWeight: 800, cursor: isExporting ? "wait" : "pointer", opacity: isExporting ? .6 : 1 }}>{isExporting ? "Generando…" : "Exportar PNG"}</button></div></div><ResponsiveContainer width="100%" height={286}><ComposedChart data={chartData} margin={{ top: 14, right: 20, bottom: 0, left: -18 }}><defs><linearGradient id={`candidate-votes-${target.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={target.color} stopOpacity={0.45} /><stop offset="100%" stopColor={target.color} stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="rgba(255,255,255,.07)" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="etiqueta" tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} /><Tooltip cursor={{ stroke: target.color, strokeWidth: 1, strokeDasharray: "4 4" }} content={({ active, payload }) => { const point = payload?.[0]?.payload as (CandidateVoteHistoryPoint & { comparacion?: number }) | undefined; return active && point ? <div style={{ background: "#0b0d14", border: `1px solid ${target.color}88`, borderRadius: 9, padding: "9px 10px", color: "#f8fafc", fontSize: 11, boxShadow: "0 12px 28px rgba(0,0,0,.35)" }}><div style={{ color: "#cbd5e1", fontWeight: 800 }}>{new Date(`${point.fecha}T12:00:00`).toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}</div><div style={{ marginTop: 5 }}>Votos nuevos: <strong>{point.votosDia.toLocaleString("es-ES")}</strong></div><div style={{ marginTop: 2, color: target.color }}>{target.leader_name}: <strong>{point.acumulado.toLocaleString("es-ES")}</strong></div>{comparisonTarget && <div style={{ marginTop: 2, color: comparisonTarget.color }}>{comparisonTarget.leader_name}: <strong>{(point.comparacion ?? 0).toLocaleString("es-ES")}</strong></div>}</div> : null; }} /><Area type="monotone" dataKey="acumulado" name="Área acumulada" stroke="transparent" fill={`url(#candidate-votes-${target.id})`} /><Line type="monotone" dataKey="acumulado" name={target.leader_name} stroke="#f8fafc" strokeWidth={5} strokeOpacity={0.38} dot={false} isAnimationActive={false} /><Line type="monotone" dataKey="acumulado" name={target.leader_name} stroke={target.color} strokeWidth={3} dot={{ r: 4, fill: target.color, stroke: "#f8fafc", strokeWidth: 2 }} activeDot={{ r: 7, fill: target.color, stroke: "#ffffff", strokeWidth: 2 }} />{comparisonTarget && comparisonHistory.length > 0 && <Line type="monotone" dataKey="comparacion" name={comparisonTarget.leader_name} stroke={comparisonTarget.color || "#fbbf24"} strokeWidth={3} strokeDasharray="7 5" dot={{ r: 3, fill: comparisonTarget.color || "#fbbf24", stroke: "#0b0d14", strokeWidth: 2 }} activeDot={{ r: 6 }} />}</ComposedChart></ResponsiveContainer></div> : <div style={{ padding: 28, textAlign: "center", color: "#9ca3af", borderRadius: 12, background: "rgba(255,255,255,.03)", border: "1px dashed rgba(255,255,255,.13)", fontSize: 13 }}>Aún no hay registros temporales suficientes para representar la evolución de este candidato.</div>}
       </section>
@@ -1895,9 +1910,9 @@ async function generarInfografiaPNG(
   totalResponses: number,
   edadPromedio: number | null,
   ideologiaPromedio: number | null,
-  type: "general" | "party",
+  type: "general" | "party" | "leaders",
   partyName?: string,
-  topLeaders?: Array<{ name: string; party: string; votes: number; color: string }>,
+  topLeaders?: Array<{ name: string; party: string; votes: number; average?: number; color: string }>,
   topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
   topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>,
   top5LideresPorPartido?: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>>,
@@ -1945,7 +1960,7 @@ async function generarInfografiaPNG(
   // Título principal
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 42px Georgia, serif";
-  const title = type === "general" ? "Resultados de la Encuesta" : type === "party" ? `Análisis: ${partyName}` : "Análisis de Líderes";
+  const title = type === "general" ? "Resultados de la Encuesta" : type === "party" ? `Análisis: ${partyName}` : "Top 5 de Líderes";
   ctx.fillText(title, 40, 100);
   if (type === "party" && partyName) {
     const logo = await loadImage((partyLogos || {})[partyName]);
@@ -2021,6 +2036,27 @@ async function generarInfografiaPNG(
       ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.region, 870, y);
       ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(String(row.votos), 1110, y);
     });
+  } else if (type === "leaders") {
+    const ranking = [...(topLeaders || [])].sort((a, b) => (b.average || 0) - (a.average || 0)).slice(0, 5);
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.beginPath(); ctx.roundRect(40, 230, 1120, 500, 14); ctx.fill();
+    ctx.fillStyle = "#34d399"; ctx.font = "bold 13px monospace"; ctx.fillText("RANKING DE VALORACIÓN · ESCALA 1–10", 70, 270);
+    ranking.forEach((leader, index) => {
+      const y = 315 + index * 76;
+      const color = normalizeInfographicColor(leader.color || "#34d399");
+      ctx.fillStyle = "rgba(255,255,255,0.05)"; ctx.beginPath(); ctx.roundRect(70, y, 1060, 56, 10); ctx.fill();
+      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(102, y + 28, 20, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#08111a"; ctx.font = "bold 15px monospace"; ctx.textAlign = "center"; ctx.fillText(String(index + 1), 102, y + 34); ctx.textAlign = "left";
+      ctx.fillStyle = "#f8fafc"; ctx.font = "bold 17px 'DM Sans', sans-serif"; ctx.fillText(leader.name, 140, y + 25);
+      ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(leader.party || "Sin adscripción", 140, y + 43);
+      ctx.fillStyle = "rgba(255,255,255,.09)"; ctx.beginPath(); ctx.roundRect(410, y + 20, 460, 16, 8); ctx.fill();
+      ctx.fillStyle = color; ctx.beginPath(); ctx.roundRect(410, y + 20, Math.max(4, Math.min(460, ((leader.average || 0) / 10) * 460)), 16, 8); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Georgia, serif"; ctx.fillText(`${(leader.average || 0).toFixed(2)}/10`, 910, y + 33);
+      ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.font = "11px monospace"; ctx.fillText(`${leader.votes.toLocaleString("es-ES")} valoraciones`, 910, y + 49);
+    });
+    if (!ranking.length) {
+      ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.font = "16px 'DM Sans', sans-serif"; ctx.fillText("Aún no hay valoraciones suficientes para formar el Top 5.", 70, 330);
+    }
   } else if (type === "party" && partyName) {
     const party = stats.find(s => s.nombre === partyName);
     if (party) {
@@ -2516,7 +2552,7 @@ export default function Results() {
     });
   }, [historicoElecciones, generalStats]);
 
-  const handleGenerarInfografia = async (type: "general" | "party", party?: string) => {
+  const handleGenerarInfografia = async (type: "general" | "party" | "leaders", party?: string) => {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
     let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
     let top5LideresPorPartido: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>> = {};
@@ -2602,7 +2638,8 @@ export default function Results() {
     } catch (e) {
       console.error("Error cargando datos extendidos para infografía:", e);
     }
-    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, undefined, top1PorPartido, topRegionPorPartido, top5LideresPorPartido, preguntasVarias, partyLogos);
+    const topLeaders = leaderRatings.slice().sort((a, b) => b.average - a.average).map((leader) => ({ name: leader.name, party: "Valoración BC", votes: leader.count, average: leader.average, color: leader.average >= 7 ? "#34d399" : leader.average >= 4 ? "#fbbf24" : "#fb7185" }));
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, topLeaders, top1PorPartido, topRegionPorPartido, top5LideresPorPartido, preguntasVarias, partyLogos);
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";
@@ -2644,11 +2681,35 @@ export default function Results() {
               }
               try {
                 const html2canvas = (await import('html2canvas')).default;
-                const canvas = await html2canvas(node, { scale: 1.5, backgroundColor: '#0a0a0f', useCORS: true, logging: false });
+                const canvas = await html2canvas(node, {
+                  scale: 1.5,
+                  backgroundColor: '#0a0a0f',
+                  useCORS: true,
+                  logging: false,
+                  onclone: (clonedDocument) => {
+                    clonedDocument.querySelectorAll('img').forEach((image) => {
+                      try {
+                        const url = new URL(image.currentSrc || image.src, window.location.origin);
+                        if (url.origin !== window.location.origin) {
+                          image.style.visibility = 'hidden';
+                        }
+                      } catch {
+                        image.style.visibility = 'hidden';
+                      }
+                    });
+                  }
+                });
+                const blob = await new Promise<Blob>((resolve, reject) => {
+                  canvas.toBlob((result) => result ? resolve(result) : reject(new Error('El navegador no pudo crear el PNG.')), 'image/png');
+                });
                 const link = document.createElement('a');
                 link.download = `batalla-cultural-${activeTab}-${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
+                const exportUrl = URL.createObjectURL(blob);
+                link.href = exportUrl;
+                document.body.appendChild(link);
                 link.click();
+                link.remove();
+                window.setTimeout(() => URL.revokeObjectURL(exportUrl), 1_000);
                 alert("¡Imagen PNG de alta calidad descargada con éxito!");
                 
                 const filterDesc = "Resultados en tiempo real";
@@ -2845,37 +2906,43 @@ export default function Results() {
               )}
               {activeTab === "contexto-historico" && (
                 <div style={{ display: "grid", gap: 14 }}>
-                  <div className="r-section">
-                    <div className="r-section-title">Contexto histórico y ciclos electorales (por partido)</div>
-                    <ResponsiveContainer width="100%" height={320}>
-                      <LineChart data={historicoPorPartido}>
+                  {!historicoPorPartido.length ? <div className="r-section" style={{ textAlign: "center", padding: "44px 22px" }}><History size={28} color="#60a5fa" style={{ margin: "0 auto 10px" }} /><div className="r-section-title">Contexto histórico pendiente de datos</div><p style={{ margin: "8px auto 0", maxWidth: 530, color: "#9ca3af", fontSize: 13, lineHeight: 1.6 }}>No se han encontrado filas utilizables en <code>elecciones_historicas</code>. Cuando se registren años y escaños por partido, aparecerán aquí sin estimaciones ni datos simulados.</p></div> : <>
+                  <div className="r-section" style={{ overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+                      <div><div className="r-section-title" style={{ marginBottom: 4 }}>Contexto histórico y ciclos electorales</div><div style={{ color: "#9ca3af", fontSize: 12 }}>Evolución de escaños registrada en la serie histórica disponible.</div></div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><span className="r-badge">{historicoPorPartido.length} convocatorias</span><span className="r-badge">{historicoPorPartido[0]?.año}–{historicoPorPartido.at(-1)?.año}</span></div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={340}>
+                      <LineChart data={historicoPorPartido} margin={{ top: 12, right: 14, left: -12, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
                         <XAxis dataKey="año" tick={{ fill: "#7a7990" }} />
                         <YAxis tick={{ fill: "#7a7990" }} />
-                        <Tooltip />
-                        <Legend />
+                        <Tooltip contentStyle={{ background: "#11131c", border: "1px solid rgba(255,255,255,.14)", borderRadius: 10, color: "#f8fafc" }} labelStyle={{ color: "#f8fafc", fontWeight: 800 }} itemStyle={{ color: "#dbeafe" }} />
+                        <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                         {["PP", "PSOE", "VOX", "SUMAR", "PODEMOS", "Ciudadanos", "ERC", "JUNTS"].map((p) => (
-                          <Line key={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} dot={false} connectNulls />
+                          <Line key={p} name={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} strokeWidth={2.2} activeDot={{ r: 5 }} dot={{ r: 2, strokeWidth: 0 }} connectNulls />
                         ))}
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                   <div className="r-section">
-                    <div className="r-section-title">Comparativa 2023 vs escaños actuales (Encuesta BC)</div>
+                    <div className="r-section-title">Comparativa 2023 vs proyección actual de Encuesta BC</div>
+                    <p style={{ color: "#9ca3af", fontSize: 12, margin: "4px 0 12px" }}>La referencia histórica usa el registro de 2023 almacenado en Supabase; la segunda barra aplica la distribución actual de la encuesta.</p>
                     <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={comparativa2023VsActual}>
+                      <BarChart data={comparativa2023VsActual} margin={{ top: 10, right: 10, left: -12, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
                       <XAxis dataKey="partido" tick={{ fill: "#7a7990" }} />
                       <YAxis tick={{ fill: "#7a7990" }} />
-                      <Tooltip />
-                      <Legend />
+                      <Tooltip contentStyle={{ background: "#11131c", border: "1px solid rgba(255,255,255,.14)", borderRadius: 10, color: "#f8fafc" }} labelStyle={{ color: "#f8fafc", fontWeight: 800 }} itemStyle={{ color: "#dbeafe" }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Bar dataKey="escanos_2023" fill="#60a5fa" name="2023" />
                       <Bar dataKey="escanos_actuales" fill="#e8465a" name="Actual BC" />
                     </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                </div>
-              )}
+	                    </ResponsiveContainer>
+	                </div>
+	                </>}
+	                </div>
+	              )}
               {activeTab === "noche-electoral" && (
                 <div className="r-section">
                   <div className="r-section-title">Modo Directo: Noche Electoral</div>
@@ -2920,7 +2987,6 @@ export default function Results() {
               {activeTab === "lideres-preferidos" && <LeadersResultsChart partyColors={partyColorMap} />}
               {activeTab === "preguntas-varias" && <PreguntasVariasSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "crisis-ceuta" && <CrisisCeutaSection partyMeta={generalPartyMetaLookup} />}
-              {activeTab === "primarias" && <PrimariasResultsSection />}
               {activeTab === "lideres-ranking" && <LideresRankingSection />}
               {activeTab === "ccaa" && <CCAAResltsSection partyMeta={generalPartyMetaLookup} />}
               {activeTab === "provincias" && <ProvincesResultsSection partyMeta={generalPartyMetaLookup} />}

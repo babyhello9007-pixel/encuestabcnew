@@ -712,6 +712,18 @@
 - [x] Ejecutar pruebas y guardar checkpoint de la corrección
 
 ## Correcciones y mejoras solicitadas: GovernmentBuilder, Discord y ranking
+- [x] Compartir la gráfica de comparación de candidatos mediante enlace y redes
+- [x] Mostrar una tabla con las tres mayores transferencias bajo el Sankey
+- [x] Mostrar indicador visual durante el recálculo del Sankey por fechas
+- [x] Reparar el desglose por partido de Preguntas Varias con datos o vista Supabase compatibles
+- [ ] Corregir logotipos y presentación de Provincia, CCAA y secciones territoriales
+- [x] Ocultar Primarias de la navegación pública de Resultados
+- [x] Reparar y mejorar visual y datos del Contexto Histórico
+- [x] Reparar el botón superior de exportación PNG de Resultados
+- [x] Reparar y ampliar infografías de Resultados con una opción de Top 5 líderes
+- [x] Mejorar métricas, nombres de partido y diseño de Crisis Ceuta
+- [x] Sincronizar la selección de provincia de NanoEncuesta con un mapa seleccionable
+- [x] Mejorar botones y acabado visual de NanoEncuesta
 - [x] Comparar la evolución temporal de dos candidatos en el modal de historial
 - [x] Exportar datos filtrados del Sankey en CSV y Excel
 - [x] Animar suavemente el recálculo del Sankey al cambiar el periodo
@@ -756,3 +768,11 @@
 - [x] Escribir y ejecutar pruebas para las nuevas funcionalidades
 - [x] Guardar checkpoint de la entrega
 - [x] Auditar y corregir el siguiente bloque de errores de diagnóstico TypeScript y flujos de Resultados
+- [x] Mejorar las animaciones y el detalle interactivo del mapa provincial de NanoEncuesta
+- [x] Permitir seleccionar comunidades autónomas desde un mapa en NanoEncuesta
+- [x] Sincronizar de forma bidireccional los selectores geográficos de CCAA y provincia
+- [x] Validar en navegador y móvil los mapas, detalles y selección geográfica
+- [x] Implementar SEO técnico y metadatos sociales preparados para el dominio de Vercel
+- [x] Añadir datos estructurados, sitemap y robots para mejorar indexación en Google
+- [x] Mostrar en Home las publicaciones recientes de @bcultural_es con carga y alternativa robusta
+- [x] Validar en navegador los metadatos y el módulo social en desktop y móvil

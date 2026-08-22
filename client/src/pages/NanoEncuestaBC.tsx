@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { PROVINCES, CCAA } from "@/lib/surveyData";
@@ -11,6 +11,7 @@ import { checkVotingCooldown, recordVote, getUserIP } from "@/lib/votingCooldown
 import ImageLoader from "@/components/ImageLoader";
 import { getLeaderIdentityKey } from "@/lib/leaderIdentity";
 import { matchesPartySearch, sortPartiesByCurrentVote } from "@/lib/partyOrdering";
+import { SpainMapRealistic } from "@/components/SpainMapRealistic";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -194,6 +195,8 @@ export default function NanoEncuestaBC() {
   const [loadingParties, setLoadingParties] = useState(true);
   const [partySearch, setPartySearch] = useState("");
   const [unavailablePartyLogos, setUnavailablePartyLogos] = useState<Record<string, boolean>>({});
+  const provinceSelectorData = useMemo(() => Object.fromEntries(PROVINCES.map((province) => [province, { name: province }])), []);
+  const ccaaSelectorData = useMemo(() => Object.fromEntries(CCAA.map((ccaa) => [ccaa, { name: ccaa }])), []);
 
   // Fetch party configuration and leaders from Supabase
   useEffect(() => {
@@ -305,8 +308,10 @@ export default function NanoEncuestaBC() {
     }
     if (currentStepData.key === "comunidad_autonoma") {
       const prov = responses.provincia as string;
-      if (prov && !isProvinceInCCAA(prov, value)) setCCAAWarning(`${prov} no pertenece a ${value}`);
-      else setCCAAWarning(null);
+      if (prov && !isProvinceInCCAA(prov, value)) {
+        setResponses(prev => ({ ...prev, provincia: undefined }));
+        setCCAAWarning(`${prov} no pertenece a ${value}; selecciona una provincia de la nueva comunidad.`);
+      } else setCCAAWarning(null);
     }
   };
 
@@ -1128,6 +1133,31 @@ export default function NanoEncuestaBC() {
                     {currentStepData.key === "comunidad_autonoma" && CCAA.map(c => <option key={c} value={c}>{c}</option>)}
                     {currentStepData.key === "provincia" && getFilteredProvinces().map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
+                  {currentStepData.key === "comunidad_autonoma" && (
+                    <details className="nc-province-map">
+                      <summary>Seleccionar directamente en el mapa</summary>
+                      <p>Al elegir una comunidad se actualizará la lista de provincias disponibles.</p>
+                      <SpainMapRealistic
+                        provincesData={ccaaSelectorData}
+                        selectedProvince={responses.comunidad_autonoma || null}
+                        selectorMode
+                        mapLevel="ccaa"
+                        onProvinceSelect={(ccaa) => handleAnswer(ccaa || "")}
+                      />
+                    </details>
+                  )}
+                  {currentStepData.key === "provincia" && (
+                    <details className="nc-province-map" open>
+                      <summary>Seleccionar directamente en el mapa</summary>
+                      <p>El mapa refleja tu selección; al pulsar una provincia, se completa también su comunidad autónoma.</p>
+                      <SpainMapRealistic
+                        provincesData={provinceSelectorData}
+                        selectedProvince={responses.provincia || null}
+                        selectorMode
+                        onProvinceSelect={(province) => handleAnswer(province || "")}
+                      />
+                    </details>
+                  )}
                 </div>
               )}
 

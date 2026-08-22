@@ -2,6 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api
-Disallow: /*.json$
-Disallow: /*.xml$
-Sitemap: https://encuestabc.manus.space/sitemap.xml
+Disallow: /admin
+Disallow: /api/
+Sitemap: https://encuestabc-6q57y6uz.manus.space/sitemap.xml

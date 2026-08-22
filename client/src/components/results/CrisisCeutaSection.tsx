@@ -51,6 +51,16 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
     derecho: "Drama humano / Derecho a migrar",
   };
 
+  const normalizeOpinion = (value: unknown) => {
+    const normalized = String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    if (normalized.includes("invasion")) return "invasion";
+    if (normalized.includes("humanitaria")) return "humanitaria";
+    if (normalized.includes("geopolit") || normalized.includes("socioeconom")) return "geopolitica";
+    if (normalized.includes("diplomat") || normalized.includes("fronter") || normalized.includes("gestion")) return "gestion";
+    if (normalized.includes("derecho") || normalized.includes("migrar") || normalized.includes("vias legales") || normalized.includes("drama humano")) return "derecho";
+    return String(value || "Sin clasificar").trim() || "Sin clasificar";
+  };
+
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -67,12 +77,14 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
         if (!partyError && partyConfigs) {
           partyConfigs.forEach((p) => {
             const keyLower = p.party_key.toLowerCase();
-            loadedPartiesMap[keyLower] = {
+            const meta = {
               key: p.party_key,
               name: p.display_name,
               color: p.color || "#818cf8",
               logo: p.logo_url || "",
             };
+            loadedPartiesMap[keyLower] = meta;
+            if (p.display_name) loadedPartiesMap[p.display_name.toLowerCase().trim()] = meta;
           });
         }
         setPartiesMap(loadedPartiesMap);
@@ -82,16 +94,35 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
           .from("crisis_ceuta_por_partido")
           .select("*");
 
-        if (byPartyError) throw byPartyError;
-        setCrisisData(byParty || []);
-
         // 3. Fetch resumen general de opiniones
         const { data: summary, error: summaryError } = await supabase
           .from("crisis_ceuta_resumen")
           .select("*");
 
-        if (summaryError) throw summaryError;
-        setCrisisResumen(summary || []);
+        if (!byPartyError && !summaryError && byParty?.length && summary?.length) {
+          setCrisisData(byParty.map((row: any) => ({ ...row, opinion: normalizeOpinion(row.opinion), votos: Number(row.votos || 0), porcentaje: Number(row.porcentaje || 0) })));
+          setCrisisResumen(summary.map((row: any) => ({ ...row, opinion: normalizeOpinion(row.opinion), total_votos: Number(row.total_votos || 0), porcentaje: Number(row.porcentaje || 0) })));
+        } else {
+          const { data: rawResponses, error: rawError } = await supabase
+            .from("respuestas")
+            .select("voto_generales, opinion_crisismigratoria")
+            .not("opinion_crisismigratoria", "is", null);
+          if (rawError) throw rawError;
+          const rows = (rawResponses || []).map((row: any) => ({ party: String(row.voto_generales || "").trim(), opinion: normalizeOpinion(row.opinion_crisismigratoria) })).filter((row) => row.party && row.opinion);
+          const totalByParty: Record<string, number> = {};
+          const partyOpinionCounts: Record<string, number> = {};
+          const opinionCounts: Record<string, number> = {};
+          rows.forEach(({ party, opinion }) => {
+            totalByParty[party] = (totalByParty[party] || 0) + 1;
+            partyOpinionCounts[`${party}::${opinion}`] = (partyOpinionCounts[`${party}::${opinion}`] || 0) + 1;
+            opinionCounts[opinion] = (opinionCounts[opinion] || 0) + 1;
+          });
+          setCrisisData(Object.entries(partyOpinionCounts).map(([key, votos]) => {
+            const [partido, opinion] = key.split("::");
+            return { partido, opinion, votos, porcentaje: totalByParty[partido] ? (votos / totalByParty[partido]) * 100 : 0 };
+          }).sort((a, b) => b.votos - a.votos));
+          setCrisisResumen(Object.entries(opinionCounts).map(([opinion, total_votos]) => ({ opinion, total_votos, porcentaje: rows.length ? (total_votos / rows.length) * 100 : 0 })).sort((a, b) => b.total_votos - a.total_votos));
+        }
       } catch (error) {
         console.error("Error fetching datos de la crisis de Ceuta:", error);
       } finally {
@@ -172,6 +203,9 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
     activeOpinionFilter === "todas"
       ? opinionsKeys
       : opinionsKeys.filter((op) => op === activeOpinionFilter);
+  const totalCrisisVotes = crisisResumen.reduce((total, item) => total + Number(item.total_votos || 0), 0);
+  const leadingOpinion = crisisResumen.slice().sort((a, b) => Number(b.total_votos || 0) - Number(a.total_votos || 0))[0];
+  const representedParties = new Set(crisisData.map((item) => item.partido).filter(Boolean)).size;
 
   // Formateador personalizado para el Tooltip del gráfico de Recharts
   const CustomTooltip = ({ active, payload }: any) => {
@@ -227,6 +261,11 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12 }}>
+        <div style={{ padding: "15px 16px", borderRadius: 14, border: "1px solid rgba(96,165,250,.24)", background: "linear-gradient(135deg, rgba(59,130,246,.15), rgba(15,23,42,.45))" }}><div style={{ color: "#93c5fd", fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase" }}>Respuestas analizadas</div><div style={{ color: "#f8fafc", fontWeight: 900, fontSize: 26, marginTop: 4 }}>{totalCrisisVotes.toLocaleString("es-ES")}</div></div>
+        <div style={{ padding: "15px 16px", borderRadius: 14, border: "1px solid rgba(52,211,153,.24)", background: "linear-gradient(135deg, rgba(16,185,129,.13), rgba(15,23,42,.45))" }}><div style={{ color: "#86efac", fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase" }}>Partidos con respuestas</div><div style={{ color: "#f8fafc", fontWeight: 900, fontSize: 26, marginTop: 4 }}>{representedParties}</div></div>
+        <div style={{ padding: "15px 16px", borderRadius: 14, border: "1px solid rgba(251,191,36,.24)", background: "linear-gradient(135deg, rgba(245,158,11,.13), rgba(15,23,42,.45))" }}><div style={{ color: "#fde68a", fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase" }}>Posición mayoritaria</div><div style={{ color: "#f8fafc", fontWeight: 800, fontSize: 14, lineHeight: 1.25, marginTop: 7 }}>{leadingOpinion ? opinionLabels[leadingOpinion.opinion] || leadingOpinion.opinion : "—"}</div></div>
+      </div>
       {/* 1. RESUMEN GENERAL DE OPINIONES */}
       <div
         style={{

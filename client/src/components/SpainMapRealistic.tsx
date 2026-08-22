@@ -5,17 +5,19 @@ import { normalizeProvinceName } from "@/lib/provinceNameNormalizer";
 
 interface Province {
   name: string;
-  votes: { [key: string]: number };
-  totalVotes: number;
-  winnerParty: string;
-  age: number;
-  ideology: number;
+  votes?: { [key: string]: number };
+  totalVotes?: number;
+  winnerParty?: string;
+  age?: number;
+  ideology?: number;
 }
 
 interface SpainMapRealisticProps {
   provincesData: { [key: string]: Province };
   onProvinceSelect: (province: string | null) => void;
   selectedProvince: string | null;
+  selectorMode?: boolean;
+  mapLevel?: "province" | "ccaa";
 }
 
 type Coordinate = [number, number];
@@ -31,6 +33,14 @@ interface TopoJSON {
   objects: {
     provinces: {
       type: string;
+      geometries: Array<{
+        type: string;
+        arcs: PolygonArcs | MultiPolygonArcs;
+        id: string;
+        properties: { name: string };
+      }>;
+    };
+    autonomous_regions?: {
       geometries: Array<{
         type: string;
         arcs: PolygonArcs | MultiPolygonArcs;
@@ -63,10 +73,26 @@ function geoToSvg(lon: number, lat: number, bbox: number[], width: number, heigh
   return [x, y];
 }
 
+function normalizeGeoName(name: string, mapLevel: "province" | "ccaa") {
+  if (mapLevel === "province") return normalizeProvinceName(name) || name;
+  const normalized = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+    .replace(/^(comunidad|region|principado|comunidad foral) de\s+/, "")
+    .replace(/^pais vasco$/, "euskadi");
+  const aliases: Record<string, string> = {
+    "principado de asturias": "asturias", "asturias": "asturias", "illes balears": "islas baleares",
+    "comunitat valenciana": "comunidad valenciana", "valencia": "comunidad valenciana",
+    "cataluna/catalunya": "cataluna", "pais vasco/euskadi": "pais vasco", "euskadi": "pais vasco",
+    "ciudad autonoma de ceuta": "ceuta y melilla", "ciudad autonoma de melilla": "ceuta y melilla",
+  };
+  return aliases[normalized] || normalized;
+}
+
 export function SpainMapRealistic({
   provincesData,
   onProvinceSelect,
   selectedProvince,
+  selectorMode = false,
+  mapLevel = "province",
 }: SpainMapRealisticProps) {
   const [topoData, setTopoData] = useState<TopoJSON | null>(null);
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
@@ -98,10 +124,10 @@ export function SpainMapRealistic({
   const normalizedDataMap = useMemo(() => {
     const map = new Map<string, { originalKey: string; data: Province }>();
     Object.entries(provincesData).forEach(([key, val]) => {
-      map.set(normalizeProvinceName(key) || key, { originalKey: key, data: val });
+      map.set(normalizeGeoName(key, mapLevel), { originalKey: key, data: val });
     });
     return map;
-  }, [provincesData]);
+  }, [provincesData, mapLevel]);
 
   const processedGeometries = useMemo(() => {
     if (!topoData) return [];
@@ -130,10 +156,11 @@ export function SpainMapRealistic({
         .join(" ") + "Z";
     };
 
-    return objects.provinces.geometries.map((geom) => {
+    const geometries = mapLevel === "ccaa" ? (objects.autonomous_regions?.geometries || []) : objects.provinces.geometries;
+    return geometries.map((geom) => {
       const geoName = geom.properties.name;
-      const normalized = normalizeProvinceName(geoName) || geoName;
-      const match = normalizedDataMap.get(normalized);
+      const normalized = normalizeGeoName(geoName, mapLevel);
+      const match = normalizedDataMap.get(normalized) || (mapLevel === "ccaa" && ["ceuta", "melilla"].includes(normalized) ? normalizedDataMap.get("ceuta y melilla") : undefined);
 
       return {
         id: geom.id,
@@ -142,7 +169,7 @@ export function SpainMapRealistic({
             pathData: buildPath(geom.arcs as unknown as number[][]),
       };
     });
-  }, [topoData, normalizedDataMap]);
+  }, [topoData, normalizedDataMap, mapLevel]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -169,10 +196,10 @@ export function SpainMapRealistic({
   const hoveredObj = processedGeometries.find((g) => g.name === hoveredProvince);
 
   return (
-    <div className="w-full flex flex-col items-center gap-6 select-none font-sans text-slate-100">
+    <div className={`w-full flex flex-col items-center gap-6 select-none font-sans text-slate-100${selectorMode ? ` nc-geo-selector nc-geo-${mapLevel}` : ""}`}>
       
       {/* Selector de Modos / Temas (Satelital vs Noche) */}
-      <div className="flex items-center justify-between w-full max-w-5xl px-2">
+      <div className="flex items-center justify-between w-full max-w-5xl px-2" style={{ display: selectorMode ? "none" : undefined }}>
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Mapa Interactivo de España</span>
@@ -279,11 +306,11 @@ export function SpainMapRealistic({
             {processedGeometries.map(({ id, name, data, pathData }) => {
               const isSelected = selectedProvince === name;
               const isHovered = hoveredProvince === name;
-              const partyColor = data ? getPartyColor(data.winnerParty) || "#64748B" : "#334155";
-              const hasVotes = data && data.totalVotes > 0;
+              const partyColor = selectorMode ? "#334155" : data ? getPartyColor(data.winnerParty || "") || "#64748B" : "#334155";
+              const hasVotes = !!data && Number(data.totalVotes || 0) > 0;
 
               // Opacidades según el modo de mapa elegido
-              let opacity = hasVotes ? 0.55 : 0.15;
+              let opacity = selectorMode ? 0.25 : hasVotes ? 0.55 : 0.15;
               if (isHovered) opacity = 0.85;
               if (isSelected) opacity = 0.95;
 
@@ -305,6 +332,7 @@ export function SpainMapRealistic({
                   strokeWidth={isSelected ? 2.5 : isHovered ? 1.8 : 0.6}
                   filter={isSelected || isHovered ? "url(#glow-effect)" : undefined}
                   className="cursor-pointer transition-all duration-150 ease-out hover:opacity-100"
+                  style={{ transition: "fill-opacity 220ms ease, stroke 220ms ease, stroke-width 220ms ease, filter 220ms ease" }}
                   onMouseEnter={() => setHoveredProvince(name)}
                   onMouseLeave={() => setHoveredProvince(null)}
                   onClick={() => onProvinceSelect(isSelected ? null : name)}
@@ -314,7 +342,7 @@ export function SpainMapRealistic({
           </g>
 
           {/* Leyenda Minimalista Flotante en Cristal */}
-          <g transform="translate(20, 595)">
+          <g transform="translate(20, 595)" style={{ display: selectorMode ? "none" : undefined }}>
             <rect
               x="0"
               y="-15"
@@ -341,7 +369,7 @@ export function SpainMapRealistic({
         </svg>
 
         {/* 🌟 TOOLTIP EMERGENTE HTML ULTRA-MEJORADO (Liquid Glass) */}
-        {hoveredObj && hoveredObj.data && (
+        {!selectorMode && hoveredObj && hoveredObj.data && (
           <div
             className="pointer-events-none absolute z-50 w-64 p-4 rounded-2xl bg-slate-950/80 backdrop-blur-xl border border-white/20 shadow-[0_20px_40px_rgba(0,0,0,0.8)] transition-all duration-75 ease-out transform -translate-x-1/2 -translate-y-full"
             style={{
@@ -354,7 +382,7 @@ export function SpainMapRealistic({
               <h4 className="text-sm font-bold text-white tracking-wide">{hoveredObj.name}</h4>
               <span
                 className="px-2 py-0.5 text-[10px] font-extrabold rounded-full text-white shadow-sm"
-                style={{ backgroundColor: getPartyColor(hoveredObj.data.winnerParty) || "#64748B" }}
+                style={{ backgroundColor: getPartyColor(hoveredObj.data.winnerParty || "") || "#64748B" }}
               >
                 {hoveredObj.data.winnerParty}
               </span>
@@ -364,23 +392,30 @@ export function SpainMapRealistic({
             <div className="space-y-2 text-xs text-slate-300">
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Total Votos:</span>
-                <span className="font-bold text-white">{hoveredObj.data.totalVotes.toLocaleString()}</span>
+                <span className="font-bold text-white">{Number(hoveredObj.data.totalVotes || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Edad Media:</span>
-                <span className="font-bold text-sky-400">{hoveredObj.data.age.toFixed(1)} años</span>
+                <span className="font-bold text-sky-400">{Number(hoveredObj.data.age || 0).toFixed(1)} años</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Ideología:</span>
-                <span className="font-bold text-emerald-400">{hoveredObj.data.ideology.toFixed(1)} / 10</span>
+                <span className="font-bold text-emerald-400">{Number(hoveredObj.data.ideology || 0).toFixed(1)} / 10</span>
               </div>
             </div>
           </div>
         )}
       </div>
 
+      {selectorMode && selectedProvince && (
+        <div className="w-full max-w-5xl flex items-center justify-between gap-3 rounded-2xl border border-sky-400/30 bg-sky-400/10 px-4 py-3 text-sm text-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <span><strong className="text-sky-300">{mapLevel === "ccaa" ? "Comunidad seleccionada" : "Provincia seleccionada"}:</strong> {selectedProvince}</span>
+          <button onClick={() => onProvinceSelect(null)} className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-100 transition hover:bg-white/10">Cambiar</button>
+        </div>
+      )}
+
       {/* 📊 PANEL/MODAL DE DETALLES DE LA PROVINCIA SELECCIONADA */}
-      {selectedProvince && activeProvinceData && (
+      {!selectorMode && selectedProvince && activeProvinceData && (
         <div className="w-full max-w-5xl bg-slate-950/70 backdrop-blur-2xl border border-white/15 p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
           
           {/* Encabezado */}
@@ -388,7 +423,7 @@ export function SpainMapRealistic({
             <div className="flex items-center gap-3">
               <div
                 className="w-4 h-10 rounded-full"
-                style={{ backgroundColor: getPartyColor(activeProvinceData.winnerParty) || "#38BDF8" }}
+                style={{ backgroundColor: getPartyColor(activeProvinceData.winnerParty || "") || "#38BDF8" }}
               />
               <div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-sky-400">Detalles de Provincia</span>
@@ -407,22 +442,22 @@ export function SpainMapRealistic({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-md">
               <p className="text-xs font-medium text-slate-400 mb-1">Total de Votos</p>
-              <p className="text-2xl font-black text-white">{activeProvinceData.totalVotes.toLocaleString()}</p>
+              <p className="text-2xl font-black text-white">{Number(activeProvinceData.totalVotes || 0).toLocaleString()}</p>
             </div>
             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-md">
               <p className="text-xs font-medium text-slate-400 mb-1">Edad Media</p>
-              <p className="text-2xl font-black text-sky-400">{activeProvinceData.age.toFixed(1)} <span className="text-xs text-slate-400 font-normal">años</span></p>
+              <p className="text-2xl font-black text-sky-400">{Number(activeProvinceData.age || 0).toFixed(1)} <span className="text-xs text-slate-400 font-normal">años</span></p>
             </div>
             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-md">
               <p className="text-xs font-medium text-slate-400 mb-1">Ideología Media</p>
-              <p className="text-2xl font-black text-emerald-400">{activeProvinceData.ideology.toFixed(1)} <span className="text-xs text-slate-400 font-normal">/ 10</span></p>
+              <p className="text-2xl font-black text-emerald-400">{Number(activeProvinceData.ideology || 0).toFixed(1)} <span className="text-xs text-slate-400 font-normal">/ 10</span></p>
             </div>
             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-md flex flex-col justify-center">
               <p className="text-xs font-medium text-slate-400 mb-1">Victoria Electoral</p>
               <div className="flex items-center gap-2">
                 <span
                   className="w-3 h-3 rounded-full ring-2 ring-white/30"
-                  style={{ backgroundColor: getPartyColor(activeProvinceData.winnerParty) || "#CBD5E1" }}
+                  style={{ backgroundColor: getPartyColor(activeProvinceData.winnerParty || "") || "#CBD5E1" }}
                 />
                 <p className="text-xl font-black text-white">{activeProvinceData.winnerParty}</p>
               </div>

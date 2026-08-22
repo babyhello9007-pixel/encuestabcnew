@@ -148,17 +148,45 @@ export default function PreguntasVariasSection({
           .select('question_key, option_value, party_vote, votes_count')
           .order('votes_count', { ascending: false });
 
-        if (error) {
-          setBreakdownLoading(false);
-          return;
-        }
-
         const grouped: Record<string, OptionPartyBreakdown[]> = {};
-        (data || []).forEach((row: any) => {
-          const key = `${row.question_key}::${row.option_value}`;
-          if (!grouped[key]) grouped[key] = [];
-          grouped[key].push(row as OptionPartyBreakdown);
-        });
+        if (!error && data?.length) {
+          data.forEach((row: any) => {
+            const key = `${row.question_key}::${row.option_value}`;
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(row as OptionPartyBreakdown);
+          });
+        } else {
+          let rawQuery = supabase.from('respuestas').select('voto_generales, monarquia_republica, division_territorial, sistema_pensiones, edad, ccaa');
+          if (selectedCCAAs.length > 0) rawQuery = rawQuery.in('ccaa', selectedCCAAs);
+          const { data: rawRows, error: rawError } = await rawQuery;
+          if (rawError) throw rawError;
+          const ageMatches = (row: any) => {
+            if (selectedEdad === 'todos') return true;
+            const age = Number(row.edad);
+            if (!Number.isFinite(age)) return false;
+            if (selectedEdad === '18-30') return age >= 18 && age <= 30;
+            if (selectedEdad === '31-45') return age >= 31 && age <= 45;
+            if (selectedEdad === '46-60') return age >= 46 && age <= 60;
+            return age > 60;
+          };
+          const accumulator: Record<string, Record<string, number>> = {};
+          const fields = ['monarquia_republica', 'division_territorial', 'sistema_pensiones'] as const;
+          (rawRows || []).filter(ageMatches).forEach((row: any) => {
+            const party = String(row.voto_generales || '').trim();
+            if (!party) return;
+            fields.forEach((field) => {
+              const option = String(row[field] || '').trim();
+              if (!option) return;
+              const key = `${field}::${option}`;
+              if (!accumulator[key]) accumulator[key] = {};
+              accumulator[key][party] = (accumulator[key][party] || 0) + 1;
+            });
+          });
+          Object.entries(accumulator).forEach(([key, parties]) => {
+            const [question_key, option_value] = key.split('::');
+            grouped[key] = Object.entries(parties).map(([party_vote, votes_count]) => ({ question_key, option_value, party_vote, votes_count })).sort((a, b) => b.votes_count - a.votes_count);
+          });
+        }
 
         setPartyBreakdownMap(grouped);
       } catch (err) {
@@ -190,7 +218,7 @@ export default function PreguntasVariasSection({
 
     loadBreakdown();
     loadBranding();
-  }, []);
+  }, [selectedEdad, selectedCCAAs]);
 
   const getBreakdownKey = (questionKey: string, label: string) => `${questionKey}::${label}`;
   const getPartyStyle = (party: string) => {

@@ -401,6 +401,12 @@ export function TransferenciaVotoModal({
     });
   }, [activeTransferData, selectedOrigen, modeFilter, searchTerm, getPartyDisplayName]);
 
+  const topTransfers = useMemo(() => filteredData
+    .filter((item) => item.origen_partido !== item.destino_partido)
+    .slice()
+    .sort((a, b) => b.votos_transferidos - a.votos_transferidos)
+    .slice(0, 3), [filteredData]);
+
   const totalPages = Math.max(Math.ceil(filteredData.length / ITEMS_PER_PAGE), 1);
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -920,7 +926,7 @@ export function TransferenciaVotoModal({
                       </button>
                     </div>
 
-                    <div key={sankeyMotionKey} className="sankey-recalculate">
+                    <div key={sankeyMotionKey} className="sankey-recalculate" style={{ position: "relative" }}>
                       <SankeyChart
                         data={filteredData}
                         getPartyColor={getPartyColor}
@@ -930,8 +936,14 @@ export function TransferenciaVotoModal({
                         setHoveredNode={setHoveredNode}
                         svgRef={sankeyRef}
                       />
+                      {temporalLoading && <div role="status" aria-live="polite" style={{ position: "absolute", inset: 0, zIndex: 4, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 12, background: "rgba(8,10,20,.72)", backdropFilter: "blur(3px)", color: "#e0e7ff", fontSize: 12, fontWeight: 800 }}><Loader2 className="animate-spin" size={25} color="#a5b4fc" />Recalculando transferencias del período…</div>}
                     </div>
                   </div>
+
+                  <section aria-label="Tres mayores transvases" style={{ marginBottom: 20, padding: 16, borderRadius: 16, border: "1px solid rgba(129,140,248,.18)", background: "linear-gradient(135deg, rgba(99,102,241,.10), rgba(15,23,42,.32))" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginBottom: 12 }}><h3 style={{ margin: 0, color: "#eef2ff", fontSize: 13, fontWeight: 800 }}>Top 3 transvases</h3><span style={{ color: "#a5b4fc", fontSize: 10, fontWeight: 700 }}>Excluye fidelidad de voto</span></div>
+                    {topTransfers.length ? <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 10 }}>{topTransfers.map((item, index) => <div key={`${item.origen_partido}-${item.destino_partido}`} style={{ display: "flex", alignItems: "center", gap: 8, padding: 10, borderRadius: 11, background: "rgba(255,255,255,.045)", border: "1px solid rgba(255,255,255,.08)" }}><span style={{ width: 22, height: 22, display: "grid", placeItems: "center", borderRadius: 99, color: "#111827", background: index === 0 ? "#fbbf24" : "#c7d2fe", fontSize: 11, fontWeight: 900 }}>{index + 1}</span><div style={{ minWidth: 0, flex: 1 }}><div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}><PartyBadge party={item.origen_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} /><ArrowRight size={12} color="#a5b4fc" /><PartyBadge party={item.destino_partido} getColor={getPartyColor} getLogo={getPartyLogo} getDisplayName={getPartyDisplayName} /></div><div style={{ marginTop: 6, color: "#cbd5e1", fontSize: 11, fontWeight: 700 }}>{item.votos_transferidos.toLocaleString("es-ES")} votos · {item.porcentaje.toFixed(1)}% del origen</div></div></div>)}</div> : <p style={{ margin: 0, color: "#94a3b8", fontSize: 12 }}>No hay transvases entre partidos que coincidan con los filtros actuales.</p>}
+                  </section>
 
                   {/* Tabla Detallada */}
                   <div style={{ marginBottom: 12 }}>

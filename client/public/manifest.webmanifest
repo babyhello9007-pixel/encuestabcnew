@@ -1,0 +1,10 @@
+{
+  "name": "Batalla Cultural · Encuesta y resultados",
+  "short_name": "Batalla Cultural",
+  "lang": "es-ES",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#991b1b",
+  "icons": [{ "src": "/favicon.png", "sizes": "512x512", "type": "image/png" }]
+}

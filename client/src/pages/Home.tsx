@@ -1,6 +1,8 @@
 import { useLocation } from "wouter";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { SeoHead } from "@/components/SeoHead";
+import { XTimeline } from "@/components/XTimeline";
 import { 
   ArrowRight, 
   BarChart3, 
@@ -92,6 +94,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans selection:bg-red-500 selection:text-white">
+      <SeoHead title="Batalla Cultural | Encuesta y resultados políticos en vivo" description="Participa en la encuesta política y cultural de Batalla Cultural. Consulta resultados en vivo, mapas electorales y análisis de opinión en España." path="/" />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;800&display=swap');
 
@@ -310,6 +313,8 @@ export default function Home() {
           </div>
         </section>
         {/* --- FIN APARTADO MEDIO QUORUM --- */}
+
+        <XTimeline />
 
         {/* Features Section */}
         <section className="px-4 sm:px-8 py-16 md:py-24 max-w-6xl mx-auto w-full">
