@@ -38,6 +38,8 @@ export interface CCAAResultsSectionProps {
   partyMeta?: Record<string, { color?: string; logo?: string }>;
 }
 
+const partyLookupKey = (value?: string) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
 export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
   const [ccaaResults, setCCAAResults] = useState<CCAAResults[]>([]);
   const [ccaaSummary, setCCAASummary] = useState<CCAASummary[]>([]);
@@ -64,10 +66,10 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
           const configMap: Record<string, PartyConfig> = {};
           data.forEach((party: PartyConfig) => {
             if (party.party_key) {
-              configMap[party.party_key.toLowerCase().trim()] = party;
+              configMap[partyLookupKey(party.party_key)] = party;
             }
             if (party.display_name) {
-              configMap[party.display_name.toLowerCase().trim()] = party;
+              configMap[partyLookupKey(party.display_name)] = party;
             }
           });
           setPartyConfigs(configMap);
@@ -130,17 +132,17 @@ export function CCAAResltsSection({ partyMeta = {} }: CCAAResultsSectionProps) {
     fetchCCAAResults();
   }, [analysisType]);
 
-  // Resolutor unificado de logo y color (Prioridad: Vista SQL > Config DB > Props > Fallback)
+  // party_configuration es la fuente canónica de identidad visual.
   const getPartyMeta = (result: CCAAResults) => {
     const partyName = result.partido;
-    const key = (result.party_key || partyName).toLowerCase().trim();
-    const nameKey = partyName.toLowerCase().trim();
+    const key = partyLookupKey(result.party_key || partyName);
+    const nameKey = partyLookupKey(partyName);
     
     const dbParty = partyConfigs[key] || partyConfigs[nameKey];
 
     return {
-      color: result.color || dbParty?.color || partyMeta[partyName]?.color || "#9CA3AF",
-      logo: result.logo_url || dbParty?.logo_url || partyMeta[partyName]?.logo || "",
+      color: dbParty?.color || "#9CA3AF",
+      logo: dbParty?.logo_url || "",
       displayName: dbParty?.display_name || result.partido
     };
   };

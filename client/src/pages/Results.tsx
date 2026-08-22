@@ -400,6 +400,91 @@ type TabKey =
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
+async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, totalResponses: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1800;
+  canvas.height = 1120;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("No se pudo crear el lienzo de exportación.");
+  const drawRounded = (x: number, y: number, width: number, height: number, radius: number) => {
+    context.beginPath();
+    context.roundRect(x, y, width, height, radius);
+    context.fill();
+  };
+  const rows = stats.slice().sort((a, b) => b.votos - a.votos).slice(0, 8);
+  const title = activeTab === "general" ? "Resultados Generales" : activeTab === "youth" ? "Asociaciones Juveniles" : "Resumen de Resultados";
+  const date = new Intl.DateTimeFormat("es-ES", { dateStyle: "long", timeStyle: "short" }).format(new Date());
+
+  const background = context.createLinearGradient(0, 0, 1800, 1120);
+  background.addColorStop(0, "#060817");
+  background.addColorStop(0.55, "#11162b");
+  background.addColorStop(1, "#210d17");
+  context.fillStyle = background;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#e8465a";
+  context.fillRect(0, 0, 1800, 14);
+  context.fillStyle = "#f8fafc";
+  context.font = "900 56px Inter, Arial, sans-serif";
+  context.fillText("BATALLA CULTURAL", 96, 125);
+  context.font = "800 32px Inter, Arial, sans-serif";
+  context.fillStyle = "#e8465a";
+  context.fillText(title.toUpperCase(), 96, 178);
+  context.font = "500 24px Inter, Arial, sans-serif";
+  context.fillStyle = "#aeb8cc";
+  context.fillText(`Generado el ${date}`, 96, 220);
+
+  context.fillStyle = "rgba(255,255,255,0.07)";
+  drawRounded(1190, 84, 510, 170, 28);
+  context.fillStyle = "#aeb8cc";
+  context.font = "700 23px Inter, Arial, sans-serif";
+  context.fillText("RESPUESTAS ANALIZADAS", 1230, 140);
+  context.fillStyle = "#f8fafc";
+  context.font = "900 68px Inter, Arial, sans-serif";
+  context.fillText(totalResponses.toLocaleString("es-ES"), 1230, 215);
+
+  const columnWidth = 765;
+  const cardHeight = 150;
+  rows.forEach((row, index) => {
+    const column = index % 2;
+    const line = Math.floor(index / 2);
+    const x = 96 + column * (columnWidth + 80);
+    const y = 310 + line * (cardHeight + 34);
+    context.fillStyle = "rgba(255,255,255,0.065)";
+    drawRounded(x, y, columnWidth, cardHeight, 24);
+    context.fillStyle = row.color || "#e8465a";
+    drawRounded(x + 26, y + 27, 12, 96, 6);
+    context.fillStyle = "#f8fafc";
+    context.font = "800 31px Inter, Arial, sans-serif";
+    context.fillText(row.nombre, x + 68, y + 62);
+    context.fillStyle = "#b6c0d3";
+    context.font = "600 22px Inter, Arial, sans-serif";
+    context.fillText(`${row.votos.toLocaleString("es-ES")} votos · ${Number(row.porcentaje || 0).toFixed(1)}%`, x + 68, y + 105);
+    context.textAlign = "right";
+    context.fillStyle = "#f8fafc";
+    context.font = "900 42px Inter, Arial, sans-serif";
+    context.fillText(`${row.escanos || 0}`, x + columnWidth - 34, y + 79);
+    context.fillStyle = "#aeb8cc";
+    context.font = "700 16px Inter, Arial, sans-serif";
+    context.fillText("ESCAÑOS", x + columnWidth - 34, y + 108);
+    context.textAlign = "left";
+  });
+  context.fillStyle = "rgba(255,255,255,0.08)";
+  context.fillRect(96, 1016, 1608, 1);
+  context.fillStyle = "#8d99ae";
+  context.font = "600 18px Inter, Arial, sans-serif";
+  context.fillText("Resultados de participación anónima · Batalla Cultural", 96, 1065);
+
+  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((file) => file ? resolve(file) : reject(new Error("El navegador no pudo crear el PNG.")), "image/png"));
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `batalla-cultural-${activeTab}-${Date.now()}.png`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+}
+
 const TAB_GROUPS: TabGroup[] = [
   { label: "Elecciones", icon: <Vote className="w-3.5 h-3.5" />, tabs: [
     { key: "general", label: "Resultados Generales" },
@@ -2357,17 +2442,37 @@ export default function Results() {
         } catch (e) { console.error(e); }
 
         try {
-          const { data: vld } = await supabase.from("valoraciones_lideres_view").select("*");
-          if (vld?.length) {
-            const lm: Record<string, { name: string; fieldName: string }> = { feijoo: { name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" }, sanchez: { name: "Pedro Sánchez", fieldName: "val_sanchez" }, abascal: { name: "Santiago Abascal", fieldName: "val_abascal" }, alvise: { name: "Alvise Pérez", fieldName: "val_alvise" }, yolanda_diaz: { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" }, irene_montero: { name: "Irene Montero", fieldName: "val_irene_montero" }, ayuso: { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" }, buxade: { name: "Jorge Buxadé", fieldName: "val_buxade" } };
-            setLeaderRatings(vld.map((r: any) => { const l = lm[r.lider]; return { name: l?.name ?? r.lider, fieldName: l?.fieldName ?? r.lider, average: parseFloat(r.valoracion_media) || 0, count: r.total_valoraciones || 0 }; }));
-          }
-        } catch {
-          const { data: ar } = await supabase.from("respuestas").select("val_feijoo, val_sanchez, val_abascal, val_alvise, val_yolanda_diaz, val_irene_montero, val_ayuso, val_buxade");
-          if (ar) {
-            const ls = [{ name: "Alberto Núñez Feijóo", fieldName: "val_feijoo" }, { name: "Pedro Sánchez", fieldName: "val_sanchez" }, { name: "Santiago Abascal", fieldName: "val_abascal" }, { name: "Alvise Pérez", fieldName: "val_alvise" }, { name: "Yolanda Díaz", fieldName: "val_yolanda_diaz" }, { name: "Irene Montero", fieldName: "val_irene_montero" }, { name: "Isabel Díaz Ayuso", fieldName: "val_ayuso" }, { name: "Jorge Buxadé", fieldName: "val_buxade" }];
-            setLeaderRatings(ls.map(l => { let s = 0, c = 0; ar.forEach((r: any) => { const v = r[l.fieldName]; if (v != null) { s += v; c++; } }); return { ...l, average: Math.round(c > 0 ? (s / c) * 10 : 0) / 10, count: c }; }));
-          }
+          const { data: ratings, error: ratingsError } = await supabase
+            .from("valoraciones_lideres")
+            .select("party_key, leader_name, valoracion")
+            .gte("valoracion", 1)
+            .lte("valoracion", 10)
+            .limit(10_000);
+          if (ratingsError) throw ratingsError;
+          const grouped = new globalThis.Map<string, { name: string; partyKey: string; total: number; score: number }>();
+          (ratings || []).forEach((rating: any) => {
+            const partyKey = String(rating.party_key || "").trim();
+            const name = String(rating.leader_name || "").trim();
+            const score = Number(rating.valoracion);
+            if (!partyKey || !name || !Number.isFinite(score)) return;
+            const key = `${partyKey.toLocaleLowerCase()}::${name.toLocaleLowerCase()}`;
+            const current = grouped.get(key) || { name, partyKey, total: 0, score: 0 };
+            current.total += 1;
+            current.score += score;
+            grouped.set(key, current);
+          });
+          const aggregatedLeaders = Array.from(grouped.values()) as Array<{ name: string; partyKey: string; total: number; score: number }>;
+          setLeaderRatings(aggregatedLeaders
+            .map((leader) => ({
+              name: leader.name,
+              fieldName: `${leader.partyKey}::${leader.name}`,
+              average: Math.round((leader.score / leader.total) * 10) / 10,
+              count: leader.total,
+            }))
+            .sort((a, b) => b.average - a.average || b.count - a.count || a.name.localeCompare(b.name, "es")));
+        } catch (error) {
+          console.error("Error cargando valoraciones_lideres:", error);
+          setLeaderRatings([]);
         }
 
         try { const { data } = await supabase.from("media_nota_ejecutivo").select("nota_media"); if (data?.[0]) setNotaEjecutivo(data[0].nota_media); } catch { /* skip */ }
@@ -2527,15 +2632,15 @@ export default function Results() {
     if (!historicoElecciones || historicoElecciones.length === 0) return [];
     
     return historicoElecciones.map((h: any) => ({
-      año: h.año,
-      PP: h.pp || 0,
-      PSOE: h.psoe || 0,
-      VOX: h.vox || 0,
-      SUMAR: h.sumar || 0,
-      PODEMOS: h.podemos || 0,
-      Ciudadanos: h.ciudadanos || 0,
-      ERC: h.erc || 0,
-      JUNTS: h.junts || 0,
+      año: Number(h.año ?? h.ano),
+      PP: Number(h.pp ?? h.PP ?? 0),
+      PSOE: Number(h.psoe ?? h.PSOE ?? 0),
+      VOX: Number(h.vox ?? h.VOX ?? 0),
+      SUMAR: Number(h.sumar ?? h.SUMAR ?? 0),
+      PODEMOS: Number(h.podemos ?? h.PODEMOS ?? 0),
+      Ciudadanos: Number(h.ciudadanos ?? h.CIUDADANOS ?? 0),
+      ERC: Number(h.erc ?? h.ERC ?? 0),
+      JUNTS: Number(h.junts ?? h.JUNTS ?? 0),
     })).sort((a: any, b: any) => a.año - b.año);
   }, [historicoElecciones]);
   const comparativa2023VsActual = useMemo(() => {
@@ -2674,55 +2779,14 @@ export default function Results() {
               <FileText size={12} /><span>PDF</span>
             </button>
             <button className="r-hbtn r-hbtn-ai" onClick={async () => {
-              const node = document.querySelector('.r-main') as HTMLElement;
-              if (!node) {
-                alert("No se encontró el contenedor principal para exportar.");
-                return;
-              }
               try {
-                const html2canvas = (await import('html2canvas')).default;
-                const canvas = await html2canvas(node, {
-                  scale: 1.5,
-                  backgroundColor: '#0a0a0f',
-                  useCORS: true,
-                  logging: false,
-                  onclone: (clonedDocument) => {
-                    clonedDocument.querySelectorAll('img').forEach((image) => {
-                      try {
-                        const url = new URL(image.currentSrc || image.src, window.location.origin);
-                        if (url.origin !== window.location.origin) {
-                          image.style.visibility = 'hidden';
-                        }
-                      } catch {
-                        image.style.visibility = 'hidden';
-                      }
-                    });
-                  }
-                });
-                const blob = await new Promise<Blob>((resolve, reject) => {
-                  canvas.toBlob((result) => result ? resolve(result) : reject(new Error('El navegador no pudo crear el PNG.')), 'image/png');
-                });
-                const link = document.createElement('a');
-                link.download = `batalla-cultural-${activeTab}-${Date.now()}.png`;
-                const exportUrl = URL.createObjectURL(blob);
-                link.href = exportUrl;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                window.setTimeout(() => URL.revokeObjectURL(exportUrl), 1_000);
-                alert("¡Imagen PNG de alta calidad descargada con éxito!");
-                
-                const filterDesc = "Resultados en tiempo real";
-                const shareText = encodeURIComponent(`¡Mira la actualización de ${filterDesc} en la III Encuesta de Batalla Cultural!`);
-                const shareUrl = encodeURIComponent(window.location.href);
-                if (confirm("¿Deseas compartir tu vista exportada en Twitter / X ahora?")) {
-                  window.open(`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`, '_blank');
-                }
+                await exportResultsSummaryPng(stats, activeTab, totalResponses);
+                alert("¡Resumen PNG descargado con éxito!");
               } catch (err) {
                 console.error("Error exportando imagen PNG:", err);
                 alert("No se pudo exportar la imagen. Inténtalo de nuevo.");
               }
-            }} title="Exportar vista actual en imagen PNG de alta calidad">
+            }} title="Exportar resumen actual en imagen PNG de alta calidad">
               <Download size={12} /><span>Exportar PNG</span>
             </button>
             

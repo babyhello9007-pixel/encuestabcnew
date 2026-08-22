@@ -776,3 +776,12 @@
 - [x] Añadir datos estructurados, sitemap y robots para mejorar indexación en Google
 - [x] Mostrar en Home las publicaciones recientes de @bcultural_es con carga y alternativa robusta
 - [x] Validar en navegador los metadatos y el módulo social en desktop y móvil
+- [x] Verificar y reparar con datos reales el desglose por partido de Preguntas Varias
+- [x] Validar el uso de party_configuration en Provincia, CCAA y tablas territoriales
+- [x] Confirmar que Primarias no sea accesible desde la navegación pública de Resultados
+- [x] Corregir la carga y la presentación del Contexto Histórico con su esquema SQL real
+- [x] Rehacer y comprobar la descarga del botón superior Exportar PNG de Resultados
+- [x] Cargar los líderes de NanoEncuesta exclusivamente desde party_leaders activos
+- [x] Calcular el Top 5 de líderes exclusivamente desde valoraciones_lideres
+- [x] Usar party_configuration como única fuente de nombre, color y logo en las vistas afectadas
+- [x] Validar con datos reales los líderes de NanoEncuesta y el Top 5 de Resultados

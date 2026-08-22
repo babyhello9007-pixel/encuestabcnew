@@ -46,6 +46,8 @@ export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionP
   const [loading, setLoading] = useState<boolean>(true);
   const [analysisType, setAnalysisType] = useState<"generales" | "autonomicas">("generales");
 
+  const partyLookupKey = (value?: string) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
   // 1. Cargar la configuración de partidos de party_configuration
   useEffect(() => {
     const fetchPartyConfigurations = async () => {
@@ -61,10 +63,10 @@ export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionP
           const configMap: Record<string, PartyConfig> = {};
           data.forEach((party: PartyConfig) => {
             if (party.party_key) {
-              configMap[party.party_key.toLowerCase().trim()] = party;
+              configMap[partyLookupKey(party.party_key)] = party;
             }
             if (party.display_name) {
-              configMap[party.display_name.toLowerCase().trim()] = party;
+              configMap[partyLookupKey(party.display_name)] = party;
             }
           });
           setPartyConfigs(configMap);
@@ -116,14 +118,14 @@ export function CCAAComparisonSection({ partyMeta = {} }: CCAAComparisonSectionP
   // Helper para resolver metadatos de partidos
   const getPartyMeta = (result: CCAAReslts) => {
     const partyName = result.partido;
-    const key = (result.party_key || partyName).toLowerCase().trim();
-    const nameKey = partyName.toLowerCase().trim();
+    const key = partyLookupKey(result.party_key || partyName);
+    const nameKey = partyLookupKey(partyName);
     
     const dbParty = partyConfigs[key] || partyConfigs[nameKey];
 
     return {
-      color: result.color || dbParty?.color || partyMeta[partyName]?.color || "#9CA3AF",
-      logo: result.logo_url || dbParty?.logo_url || partyMeta[partyName]?.logo || "",
+      color: dbParty?.color || "#9CA3AF",
+      logo: dbParty?.logo_url || "",
       displayName: dbParty?.display_name || result.partido
     };
   };

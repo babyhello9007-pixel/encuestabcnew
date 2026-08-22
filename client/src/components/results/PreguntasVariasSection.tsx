@@ -19,6 +19,8 @@ interface OptionPartyBreakdown {
   votes_count: number;
 }
 
+const normalizePartyKey = (value?: string) => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+
 export default function PreguntasVariasSection({
   partyMeta = {}
 }: {
@@ -43,25 +45,35 @@ export default function PreguntasVariasSection({
     "Ceuta", "Melilla", "Exterior"
   ];
 
+  const fetchFilteredResponses = async (includePartyVote: boolean) => {
+    const baseFields = includePartyVote
+      ? 'voto_generales, monarquia_republica, division_territorial, sistema_pensiones, edad'
+      : 'monarquia_republica, division_territorial, sistema_pensiones, edad';
+    const runQuery = async (geoColumn: 'ccaa' | 'comunidad_autonoma') => {
+      let query: any = supabase.from('respuestas').select(`${baseFields}, ${geoColumn}`);
+      if (selectedCCAAs.length > 0) query = query.in(geoColumn, selectedCCAAs);
+      return query;
+    };
+    let result = await runQuery('ccaa');
+    if (result.error) result = await runQuery('comunidad_autonoma');
+    if (result.error) throw result.error;
+    return result.data || [];
+  };
+
   const loadDataFiltered = async () => {
     try {
       setLoading(true);
-      let query = supabase.from('respuestas').select('monarquia_republica, division_territorial, sistema_pensiones, edad, ccaa');
+      const data = await fetchFilteredResponses(false);
 
-      if (selectedCCAAs.length > 0) {
-        query = query.in('ccaa', selectedCCAAs);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
+      if (!data.length && selectedCCAAs.length === 0) {
         const { data: viewData, error: viewError } = await supabase
           .from('preguntas_varias_view')
           .select('monarquia_republica, division_territorial, sistema_pensiones, edad_media, ideologia_media');
         
-        if (viewError) throw viewError;
-        processRawData(viewData || []);
-        return;
+        if (!viewError && viewData?.length) {
+          processRawData(viewData);
+          return;
+        }
       }
 
       let filtered = data || [];
@@ -143,10 +155,10 @@ export default function PreguntasVariasSection({
     const loadBreakdown = async () => {
       try {
         setBreakdownLoading(true);
-        const { data, error } = await supabase
-          .from('preguntas_varias_party_breakdown')
-          .select('question_key, option_value, party_vote, votes_count')
-          .order('votes_count', { ascending: false });
+        const canUseView = selectedEdad === 'todos' && selectedCCAAs.length === 0;
+        const { data, error } = canUseView
+          ? await supabase.from('preguntas_varias_party_breakdown').select('question_key, option_value, party_vote, votes_count').order('votes_count', { ascending: false })
+          : { data: null, error: new Error('Aplicando filtros sobre respuestas reales') };
 
         const grouped: Record<string, OptionPartyBreakdown[]> = {};
         if (!error && data?.length) {
@@ -156,10 +168,7 @@ export default function PreguntasVariasSection({
             grouped[key].push(row as OptionPartyBreakdown);
           });
         } else {
-          let rawQuery = supabase.from('respuestas').select('voto_generales, monarquia_republica, division_territorial, sistema_pensiones, edad, ccaa');
-          if (selectedCCAAs.length > 0) rawQuery = rawQuery.in('ccaa', selectedCCAAs);
-          const { data: rawRows, error: rawError } = await rawQuery;
-          if (rawError) throw rawError;
+          const rawRows = await fetchFilteredResponses(true);
           const ageMatches = (row: any) => {
             if (selectedEdad === 'todos') return true;
             const age = Number(row.edad);
@@ -208,8 +217,8 @@ export default function PreguntasVariasSection({
       (data || []).forEach((row: any) => {
         const color = typeof row.color === 'string' ? row.color.trim() : '#9CA3AF';
         const logo = typeof row.logo_url === 'string' ? row.logo_url : '';
-        const key = typeof row.party_key === 'string' ? row.party_key.trim().toUpperCase() : '';
-        const display = typeof row.display_name === 'string' ? row.display_name.trim().toUpperCase() : '';
+        const key = normalizePartyKey(row.party_key);
+        const display = normalizePartyKey(row.display_name);
         if (key) map[key] = { color, logo };
         if (display) map[display] = { color, logo };
       });
@@ -222,9 +231,7 @@ export default function PreguntasVariasSection({
 
   const getBreakdownKey = (questionKey: string, label: string) => `${questionKey}::${label}`;
   const getPartyStyle = (party: string) => {
-    const key = party.trim().toUpperCase();
-    const fromMeta = partyMeta[key];
-    if (fromMeta?.color || fromMeta?.logo) return { color: fromMeta.color || "#9CA3AF", logo: fromMeta.logo || "" };
+    const key = normalizePartyKey(party);
     return partyBranding[key] || { color: "#9CA3AF", logo: "" };
   };
 

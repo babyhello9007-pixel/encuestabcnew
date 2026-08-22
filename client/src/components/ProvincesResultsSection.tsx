@@ -8,11 +8,21 @@ import PartyLogo from "@/components/PartyLogo";
 interface ProvinceResults {
   provincia: string;
   partido: string;
+  party_key?: string;
   votos: number;
   porcentaje: number;
   edad_promedio: number;
   ideologia_promedio: number;
 }
+
+interface PartyConfig {
+  party_key: string;
+  display_name: string;
+  color: string;
+  logo_url: string;
+}
+
+const partyLookupKey = (value?: string) => (value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
 interface ProvinceSummary {
   provincia: string;
@@ -33,6 +43,7 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"summary" | "detail">("summary");
+  const [partyConfigs, setPartyConfigs] = useState<Record<string, PartyConfig>>({});
 
   useEffect(() => {
     const fetchProvinceResults = async () => {
@@ -67,6 +78,24 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
     fetchProvinceResults();
   }, []);
 
+  useEffect(() => {
+    const loadPartyConfigurations = async () => {
+      const { data, error } = await supabase.from("party_configuration").select("party_key, display_name, color, logo_url").eq("is_active", true);
+      if (error) {
+        console.warn("No se pudo cargar party_configuration para provincias:", error.message);
+        return;
+      }
+      const configByName: Record<string, PartyConfig> = {};
+      (data || []).forEach((party) => {
+        const config = party as PartyConfig;
+        configByName[partyLookupKey(config.party_key)] = config;
+        configByName[partyLookupKey(config.display_name)] = config;
+      });
+      setPartyConfigs(configByName);
+    };
+    loadPartyConfigurations();
+  }, []);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -83,12 +112,16 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
     ? provinceResults.filter(r => r.provincia === selectedProvince)
     : [];
 
-  const chartData = selectedProvinceResults.map(r => ({
-    name: r.partido,
-    votos: r.votos,
-    porcentaje: r.porcentaje,
-    color: partyMeta[r.partido]?.color || "#9CA3AF"
-  }));
+  const getPartyMeta = (result: ProvinceResults) => {
+    const dbParty = partyConfigs[partyLookupKey(result.party_key)] || partyConfigs[partyLookupKey(result.partido)];
+    const provided = partyMeta[result.partido] || partyMeta[result.party_key || ""];
+    return { name: dbParty?.display_name || result.partido, color: dbParty?.color || provided?.color || "#9CA3AF", logo: dbParty?.logo_url || provided?.logo || "" };
+  };
+
+  const chartData = selectedProvinceResults.map(r => {
+    const meta = getPartyMeta(r);
+    return { name: meta.name, votos: r.votos, porcentaje: r.porcentaje, color: meta.color, logo: meta.logo };
+  });
 
   return (
     <div className="space-y-6">
@@ -190,7 +223,7 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
                             const data = payload[0].payload;
                             return (
                               <div className="bg-white p-2 border border-slate-200 rounded shadow-lg">
-                                <p className="font-bold text-sm">{data.logo} {data.name}</p>
+                                <div className="flex items-center gap-2"><PartyLogo src={data.logo} partyName={data.name} size={22} strictExternal /><p className="font-bold text-sm">{data.name}</p></div>
                                 <p className="text-sm text-red-600">Votos: {data.votos}</p>
                                 <p className="text-sm text-slate-600">Porcentaje: {data.porcentaje}%</p>
                               </div>
@@ -224,19 +257,15 @@ export function ProvincesResultsSection({ partyMeta = {} }: ProvincesResultsSect
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedProvinceResults.map((result, idx) => (
-                      <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
-                        <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                          <span className="inline-flex items-center gap-2">
-                            <PartyLogo src={partyMeta[result.partido]?.logo || ""} partyName={result.partido} size={32} strictExternal />
-                            {result.partido}
-                          </span>
-                        </td>
+                    {selectedProvinceResults.map((result, idx) => {
+                      const meta = getPartyMeta(result);
+                      return <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
+                        <td className="px-4 py-3 text-sm font-medium text-slate-900"><span className="inline-flex items-center gap-2"><PartyLogo src={meta.logo} partyName={meta.name} size={32} strictExternal /><span style={{ borderLeft: `4px solid ${meta.color}`, paddingLeft: 8 }}>{meta.name}</span></span></td>
                         <td className="px-4 py-3 text-right text-sm font-bold text-red-600">{result.votos}</td>
                         <td className="px-4 py-3 text-right text-sm text-slate-600">{result.porcentaje}%</td>
                         <td className="px-4 py-3 text-right text-sm text-slate-600">{result.edad_promedio}</td>
-                      </tr>
-                    ))}
+                      </tr>;
+                    })}
                   </tbody>
                 </table>
               </div>

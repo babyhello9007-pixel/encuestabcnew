@@ -1,5 +1,7 @@
 -- Vista opcional para acelerar el desglose político de Preguntas Varias.
--- La interfaz ya tiene un fallback que agrega respuestas reales si esta vista no existe.
+-- La interfaz agrega directamente las respuestas reales si esta vista no existe,
+-- si está vacía o si el usuario activa filtros por edad o comunidad autónoma.
+-- Ejecutar este archivo en el SQL Editor de Supabase y mantener los GRANT finales.
 
 create or replace view public.preguntas_varias_party_breakdown as
 with respuestas_normalizadas as (

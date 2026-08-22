@@ -5,6 +5,7 @@ import {
   type MediaValoracionRow,
   type PartyLeaderRow,
 } from "./leaderRankingCore";
+import { aggregatePartyLeaderRatings } from "./leaderRatingAggregation";
 
 export { buildLeaderRanking } from "./leaderRankingCore";
 export type {
@@ -15,8 +16,13 @@ export type {
 } from "./leaderRankingCore";
 
 export async function fetchLeaderRanking(): Promise<LiderRanking[]> {
-  const [mediaRes, leadersRes] = await Promise.all([
-    supabase.from("media_valoraciones_lideres").select("*"),
+  const [ratingsRes, leadersRes] = await Promise.all([
+    supabase
+      .from("valoraciones_lideres")
+      .select("party_key, leader_name, valoracion")
+      .gte("valoracion", 1)
+      .lte("valoracion", 10)
+      .limit(10_000),
     supabase
       .from("party_leaders")
       .select(
@@ -30,13 +36,32 @@ export async function fetchLeaderRanking(): Promise<LiderRanking[]> {
       .eq("is_active", true),
   ]);
 
-  if (mediaRes.error) throw mediaRes.error;
+  if (ratingsRes.error) throw ratingsRes.error;
   if (leadersRes.error) throw leadersRes.error;
 
-  return buildLeaderRanking(
-    (mediaRes.data as MediaValoracionRow[]) || [],
-    (leadersRes.data as unknown as PartyLeaderRow[]) || []
-  );
+  const aggregated = aggregatePartyLeaderRatings((ratingsRes.data || []) as Array<{ party_key: string; leader_name: string; valoracion: number }>);
+  const leaderByKey = new Map<string, PartyLeaderRow>();
+  ((leadersRes.data as unknown as PartyLeaderRow[]) || []).forEach((leader) => {
+    leaderByKey.set(`${leader.party_key.toLocaleLowerCase()}::${leader.leader_name.trim().toLocaleLowerCase()}`, leader);
+  });
+
+  return aggregated.map((row) => {
+    const leader = leaderByKey.get(`${row.party_key.toLocaleLowerCase()}::${row.leader_name.toLocaleLowerCase()}`);
+    const party = leader?.party_configuration;
+    return {
+      leader_name: row.leader_name,
+      media_valoracion: row.total ? row.score / row.total : 0,
+      total_valoraciones: row.total,
+      photo_url: leader?.photo_url || "",
+      parties: [{
+        party_key: row.party_key,
+        display_name: party?.display_name || row.party_key,
+        color: party?.color || "#9CA3AF",
+        logo_url: party?.logo_url || "",
+      }],
+      primary_color: party?.color || "#9CA3AF",
+    } satisfies LiderRanking;
+  }).sort((a, b) => b.media_valoracion - a.media_valoracion || b.total_valoraciones - a.total_valoraciones || a.leader_name.localeCompare(b.leader_name, "es"));
 }
 
 export function subscribeToLeaderRatings(onChange: () => void) {

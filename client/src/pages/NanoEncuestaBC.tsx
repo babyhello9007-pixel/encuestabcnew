@@ -197,6 +197,14 @@ export default function NanoEncuestaBC() {
   const [unavailablePartyLogos, setUnavailablePartyLogos] = useState<Record<string, boolean>>({});
   const provinceSelectorData = useMemo(() => Object.fromEntries(PROVINCES.map((province) => [province, { name: province }])), []);
   const ccaaSelectorData = useMemo(() => Object.fromEntries(CCAA.map((ccaa) => [ccaa, { name: ccaa }])), []);
+  const normalizePartyReference = (value?: string) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
+  const getSelectedParty = (value?: string) => {
+    const reference = normalizePartyReference(value);
+    return parties.find((party) =>
+      normalizePartyReference(party.party_key) === reference ||
+      normalizePartyReference(party.display_name) === reference
+    );
+  };
 
   // Fetch party configuration and leaders from Supabase
   useEffect(() => {
@@ -204,7 +212,7 @@ export default function NanoEncuestaBC() {
       try {
         const [partiesRes, leadersRes, generalTotalsRes, youthTotalsRes] = await Promise.all([
           supabase.from("party_configuration").select("*").eq("is_active", true).order("display_name"),
-          supabase.from("party_leaders").select("*").eq("is_active", true),
+          supabase.from("party_leaders").select("id, party_key, leader_name, photo_url").eq("is_active", true).order("updated_at", { ascending: false }),
           supabase.from("votos_generales_totales").select("partido_id, votos"),
           supabase.from("votos_juveniles_totales").select("asociacion_id, votos"),
         ]);
@@ -216,7 +224,9 @@ export default function NanoEncuestaBC() {
           setParties(sortPartiesByCurrentVote(general, (generalTotalsRes.data || []).map((row: any) => ({ id: row.partido_id, votos: row.votos }))));
           setYouthParties(sortPartiesByCurrentVote(youth, (youthTotalsRes.data || []).map((row: any) => ({ id: row.asociacion_id, votos: row.votos }))));
         }
-        if (leadersRes.data) setLeaders(leadersRes.data);
+        if (leadersRes.data) {
+          setLeaders((leadersRes.data as PartyLeader[]).filter((leader) => Boolean(leader.party_key && leader.leader_name)));
+        }
       } catch (err) {
         console.error("Error fetching party data:", err);
       } finally {
@@ -388,8 +398,8 @@ export default function NanoEncuestaBC() {
       } catch (e) { console.error("Error recording cooldown:", e); }
 
       if (responses.lider_partido) {
-        const selectedParty = parties.find(p => p.display_name === responses.voto_generales);
-        const partyLeaders = leaders.filter(l => l.party_key === selectedParty?.party_key);
+        const selectedParty = getSelectedParty(responses.voto_generales);
+        const partyLeaders = leaders.filter((leader) => normalizePartyReference(leader.party_key) === normalizePartyReference(selectedParty?.party_key));
         const isCustom = !partyLeaders.some(l => l.leader_name === responses.lider_partido);
         try {
           const { error: leaderError } = await supabase.from("lideres_preferidos").insert({
@@ -427,10 +437,10 @@ export default function NanoEncuestaBC() {
   );
 
   // Helpers
-  const selectedParty = parties.find(p => p.display_name === responses.voto_generales);
+  const selectedParty = getSelectedParty(responses.voto_generales);
   const partyLeaders = Array.from(new Map(
     leaders
-      .filter(leader => leader.party_key === selectedParty?.party_key)
+      .filter((leader) => normalizePartyReference(leader.party_key) === normalizePartyReference(selectedParty?.party_key))
       .map(leader => [getLeaderIdentityKey(leader.leader_name), leader])
   ).values());
   const accentColor = selectedParty?.color || "#e8465a";
