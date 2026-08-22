@@ -785,3 +785,4 @@
 - [x] Calcular el Top 5 de líderes exclusivamente desde valoraciones_lideres
 - [x] Usar party_configuration como única fuente de nombre, color y logo en las vistas afectadas
 - [x] Validar con datos reales los líderes de NanoEncuesta y el Top 5 de Resultados
+- [x] Restaurar el cooldown efectivo de treinta minutos y corregir su prueba de bloqueo
