@@ -2685,7 +2685,7 @@ export default function Results() {
     const r2023 = historicoElecciones.find((h: any) => h.año === 2023);
     if (!r2023) return [];
     
-    const parties = ['PP', 'PSOE', 'VOX', 'SUMAR', 'PODEMOS', 'Ciudadanos', 'ERC', 'JUNTS', 'PNV', 'bildu',];
+    const parties = ['PP', 'PSOE', 'VOX', 'SUMAR', 'PODEMOS', 'Ciudadanos', 'ERC', 'JUNTS', 'PNV', 'BILDU',];
     return parties.map(p => {
       const current = generalStats.find(g => g.nombre === p || g.id === p)?.escanos || 0;
       const key = p.toLowerCase();
@@ -3019,7 +3019,7 @@ export default function Results() {
                         <YAxis tick={{ fill: "#7a7990" }} />
                         <Tooltip contentStyle={{ background: "#11131c", border: "1px solid rgba(255,255,255,.14)", borderRadius: 10, color: "#f8fafc" }} labelStyle={{ color: "#f8fafc", fontWeight: 800 }} itemStyle={{ color: "#dbeafe" }} />
                         <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-                        {["PP", "PSOE", "VOX", "SUMAR", "PODEMOS", "Ciudadanos", "ERC", "JUNTS"].map((p) => (
+                        {["PP", "PSOE", "VOX", "SUMAR", "PODEMOS", "Ciudadanos", "ERC", "JUNTS", "PNV", "BILDU",].map((p) => (
                           <Line key={p} name={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} strokeWidth={2.2} activeDot={{ r: 5 }} dot={{ r: 2, strokeWidth: 0 }} connectNulls />
                         ))}
                       </LineChart>
