@@ -2675,6 +2675,8 @@ export default function Results() {
       Ciudadanos: Number(h.ciudadanos ?? h.CIUDADANOS ?? 0),
       ERC: Number(h.erc ?? h.ERC ?? 0),
       JUNTS: Number(h.junts ?? h.JUNTS ?? 0),
+	  PNV: Number(h.pnv ?? h.PNV ?? 0),
+      BILDU: Number(h.bildu ?? h.BILDU ?? 0),
     })).sort((a: any, b: any) => a.año - b.año);
   }, [historicoElecciones]);
   const comparativa2023VsActual = useMemo(() => {
@@ -2683,7 +2685,7 @@ export default function Results() {
     const r2023 = historicoElecciones.find((h: any) => h.año === 2023);
     if (!r2023) return [];
     
-    const parties = ['PP', 'PSOE', 'VOX', 'SUMAR', 'PODEMOS', 'Ciudadanos', 'ERC', 'JUNTS'];
+    const parties = ['PP', 'PSOE', 'VOX', 'SUMAR', 'PODEMOS', 'Ciudadanos', 'ERC', 'JUNTS', 'PNV', 'bildu',];
     return parties.map(p => {
       const current = generalStats.find(g => g.nombre === p || g.id === p)?.escanos || 0;
       const key = p.toLowerCase();
