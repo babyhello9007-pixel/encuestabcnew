@@ -47,6 +47,8 @@ export const LINKTREE_SHARE_TITLE = "Batalla Cultural";
 export const LINKTREE_SHARE_TEXT = "Encuesta, análisis y comunidad para entender la opinión política y cultural de España.";
 export const LINKTREE_THEME_STORAGE_KEY = "bc-linktree-theme";
 export const LINKTREE_CLICK_STORAGE_KEY = "bc-linktree-click-counts";
+export const BIO_FAVICON = "/favicon.png";
+
 export const LINKTREE_QUORUM_FALLBACK = {
   title: "Ceuta ha dicho basta.",
   excerpt: "Análisis de la actualidad política y social desde Quorum.",
@@ -242,7 +244,15 @@ export default function Bio() {
           <div className="mb-4 flex items-start justify-between">
             <span className="h-11 w-11" aria-hidden="true" />
             <div className={`linktree-logo-shell flex h-24 w-24 items-center justify-center rounded-[2rem] border p-2 shadow-2xl backdrop-blur-xl ${isDark ? "border-white/20 bg-white/10 shadow-rose-950/30" : "border-slate-200 bg-white shadow-slate-300/40"}`}>
-              <img src={APP_LOGO} alt="Batalla Cultural" className="h-full w-full rounded-[1.45rem] object-contain" />
+              <img
+                src={BIO_FAVICON}
+                alt="Favicon de Batalla Cultural"
+                className="h-full w-full rounded-[1.45rem] object-contain"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = APP_LOGO;
+                }}
+              />
             </div>
             <button
               type="button"
