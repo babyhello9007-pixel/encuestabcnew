@@ -1073,6 +1073,76 @@ export default function NanoEncuestaBC() {
           .nc-thankyou-title { font-size: 22px; }
           .nc-thankyou-sub { font-size: 13px; }
         }
+
+        /* BC visual refresh: solo presentación, sin cambios de encuesta */
+        .nc-wrap {
+          background:
+            radial-gradient(circle at 10% 0%, rgba(232, 70, 90, 0.14), transparent 30%),
+            radial-gradient(circle at 92% 18%, rgba(56, 189, 248, 0.1), transparent 28%),
+            linear-gradient(145deg, #060914 0%, #0b1020 54%, #070a14 100%);
+        }
+        .nc-header {
+          background: linear-gradient(180deg, rgba(9, 14, 30, 0.92), rgba(10, 14, 27, 0.7));
+          backdrop-filter: blur(24px) saturate(150%);
+          -webkit-backdrop-filter: blur(24px) saturate(150%);
+          border-bottom-color: rgba(255, 255, 255, 0.14);
+          box-shadow: 0 12px 30px rgba(2, 6, 23, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+        }
+        .nc-progress-wrap { background: rgba(8, 13, 27, 0.72); }
+        .nc-card,
+        .nc-leader-hero,
+        .nc-cooldown-card,
+        .nc-thankyou-card {
+          background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.035));
+          backdrop-filter: blur(24px) saturate(150%);
+          -webkit-backdrop-filter: blur(24px) saturate(150%);
+          border-color: rgba(255,255,255,0.16);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.12), inset -1px -1px 0 rgba(2,6,23,0.34), 14px 18px 38px rgba(2,6,23,0.32);
+        }
+        .nc-party-btn,
+        .nc-leader-btn,
+        .nc-option-card,
+        .nc-num-btn,
+        .nc-ideology-btn,
+        .nc-input,
+        .nc-select {
+          background: linear-gradient(145deg, rgba(255,255,255,0.085), rgba(255,255,255,0.025));
+          border-color: rgba(255,255,255,0.15);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.08), inset -2px -2px 5px rgba(2,6,23,0.2), 8px 10px 22px rgba(2,6,23,0.12);
+        }
+        .nc-party-btn:hover,
+        .nc-leader-btn:hover,
+        .nc-option-card:hover,
+        .nc-num-btn:hover,
+        .nc-ideology-btn:hover,
+        .nc-input:focus,
+        .nc-select:focus {
+          border-color: rgba(255,255,255,0.28);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.12), 12px 14px 28px rgba(2,6,23,0.24), 0 0 24px rgba(232,70,90,0.07);
+        }
+        .nc-party-btn.selected,
+        .nc-leader-btn.selected,
+        .nc-option-card.selected,
+        .nc-num-btn.selected,
+        .nc-ideology-btn.selected {
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.16), 0 12px 28px rgba(2,6,23,0.34), 0 0 24px rgba(232,70,90,0.13);
+        }
+        .nc-btn-next,
+        .nc-btn-primary {
+          box-shadow: 0 12px 26px rgba(2,6,23,0.28), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(111, 10, 32, 0.28);
+        }
+        .nc-btn-prev,
+        .nc-btn-outline,
+        .nc-close-btn {
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.1), inset -2px -2px 5px rgba(2,6,23,0.22), 8px 10px 22px rgba(2,6,23,0.14);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .nc-party-btn:hover,
+          .nc-leader-btn:hover,
+          .nc-option-card:hover,
+          .nc-num-btn:hover,
+          .nc-ideology-btn:hover { transform: none; }
+        }
       `}</style>
 
       <div className="nc-wrap">

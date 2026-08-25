@@ -394,6 +394,95 @@ const RESULTS_CSS = `
   .r-sim-add-row { flex-direction: column; }
   .r-nav-group-btn { padding: 10px 10px; font-size: 11px; }
 }
+
+/* BC visual refresh: solo presentación, sin cambios de datos o interacción */
+.r-root {
+  background:
+    radial-gradient(circle at 6% 0%, rgba(232, 70, 90, 0.16), transparent 26%),
+    radial-gradient(circle at 96% 18%, rgba(56, 189, 248, 0.1), transparent 28%),
+    linear-gradient(145deg, #060914 0%, #0b1020 52%, #070a14 100%);
+}
+.r-header {
+  background: linear-gradient(180deg, rgba(9, 14, 30, 0.9), rgba(10, 14, 27, 0.68));
+  border-bottom-color: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+.r-subnav {
+  background: rgba(10, 16, 32, 0.78);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.17);
+}
+.r-stat-card,
+.r-party-card,
+.r-section,
+.r-sim-wrap,
+.r-sim-results,
+.r-infog-modal,
+.r-gov-modal {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.035));
+  backdrop-filter: blur(24px) saturate(155%);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.12), inset -1px -1px 0 rgba(2, 6, 23, 0.3), 14px 18px 38px rgba(2, 6, 23, 0.3);
+}
+.r-stat-card,
+.r-party-card,
+.r-section,
+.r-sim-wrap {
+  border-radius: 20px;
+}
+.r-stat-card:hover,
+.r-party-card:hover,
+.r-section:hover,
+.r-sim-wrap:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.16), 18px 24px 46px rgba(2, 6, 23, 0.4), 0 0 28px rgba(232, 70, 90, 0.07);
+}
+.r-dropdown,
+.r-infog-option,
+.r-gov-ministry,
+.r-sim-party-row,
+.r-mode-tabs {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.78), rgba(15, 23, 42, 0.62));
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.08), 10px 14px 28px rgba(2, 6, 23, 0.22);
+}
+.r-sort-btn,
+.r-subtab-btn,
+.r-map-btn,
+.r-hbtn-outline {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.r-sort-btn:hover,
+.r-subtab-btn:hover,
+.r-map-btn:hover,
+.r-hbtn-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.r-select,
+.r-sim-input,
+.r-sim-add-input,
+.r-gov-ministry-input {
+  background: rgba(2, 6, 23, 0.3);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 2px 2px 5px rgba(2, 6, 23, 0.22), inset -1px -1px 2px rgba(255, 255, 255, 0.04);
+}
+.r-cta-btn,
+.r-hbtn-ai,
+.r-hbtn-infog,
+.r-hbtn-gov,
+.r-hbtn-pdf {
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+@media (max-width: 768px) {
+  .r-stat-card,
+  .r-party-card,
+  .r-section,
+  .r-sim-wrap { border-radius: 16px; }
+}
 `;
 
 // ─── Tab navigation ──────────────────────────────────────────────────────────

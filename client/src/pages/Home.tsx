@@ -93,23 +93,64 @@ export default function Home() {
   const QUORUM_URL = "https://batallaperi-avauhaz8.manus.space/";
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans selection:bg-red-500 selection:text-white">
+    <div className="bc-home-shell min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans selection:bg-red-500 selection:text-white">
       <SeoHead title="Batalla Cultural | Encuesta y resultados políticos en vivo" description="Participa en la encuesta política y cultural de Batalla Cultural. Consulta resultados en vivo, mapas electorales y análisis de opinión en España." path="/" />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;800&display=swap');
 
-        .frosted-glass {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
+        .bc-home-shell .frosted-glass {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
+          backdrop-filter: blur(24px) saturate(150%);
+          -webkit-backdrop-filter: blur(24px) saturate(150%);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 22px;
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.28), 12px 16px 34px rgba(0,0,0,0.25);
         }
 
-        .liquid-glass {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-          backdrop-filter: blur(30px);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 20px;
+        .bc-home-shell .liquid-glass {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.045) 48%, rgba(244, 63, 94, 0.07) 100%);
+          backdrop-filter: blur(32px) saturate(165%);
+          -webkit-backdrop-filter: blur(32px) saturate(165%);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 26px;
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.28), 18px 24px 52px rgba(0,0,0,0.32), 0 0 40px rgba(244,63,94,0.06);
+        }
+
+        .bc-home-shell .frosted-glass::after,
+        .bc-home-shell .liquid-glass::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: linear-gradient(120deg, rgba(255,255,255,0.12), transparent 34%, transparent 70%, rgba(255,255,255,0.04));
+        }
+
+        .bc-home-shell .frosted-glass,
+        .bc-home-shell .liquid-glass {
+          transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+        }
+
+        .bc-home-shell .frosted-glass:hover,
+        .bc-home-shell .liquid-glass:hover {
+          transform: translateY(-3px);
+          border-color: rgba(255, 255, 255, 0.28);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.2), 18px 26px 54px rgba(0,0,0,0.36), 0 0 34px rgba(244,63,94,0.09);
+        }
+
+        .bc-home-shell header {
+          background: linear-gradient(180deg, rgba(5, 8, 22, 0.76), rgba(5, 8, 22, 0.28));
+          backdrop-filter: blur(18px) saturate(135%);
+          -webkit-backdrop-filter: blur(18px) saturate(135%);
+          border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .bc-home-shell .frosted-glass:hover,
+          .bc-home-shell .liquid-glass:hover { transform: none; }
         }
 
         .font-playfair {

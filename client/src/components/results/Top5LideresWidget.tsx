@@ -87,7 +87,7 @@ export function Top5LideresWidget() {
 
   return (
     <>
-      <div className="mb-6 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="bc-top5-widget mb-6 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         {/* Encabezado compacto */}
         <div className="flex items-center justify-between mb-2 px-1">
           <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export function Top5LideresWidget() {
                 onClick={() => setSelectedLeader(lider)}
                 title={`Ver desglose de valoraciones de ${lider.leader_name}`}
                 aria-label={`Abrir desglose de valoraciones de ${lider.leader_name}`}
-                className="w-full flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#C41E3A]/50 hover:shadow transition text-left cursor-pointer group"
+                className="bc-top5-leader w-full flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#C41E3A]/50 hover:shadow transition text-left cursor-pointer group"
               >
               {/* Mini avatar y medalla */}
               <div className="relative flex-shrink-0">
@@ -157,7 +157,7 @@ export function Top5LideresWidget() {
             </button>
 
             {/* Tooltip flotante al hacer hover */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/card:flex flex-col items-center z-50 pointer-events-none w-48 p-2.5 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl border border-slate-700">
+            <div className="bc-top5-tooltip absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/card:flex flex-col items-center z-50 pointer-events-none w-48 p-2.5 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl border border-slate-700">
               <p className="font-bold text-yellow-400 mb-0.5">{lider.leader_name}</p>
               <p className="text-slate-300">Valoración media: <span className="font-bold text-white">{lider.media_valoracion.toFixed(1)} / 10</span></p>
               <p className="text-slate-300">Total valoraciones: <span className="font-bold text-white">{lider.total_valoraciones}</span></p>

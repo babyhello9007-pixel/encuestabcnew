@@ -808,3 +808,6 @@
 - [x] Corregir dependencia e import de qrcode en Bio.tsx y verificar build
 - [x] Integrar el favicon de Batalla Cultural en la página Linktree/Bio y verificar su visualización
 - [x] Añadir skeleton animado y accesible en Bio mientras se cargan los datos remotos
+- [x] Unificar el estilo glassmórfico, liquid glass, neumórfico y claymórfico en Home, Bio, Results y NanoEncuesta
+- [x] Validar la nueva estética en desktop y móvil sin perder contraste ni accesibilidad
+- [x] Aplicar los cambios visuales sin factorizar, eliminar ni modificar lógica, rutas, consultas o funcionalidades existentes
