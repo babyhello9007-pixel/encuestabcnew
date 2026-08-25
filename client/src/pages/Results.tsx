@@ -51,6 +51,7 @@ import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
 import { createCanonicalPartyIndex, normalizePartyReference, resolveCanonicalParty, sanitizePartyColor, type CanonicalPartyConfigRow } from "@/lib/canonicalPartyConfig";
 import { buildResultsSharePayload } from "@/lib/resultsShare";
+import { buildResultsCsv, buildResultsExcelHtml, type ResultsExportContext, type ResultsExportRow } from "@/lib/resultsExport";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -95,6 +96,19 @@ interface VotoHistorico {
   partido: string; tipo: string; snapshot_at: string;
   votos: number; porcentaje: number;
 }
+interface ResultFilterRow {
+  voto_generales?: string | null;
+  voto_asociacion_juvenil?: string | null;
+  provincia?: string | null;
+  ccaa?: string | null;
+  edad?: number | string | null;
+}
+type ResultAgeFilter = "all" | "18-30" | "31-45" | "46-60" | "60+";
+interface ResultFilterState {
+  ccaa: string;
+  provincia: string;
+  edad: ResultAgeFilter;
+}
 interface NocheElectoralRow {
   id: number;
   election_date: string; region_name: string; region_flag_url: string | null; close_at: string; escrutado?: number | null;
@@ -103,16 +117,16 @@ interface NocheElectoralRow {
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const RESULTS_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
+/* TVP se carga una sola vez desde index.css. */
 
-.r-root { --top-anchor: 64px; min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #1f2937 0%, #0a0a0f 45%, #07070b 100%); color: #f0eff8; font-family: 'Plus Jakarta Sans', sans-serif; }
+.r-root { --top-anchor: 64px; min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at 20% 10%, #1f2937 0%, #0a0a0f 45%, #07070b 100%); color: #f0eff8; font-family: 'TVP', sans-serif; }
 .r-header { position: relative; top: 0; z-index: 60; height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(10,10,15,0.92); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); gap: 8px; }
 .r-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .r-brand img { height: 28px; width: 28px; }
-.r-brand-title { font-size: 14px; font-weight: 700; color: #f0eff8; line-height: 1.2; }
-.r-brand-sub { font-size: 11px; color: #7a7990; }
+.r-brand-title { font-size: 16px; font-weight: 700; color: #f0eff8; line-height: 1.2; }
+.r-brand-sub { font-size: 12px; color: #7a7990; }
 .r-header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.r-hbtn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+.r-hbtn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
 .r-hbtn-ai { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; }
 .r-hbtn-ai:hover { background: rgba(245,158,11,0.25); }
 .r-hbtn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #7a7990; }
@@ -125,7 +139,7 @@ const RESULTS_CSS = `
   .r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
   .r-hbtn-share { background: rgba(45,212,191,0.14); border: 1px solid rgba(45,212,191,0.32); color: #5eead4; }
   .r-hbtn-share:hover { background: rgba(45,212,191,0.24); transform: translateY(-1px); }
-  .r-share-feedback { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 8px; background: rgba(16,185,129,.13); border: 1px solid rgba(110,231,183,.28); color: #a7f3d0; font-size: 10px; font-weight: 700; animation: fadeIn .2s ease-out both; }
+  .r-share-feedback { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 8px; background: rgba(16,185,129,.13); border: 1px solid rgba(110,231,183,.28); color: #a7f3d0; font-size: 12px; font-weight: 700; animation: fadeIn .2s ease-out both; }
 
 /* Subnav */
 .r-subnav { position: relative; top: 0; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
@@ -133,7 +147,7 @@ const RESULTS_CSS = `
 .r-subnav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 .r-subnav-inner { display: flex; align-items: stretch; padding: 0 16px; min-width: max-content; }
 .r-nav-group { position: relative; display: flex; align-items: center; }
-.r-nav-group-btn { display: flex; align-items: center; gap: 6px; padding: 12px 14px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; color: #7a7990; transition: all 0.18s; white-space: nowrap; }
+.r-nav-group-btn { display: flex; align-items: center; gap: 6px; padding: 12px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; color: #7a7990; transition: all 0.18s; white-space: nowrap; }
 .r-nav-group-btn:hover { color: #f0eff8; }
 .r-nav-group-btn.active { color: #e8465a; border-bottom-color: #e8465a; }
 .r-dropdown { position: absolute; top: 100%; left: 0; min-width: 200px; z-index: 100; background: #18181f; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; animation: dropIn 0.15s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.5); margin-top: 2px; }
@@ -156,16 +170,43 @@ const RESULTS_CSS = `
   .r-stat-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(22px) saturate(165%); -webkit-backdrop-filter: blur(22px) saturate(165%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 14px 38px rgba(5,8,20,0.38); border-radius: 14px; padding: 16px 14px; text-align: center; transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
   .r-stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.24); box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 18px 42px rgba(5,8,20,.46); }
 
-.r-stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7a7990; margin-bottom: 4px; }
-.r-stat-value { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; color: #f0eff8; line-height: 1; }
+.r-stat-label { font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7a7990; margin-bottom: 4px; }
+.r-stat-value { font-family: 'TVP', sans-serif; font-size: 28px; font-weight: 800; color: #f0eff8; line-height: 1; }
 .r-stat-value.accent { color: #e8465a; }
-.r-stat-suffix { font-size: 10px; color: #7a7990; margin-top: 2px; }
+.r-stat-suffix { font-size: 12px; color: #7a7990; margin-top: 2px; }
 
 /* Sort bar */
 .r-sort-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.r-sort-btn { padding: 5px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; transition: all 0.18s; }
+.r-sort-btn { padding: 6px 13px; border-radius: 100px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; transition: all 0.18s; }
 .r-sort-btn.active { background: #e8465a; border-color: #e8465a; color: #fff; }
-.r-sort-hint { margin-left: auto; font-size: 11px; color: #5a596a; }
+.r-sort-hint { margin-left: auto; font-size: 12px; color: #5a596a; }
+
+/* Advanced result filters */
+.r-filter-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 12px 30px rgba(0,0,0,.18); }
+.r-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.r-filter-title { display: inline-flex; align-items: center; gap: 7px; color: #f0eff8; font-size: 13px; font-weight: 800; }
+.r-filter-description { margin: 2px 0 0; color: #8b8aa0; font-size: 11px; }
+.r-filter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.r-filter-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.r-filter-label { color: #a4a2b6; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.r-filter-select { width: 100%; min-height: 36px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 9px; background: rgba(7,9,19,.58); color: #f0eff8; font: inherit; font-size: 12px; outline: none; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.r-filter-select:focus { border-color: rgba(94,234,212,.65); background: rgba(7,9,19,.78); box-shadow: 0 0 0 3px rgba(94,234,212,.10); }
+.r-filter-clear { min-height: 32px; padding: 6px 11px; border: 1px solid rgba(232,70,90,.32); border-radius: 8px; background: rgba(232,70,90,.10); color: #ff9aa5; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+.r-filter-clear:hover { background: rgba(232,70,90,.20); transform: translateY(-1px); }
+.r-filter-summary { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; color: #8b8aa0; font-size: 11px; }
+.r-filter-summary strong { color: #5eead4; font-weight: 800; }
+.r-filter-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.r-export-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 6px 11px; border: 1px solid rgba(96,165,250,.32); border-radius: 8px; background: rgba(96,165,250,.10); color: #bfdbfe; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+.r-export-btn:hover { background: rgba(96,165,250,.20); transform: translateY(-1px); }
+.r-export-btn-excel { border-color: rgba(52,211,153,.32); background: rgba(52,211,153,.10); color: #bbf7d0; }
+.r-export-btn-excel:hover { background: rgba(52,211,153,.20); }
+@media (max-width: 768px) {
+  .r-filter-grid { grid-template-columns: 1fr; }
+  .r-filter-panel { padding: 13px; }
+  .r-filter-title { font-size: 12px; }
+  .r-filter-select { min-height: 40px; font-size: 13px; }
+  .r-filter-label, .r-filter-summary, .r-filter-description { font-size: 11px; }
+}
 
 /* Party cards */
 .r-party-card { --party-accent: #e8465a; background: linear-gradient(160deg, color-mix(in srgb, var(--party-accent) 12%, transparent), rgba(255,255,255,0.03)); backdrop-filter: blur(20px) saturate(175%); -webkit-backdrop-filter: blur(20px) saturate(175%); border: 1px solid color-mix(in srgb, var(--party-accent) 38%, rgba(255,255,255,0.16)); border-radius: 16px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
@@ -173,15 +214,15 @@ const RESULTS_CSS = `
 .r-party-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .r-party-logo-wrap { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .r-party-info { flex: 1; min-width: 0; }
-.r-party-name { font-size: 16px; font-weight: 800; color: #f0eff8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.r-party-votes { font-size: 13px; color: #7a7990; margin-top: 2px; font-weight: 600; }
-.r-party-edad { font-size: 12px; color: #c9a96e; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.r-party-name { font-size: 18px; font-weight: 800; color: #f0eff8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r-party-votes { font-size: 14px; color: #7a7990; margin-top: 2px; font-weight: 600; }
+.r-party-edad { font-size: 13px; color: #c9a96e; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
 .r-party-seats { text-align: right; flex-shrink: 0; display: flex; flex-direction: row; gap: 12px; min-width: auto; align-items: center; }
 .r-party-seats > div { flex: 1; min-width: 80px; }
-.r-party-seats-num { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; line-height: 1; }
-.r-party-seats-label { font-size: 9px; color: #7a7990; }
+.r-party-seats-num { font-family: 'TVP', sans-serif; font-size: 28px; font-weight: 800; line-height: 1; }
+.r-party-seats-label { font-size: 11px; color: #7a7990; }
 .r-party-bar-wrap { display: flex; flex-direction: column; gap: 3px; }
-.r-party-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: #5a596a; }
+.r-party-bar-labels { display: flex; justify-content: space-between; font-size: 12px; color: #5a596a; }
 .r-party-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
 .r-party-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
 
@@ -246,7 +287,7 @@ const RESULTS_CSS = `
 
 /* Section card */
 .r-section { background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03)); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 20px 48px rgba(1,6,18,0.45); border-radius: 16px; padding: 20px; }
-.r-section-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
+.r-section-title { font-family: 'TVP', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; letter-spacing: -0.01em; margin: 0 0 4px; }
 .r-section-sub { font-size: 12px; color: #7a7990; margin: 0 0 16px; }
 
 
@@ -265,7 +306,7 @@ const RESULTS_CSS = `
 .r-leader-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px; display: block; }
 .r-leader-img-placeholder { width: 72px; height: 72px; border-radius: 50%; background: #18181f; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #7a7990; margin: 0 auto 10px; }
 .r-leader-name { font-size: 12px; font-weight: 700; color: #f0eff8; margin-bottom: 8px; line-height: 1.3; }
-.r-leader-score { font-family: 'Manrope', sans-serif; font-size: 22px; font-weight: 800; color: #e8465a; line-height: 1; margin-bottom: 4px; }
+.r-leader-score { font-family: 'TVP', sans-serif; font-size: 22px; font-weight: 800; color: #e8465a; line-height: 1; margin-bottom: 4px; }
 .r-leader-bar-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
 .r-leader-bar-fill { height: 100%; border-radius: 2px; }
 .r-leader-count { font-size: 10px; color: #5a596a; }
@@ -286,13 +327,13 @@ const RESULTS_CSS = `
 /* Simulator */
 .r-sim-wrap { background: #0d0d14; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; overflow: hidden; }
 .r-sim-header { padding: 20px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.r-sim-title { font-family: 'Manrope', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; margin: 0 0 2px; }
-.r-sim-sub { font-size: 11px; color: #7a7990; margin: 0; }
+.r-sim-title { font-family: 'TVP', sans-serif; font-size: 18px; font-weight: 800; color: #f0eff8; margin: 0 0 2px; }
+.r-sim-sub { font-size: 13px; color: #7a7990; margin: 0; }
 .r-sim-body { padding: 20px; }
 .r-mode-tabs { display: flex; gap: 2px; padding: 3px; background: rgba(255,255,255,0.05); border-radius: 10px; width: fit-content; margin-bottom: 16px; }
-.r-mode-tab { padding: 6px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; background: transparent; color: #7a7990; transition: all 0.18s; }
+.r-mode-tab { padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; background: transparent; color: #7a7990; transition: all 0.18s; }
 .r-mode-tab.active { background: #e8465a; color: #fff; }
-.r-sim-total { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 9px; padding: 8px 14px; margin-bottom: 14px; font-size: 12px; color: #7a7990; flex-wrap: wrap; }
+.r-sim-total { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 9px; padding: 8px 14px; margin-bottom: 14px; font-size: 13px; color: #7a7990; flex-wrap: wrap; }
 .r-sim-total strong { color: #e8465a; font-size: 15px; }
 .r-sim-party-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .r-sim-party-row { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 9px; padding: 8px 12px; transition: border-color 0.18s; }
@@ -309,7 +350,7 @@ const RESULTS_CSS = `
 .r-sim-row-bar { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; position: relative; }
 .r-sim-row-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
 .r-sim-row-majority { position: absolute; top: 0; height: 100%; width: 1px; background: rgba(245,158,11,0.6); }
-.r-sim-row-seats { font-family: 'Manrope', sans-serif; font-size: 16px; font-weight: 800; min-width: 28px; text-align: right; }
+.r-sim-row-seats { font-family: 'TVP', sans-serif; font-size: 16px; font-weight: 800; min-width: 28px; text-align: right; }
 .r-sim-row-pct { font-size: 10px; color: #5a596a; min-width: 34px; text-align: right; }
 .r-sim-add { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.12); border-radius: 10px; padding: 14px 16px; margin-top: 14px; }
 .r-sim-add-title { font-size: 11px; font-weight: 700; color: #5a596a; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
@@ -325,7 +366,7 @@ const RESULTS_CSS = `
 /* Infog modal */
 .r-infog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; }
 .r-infog-modal { background: #111118; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 28px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; }
-.r-infog-title { font-family: 'Manrope', sans-serif; font-size: 20px; font-weight: 800; color: #f0eff8; margin: 0 0 6px; }
+.r-infog-title { font-family: 'TVP', sans-serif; font-size: 20px; font-weight: 800; color: #f0eff8; margin: 0 0 6px; }
 .r-infog-sub { font-size: 13px; color: #7a7990; margin: 0 0 20px; }
 .r-infog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
 .r-infog-option { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 10px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.08); background: #18181f; cursor: pointer; transition: all 0.18s; text-align: center; }
@@ -524,22 +565,22 @@ async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, t
   context.fillStyle = "#e8465a";
   context.fillRect(0, 0, 1800, 14);
   context.fillStyle = "#f8fafc";
-  context.font = "900 56px Inter, Arial, sans-serif";
+  context.font = "900 56px Inter, TVP, sans-serif";
   context.fillText("BATALLA CULTURAL", 96, 125);
-  context.font = "800 32px Inter, Arial, sans-serif";
+  context.font = "800 32px Inter, TVP, sans-serif";
   context.fillStyle = "#e8465a";
   context.fillText(title.toUpperCase(), 96, 178);
-  context.font = "500 24px Inter, Arial, sans-serif";
+  context.font = "500 24px Inter, TVP, sans-serif";
   context.fillStyle = "#aeb8cc";
   context.fillText(`Generado el ${date}`, 96, 220);
 
   context.fillStyle = "rgba(255,255,255,0.07)";
   drawRounded(1190, 84, 510, 170, 28);
   context.fillStyle = "#aeb8cc";
-  context.font = "700 23px Inter, Arial, sans-serif";
+  context.font = "700 23px Inter, TVP, sans-serif";
   context.fillText("RESPUESTAS ANALIZADAS", 1230, 140);
   context.fillStyle = "#f8fafc";
-  context.font = "900 68px Inter, Arial, sans-serif";
+  context.font = "900 68px Inter, TVP, sans-serif";
   context.fillText(totalResponses.toLocaleString("es-ES"), 1230, 215);
 
   const columnWidth = 765;
@@ -554,24 +595,24 @@ async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, t
     context.fillStyle = row.color || "#e8465a";
     drawRounded(x + 26, y + 27, 12, 96, 6);
     context.fillStyle = "#f8fafc";
-    context.font = "800 31px Inter, Arial, sans-serif";
+    context.font = "800 31px Inter, TVP, sans-serif";
     context.fillText(row.nombre, x + 68, y + 62);
     context.fillStyle = "#b6c0d3";
-    context.font = "600 22px Inter, Arial, sans-serif";
+    context.font = "600 22px Inter, TVP, sans-serif";
     context.fillText(`${row.votos.toLocaleString("es-ES")} votos · ${Number(row.porcentaje || 0).toFixed(1)}%`, x + 68, y + 105);
     context.textAlign = "right";
     context.fillStyle = "#f8fafc";
-    context.font = "900 42px Inter, Arial, sans-serif";
+    context.font = "900 42px Inter, TVP, sans-serif";
     context.fillText(`${row.escanos || 0}`, x + columnWidth - 34, y + 79);
     context.fillStyle = "#aeb8cc";
-    context.font = "700 16px Inter, Arial, sans-serif";
+    context.font = "700 16px Inter, TVP, sans-serif";
     context.fillText("ESCAÑOS", x + columnWidth - 34, y + 108);
     context.textAlign = "left";
   });
   context.fillStyle = "rgba(255,255,255,0.08)";
   context.fillRect(96, 1016, 1608, 1);
   context.fillStyle = "#8d99ae";
-  context.font = "600 18px Inter, Arial, sans-serif";
+  context.font = "600 18px Inter, TVP, sans-serif";
   context.fillText("Resultados de participación anónima · Batalla Cultural", 96, 1065);
 
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((file) => file ? resolve(file) : reject(new Error("El navegador no pudo crear el PNG.")), "image/png"));
@@ -822,7 +863,7 @@ function GobiernoModal({
         </div>
       </article>`;
     }).join('');
-    preview.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview Gobierno</title></head><body style="margin:0;padding:20px;background:#0c0f1a;font-family:Inter,system-ui"><h1 style="color:#fff">${nombreGobierno}</h1><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${cards}</div><div style="margin-top:16px"><button onclick="window.print()" style="padding:10px 14px;border-radius:10px;border:0;background:#C41E3A;color:#fff">Capturar / Guardar (Imprimir)</button></div></body></html>`);
+    preview.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview Gobierno</title></head><body style="margin:0;padding:20px;background:#0c0f1a;font-family:TVP"><h1 style="color:#fff">${nombreGobierno}</h1><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${cards}</div><div style="margin-top:16px"><button onclick="window.print()" style="padding:10px 14px;border-radius:10px;border:0;background:#C41E3A;color:#fff">Capturar / Guardar (Imprimir)</button></div></body></html>`);
     preview.document.close();
   };
 
@@ -872,9 +913,9 @@ function GobiernoModal({
 
       // Título gobierno (más arriba)
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 30px 'DM Sans', sans-serif";
+      ctx.font = "bold 30px 'TVP', sans-serif";
       ctx.fillText(nombreGobierno, 400, 44);
-      ctx.font = "16px 'DM Sans', sans-serif";
+      ctx.font = "16px 'TVP', sans-serif";
       ctx.fillStyle = "rgba(255,255,255,0.5)";
       ctx.fillText(new Date().toLocaleDateString("es-ES", { year: "numeric", month: "long" }), 400, 68);
 
@@ -890,9 +931,9 @@ function GobiernoModal({
         ctx.roundRect(40, 112, 300, 64, 10);
         ctx.fill();
         ctx.fillStyle = "#fff";
-        ctx.font = "bold 18px 'DM Sans', sans-serif";
+        ctx.font = "bold 18px 'TVP', sans-serif";
         ctx.fillText(pm.name || selectedParty, 60, 140);
-        ctx.font = "13px 'DM Sans', sans-serif";
+        ctx.font = "13px 'TVP', sans-serif";
         ctx.fillStyle = "rgba(255,255,255,0.8)";
         ctx.fillText(`Presidente: ${selectedLeader || "—"}`, 60, 162);
       }
@@ -936,14 +977,14 @@ function GobiernoModal({
           ctx.restore();
         } else {
           ctx.fillStyle = "#fff";
-          ctx.font = "bold 14px 'DM Sans', sans-serif";
+          ctx.font = "bold 14px 'TVP', sans-serif";
           ctx.fillText((titular || "I").charAt(0).toUpperCase(), avatarX + 12, avatarY + 24);
         }
 
         // texts
-        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 13px 'DM Sans', sans-serif";
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 13px 'TVP', sans-serif";
         ctx.fillText(min.titulo || "Ministerio", x + 58, y + 30);
-        ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "12px 'DM Sans', sans-serif";
+        ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "12px 'TVP', sans-serif";
         ctx.fillText(titular.length > 32 ? `${titular.slice(0, 32)}…` : titular, x + 14, y + 68);
 
         // party tag + logo
@@ -1265,7 +1306,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Líderes por Partido</h2>
+        <h2 style={{ fontFamily: "'TVP'", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Líderes por Partido</h2>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <div className="r-mode-tabs" style={{ marginBottom: 0 }}>
             <button className={`r-mode-tab${subTab === "candidatos" ? " active" : ""}`} onClick={() => setSubTab("candidatos")}>Candidatos</button>
@@ -1401,7 +1442,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                   <PartyLogoImg src={logo} name={name} color={color} size={34} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 800, color }}>{name}</div>
+                    <div style={{ fontFamily: "'TVP'", fontSize: 16, fontWeight: 800, color }}>{name}</div>
                     <div style={{ fontSize: 11, color: "#7a7990" }}>{partyLeaders.length} candidato{partyLeaders.length !== 1 ? "s" : ""} · {tot > 0 ? `${tot} votos` : "Sin votos aún"}</div>
                   </div>
                 </div>
@@ -1596,10 +1637,10 @@ function CandidateVoteHistoryModal({ target, onClose }: { target: CandidateVoteH
       context.fillStyle = target.color;
       context.fillRect(0, 0, 10 * scale, canvas.height);
       context.fillStyle = "#f8fafc";
-      context.font = `800 ${22 * scale}px Arial, sans-serif`;
+      context.font = `800 ${22 * scale}px TVP, sans-serif`;
       context.fillText(`Evolución de votos · ${target.leader_name}`, 28 * scale, 38 * scale);
       context.fillStyle = "#cbd5e1";
-      context.font = `600 ${12 * scale}px Arial, sans-serif`;
+      context.font = `600 ${12 * scale}px TVP, sans-serif`;
       context.fillText(`${target.display_name} · ${target.votos.toLocaleString("es-ES")} votos actuales · Generado el ${new Date().toLocaleDateString("es-ES")}`, 28 * scale, 64 * scale);
       context.drawImage(chartCanvas, 0, headerHeight * 2);
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error("No se pudo convertir el gráfico a PNG.")), "image/png"));
@@ -2156,7 +2197,7 @@ async function generarInfografiaPNG(
 
   // Título principal
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 42px Georgia, serif";
+  ctx.font = "bold 42px TVP, sans-serif";
   const title = type === "general" ? "Resultados de la Encuesta" : type === "party" ? `Análisis: ${partyName}` : "Top 5 de Líderes";
   ctx.fillText(title, 40, 100);
   if (type === "party" && partyName) {
@@ -2177,7 +2218,7 @@ async function generarInfografiaPNG(
     ctx.strokeStyle = sb.color + "40"; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = sb.color; ctx.font = "bold 11px monospace";
     ctx.fillText(sb.label, x + 16, 148);
-    ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px Georgia, serif";
+    ctx.fillStyle = "#ffffff"; ctx.font = "bold 28px TVP, sans-serif";
     ctx.fillText(sb.value, x + 16, 182);
   });
 
@@ -2204,7 +2245,7 @@ async function generarInfografiaPNG(
       ctx.fillStyle = barGrad;
       ctx.beginPath(); ctx.roundRect(60, y + 10, barW, 22, 4); ctx.fill();
       // Party name
-      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 12px 'DM Sans', sans-serif";
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 12px 'TVP', sans-serif";
       ctx.fillText(party.nombre.slice(0, 18), 60, y + 8);
       // Percentage
       ctx.fillStyle = color; ctx.font = "bold 11px monospace";
@@ -2220,8 +2261,8 @@ async function generarInfografiaPNG(
     ctx.fillStyle = "#C41E3A"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
     topLeaderRows.forEach((row, i) => {
       const y = 290 + i * 34;
-      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
-      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.lider, 870, y);
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'TVP', sans-serif"; ctx.fillText(row.lider, 870, y);
       ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(`${row.porcentaje.toFixed(1)}%`, 1110, y);
     });
     ctx.fillStyle = "rgba(255,255,255,0.04)";
@@ -2229,8 +2270,8 @@ async function generarInfografiaPNG(
     ctx.fillStyle = "#3b82f6"; ctx.font = "bold 12px monospace"; ctx.fillText("REGIÓN TOP POR PARTIDO", 800, 526);
     topRegionRows.forEach((row, i) => {
       const y = 560 + i * 34;
-      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif"; ctx.fillText(row.partido, 800, y);
-      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(row.region, 870, y);
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif"; ctx.fillText(row.partido, 800, y);
+      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'TVP', sans-serif"; ctx.fillText(row.region, 870, y);
       ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(String(row.votos), 1110, y);
     });
   } else if (type === "leaders") {
@@ -2244,15 +2285,15 @@ async function generarInfografiaPNG(
       ctx.fillStyle = "rgba(255,255,255,0.05)"; ctx.beginPath(); ctx.roundRect(70, y, 1060, 56, 10); ctx.fill();
       ctx.fillStyle = color; ctx.beginPath(); ctx.arc(102, y + 28, 20, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#08111a"; ctx.font = "bold 15px monospace"; ctx.textAlign = "center"; ctx.fillText(String(index + 1), 102, y + 34); ctx.textAlign = "left";
-      ctx.fillStyle = "#f8fafc"; ctx.font = "bold 17px 'DM Sans', sans-serif"; ctx.fillText(leader.name, 140, y + 25);
-      ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.font = "11px 'DM Sans', sans-serif"; ctx.fillText(leader.party || "Sin adscripción", 140, y + 43);
+      ctx.fillStyle = "#f8fafc"; ctx.font = "bold 17px 'TVP', sans-serif"; ctx.fillText(leader.name, 140, y + 25);
+      ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.font = "11px 'TVP', sans-serif"; ctx.fillText(leader.party || "Sin adscripción", 140, y + 43);
       ctx.fillStyle = "rgba(255,255,255,.09)"; ctx.beginPath(); ctx.roundRect(410, y + 20, 460, 16, 8); ctx.fill();
       ctx.fillStyle = color; ctx.beginPath(); ctx.roundRect(410, y + 20, Math.max(4, Math.min(460, ((leader.average || 0) / 10) * 460)), 16, 8); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.font = "bold 22px Georgia, serif"; ctx.fillText(`${(leader.average || 0).toFixed(2)}/10`, 910, y + 33);
+      ctx.fillStyle = "#fff"; ctx.font = "bold 22px TVP, sans-serif"; ctx.fillText(`${(leader.average || 0).toFixed(2)}/10`, 910, y + 33);
       ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.font = "11px monospace"; ctx.fillText(`${leader.votes.toLocaleString("es-ES")} valoraciones`, 910, y + 49);
     });
     if (!ranking.length) {
-      ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.font = "16px 'DM Sans', sans-serif"; ctx.fillText("Aún no hay valoraciones suficientes para formar el Top 5.", 70, 330);
+      ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.font = "16px 'TVP', sans-serif"; ctx.fillText("Aún no hay valoraciones suficientes para formar el Top 5.", 70, 330);
     }
   } else if (type === "party" && partyName) {
     const party = stats.find(s => s.nombre === partyName);
@@ -2262,12 +2303,12 @@ async function generarInfografiaPNG(
       ctx.fillStyle = "rgba(255,255,255,0.04)";
       ctx.beginPath(); ctx.roundRect(40, 230, 350, 520, 12); ctx.fill();
       ctx.fillStyle = partyColor;
-      ctx.font = "bold 48px Georgia, serif"; ctx.fillText(party.porcentaje.toFixed(1) + "%", 60, 310);
-      ctx.fillStyle = "#fff"; ctx.font = "14px 'DM Sans', sans-serif";
+      ctx.font = "bold 48px TVP, sans-serif"; ctx.fillText(party.porcentaje.toFixed(1) + "%", 60, 310);
+      ctx.fillStyle = "#fff"; ctx.font = "14px 'TVP', sans-serif";
       ctx.fillText(`${party.votos.toLocaleString("es-ES")} votos`, 60, 345);
-      ctx.fillStyle = partyColor; ctx.font = "bold 56px Georgia, serif";
+      ctx.fillStyle = partyColor; ctx.font = "bold 56px TVP, sans-serif";
       ctx.fillText(String(party.escanos), 60, 430);
-      ctx.fillStyle = "#7a7990"; ctx.font = "14px 'DM Sans', sans-serif";
+      ctx.fillStyle = "#7a7990"; ctx.font = "14px 'TVP', sans-serif";
       ctx.fillText("escaños", 60, 460);
       
       const top5 = (top5LideresPorPartido?.[partyName] || []).slice(0, 5);
@@ -2292,9 +2333,9 @@ async function generarInfografiaPNG(
         } else {
           ctx.fillStyle = "rgba(255,255,255,0.15)";
           ctx.beginPath(); ctx.arc(442, y - 5, 12, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = "#fff"; ctx.font = "bold 10px 'DM Sans', sans-serif"; ctx.fillText(initial, 438, y - 1);
+          ctx.fillStyle = "#fff"; ctx.font = "bold 10px 'TVP', sans-serif"; ctx.fillText(initial, 438, y - 1);
         }
-        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif";
         ctx.fillText(`${i + 1}. ${row?.nombre || "Sin dato"}`, 460, y);
         ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = "10px monospace";
         ctx.fillText(`${row ? row.porcentaje.toFixed(1) : "0.0"}%`, 685, y);
@@ -2312,9 +2353,9 @@ async function generarInfografiaPNG(
       ];
       preguntasRows.forEach((p, i) => {
         const y = 310 + i * 72;
-        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'DM Sans', sans-serif";
+        ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif";
         ctx.fillText(p.q, 800, y);
-        ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "10px 'DM Sans', sans-serif";
+        ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.font = "10px 'TVP', sans-serif";
         ctx.fillText(String(p.a).slice(0, 28), 800, y + 24);
       });
     }
@@ -2337,7 +2378,7 @@ async function generarInfografiaPNG(
       angle += span;
     });
     ctx.fillStyle = "#0a0a1a"; ctx.beginPath(); ctx.arc(hx, hy, hr * 0.55, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#fff"; ctx.font = "bold 26px Georgia, serif"; ctx.textAlign = "center";
+    ctx.fillStyle = "#fff"; ctx.font = "bold 26px TVP, sans-serif"; ctx.textAlign = "center";
     ctx.fillText("350", hx, hy - 10);
     ctx.fillStyle = "#7a7990"; ctx.font = "12px monospace";
     ctx.fillText("ESCAÑOS", hx, hy + 14);
@@ -2420,6 +2461,8 @@ export default function Results() {
   const [liderPorPartido, setLiderPorPartido] = useState<Record<string, string>>({});
   const [porcentajeLiderPorPartido, setPorcentajeLiderPorPartido] = useState<Record<string, number>>({});
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [resultFilters, setResultFilters] = useState<ResultFilterState>({ ccaa: "all", provincia: "all", edad: "all" });
+  const [filterRows, setFilterRows] = useState<ResultFilterRow[]>([]);
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
 
@@ -2535,8 +2578,19 @@ export default function Results() {
         try { const { data } = await supabase.from("total_respuestas_view").select("total_respuestas"); setTotalResponses(data?.[0]?.total_respuestas || 0); }
         catch { const { count } = await supabase.from("respuestas").select("*", { count: "exact", head: true }); setTotalResponses(count || 0); }
 
-        try {
-          const { data: gd } = await supabase.from("votos_generales_totales").select("*");
+                try {
+          const { data: filterData, error: filterError } = await supabase
+            .from("respuestas")
+            .select("voto_generales, voto_asociacion_juvenil, provincia, ccaa, edad")
+            .limit(10_000);
+          if (!filterError) setFilterRows((filterData || []) as ResultFilterRow[]);
+        } catch (e) {
+          console.warn("No se pudieron cargar los filtros avanzados:", e);
+          setFilterRows([]);
+        }
+
+        try { const { data: gd } = await supabase.from("votos_generales_totales").select("*");
+
           if (gd?.length) {
             const gv: Record<string, number> = {};
             Object.keys(generalPartyMap).forEach(k => { gv[k] = 0; });
@@ -2763,6 +2817,82 @@ export default function Results() {
 
   const stats = activeTab === "general" ? generalStats : activeTab === "youth" ? youthStats : [];
   const totalEscanos = activeTab === "general" ? 350 : activeTab === "youth" ? 100 : 0;
+  const filterOptions = useMemo(() => ({
+    ccaas: Array.from(new Set(filterRows.map(row => String(row.ccaa || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, "es")),
+    provincias: Array.from(new Set(filterRows.map(row => String(row.provincia || "").trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, "es")),
+  }), [filterRows]);
+  const filtersAreActive = resultFilters.ccaa !== "all" || resultFilters.provincia !== "all" || resultFilters.edad !== "all";
+  const filteredRows = useMemo(() => {
+    const normalized = (value: unknown) => String(value ?? "").trim().toLocaleLowerCase("es-ES");
+    return filterRows.filter(row => {
+      const matchesCcaa = resultFilters.ccaa === "all" || normalized(row.ccaa) === normalized(resultFilters.ccaa);
+      const matchesProvincia = resultFilters.provincia === "all" || normalized(row.provincia) === normalized(resultFilters.provincia);
+      const age = Number(row.edad);
+      const matchesEdad = resultFilters.edad === "all"
+        || (Number.isFinite(age) && resultFilters.edad === "18-30" && age >= 18 && age <= 30)
+        || (Number.isFinite(age) && resultFilters.edad === "31-45" && age >= 31 && age <= 45)
+        || (Number.isFinite(age) && resultFilters.edad === "46-60" && age >= 46 && age <= 60)
+        || (Number.isFinite(age) && resultFilters.edad === "60+" && age > 60);
+      return matchesCcaa && matchesProvincia && matchesEdad;
+    });
+  }, [filterRows, resultFilters]);
+  const filteredStats = useMemo(() => {
+    if (!filtersAreActive) return stats;
+    const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
+    const voteField = activeTab === "general" ? "voto_generales" : "voto_asociacion_juvenil";
+    const votes: Record<string, number> = {};
+    Object.keys(partyMap).forEach(key => { votes[key] = 0; });
+    filteredRows.forEach(row => {
+      const rawVote = String(row[voteField] || "").trim();
+      if (!rawVote || rawVote.toLocaleLowerCase("es-ES") === "otro") return;
+      const partyKey = resolvePartyKey(rawVote, partyMap);
+      if (partyMap[partyKey]) votes[partyKey] = (votes[partyKey] || 0) + 1;
+    });
+    const seats = activeTab === "general" ? calcularEscanosGenerales(votes) : calcularEscanosJuveniles(votes);
+    const names: Record<string, string> = {};
+    const logos: Record<string, string> = {};
+    Object.entries(partyMap).forEach(([key, party]) => { names[key] = party.name; logos[key] = party.logo; });
+    return obtenerEstadisticas(votes, seats, names, logos).map(party => ({
+      ...party,
+      color: partyMap[resolvePartyKey(party.id, partyMap)]?.color,
+    }));
+  }, [activeTab, filtersAreActive, filteredRows, generalPartyMap, stats, youthPartyMap]);
+  const displayedStats = filtersAreActive ? filteredStats : stats;
+  const displayedResponseCount = filtersAreActive ? filteredRows.length : totalResponses;
+  const exportRows = useMemo<ResultsExportRow[]>(() => {
+    const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
+    return displayedStats.map(party => {
+      const partyKey = resolvePartyKey(party.id, partyMap);
+      return {
+        partido: party.nombre,
+        votos: party.votos,
+        porcentaje: party.porcentaje,
+        escanos: party.escanos,
+        barometro: activeTab === "general" ? (barometroBC[partyKey] ?? barometroBC[party.id] ?? 0) : 0,
+        media: activeTab === "general" ? (mediaEncuestas[partyKey] ?? mediaEncuestas[party.id] ?? 0) : 0,
+      };
+    });
+  }, [activeTab, barometroBC, displayedStats, generalPartyMap, mediaEncuestas, youthPartyMap]);
+  const exportContext = useMemo<ResultsExportContext>(() => ({
+    titulo: activeTab === "general" ? "Resultados Generales — Batalla Cultural" : "Asociaciones Juveniles — Batalla Cultural",
+    respuestas: displayedResponseCount,
+    ccaa: resultFilters.ccaa === "all" ? "Todas" : resultFilters.ccaa,
+    provincia: resultFilters.provincia === "all" ? "Todas" : resultFilters.provincia,
+    edad: ({ all: "Todas", "18-30": "18–30", "31-45": "31–45", "46-60": "46–60", "60+": "Más de 60" } as Record<ResultAgeFilter, string>)[resultFilters.edad],
+  }), [activeTab, displayedResponseCount, resultFilters]);
+  const downloadExportFile = useCallback((content: string, mimeType: string, extension: "csv" | "xls") => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `resultados-batalla-cultural-${new Date().toISOString().slice(0, 10)}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+  }, []);
+  const handleExportCsv = () => downloadExportFile(buildResultsCsv(exportRows, exportContext), "text/csv;charset=utf-8", "csv");
+  const handleExportExcel = () => downloadExportFile(buildResultsExcelHtml(exportRows, exportContext), "application/vnd.ms-excel;charset=utf-8", "xls");
   const partyColorMap = useMemo(() => {
     const m: Record<string, string> = {};
     [...Object.values(generalPartyMap), ...Object.values(youthPartyMap)].forEach((p: any) => {
@@ -2894,7 +3024,7 @@ export default function Results() {
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";
-  const showPartyList = stats.length > 0 && showSortBar;
+  const showPartyList = displayedStats.length > 0 && showSortBar;
 
   return (
     <>
@@ -2906,7 +3036,7 @@ export default function Results() {
             <img src="/favicon.png" alt="BC" />
             <div>
               <div className="r-brand-title">Resultados en Vivo</div>
-              <div className="r-brand-sub">{totalResponses.toLocaleString("es-ES")} respuestas · Batalla Cultural</div>
+              <div className="r-brand-sub">{displayedResponseCount.toLocaleString("es-ES")} respuestas{filtersAreActive ? " filtradas" : ""} · Batalla Cultural</div>
             </div>
           </div>
           <div className="r-header-actions">
@@ -2954,7 +3084,7 @@ export default function Results() {
               <div className="r-quickstats" style={{ animation: 'slideInUp 0.6s ease-out' }}>
                 <div className="r-stat-card">
                   <div className="r-stat-label">Respuestas</div>
-                  <div className="r-stat-value accent">{totalResponses.toLocaleString("es-ES")}</div>
+                  <div className="r-stat-value accent">{displayedResponseCount.toLocaleString("es-ES")}</div>
                 </div>
                 {edadPromedio !== null && (
                   <div className="r-stat-card">
@@ -2988,6 +3118,76 @@ export default function Results() {
                   <div className="r-stat-suffix">/ 10</div>
                 </div>
               </div>
+
+              {showSortBar && (
+                <section className="r-filter-panel" aria-label="Filtros avanzados de resultados">
+                  <div className="r-filter-head">
+                    <div>
+                      <div className="r-filter-title"><Filter size={14} /> Filtros avanzados</div>
+                      <p className="r-filter-description">Recalcula votos y escaños con las respuestas que coinciden con tu selección.</p>
+                    </div>
+                    {filtersAreActive && (
+                      <button
+                        type="button"
+                        className="r-filter-clear"
+                        onClick={() => setResultFilters({ ccaa: "all", provincia: "all", edad: "all" })}
+                      >
+                        Limpiar filtros
+                      </button>
+                    )}
+                  </div>
+                  <div className="r-filter-grid">
+                    <label className="r-filter-field">
+                      <span className="r-filter-label">Comunidad autónoma</span>
+                      <select
+                        className="r-filter-select"
+                        value={resultFilters.ccaa}
+                        onChange={(event) => setResultFilters(previous => ({ ...previous, ccaa: event.target.value, provincia: "all" }))}
+                      >
+                        <option value="all">Todas las comunidades</option>
+                        {filterOptions.ccaas.map(option => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <label className="r-filter-field">
+                      <span className="r-filter-label">Provincia</span>
+                      <select
+                        className="r-filter-select"
+                        value={resultFilters.provincia}
+                        onChange={(event) => setResultFilters(previous => ({ ...previous, provincia: event.target.value }))}
+                      >
+                        <option value="all">Todas las provincias</option>
+                        {filterOptions.provincias.map(option => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <label className="r-filter-field">
+                      <span className="r-filter-label">Rango de edad</span>
+                      <select
+                        className="r-filter-select"
+                        value={resultFilters.edad}
+                        onChange={(event) => setResultFilters(previous => ({ ...previous, edad: event.target.value as ResultAgeFilter }))}
+                      >
+                        <option value="all">Todas las edades</option>
+                        <option value="18-30">18–30 años</option>
+                        <option value="31-45">31–45 años</option>
+                        <option value="46-60">46–60 años</option>
+                        <option value="60+">Más de 60 años</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div className="r-filter-summary" aria-live="polite">
+                    <span>Muestra:</span> <strong>{displayedResponseCount.toLocaleString("es-ES")} respuestas</strong>
+                    {filtersAreActive && <span>· Los escaños se recalculan con Ley d'Hondt sobre esta muestra.</span>}
+                  </div>
+                  <div className="r-filter-actions">
+                    <button type="button" className="r-export-btn" onClick={handleExportCsv} title="Descargar los resultados visibles en CSV">
+                      <Download size={13} /> CSV detallado
+                    </button>
+                    <button type="button" className="r-export-btn r-export-btn-excel" onClick={handleExportExcel} title="Descargar los resultados visibles en formato Excel">
+                      <FileText size={13} /> Excel detallado
+                    </button>
+                  </div>
+                </section>
+              )}
 
               {showSortBar && (
                 <div className="r-sort-bar">
@@ -3027,13 +3227,13 @@ export default function Results() {
                 </div>
               )}
 
-              {showPartyList && activeTab === "general" && (
+              {showPartyList && activeTab === "general" && !filtersAreActive && (
                 <Top5LideresWidget />
               )}
 
               {showPartyList && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {(sortBy === "votos" ? [...stats].sort((a, b) => b.votos - a.votos) : sortBy === "escanos" ? [...stats].sort((a, b) => b.escanos - a.escanos) : sortBy === "barometro" ? [...stats].sort((a, b) => (barometroBC[b.id] ?? 0) - (barometroBC[a.id] ?? 0)) : [...stats].sort((a, b) => (mediaEncuestas[b.id] ?? 0) - (mediaEncuestas[a.id] ?? 0))).map(party => {
+                  {(sortBy === "votos" ? [...displayedStats].sort((a, b) => b.votos - a.votos) : sortBy === "escanos" ? [...displayedStats].sort((a, b) => b.escanos - a.escanos) : sortBy === "barometro" ? [...displayedStats].sort((a, b) => (barometroBC[b.id] ?? 0) - (barometroBC[a.id] ?? 0)) : [...displayedStats].sort((a, b) => (mediaEncuestas[b.id] ?? 0) - (mediaEncuestas[a.id] ?? 0))).map(party => {
                     const canonicalParty = resolveCanonicalParty(party.id, canonicalPartyIndex) || resolveCanonicalParty(party.nombre, canonicalPartyIndex);
                     const displayName = canonicalParty?.display_name || party.nombre;
                     const logoUrl = canonicalParty?.logo_url || "";
@@ -3151,10 +3351,24 @@ export default function Results() {
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Bar dataKey="escanos_2023" fill="#60a5fa" name="2023" />
                       <Bar dataKey="escanos_actuales" fill="#e8465a" name="Actual BC" />
-                    </BarChart>
+                                          </BarChart>
 	                    </ResponsiveContainer>
-	                </div>
-	                </>}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginTop: 14 }}>
+                      {comparativa2023VsActual.map((row) => {
+                        const delta = row.escanos_actuales - row.escanos_2023;
+                        return (
+                          <div key={row.partido} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 4, padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,.035)", border: "1px solid rgba(255,255,255,.07)" }}>
+                            <span style={{ color: "#dbeafe", fontSize: 12, fontWeight: 700 }}>{row.partido}</span>
+                            <strong style={{ color: delta >= 0 ? "#86efac" : "#fda4af", fontSize: 13 }}>{delta >= 0 ? "+" : ""}{delta}</strong>
+                            <span style={{ color: "#7a7990", fontSize: 10 }}>2023: {row.escanos_2023} escaños</span>
+                            <span style={{ color: "#a5b4fc", fontSize: 10, textAlign: "right" }}>Actual: {row.escanos_actuales}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                </div>
+                </>}
+
 	                </div>
 	              )}
               {activeTab === "noche-electoral" && (
@@ -3211,7 +3425,7 @@ export default function Results() {
               {activeTab === "leaders" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-                    <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Valoración de Líderes</h2>
+                    <h2 style={{ fontFamily: "'TVP'", fontSize: 20, fontWeight: 800, color: "#f0eff8", margin: 0 }}>Valoración de Líderes</h2>
                     <div className="r-mode-tabs" style={{ marginBottom: 0 }}>
                       <button className={`r-mode-tab${leadersSubTab === "individual" ? " active" : ""}`} onClick={() => setLeadersSubTab("individual")}>Individual</button>
                       <button className={`r-mode-tab${leadersSubTab === "porpartido" ? " active" : ""}`} onClick={() => setLeadersSubTab("porpartido")}>Por Partido</button>

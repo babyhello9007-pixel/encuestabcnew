@@ -101,7 +101,7 @@ export default function CooldownModal({ isOpen, remainingMinutes, onClose }: Coo
         }
 
         .cooldown-card {
-          font-family: 'Sora', sans-serif;
+          font-family: 'TVP', sans-serif;
           background: linear-gradient(160deg, #0f1117 0%, #161b27 50%, #0f1117 100%);
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 24px;
@@ -126,7 +126,7 @@ export default function CooldownModal({ isOpen, remainingMinutes, onClose }: Coo
         }
 
         .mono {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: 'TVP', sans-serif;
         }
 
         .clock-pulse {

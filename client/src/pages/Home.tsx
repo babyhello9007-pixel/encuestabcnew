@@ -154,7 +154,7 @@ export default function Home() {
         }
 
         .font-playfair {
-          font-family: 'Playfair Display', Georgia, serif;
+          font-family: 'TVP', sans-serif;
         }
       `}</style>
 

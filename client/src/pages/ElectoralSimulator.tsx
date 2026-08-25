@@ -188,7 +188,7 @@ export default function ElectoralSimulator({ generalStats, generalPartyMap, voto
         }}>
           <div>
             <h2 style={{
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "TVP",
               fontSize: 20,
               fontWeight: 800,
               color: "#f0eff8",
@@ -763,7 +763,7 @@ export default function ElectoralSimulator({ generalStats, generalPartyMap, voto
                   }} />
                 </div>
                 <span style={{
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "TVP",
                   fontSize: 18,
                   fontWeight: 800,
                   minWidth: 32,

@@ -157,7 +157,7 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
     // Contenido Popup HTML estilizado en Modo Noche con efecto Frosted Glass
     const popupContentHtml = `
-      <div style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); font-family: sans-serif; color: #e2e8f0; font-size: 13px;">
+      <div style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); font-family: TVP, sans-serif; color: #e2e8f0; font-size: 13px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
           <h3 style="font-size: 12px; font-weight: 700; color: #f1f5f9; margin: 0; text-transform: uppercase;">${spanishProvinceName}</h3>
           <span style="font-size: 8px; font-weight: 600; color: #10b981; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 5px; border-radius: 10px;">

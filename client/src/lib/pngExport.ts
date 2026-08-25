@@ -25,7 +25,7 @@ export async function generateInfographicPNG(data: InfographicData): Promise<Blo
   container.style.height = '1080px';
   container.style.backgroundColor = '#1a1a1a';
   container.style.padding = '40px';
-  container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+  container.style.fontFamily = 'TVP, sans-serif';
   container.style.color = '#ffffff';
   container.style.display = 'flex';
   container.style.flexDirection = 'column';

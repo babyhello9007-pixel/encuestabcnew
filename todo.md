@@ -801,8 +801,8 @@
 - [x] Hacer que Results.tsx entregue un único índice canónico de party_configuration y party_leaders a Provincia, CCAA y Preguntas Varias, sin rutas visuales heredadas
 - [x] Verificar visualmente en las tres secciones los alias UPN, Se Acabó La Fiesta, Aliança Catalana y los colores #00000 saneados
 - [x] Corregir el partyIndex indefinido de SpainMapRealistic y reproducir el mapa territorial sin excepción
-- [ ] En móvil, colocar Siguiente antes de Anterior y reducir visualmente el botón Anterior de NanoEncuesta
-- [ ] Desplazar NanoEncuesta al botón Siguiente al seleccionar una opción de partidos o asociaciones juveniles
+- [x] En móvil, colocar Siguiente antes de Anterior y reducir visualmente el botón Anterior de NanoEncuesta
+- [x] Desplazar NanoEncuesta al botón Siguiente al seleccionar una opción de partidos o asociaciones juveniles
 - [x] Prioridad absoluta: no cerrar hasta que Results.tsx inyecte party_configuration y party_leaders canónicos en Provincia, CCAA y Preguntas Varias y se reproduzca sin fallos
 - [x] Localizar y eliminar la ruta exacta que aún muestra logos antiguos en Results.tsx, comparando cada src visible con party_configuration.logo_url
 - [x] Corregir dependencia e import de qrcode en Bio.tsx y verificar build
@@ -811,10 +811,10 @@
 - [x] Unificar el estilo glassmórfico, liquid glass, neumórfico y claymórfico en Home, Bio, Results y NanoEncuesta
 - [x] Validar la nueva estética en desktop y móvil sin perder contraste ni accesibilidad
 - [x] Aplicar los cambios visuales sin factorizar, eliminar ni modificar lógica, rutas, consultas o funcionalidades existentes
-- [ ] Añadir transiciones suaves en tarjetas y botones para reforzar el glassmorfismo
-- [ ] Añadir compartir de resultados y Bio con feedback de confirmación
-- [ ] Añadir tooltips y mensajes de feedback contextual en NanoEncuesta
-- [ ] Enfocar automáticamente la opción seleccionada al avanzar entre partidos y asociaciones
+- [x] Añadir transiciones suaves en tarjetas y botones para reforzar el glassmorfismo
+- [x] Añadir compartir de resultados y Bio con feedback de confirmación
+- [x] Añadir tooltips y mensajes de feedback contextual en NanoEncuesta
+- [x] Enfocar automáticamente la opción seleccionada al avanzar entre partidos y asociaciones
 
 ## Mejoras UX interactivas - SESIÓN ACTUAL
 - [x] Añadir transiciones suaves de glassmorfismo a tarjetas y botones de NanoEncuesta y Results
@@ -823,3 +823,12 @@
 - [x] Verificar compartir del enlace de Bio/Linktree con feedback y fallback existente
 - [x] Enfocar y desplazar automáticamente la opción de partido seleccionada al avanzar entre bloques consecutivos
 - [x] Ejecutar pruebas unitarias, build y validación responsive final
+
+## Backlog priorizado y tipografía global - SESIÓN ACTUAL
+- [x] Integrar TVP.ttf como fuente única en index.html e index.css
+- [x] Aumentar de forma coherente la escala tipográfica global y responsive
+- [x] Añadir filtros avanzados en Results por CCAA, provincia y rango de edad
+- [x] Completar exportación detallada de Results en CSV y Excel
+- [x] Completar comparativa histórica con datos reales y estado vacío
+- [x] Revisar y ampliar dashboard administrativo con estadísticas de participación
+- [x] Añadir pruebas unitarias y validación responsive del alcance priorizado

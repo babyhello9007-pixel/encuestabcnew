@@ -124,7 +124,7 @@ Importass\t2025-01-15\tVOX\t2000\t10.2\t35`;
       margin: "0 auto",
     }}>
       <h1 style={{
-        fontFamily: "'Playfair Display', serif",
+        fontFamily: "TVP",
         fontSize: 28,
         fontWeight: 800,
         color: "#a855f7",

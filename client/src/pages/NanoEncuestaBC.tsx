@@ -546,7 +546,7 @@ export default function NanoEncuestaBC() {
           display: flex;
           flex-direction: column;
           background: var(--nc-bg);
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'TVP', sans-serif;
           color: var(--nc-text);
         }
 
@@ -617,7 +617,7 @@ export default function NanoEncuestaBC() {
         .nc-step-pct { font-size: 13px; color: var(--nc-muted); font-weight: 500; }
 
         .nc-step-title {
-          font-family: 'Playfair Display', Georgia, serif;
+          font-family: 'TVP', sans-serif;
           font-size: clamp(24px, 4vw, 34px);
           font-weight: 800;
           line-height: 1.15;
@@ -804,7 +804,7 @@ export default function NanoEncuestaBC() {
         }
         .nc-slider-label { font-size: 12px; color: var(--nc-muted); }
         .nc-slider-value {
-          font-family: 'Playfair Display', serif;
+          font-family: 'TVP', sans-serif;
           font-size: 28px; font-weight: 800;
           color: var(--nc-accent);
         }
@@ -971,7 +971,7 @@ export default function NanoEncuestaBC() {
         /* Cooldown */
         .nc-cooldown-screen, .nc-thankyou-screen {
           min-height: 100vh; display: flex; align-items: center; justify-content: center;
-          background: var(--nc-bg); font-family: 'DM Sans', sans-serif; padding: 24px;
+          background: var(--nc-bg); font-family: 'TVP', sans-serif; padding: 24px;
         }
         .nc-cooldown-card, .nc-thankyou-card {
           background: var(--nc-surface);
@@ -989,7 +989,7 @@ export default function NanoEncuestaBC() {
           color: var(--nc-accent); margin: 0 auto 20px;
         }
         .nc-cooldown-title {
-          font-family: 'Playfair Display', serif;
+          font-family: 'TVP', sans-serif;
           font-size: 28px; font-weight: 800;
           color: var(--nc-text); margin: 0 0 8px;
         }
@@ -1001,7 +1001,7 @@ export default function NanoEncuestaBC() {
         .nc-timer-block { text-align: center; }
         .nc-timer-num {
           display: block;
-          font-family: 'Playfair Display', serif;
+          font-family: 'TVP', sans-serif;
           font-size: 42px; font-weight: 800;
           color: var(--nc-accent); line-height: 1;
         }
@@ -1014,7 +1014,7 @@ export default function NanoEncuestaBC() {
           display: flex; align-items: center; justify-content: center;
           color: var(--nc-green); margin: 0 auto 20px;
         }
-        .nc-thankyou-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 800; color: var(--nc-text); margin: 0 0 8px; }
+        .nc-thankyou-title { font-family: 'TVP', sans-serif; font-size: 32px; font-weight: 800; color: var(--nc-text); margin: 0 0 8px; }
         .nc-thankyou-sub { font-size: 15px; color: var(--nc-muted); margin: 0 0 32px; line-height: 1.7; }
         .nc-thankyou-btns { display: flex; flex-direction: column; gap: 10px; }
 

@@ -106,7 +106,7 @@ export function PrimariasResultsSection() {
       {primarias.map((primaria) => (
         <div key={primaria.primaria_nombre} className="r-section">
           <div style={{ marginBottom: "20px" }}>
-            <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 700, color: "#f0eff8", margin: "0 0 10px 0" }}>
+            <h3 style={{ fontFamily: "TVP", fontSize: 18, fontWeight: 700, color: "#f0eff8", margin: "0 0 10px 0" }}>
               {primaria.primaria_nombre}
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
@@ -204,7 +204,7 @@ export function PrimariasResultsSection() {
                 )}
                 <div>
                   <h4 style={{
-                    fontFamily: "'Manrope', sans-serif",
+                    fontFamily: "TVP",
                     fontSize: "14px",
                     fontWeight: "700",
                     color: "#f0eff8",
