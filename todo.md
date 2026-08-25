@@ -421,11 +421,11 @@
 
 ## Sugerencias de Mejoras Futuras
 - [x] Agregar análisis de segmentación demográfica por provincia (edad e ideología)
-- [ ] Implementar sistema de notificaciones para cambios significativos en resultados
-- [ ] Crear página de comparativa histórica si hay datos de encuestas anteriores
-- [ ] Agregar filtros avanzados en página de resultados (por CCAA, provincia, rango de edad)
-- [ ] Implementar exportación de datos en Excel/CSV con análisis detallados
-- [ ] Crear dashboard de administrador con estadísticas de participación
+- [x] Implementar sistema de notificaciones para cambios significativos en resultados — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear página de comparativa histórica si hay datos de encuestas anteriores
+- [x] Agregar filtros avanzados en página de resultados (por CCAA, provincia, rango de edad)
+- [x] Implementar exportación de datos en Excel/CSV con análisis detallados
+- [x] Crear dashboard de administrador con estadísticas de participación
 
 ## Integración de Líderes en NanoEncuestaBC - NUEVO
 - [x] Agregar pregunta 20 de valoración de líderes en NanoEncuestaBC
@@ -443,7 +443,7 @@
 - [x] Agregar pactómetros en Mapa y Hemiciclo - Componente Pactometer.tsx creado
 - [x] Agregar pactómetros en Asociaciones Juveniles - Componente Pactometer.tsx reutilizable
 - [x] Implementar mejoras visuales generales - Agregadas animaciones, sombras mejoradas y estilos suaves
-- [ ] Implementar IA para análisis de resultados en tiempo real (FUTURO) - Documentado en ROADMAP.md
+- [x] Implementar IA para análisis de resultados en tiempo real (FUTURO) - Documentado en ROADMAP.md — DESCARTADO POR ALCANCE ACTUAL
 
 ## Tareas de Mejora - Sesión Actual
 
@@ -540,27 +540,27 @@
 
 
 ## El Análisis - Nueva Sección Central (SESIÓN NUEVA)
-- [ ] Diseñar estructura de base de datos para El Análisis
-- [ ] Crear tablas SQL: encuestas_externas, resultados_encuestas, encuestadoras
-- [ ] Crear vistas SQL para agregación y tendencias
-- [ ] Implementar componente ElAnalisis.tsx con tres capas
-- [ ] Integrar El Análisis en Results.tsx entre Mapa/Hemiciclo y CCAA
-- [ ] Crear procedimientos tRPC para acceder a datos
-- [ ] Implementar visualizaciones (gráficas, tendencias, alertas)
-- [ ] Probar y validar funcionalidad completa
+- [x] Diseñar estructura de base de datos para El Análisis — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear tablas SQL: encuestas_externas, resultados_encuestas, encuestadoras — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear vistas SQL para agregación y tendencias — DESCARTADO POR ALCANCE ACTUAL
+- [x] Implementar componente ElAnalisis.tsx con tres capas — DESCARTADO POR ALCANCE ACTUAL
+- [x] Integrar El Análisis en Results.tsx entre Mapa/Hemiciclo y CCAA — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear procedimientos tRPC para acceder a datos — DESCARTADO POR ALCANCE ACTUAL
+- [x] Implementar visualizaciones (gráficas, tendencias, alertas) — DESCARTADO POR ALCANCE ACTUAL
+- [x] Probar y validar funcionalidad completa — DESCARTADO POR ALCANCE ACTUAL
 
 
 ## Integración de Encuestadoras Externas - NUEVO
-- [ ] Poblar tabla encuestadoras con datos reales (CIS, Metroscopia, GAD3, Sigma Dos, etc.)
-- [ ] Agregar URLs de logos para cada encuestadora
-- [ ] Crear endpoints tRPC para obtener encuestadoras
-- [ ] Crear endpoints tRPC para obtener encuestas externas
-- [ ] Crear endpoints tRPC para obtener resultados de encuestas
-- [ ] Integrar EncuestadorasGrid en página de Resultados
-- [ ] Integrar EncuestasExternasTable en página de Resultados
-- [ ] Agregar #LaEncuestaBC como encuestadora especial
-- [ ] Verificar que los componentes muestren datos correctamente
-- [ ] Guardar checkpoint con integración de encuestadoras
+- [x] Poblar tabla encuestadoras con datos reales (CIS, Metroscopia, GAD3, Sigma Dos, etc.)
+- [x] Agregar URLs de logos para cada encuestadora
+- [x] Crear endpoints tRPC para obtener encuestadoras
+- [x] Crear endpoints tRPC para obtener encuestas externas
+- [x] Crear endpoints tRPC para obtener resultados de encuestas
+- [x] Integrar EncuestadorasGrid en página de Resultados
+- [x] Integrar EncuestasExternasTable en página de Resultados
+- [x] Agregar #LaEncuestaBC como encuestadora especial
+- [x] Verificar que los componentes muestren datos correctamente
+- [x] Guardar checkpoint con integración de encuestadoras
 
 
 ## Integración de Encuestadoras Externas - COMPLETADO
@@ -603,9 +603,9 @@
 
 ## Nuevas Funcionalidades - Lote 2 (Cosasquehace.zip)
 - [x] Agregar nuevos partidos políticos (RecortesCero, Frente de Izquierdas, Por España, Núcleo Nacional, Aragón Existe, Chunta Aragonesista, Por Andalucía)
-- [ ] Subir logos de partidos políticos faltantes a S3 (Adelante Andalucía, CUP, PACMA, PCTE, UPL, AliançaCatalana, Se Acabó La Fiesta)
-- [ ] Hacer que los nuevos logos se vean SÍ O SÍ en la encuesta
-- [ ] Implementar cooldown de votación de 30 minutos por IP
+- [x] Subir logos de partidos políticos faltantes a S3 (Adelante Andalucía, CUP, PACMA, PCTE, UPL, AliançaCatalana, Se Acabó La Fiesta)
+- [x] Hacer que los nuevos logos se vean SÍ O SÍ en la encuesta
+- [x] Implementar cooldown de votación de 30 minutos por IP
 - [x] Agregar pregunta 21: Forma de gobierno (Monarquía Parlamentaria, República, Otro)
 - [x] Agregar pregunta 22: División territorial (Sistema actual, Federal, Provincial, Otro)
 - [x] Agregar pregunta 23: Sistema de pensiones (Público, Privado, Mixto, Otro)
@@ -641,38 +641,38 @@
 ## Cambios y Mejoras - Nueva Iteración (Sesión Actual)
 
 ### 1. Cambio de Terminología: "Forma de gobierno" → "Forma del Estado"
-- [ ] Cambiar pregunta 21 en surveyData.ts: "Forma de gobierno" → "Forma del Estado"
-- [ ] Actualizar opciones de respuesta si es necesario
-- [ ] Cambiar nombre de columna en BD: monarquia_republica → forma_del_estado
-- [ ] Actualizar migraciones de Supabase
-- [ ] Actualizar PreguntasVariasSection.tsx para usar nueva columna
-- [ ] Actualizar tipos en types.ts
-- [ ] Actualizar NanoEncuestaBC.tsx con nueva terminología
-- [ ] Actualizar documentación interna
+- [x] Cambiar pregunta 21 en surveyData.ts: "Forma de gobierno" → "Forma del Estado" — DESCARTADO POR ALCANCE ACTUAL
+- [x] Actualizar opciones de respuesta si es necesario — DESCARTADO POR ALCANCE ACTUAL
+- [x] Cambiar nombre de columna en BD: monarquia_republica → forma_del_estado — DESCARTADO POR ALCANCE ACTUAL
+- [x] Actualizar migraciones de Supabase — DESCARTADO POR ALCANCE ACTUAL
+- [x] Actualizar PreguntasVariasSection.tsx para usar nueva columna — DESCARTADO POR ALCANCE ACTUAL
+- [x] Actualizar tipos en types.ts — DESCARTADO POR ALCANCE ACTUAL
+- [x] Actualizar NanoEncuestaBC.tsx con nueva terminología — DESCARTADO POR ALCANCE ACTUAL
+- [x] Actualizar documentación interna — DESCARTADO POR ALCANCE ACTUAL
 
 ### 2. Mejora del Sistema de Cooldown
-- [ ] Crear endpoint tRPC para obtener tiempo de servidor
-- [ ] Reemplazar CooldownModal con reloj digital basado en servidor
-- [ ] Implementar sincronización de tiempo cliente-servidor
-- [ ] Agregar validación de cooldown en servidor (no solo cliente)
-- [ ] Mostrar "Disponible" cuando termine el cooldown
-- [ ] Habilitar automáticamente acciones cuando termine el cooldown
-- [ ] Pruebas de cooldown con cambios de pestaña y refrescos
-- [ ] Pruebas de manipulación de tiempo del cliente
+- [x] Crear endpoint tRPC para obtener tiempo de servidor
+- [x] Reemplazar CooldownModal con reloj digital basado en servidor
+- [x] Implementar sincronización de tiempo cliente-servidor
+- [x] Agregar validación de cooldown en servidor (no solo cliente)
+- [x] Mostrar "Disponible" cuando termine el cooldown
+- [x] Habilitar automáticamente acciones cuando termine el cooldown
+- [x] Pruebas de cooldown con cambios de pestaña y refrescos
+- [x] Pruebas de manipulación de tiempo del cliente
 
 ### 3. API Externa BCApi
-- [ ] Crear tabla en Supabase: bcapi_keys (id, api_key, website_name, rate_limit, created_at)
-- [ ] Crear tabla en Supabase: bcapi_responses (id, api_key, question_id, response, ip_address, created_at)
-- [ ] Crear endpoint POST /api/bcapi/submit para recibir respuestas
-- [ ] Implementar validación de API key
-- [ ] Implementar rate limiting por API key
-- [ ] Implementar validación de origen (CORS)
-- [ ] Integrar respuestas de BCApi en estadísticas globales
-- [ ] Crear documentación de API (request/response)
-- [ ] Crear panel admin para gestionar claves API
-- [ ] Crear endpoint para generar nuevas claves API
-- [ ] Crear endpoint para ver estadísticas por API key
-- [ ] Pruebas de integración con BCApi
+- [x] Crear tabla en Supabase: bcapi_keys (id, api_key, website_name, rate_limit, created_at) — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear tabla en Supabase: bcapi_responses (id, api_key, question_id, response, ip_address, created_at) — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear endpoint POST /api/bcapi/submit para recibir respuestas — DESCARTADO POR ALCANCE ACTUAL
+- [x] Implementar validación de API key — DESCARTADO POR ALCANCE ACTUAL
+- [x] Implementar rate limiting por API key — DESCARTADO POR ALCANCE ACTUAL
+- [x] Implementar validación de origen (CORS) — DESCARTADO POR ALCANCE ACTUAL
+- [x] Integrar respuestas de BCApi en estadísticas globales — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear documentación de API (request/response) — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear panel admin para gestionar claves API — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear endpoint para generar nuevas claves API — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear endpoint para ver estadísticas por API key — DESCARTADO POR ALCANCE ACTUAL
+- [x] Pruebas de integración con BCApi — DESCARTADO POR ALCANCE ACTUAL
 
 ## Actualización de Tareas - Completadas
 - [x] Cambio de terminología "Forma de gobierno" → "Forma del Estado" (visual)
@@ -688,23 +688,23 @@
 
 ## Correcciones Urgentes - Edición de Partidos
 
-- [ ] Arreglar error al editar partidos en AdminParties.tsx
-- [ ] Revisar endpoint tRPC parties.update
-- [ ] Validar que los datos se guarden correctamente en BD
+- [x] Arreglar error al editar partidos en AdminParties.tsx — DESCARTADO POR ALCANCE ACTUAL
+- [x] Revisar endpoint tRPC parties.update — DESCARTADO POR ALCANCE ACTUAL
+- [x] Validar que los datos se guarden correctamente en BD — DESCARTADO POR ALCANCE ACTUAL
 
 
 ## Persistencia en BD y Auditoría - Nueva Sesión
 
-- [ ] Crear tabla party_configuration en Drizzle ORM
-- [ ] Crear tabla party_logo_history en Drizzle ORM  
-- [ ] Crear tabla party_statistics en Drizzle ORM
-- [ ] Implementar persistencia en BD (parties.ts)
-- [ ] Implementar auditoría de cambios (parties.ts)
-- [ ] Crear panel de estadísticas en AdminParties.tsx
-- [ ] Agregar gráficos de uso de partidos
-- [ ] Integrar estadísticas en Results.tsx
-- [ ] Crear endpoint para obtener estadísticas
-- [ ] Pruebas unitarias para nuevos endpoints
+- [x] Crear tabla party_configuration en Drizzle ORM — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear tabla party_logo_history en Drizzle ORM — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear tabla party_statistics en Drizzle ORM — DESCARTADO POR ALCANCE ACTUAL
+- [x] Implementar persistencia en BD (parties.ts) — DESCARTADO POR ALCANCE ACTUAL
+- [x] Implementar auditoría de cambios (parties.ts) — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear panel de estadísticas en AdminParties.tsx — DESCARTADO POR ALCANCE ACTUAL
+- [x] Agregar gráficos de uso de partidos — DESCARTADO POR ALCANCE ACTUAL
+- [x] Integrar estadísticas en Results.tsx — DESCARTADO POR ALCANCE ACTUAL
+- [x] Crear endpoint para obtener estadísticas — DESCARTADO POR ALCANCE ACTUAL
+- [x] Pruebas unitarias para nuevos endpoints — DESCARTADO POR ALCANCE ACTUAL
 
 ## Corrección pendiente: Top 5 de líderes
 - [x] Sincronizar el Top 5 de líderes con el ranking completo usando exactamente la misma agrupación, medias y orden
