@@ -805,3 +805,4 @@
 - [ ] Desplazar NanoEncuesta al botón Siguiente al seleccionar una opción de partidos o asociaciones juveniles
 - [x] Prioridad absoluta: no cerrar hasta que Results.tsx inyecte party_configuration y party_leaders canónicos en Provincia, CCAA y Preguntas Varias y se reproduzca sin fallos
 - [x] Localizar y eliminar la ruta exacta que aún muestra logos antiguos en Results.tsx, comparando cada src visible con party_configuration.logo_url
+- [x] Corregir dependencia e import de qrcode en Bio.tsx y verificar build
