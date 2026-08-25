@@ -811,3 +811,15 @@
 - [x] Unificar el estilo glassmórfico, liquid glass, neumórfico y claymórfico en Home, Bio, Results y NanoEncuesta
 - [x] Validar la nueva estética en desktop y móvil sin perder contraste ni accesibilidad
 - [x] Aplicar los cambios visuales sin factorizar, eliminar ni modificar lógica, rutas, consultas o funcionalidades existentes
+- [ ] Añadir transiciones suaves en tarjetas y botones para reforzar el glassmorfismo
+- [ ] Añadir compartir de resultados y Bio con feedback de confirmación
+- [ ] Añadir tooltips y mensajes de feedback contextual en NanoEncuesta
+- [ ] Enfocar automáticamente la opción seleccionada al avanzar entre partidos y asociaciones
+
+## Mejoras UX interactivas - SESIÓN ACTUAL
+- [x] Añadir transiciones suaves de glassmorfismo a tarjetas y botones de NanoEncuesta y Results
+- [x] Añadir feedback visual accesible y tooltips a las selecciones de NanoEncuesta
+- [x] Implementar compartir de resultados con Web Share API y fallback al portapapeles
+- [x] Verificar compartir del enlace de Bio/Linktree con feedback y fallback existente
+- [x] Enfocar y desplazar automáticamente la opción de partido seleccionada al avanzar entre bloques consecutivos
+- [x] Ejecutar pruebas unitarias, build y validación responsive final

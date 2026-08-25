@@ -179,6 +179,8 @@ export default function NanoEncuestaBC() {
   const [animKey, setAnimKey] = useState(0);
   const [showCooldown, setShowCooldown] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [interactionFeedback, setInteractionFeedback] = useState<string | null>(null);
+  const pendingPartyFocusRef = useRef<string | null>(null);
 
   // Mapeo dinámico e hiper-optimizado de imágenes locales para la sección de valoraciones
   const LEADER_IMAGES: Record<string, string> = {
@@ -314,6 +316,11 @@ export default function NanoEncuestaBC() {
       [currentStepData.key]: value,
       ...(currentStepData.key === "voto_generales" && prev.voto_generales !== value ? { lider_partido: undefined } : {}),
     }));
+    if ((currentStepData.type === "party" || currentStepData.type === "youth_party") && String(value || "").trim()) {
+      setInteractionFeedback(`Has seleccionado «${String(value).trim()}». Pulsa «Siguiente» para continuar.`);
+    } else if (currentStepData.type === "cards" && String(value || "").trim()) {
+      setInteractionFeedback(`Respuesta guardada: «${String(value).trim()}».`);
+    }
     if (currentStepData.key === "provincia") {
       const ccaa = getCCAAFromProvince(value);
       if (ccaa) { setResponses(prev => ({ ...prev, comunidad_autonoma: ccaa })); setCCAAWarning(null); }
@@ -332,11 +339,40 @@ export default function NanoEncuestaBC() {
     }
   };
 
+  useEffect(() => {
+    const pendingValue = pendingPartyFocusRef.current;
+    if (!pendingValue || loadingParties || (currentStepData.type !== "party" && currentStepData.type !== "youth_party")) return;
+    const option = (currentStepData.type === "youth_party" ? youthParties : parties).find((party) =>
+      party.display_name === pendingValue || party.party_key === pendingValue
+    );
+    if (!option) return;
+    const focusSelectedOption = () => {
+      const target = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-party-option]"))
+        .find((button) => button.dataset.partyOption === option.party_key);
+      if (!target) return;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      pendingPartyFocusRef.current = null;
+    };
+    const frame = window.requestAnimationFrame(focusSelectedOption);
+    return () => window.cancelAnimationFrame(frame);
+  }, [currentStep, currentStepData.type, loadingParties, parties, youthParties]);
+
   const navigate = (dir: "next" | "prev") => {
     setDirection(dir);
     setAnimKey(k => k + 1);
     setShowOtroInput(false);
     setPartySearch("");
+    setInteractionFeedback(null);
+    if (dir === "next" && currentStep < steps.length - 1) {
+      const nextStep = steps[currentStep + 1];
+      const isPartyBlock = currentStepData.type === "party" || currentStepData.type === "youth_party";
+      const nextIsSamePartyBlock = nextStep.type === currentStepData.type;
+      const selectedValue = responses[currentStepData.key as keyof NanoSurveyResponse];
+      if (isPartyBlock && nextIsSamePartyBlock && selectedValue) {
+        pendingPartyFocusRef.current = String(selectedValue);
+      }
+    }
     setTimeout(() => {
       if (dir === "next") {
         if (currentStep < steps.length - 1) { setCurrentStep(s => s + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
@@ -1107,6 +1143,7 @@ export default function NanoEncuestaBC() {
         .nc-input,
         .nc-select {
           background: linear-gradient(145deg, rgba(255,255,255,0.085), rgba(255,255,255,0.025));
+          transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
           border-color: rgba(255,255,255,0.15);
           box-shadow: inset 1px 1px 0 rgba(255,255,255,0.08), inset -2px -2px 5px rgba(2,6,23,0.2), 8px 10px 22px rgba(2,6,23,0.12);
         }
@@ -1135,8 +1172,44 @@ export default function NanoEncuestaBC() {
         .nc-btn-outline,
         .nc-close-btn {
           box-shadow: inset 1px 1px 0 rgba(255,255,255,0.1), inset -2px -2px 5px rgba(2,6,23,0.22), 8px 10px 22px rgba(2,6,23,0.14);
+          transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
+        }
+        .nc-feedback {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 0 0 12px;
+          padding: 9px 12px;
+          border: 1px solid rgba(110, 231, 183, 0.28);
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(56, 189, 248, 0.07));
+          color: #b7f7dc;
+          font-size: 12px;
+          font-weight: 700;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 8px 20px rgba(2,6,23,.16);
+          animation: nc-feedback-in 220ms ease-out both;
+        }
+        @keyframes nc-feedback-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .nc-party-btn:focus-visible,
+        .nc-leader-btn:focus-visible,
+        .nc-option-card:focus-visible,
+        .nc-btn-prev:focus-visible,
+        .nc-btn-next:focus-visible {
+          outline: 2px solid rgba(125, 211, 252, .9);
+          outline-offset: 3px;
         }
         @media (prefers-reduced-motion: reduce) {
+          .nc-feedback { animation: none; }
+          .nc-party-btn,
+          .nc-leader-btn,
+          .nc-option-card,
+          .nc-num-btn,
+          .nc-ideology-btn,
+          .nc-input,
+          .nc-select,
+          .nc-btn-prev,
+          .nc-btn-outline,
+          .nc-close-btn { transition: none; }
           .nc-party-btn:hover,
           .nc-leader-btn:hover,
           .nc-option-card:hover,
@@ -1189,6 +1262,12 @@ export default function NanoEncuestaBC() {
               <div className="nc-warning">
                 <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>{ccaaWarning}</span>
+              </div>
+            )}
+            {interactionFeedback && (
+              <div className="nc-feedback" role="status" aria-live="polite">
+                <Check size={14} />
+                <span>{interactionFeedback}</span>
               </div>
             )}
 
@@ -1273,6 +1352,8 @@ export default function NanoEncuestaBC() {
                             <button
                               key={party.party_key}
                               className={`nc-party-btn${isSelected ? " selected" : ""}`}
+                              data-party-option={party.party_key}
+                              title={`Seleccionar ${party.display_name}`}
                               style={isSelected ? { borderColor: party.color, boxShadow: `0 8px 24px ${party.color}25` } : {}}
                               onClick={() => { handleAnswer(party.display_name); setPartySearch(""); }}
                               aria-pressed={isSelected}
@@ -1305,7 +1386,8 @@ export default function NanoEncuestaBC() {
                         <button
                           className={`nc-party-btn nc-party-otro${showOtroInput ? " selected" : ""}`}
                           style={showOtroInput ? { borderColor: "var(--nc-muted)", borderStyle: "solid" } : {}}
-                          onClick={() => setShowOtroInput(!showOtroInput)}
+                          onClick={() => { setShowOtroInput(!showOtroInput); setInteractionFeedback("Escribe tu opción personalizada en el campo que aparece."); }}
+                          title="Introducir una opción personalizada"
                         >
                           <div style={{ fontSize: 24, color: "var(--nc-muted)" }}>+</div>
                           <span className="nc-party-name" style={{ color: "var(--nc-muted)" }}>Otro</span>
@@ -1514,6 +1596,7 @@ export default function NanoEncuestaBC() {
                           key={opt.value}
                           className={`nc-option-card${isSelected ? " selected" : ""}`}
                           style={isSelected ? { borderColor: "var(--nc-accent)", background: "rgba(232,70,90,0.05)" } : {}}
+                          title={`Seleccionar: ${opt.label}`}
                           onClick={() => {
                             if (opt.value === "Otro") {
                               setShowOtroInput(!showOtroInput);
@@ -1559,7 +1642,7 @@ export default function NanoEncuestaBC() {
 
             {/* Navigation */}
             <div className="nc-nav" ref={navigationRef}>
-              <button className="nc-btn-prev" onClick={() => navigate("prev")} disabled={currentStep === 0}>
+              <button className="nc-btn-prev" onClick={() => navigate("prev")} disabled={currentStep === 0} title="Volver a la pregunta anterior">
                 <ChevronLeft size={16} />
                 Anterior
               </button>
@@ -1576,6 +1659,7 @@ export default function NanoEncuestaBC() {
                 <button
                   className="nc-btn-next"
                   onClick={() => navigate("next")}
+                  title="Guardar la respuesta y avanzar"
                   disabled={!isCurrentFieldComplete()}
                 >
                   Siguiente

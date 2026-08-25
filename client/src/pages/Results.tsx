@@ -16,7 +16,7 @@ import {
   Map, Grid3x3, ChevronDown, Users, BarChart2, MapPin,
   Vote, Star, TrendingUp, X, Image, FileText, Award,
   Building2, Crown, UserCheck, AlertTriangle, Activity,
-  History, ArrowRight, Zap, Filter, GitBranch,
+  History, ArrowRight, Zap, Filter, GitBranch, Share2,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -50,6 +50,7 @@ import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
 import { createCanonicalPartyIndex, normalizePartyReference, resolveCanonicalParty, sanitizePartyColor, type CanonicalPartyConfigRow } from "@/lib/canonicalPartyConfig";
+import { buildResultsSharePayload } from "@/lib/resultsShare";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -120,8 +121,11 @@ const RESULTS_CSS = `
 .r-hbtn-infog:hover { background: rgba(99,102,241,0.25); }
 .r-hbtn-gov { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
 .r-hbtn-gov:hover { background: rgba(16,185,129,0.25); }
-.r-hbtn-pdf { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
-.r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
+  .r-hbtn-pdf { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
+  .r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
+  .r-hbtn-share { background: rgba(45,212,191,0.14); border: 1px solid rgba(45,212,191,0.32); color: #5eead4; }
+  .r-hbtn-share:hover { background: rgba(45,212,191,0.24); transform: translateY(-1px); }
+  .r-share-feedback { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 8px; background: rgba(16,185,129,.13); border: 1px solid rgba(110,231,183,.28); color: #a7f3d0; font-size: 10px; font-weight: 700; animation: fadeIn .2s ease-out both; }
 
 /* Subnav */
 .r-subnav { position: relative; top: 0; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
@@ -149,7 +153,9 @@ const RESULTS_CSS = `
 
 /* Quick stats */
 .r-quickstats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.r-stat-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(22px) saturate(165%); -webkit-backdrop-filter: blur(22px) saturate(165%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 14px 38px rgba(5,8,20,0.38); border-radius: 14px; padding: 16px 14px; text-align: center; }
+  .r-stat-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(22px) saturate(165%); -webkit-backdrop-filter: blur(22px) saturate(165%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 14px 38px rgba(5,8,20,0.38); border-radius: 14px; padding: 16px 14px; text-align: center; transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+  .r-stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.24); box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 18px 42px rgba(5,8,20,.46); }
+
 .r-stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7a7990; margin-bottom: 4px; }
 .r-stat-value { font-family: 'Manrope', sans-serif; font-size: 24px; font-weight: 800; color: #f0eff8; line-height: 1; }
 .r-stat-value.accent { color: #e8465a; }
@@ -2413,8 +2419,23 @@ export default function Results() {
   const [mediaEncuestas, setMediaEncuestas] = useState<Record<string, number>>({});
   const [liderPorPartido, setLiderPorPartido] = useState<Record<string, string>>({});
   const [porcentajeLiderPorPartido, setPorcentajeLiderPorPartido] = useState<Record<string, number>>({});
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
+
+  const handleShareResults = async () => {
+    const { title, text, url } = buildResultsSharePayload(window.location.origin, activeTab, totalResponses);
+    const canNativeShare = typeof navigator.share === "function";
+    try {
+      if (canNativeShare) await navigator.share({ title, text, url });
+      else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(`${text} ${url}`);
+      else throw new Error("clipboard-unavailable");
+      setShareFeedback(canNativeShare ? "Resultados compartidos" : "Enlace copiado");
+    } catch (shareError) {
+      if ((shareError as Error)?.name !== "AbortError") setShareFeedback("No se pudo compartir");
+    }
+    window.setTimeout(() => setShareFeedback(null), 3500);
+  };
 
   const normalizePartyKey = (v: string) => normalizePartyReference(v);
 
@@ -2903,6 +2924,10 @@ export default function Results() {
             }} title="Exportar informe oficial en PDF">
               <FileText size={12} /><span>PDF</span>
             </button>
+            <button className="r-hbtn r-hbtn-share" onClick={handleShareResults} title="Compartir un enlace a estos resultados">
+              <Share2 size={12} /><span>Compartir</span>
+            </button>
+            {shareFeedback && <span className="r-share-feedback" role="status" aria-live="polite">{shareFeedback}</span>}
             <button className="r-hbtn r-hbtn-ai" onClick={async () => {
               try {
                 await exportResultsSummaryPng(stats, activeTab, totalResponses);
