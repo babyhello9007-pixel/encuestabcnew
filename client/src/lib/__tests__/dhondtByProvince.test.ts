@@ -184,6 +184,9 @@ describe('Cálculo provincial para ámbitos filtrados', () => {
     expect(resultado.totalEscanosEnAmbito).toBe(37);
     expect(Object.values(resultado.escanos).reduce((total, value) => total + value, 0)).toBe(37);
     expect(resultado.provincias).toEqual(['Madrid']);
+    expect(resultado.desglose).toHaveLength(1);
+    expect(resultado.desglose[0]).toMatchObject({ provincia: 'Madrid', cupoEscanos: 37 });
+    expect(Object.values(resultado.desglose[0].escanos).reduce((total, value) => total + value, 0)).toBe(37);
   });
 
   it('suma los cupos de Madrid y Barcelona sin redistribuir 350 escaños', async () => {

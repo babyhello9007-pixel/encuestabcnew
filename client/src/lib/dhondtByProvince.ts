@@ -377,7 +377,17 @@ export function calcularEscanosFiltradosPorAmbito(
   provinciasIncluidas: string[],
   escanosPorProvincia: Record<string, number>,
   calcularProvincia: (provincia: string, votos: Record<string, number>) => Record<string, number>,
-): { escanos: Record<string, number>; totalEscanosEnAmbito: number; provincias: string[] } {
+): {
+  escanos: Record<string, number>;
+  totalEscanosEnAmbito: number;
+  provincias: string[];
+  desglose: Array<{
+    provincia: string;
+    cupoEscanos: number;
+    votos: Record<string, number>;
+    escanos: Record<string, number>;
+  }>;
+} {
   const provincias = Array.from(new Set(
     provinciasIncluidas
       .map((provincia) => resolverProvinciaParaCupo(provincia, escanosPorProvincia))
@@ -395,16 +405,24 @@ export function calcularEscanosFiltradosPorAmbito(
   });
 
   const escanos: Record<string, number> = {};
-  provincias.forEach((provincia) => {
-    const escanosProvinciales = calcularProvincia(provincia, votosNormalizados[provincia] || {});
+  const desglose = provincias.map((provincia) => {
+    const votos = votosNormalizados[provincia] || {};
+    const escanosProvinciales = calcularProvincia(provincia, votos);
     Object.entries(escanosProvinciales).forEach(([partido, cantidad]) => {
       escanos[partido] = (escanos[partido] || 0) + cantidad;
     });
+    return {
+      provincia,
+      cupoEscanos: escanosPorProvincia[provincia] || 0,
+      votos,
+      escanos: escanosProvinciales,
+    };
   });
 
   return {
     escanos,
     totalEscanosEnAmbito: provincias.reduce((total, provincia) => total + (escanosPorProvincia[provincia] || 0), 0),
     provincias,
+    desglose,
   };
 }

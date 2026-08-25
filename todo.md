@@ -843,3 +843,9 @@
 - [x] Usar la distribución predefinida de escaños de cada provincia en los filtros
 - [x] Agregar por CCAA los escaños calculados provincia a provincia
 - [x] Añadir pruebas para garantizar que cada provincia conserva su cupo electoral
+
+## Desglose territorial y comparación nacional - SESIÓN ACTUAL
+- [x] Mostrar en el panel filtrado el desglose de escaños asignados por provincia
+- [x] Añadir hover sobre las CCAA con distribución exacta de escaños por provincia
+- [x] Añadir comparación visual entre la CCAA filtrada y el total nacional
+- [x] Añadir pruebas para desglose provincial, hover territorial y comparación nacional

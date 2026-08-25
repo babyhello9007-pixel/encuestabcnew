@@ -118,6 +118,25 @@ interface ResultFilterState {
   provincia: string;
   edad: ResultAgeFilter;
 }
+interface FilteredProvinceBreakdown {
+  provincia: string;
+  ccaa: string;
+  cupoEscanos: number;
+  votos: number;
+  escanosAsignados: number;
+  partidos: Array<{ id: string; nombre: string; escanos: number; color: string }>;
+}
+interface FilteredSeatScope {
+  escanos: Record<string, number>;
+  totalEscanosEnAmbito: number;
+  provincias: string[];
+  desglose: FilteredProvinceBreakdown[];
+}
+interface CCAAProvinceGroup {
+  ccaa: string;
+  totalEscanos: number;
+  provincias: FilteredProvinceBreakdown[];
+}
 interface NocheElectoralRow {
   id: number;
   election_date: string; region_name: string; region_flag_url: string | null; close_at: string; escrutado?: number | null;
@@ -207,7 +226,50 @@ const RESULTS_CSS = `
 .r-filter-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .r-export-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 6px 11px; border: 1px solid rgba(96,165,250,.32); border-radius: 8px; background: rgba(96,165,250,.10); color: #bfdbfe; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .18s ease, background .18s ease; }
 .r-export-btn:hover { background: rgba(96,165,250,.20); transform: translateY(-1px); }
-.r-export-btn-excel { border-color: rgba(52,211,153,.32); background: rgba(52,211,153,.10); color: #bbf7d0; }
+  .r-export-btn-excel { border-color: rgba(52,211,153,.32); background: rgba(52,211,153,.10); color: #bbf7d0; }
+  .r-territory-block { display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
+  .r-territory-block-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #f0eff8; font-size: 13px; font-weight: 800; }
+  .r-territory-block-note { color: #8b8aa0; font-size: 11px; font-weight: 500; }
+  .r-province-breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+  .r-province-breakdown-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 11px 12px; border: 1px solid rgba(255,255,255,.11); border-radius: 11px; background: rgba(8,10,20,.38); transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+  .r-province-breakdown-card:hover { transform: translateY(-2px); border-color: rgba(94,234,212,.42); background: rgba(8,10,20,.54); }
+  .r-province-breakdown-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .r-province-breakdown-name { color: #f0eff8; font-size: 13px; font-weight: 800; }
+  .r-province-breakdown-ccaa { margin-top: 2px; color: #8b8aa0; font-size: 10px; }
+  .r-province-seat-pill { flex-shrink: 0; padding: 4px 7px; border: 1px solid rgba(94,234,212,.25); border-radius: 999px; background: rgba(94,234,212,.10); color: #99f6e4; font-size: 10px; font-weight: 800; white-space: nowrap; }
+  .r-province-breakdown-meta { display: flex; justify-content: space-between; gap: 8px; color: #a4a2b6; font-size: 10px; }
+  .r-province-party-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .r-province-party-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 999px; background: rgba(255,255,255,.06); color: #d8d6e7; font-size: 10px; font-weight: 700; }
+  .r-province-party-chip strong { font-weight: 900; }
+  .r-ccaa-hover-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 7px; }
+  .r-ccaa-hover-card { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 9px 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(255,255,255,.035); color: #c7c5d6; cursor: default; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+  .r-ccaa-hover-card:hover, .r-ccaa-hover-card:focus-visible, .r-ccaa-hover-card.is-hovered { z-index: 4; transform: translateY(-1px); border-color: rgba(129,140,248,.55); background: rgba(99,102,241,.12); outline: none; }
+  .r-ccaa-hover-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 800; }
+  .r-ccaa-hover-total { flex-shrink: 0; color: #a5b4fc; font-size: 11px; font-weight: 900; }
+  .r-ccaa-tooltip { position: absolute; top: calc(100% + 7px); left: 0; right: auto; min-width: 220px; max-width: min(300px, 80vw); padding: 10px; border: 1px solid rgba(165,180,252,.38); border-radius: 11px; background: rgba(19,20,35,.97); box-shadow: 0 16px 35px rgba(0,0,0,.45); color: #f0eff8; }
+  .r-ccaa-hover-card:nth-child(4n) .r-ccaa-tooltip, .r-ccaa-hover-card:nth-child(4n-1) .r-ccaa-tooltip { left: auto; right: 0; }
+  .r-ccaa-tooltip-title { margin-bottom: 6px; color: #c7d2fe; font-size: 11px; font-weight: 900; }
+  .r-ccaa-tooltip-row { display: flex; justify-content: space-between; gap: 14px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.06); color: #b8b6c8; font-size: 10px; }
+  .r-ccaa-tooltip-row:last-child { border-bottom: 0; }
+  .r-ccaa-tooltip-row strong { color: #fff; font-weight: 900; }
+  .r-national-compare-toggle { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 6px 10px; border: 1px solid rgba(251,191,36,.32); border-radius: 8px; background: rgba(251,191,36,.10); color: #fde68a; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+  .r-national-compare-toggle:hover { transform: translateY(-1px); background: rgba(251,191,36,.18); }
+  .r-national-compare-panel { display: flex; flex-direction: column; gap: 10px; padding: 11px 12px; border: 1px solid rgba(251,191,36,.22); border-radius: 11px; background: linear-gradient(145deg, rgba(251,191,36,.08), rgba(255,255,255,.025)); }
+  .r-national-compare-title { color: #fef3c7; font-size: 12px; font-weight: 900; }
+  .r-national-compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 7px; }
+  .r-national-compare-row { display: flex; flex-direction: column; gap: 5px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,.16); }
+  .r-national-compare-label { display: flex; justify-content: space-between; gap: 8px; color: #b8b6c8; font-size: 10px; }
+  .r-national-compare-label strong { color: #fff; font-size: 11px; }
+  .r-national-compare-bar { display: flex; align-items: stretch; gap: 3px; height: 7px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.08); }
+  .r-national-compare-bar span { display: block; min-width: 2px; height: 100%; border-radius: 999px; transition: width .25s ease; }
+  .r-national-compare-bar span:first-child { background: #f59e0b; }
+  .r-national-compare-bar span:last-child { background: #818cf8; }
+  @media (max-width: 640px) {
+    .r-territory-block-title { align-items: flex-start; flex-direction: column; }
+    .r-province-breakdown-grid { grid-template-columns: 1fr; }
+    .r-ccaa-hover-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .r-ccaa-tooltip { left: 0 !important; right: auto !important; min-width: 195px; }
+  }
 .r-export-btn-excel:hover { background: rgba(52,211,153,.20); }
 @media (max-width: 768px) {
   .r-filter-grid { grid-template-columns: 1fr; }
@@ -2471,6 +2533,8 @@ export default function Results() {
   const [porcentajeLiderPorPartido, setPorcentajeLiderPorPartido] = useState<Record<string, number>>({});
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [resultFilters, setResultFilters] = useState<ResultFilterState>({ ccaa: "all", provincia: "all", edad: "all" });
+  const [showNationalComparison, setShowNationalComparison] = useState(false);
+  const [hoveredCCAA, setHoveredCCAA] = useState<string | null>(null);
   const [filterRows, setFilterRows] = useState<ResultFilterRow[]>([]);
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
@@ -2845,11 +2909,7 @@ export default function Results() {
       return matchesCcaa && matchesProvincia && matchesEdad;
     });
   }, [filterRows, resultFilters]);
-  const filteredSeatScope = useMemo(() => {
-    if (!filtersAreActive) {
-      return { escanos: {}, totalEscanosEnAmbito: totalEscanos, provincias: [] as string[] };
-    }
-
+  const filteredSeatScope = useMemo<FilteredSeatScope>(() => {
     const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
     const voteField = activeTab === "general" ? "voto_generales" : "voto_asociacion_juvenil";
     const provinceSeats = activeTab === "general"
@@ -2857,11 +2917,14 @@ export default function Results() {
       : getEscanosJuvenilesPorProvincia();
     const provinceVotes: Record<string, Record<string, number>> = {};
     const filteredProvinces: string[] = [];
+    const ccaaByProvince: Record<string, string> = {};
 
     filteredRows.forEach(row => {
       const province = resolverProvinciaParaCupo(row.provincia, provinceSeats);
       if (!province) return;
       if (!filteredProvinces.includes(province)) filteredProvinces.push(province);
+      const ccaa = String(row.ccaa || "").trim();
+      if (ccaa && !ccaaByProvince[province]) ccaaByProvince[province] = ccaa;
 
       const rawVote = String(row[voteField] || "").trim();
       if (!rawVote || rawVote.toLocaleLowerCase("es-ES") === "otro") return;
@@ -2874,13 +2937,37 @@ export default function Results() {
     const calculateProvince = activeTab === "general"
       ? calcularEscanosProvincia
       : calcularEscanosJuvenilesProvincia;
-    return calcularEscanosFiltradosPorAmbito(
+    const seatResult = calcularEscanosFiltradosPorAmbito(
       provinceVotes,
       filteredProvinces,
       provinceSeats,
       calculateProvince,
     );
-  }, [activeTab, filtersAreActive, filteredRows, generalPartyMap, totalEscanos, youthPartyMap]);
+    const desglose = seatResult.desglose.map((province) => ({
+      provincia: province.provincia,
+      ccaa: ccaaByProvince[province.provincia] || "Comunidad no identificada",
+      cupoEscanos: province.cupoEscanos,
+      votos: Object.values(province.votos).reduce((total, value) => total + value, 0),
+      escanosAsignados: Object.values(province.escanos).reduce((total, value) => total + value, 0),
+      partidos: Object.entries(province.votos)
+        .filter(([, votos]) => votos > 0)
+        .sort(([partyA, votosA], [partyB, votosB]) =>
+          (province.escanos[partyB] || 0) - (province.escanos[partyA] || 0)
+          || votosB - votosA
+          || partyA.localeCompare(partyB, "es"),
+        )
+        .map(([id, votos]) => ({
+          id,
+          nombre: partyMap[id]?.name || id,
+          escanos: province.escanos[id] || 0,
+          color: partyMap[id]?.color || "#94a3b8",
+          votos,
+        }))
+        .map(({ id, nombre, escanos, color }) => ({ id, nombre, escanos, color })),
+    }));
+
+    return { ...seatResult, desglose };
+  }, [activeTab, filteredRows, generalPartyMap, youthPartyMap]);
   const filteredStats = useMemo(() => {
     if (!filtersAreActive) return stats;
     const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
@@ -2904,6 +2991,32 @@ export default function Results() {
   const displayedStats = filtersAreActive ? filteredStats : stats;
   const displayedResponseCount = filtersAreActive ? filteredRows.length : totalResponses;
   const displayedTotalEscanos = filtersAreActive ? filteredSeatScope.totalEscanosEnAmbito : totalEscanos;
+  const ccaaProvinceGroups = useMemo<CCAAProvinceGroup[]>(() => {
+    const groups = new globalThis.Map<string, CCAAProvinceGroup>();
+    filteredSeatScope.desglose.forEach((province) => {
+      const current = groups.get(province.ccaa) || { ccaa: province.ccaa, totalEscanos: 0, provincias: [] };
+      current.totalEscanos += province.cupoEscanos;
+      current.provincias.push(province);
+      groups.set(province.ccaa, current);
+    });
+    return Array.from(groups.values()).sort((a, b) => a.ccaa.localeCompare(b.ccaa, "es"));
+  }, [filteredSeatScope.desglose]);
+  const nationalComparisonRows = useMemo(() => {
+    if (!filtersAreActive) return [];
+    const nationalByParty = new globalThis.Map<string, PartyStats>(stats.map((party) => [resolvePartyKey(party.id, activeTab === "general" ? generalPartyMap : youthPartyMap), party]));
+    return filteredStats.map((party) => {
+      const partyKey = resolvePartyKey(party.id, activeTab === "general" ? generalPartyMap : youthPartyMap);
+      const national = nationalByParty.get(partyKey);
+      return {
+        id: partyKey,
+        nombre: party.nombre,
+        color: party.color || "#94a3b8",
+        filtrado: party.escanos,
+        nacional: national?.escanos || 0,
+      };
+    }).sort((a, b) => b.filtrado - a.filtrado || b.nacional - a.nacional);
+  }, [activeTab, filtersAreActive, filteredStats, generalPartyMap, stats, youthPartyMap]);
+  const canCompareNational = filtersAreActive && (resultFilters.ccaa !== "all" || resultFilters.provincia !== "all");
   const exportRows = useMemo<ResultsExportRow[]>(() => {
     const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
     return displayedStats.map(party => {
@@ -3231,6 +3344,120 @@ export default function Results() {
                       <FileText size={13} /> Excel detallado
                     </button>
                   </div>
+
+                  {filtersAreActive && (
+                    <div className="r-territory-block">
+                      <div className="r-territory-block-title">
+                        <span>Desglose provincial del ámbito filtrado</span>
+                        <span className="r-territory-block-note">El cupo de cada provincia se mantiene independiente.</span>
+                      </div>
+                      {filteredSeatScope.desglose.length === 0 ? (
+                        <div className="r-filter-empty">No hay provincias con cupo electoral identificable en esta selección.</div>
+                      ) : (
+                        <div className="r-province-breakdown-grid">
+                          {filteredSeatScope.desglose.map((province) => (
+                            <article className="r-province-breakdown-card" key={province.provincia}>
+                              <div className="r-province-breakdown-head">
+                                <div>
+                                  <div className="r-province-breakdown-name">{province.provincia}</div>
+                                  <div className="r-province-breakdown-ccaa">{province.ccaa}</div>
+                                </div>
+                                <span className="r-province-seat-pill">{province.escanosAsignados}/{province.cupoEscanos} escaños</span>
+                              </div>
+                              <div className="r-province-breakdown-meta">
+                                <span>{province.votos.toLocaleString("es-ES")} votos válidos</span>
+                                <span>{province.cupoEscanos > 0 ? ((province.escanosAsignados / province.cupoEscanos) * 100).toFixed(0) : "0"}% asignado</span>
+                              </div>
+                              <div className="r-province-party-list">
+                                {province.partidos.length > 0 ? province.partidos.slice(0, 5).map((party) => (
+                                  <span className="r-province-party-chip" key={`${province.provincia}-${party.id}`} style={{ borderLeft: `3px solid ${party.color}` }}>
+                                    <span>{party.nombre}</span><strong>{party.escanos}</strong>
+                                  </span>
+                                )) : <span className="r-territory-block-note">Sin voto de partido válido</span>}
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="r-territory-block-title">
+                        <span>Mapa de cupos por comunidad autónoma</span>
+                        <span className="r-territory-block-note">Pasa el cursor o enfoca una comunidad.</span>
+                      </div>
+                      <div className="r-ccaa-hover-grid" aria-label="Distribución provincial de escaños por comunidad autónoma">
+                        {ccaaProvinceGroups.map((group) => {
+                          const isHovered = hoveredCCAA === group.ccaa;
+                          return (
+                            <div
+                              className={`r-ccaa-hover-card${isHovered ? " is-hovered" : ""}`}
+                              key={group.ccaa}
+                              tabIndex={0}
+                              role="button"
+                              aria-label={`Ver distribución provincial de escaños de ${group.ccaa}`}
+                              onMouseEnter={() => setHoveredCCAA(group.ccaa)}
+                              onMouseLeave={() => setHoveredCCAA(null)}
+                              onFocus={() => setHoveredCCAA(group.ccaa)}
+                              onBlur={() => setHoveredCCAA(null)}
+                              onClick={() => setHoveredCCAA(isHovered ? null : group.ccaa)}
+                            >
+                              <span className="r-ccaa-hover-name">{group.ccaa}</span>
+                              <span className="r-ccaa-hover-total">{group.totalEscanos} escaños</span>
+                              {isHovered && (
+                                <div className="r-ccaa-tooltip" role="tooltip">
+                                  <div className="r-ccaa-tooltip-title">{group.ccaa} · cupo provincial</div>
+                                  {group.provincias.map((province) => (
+                                    <div className="r-ccaa-tooltip-row" key={`${group.ccaa}-${province.provincia}`}>
+                                      <span>{province.provincia}</span>
+                                      <strong>{province.escanosAsignados}/{province.cupoEscanos}</strong>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {canCompareNational && (
+                        <>
+                          <button
+                            type="button"
+                            className="r-national-compare-toggle"
+                            onClick={() => setShowNationalComparison((current) => !current)}
+                            aria-expanded={showNationalComparison}
+                          >
+                            <BarChart2 size={13} />
+                            {showNationalComparison ? "Ocultar comparación nacional" : "Comparar con el total nacional"}
+                          </button>
+                          {showNationalComparison && (
+                            <div className="r-national-compare-panel" role="region" aria-label="Comparación del ámbito filtrado con el total nacional">
+                              <div className="r-national-compare-title">
+                                {resultFilters.ccaa !== "all" ? resultFilters.ccaa : resultFilters.provincia} frente al total nacional
+                              </div>
+                              <div className="r-territory-block-note">Naranja: ámbito filtrado · Índigo: total nacional · Escaños asignados según cada circunscripción.</div>
+                              <div className="r-national-compare-grid">
+                                {nationalComparisonRows.map((row) => {
+                                  const maxSeats = Math.max(row.filtrado, row.nacional, 1);
+                                  return (
+                                    <div className="r-national-compare-row" key={row.id}>
+                                      <div className="r-national-compare-label">
+                                        <span style={{ color: row.color }}>{row.nombre}</span>
+                                        <strong>{row.filtrado} · {row.nacional}</strong>
+                                      </div>
+                                      <div className="r-national-compare-bar" aria-label={`${row.nombre}: ${row.filtrado} en el ámbito, ${row.nacional} en el total nacional`}>
+                                        <span title={`Ámbito: ${row.filtrado}`} style={{ width: `${(row.filtrado / maxSeats) * 100}%` }} />
+                                        <span title={`Nacional: ${row.nacional}`} style={{ width: `${(row.nacional / maxSeats) * 100}%` }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </section>
               )}
 
