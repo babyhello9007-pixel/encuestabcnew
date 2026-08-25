@@ -61,6 +61,7 @@ import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha }
 import { createCanonicalPartyIndex, normalizePartyReference, resolveCanonicalParty, sanitizePartyColor, type CanonicalPartyConfigRow } from "@/lib/canonicalPartyConfig";
 import { buildResultsSharePayload } from "@/lib/resultsShare";
 import { buildResultsCsv, buildResultsExcelHtml, type ResultsExportContext, type ResultsExportRow } from "@/lib/resultsExport";
+import { buildProvincialBreakdownCsv, downloadProvincialBreakdownPdf, type ProvincialBreakdownExportContext, type ProvincialBreakdownExportRow } from "@/lib/provincialBreakdownExport";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -225,7 +226,10 @@ const RESULTS_CSS = `
 .r-filter-summary strong { color: #5eead4; font-weight: 800; }
 .r-filter-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .r-export-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 6px 11px; border: 1px solid rgba(96,165,250,.32); border-radius: 8px; background: rgba(96,165,250,.10); color: #bfdbfe; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .18s ease, background .18s ease; }
-.r-export-btn:hover { background: rgba(96,165,250,.20); transform: translateY(-1px); }
+  .r-export-btn:hover { background: rgba(96,165,250,.20); transform: translateY(-1px); }
+  .r-export-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .r-export-btn-pdf { border-color: rgba(248,113,113,.32); background: rgba(248,113,113,.10); color: #fecaca; }
+  .r-export-btn-pdf:hover { background: rgba(248,113,113,.20); }
   .r-export-btn-excel { border-color: rgba(52,211,153,.32); background: rgba(52,211,153,.10); color: #bbf7d0; }
   .r-territory-block { display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
   .r-territory-block-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #f0eff8; font-size: 13px; font-weight: 800; }
@@ -256,6 +260,13 @@ const RESULTS_CSS = `
   .r-national-compare-toggle:hover { transform: translateY(-1px); background: rgba(251,191,36,.18); }
   .r-national-compare-panel { display: flex; flex-direction: column; gap: 10px; padding: 11px 12px; border: 1px solid rgba(251,191,36,.22); border-radius: 11px; background: linear-gradient(145deg, rgba(251,191,36,.08), rgba(255,255,255,.025)); }
   .r-national-compare-title { color: #fef3c7; font-size: 12px; font-weight: 900; }
+  .r-national-compare-legend { display: flex; flex-wrap: wrap; gap: 12px; color: #d7d5e2; font-size: 10px; font-weight: 700; }
+  .r-national-compare-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+  .r-national-compare-legend-swatch { width: 10px; height: 10px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255,255,255,.18); }
+  .r-territory-insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 7px; }
+  .r-territory-insight { display: flex; flex-direction: column; gap: 3px; padding: 8px 9px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; background: rgba(255,255,255,.035); }
+  .r-territory-insight-label { color: #8b8aa0; font-size: 10px; font-weight: 700; }
+  .r-territory-insight-value { color: #f0eff8; font-size: 12px; font-weight: 900; }
   .r-national-compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 7px; }
   .r-national-compare-row { display: flex; flex-direction: column; gap: 5px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,.16); }
   .r-national-compare-label { display: flex; justify-content: space-between; gap: 8px; color: #b8b6c8; font-size: 10px; }
@@ -3017,6 +3028,19 @@ export default function Results() {
     }).sort((a, b) => b.filtrado - a.filtrado || b.nacional - a.nacional);
   }, [activeTab, filtersAreActive, filteredStats, generalPartyMap, stats, youthPartyMap]);
   const canCompareNational = filtersAreActive && (resultFilters.ccaa !== "all" || resultFilters.provincia !== "all");
+  const territoryInsights = useMemo(() => {
+    if (!filtersAreActive || filteredSeatScope.desglose.length === 0) return null;
+    const largestProvince = [...filteredSeatScope.desglose].sort((a, b) => b.votos - a.votos)[0];
+    const totalCupo = filteredSeatScope.desglose.reduce((total, province) => total + province.cupoEscanos, 0);
+    const totalAsignado = filteredSeatScope.desglose.reduce((total, province) => total + province.escanosAsignados, 0);
+    return {
+      largestProvince,
+      totalCupo,
+      totalAsignado,
+      cobertura: totalCupo > 0 ? (totalAsignado / totalCupo) * 100 : 0,
+      sinAsignacion: filteredSeatScope.desglose.filter((province) => province.cupoEscanos > 0 && province.escanosAsignados === 0).length,
+    };
+  }, [filteredSeatScope.desglose, filtersAreActive]);
   const exportRows = useMemo<ResultsExportRow[]>(() => {
     const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
     return displayedStats.map(party => {
@@ -3051,6 +3075,29 @@ export default function Results() {
   }, []);
   const handleExportCsv = () => downloadExportFile(buildResultsCsv(exportRows, exportContext), "text/csv;charset=utf-8", "csv");
   const handleExportExcel = () => downloadExportFile(buildResultsExcelHtml(exportRows, exportContext), "application/vnd.ms-excel;charset=utf-8", "xls");
+  const provincialExportRows = useMemo<ProvincialBreakdownExportRow[]>(() => filteredSeatScope.desglose.map((province) => ({
+    ccaa: province.ccaa,
+    provincia: province.provincia,
+    cupoEscanos: province.cupoEscanos,
+    votos: province.votos,
+    escanosAsignados: province.escanosAsignados,
+    partidos: province.partidos.length > 0
+      ? province.partidos.map((party) => `${party.nombre}: ${party.escanos}`).join(" · ")
+      : "Sin voto de partido válido",
+  })), [filteredSeatScope.desglose]);
+  const provincialExportContext = useMemo<ProvincialBreakdownExportContext>(() => ({
+    titulo: activeTab === "general" ? "Desglose provincial · Elecciones Generales" : "Desglose provincial · Asociaciones Juveniles",
+    respuestas: displayedResponseCount,
+    ambito: resultFilters.ccaa !== "all" ? resultFilters.ccaa : resultFilters.provincia !== "all" ? resultFilters.provincia : "Todas las provincias",
+  }), [activeTab, displayedResponseCount, resultFilters]);
+  const handleExportProvincialCsv = () => {
+    if (provincialExportRows.length === 0) return;
+    downloadExportFile(buildProvincialBreakdownCsv(provincialExportRows, provincialExportContext), "text/csv;charset=utf-8", "csv");
+  };
+  const handleExportProvincialPdf = () => {
+    if (provincialExportRows.length === 0) return;
+    downloadProvincialBreakdownPdf(provincialExportRows, provincialExportContext);
+  };
   const partyColorMap = useMemo(() => {
     const m: Record<string, string> = {};
     [...Object.values(generalPartyMap), ...Object.values(youthPartyMap)].forEach((p: any) => {
@@ -3343,6 +3390,16 @@ export default function Results() {
                     <button type="button" className="r-export-btn r-export-btn-excel" onClick={handleExportExcel} title="Descargar los resultados visibles en formato Excel">
                       <FileText size={13} /> Excel detallado
                     </button>
+                    {filtersAreActive && (
+                      <>
+                        <button type="button" className="r-export-btn" onClick={handleExportProvincialCsv} disabled={provincialExportRows.length === 0} title="Descargar el desglose provincial en CSV">
+                          <MapPin size={13} /> CSV provincial
+                        </button>
+                        <button type="button" className="r-export-btn r-export-btn-pdf" onClick={handleExportProvincialPdf} disabled={provincialExportRows.length === 0} title="Descargar el desglose provincial en PDF">
+                          <FileText size={13} /> PDF provincial
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   {filtersAreActive && (
@@ -3377,6 +3434,27 @@ export default function Results() {
                               </div>
                             </article>
                           ))}
+                        </div>
+                      )}
+
+                      {territoryInsights && (
+                        <div className="r-territory-insights" aria-label="Lectura rápida del ámbito filtrado">
+                          <div className="r-territory-insight">
+                            <span className="r-territory-insight-label">Provincia con más respuestas</span>
+                            <span className="r-territory-insight-value">{territoryInsights.largestProvince.provincia}</span>
+                          </div>
+                          <div className="r-territory-insight">
+                            <span className="r-territory-insight-label">Cupos del ámbito</span>
+                            <span className="r-territory-insight-value">{territoryInsights.totalCupo} escaños</span>
+                          </div>
+                          <div className="r-territory-insight">
+                            <span className="r-territory-insight-label">Cupos asignados</span>
+                            <span className="r-territory-insight-value">{territoryInsights.totalAsignado} · {territoryInsights.cobertura.toFixed(0)}%</span>
+                          </div>
+                          <div className="r-territory-insight">
+                            <span className="r-territory-insight-label">Provincias sin asignación</span>
+                            <span className="r-territory-insight-value">{territoryInsights.sinAsignacion}</span>
+                          </div>
                         </div>
                       )}
 
@@ -3430,11 +3508,16 @@ export default function Results() {
                             {showNationalComparison ? "Ocultar comparación nacional" : "Comparar con el total nacional"}
                           </button>
                           {showNationalComparison && (
-                            <div className="r-national-compare-panel" role="region" aria-label="Comparación del ámbito filtrado con el total nacional">
+                              <div className="r-national-compare-panel" role="region" aria-label="Comparación del ámbito filtrado con el total nacional">
                               <div className="r-national-compare-title">
                                 {resultFilters.ccaa !== "all" ? resultFilters.ccaa : resultFilters.provincia} frente al total nacional
                               </div>
-                              <div className="r-territory-block-note">Naranja: ámbito filtrado · Índigo: total nacional · Escaños asignados según cada circunscripción.</div>
+                              <div className="r-national-compare-legend" aria-label="Leyenda de colores del comparador">
+                                <span className="r-national-compare-legend-item"><span className="r-national-compare-legend-swatch" style={{ background: "#f59e0b" }} /> Ámbito filtrado</span>
+                                <span className="r-national-compare-legend-item"><span className="r-national-compare-legend-swatch" style={{ background: "#818cf8" }} /> Total nacional</span>
+                                <span className="r-national-compare-legend-item"><span className="r-national-compare-legend-swatch" style={{ background: "#94a3b8" }} /> Escaños asignados</span>
+                              </div>
+                              <div className="r-territory-block-note">Las barras comparan escaños asignados según cada circunscripción.</div>
                               <div className="r-national-compare-grid">
                                 {nationalComparisonRows.map((row) => {
                                   const maxSeats = Math.max(row.filtrado, row.nacional, 1);

@@ -849,3 +849,10 @@
 - [x] Añadir hover sobre las CCAA con distribución exacta de escaños por provincia
 - [x] Añadir comparación visual entre la CCAA filtrada y el total nacional
 - [x] Añadir pruebas para desglose provincial, hover territorial y comparación nacional
+
+## Exportación y lectura del comparador territorial - SESIÓN ACTUAL
+- [x] Añadir leyenda persistente para ámbito filtrado y total nacional
+- [x] Exportar desglose provincial de votos y escaños en CSV
+- [x] Exportar desglose provincial de votos y escaños en PDF
+- [x] Añadir mejora interpretativa: resumen de concentración territorial y provincias sin asignación
+- [x] Añadir pruebas unitarias de CSV, PDF y resumen interpretativo
