@@ -10,6 +10,7 @@ import {
   LINKTREE_SHARE_TEXT,
   LINKTREE_SHARE_TITLE,
   PRIMARY_LINKS,
+  isQuorumArticleLoading,
   QUORUM_URL,
   SOCIAL_LINKS,
 } from "./Bio";
@@ -46,6 +47,12 @@ describe("configuración del Linktree de Batalla Cultural", () => {
   it("mantiene una publicación de Quorum utilizable si la actualización remota tarda", () => {
     expect(LINKTREE_QUORUM_FALLBACK.title).toBeTruthy();
     expect(LINKTREE_QUORUM_FALLBACK.articleUrl).toContain("/articulo/");
+  });
+
+  it("muestra el skeleton solo cuando las noticias están abiertas y siguen cargando", () => {
+    expect(isQuorumArticleLoading(true, true)).toBe(true);
+    expect(isQuorumArticleLoading(false, true)).toBe(false);
+    expect(isQuorumArticleLoading(true, false)).toBe(false);
   });
 
   it("genera un QR PNG descargable para el enlace público", async () => {

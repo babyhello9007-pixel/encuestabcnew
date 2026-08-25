@@ -49,6 +49,10 @@ export const LINKTREE_THEME_STORAGE_KEY = "bc-linktree-theme";
 export const LINKTREE_CLICK_STORAGE_KEY = "bc-linktree-click-counts";
 export const BIO_FAVICON = "/favicon.png";
 
+export function isQuorumArticleLoading(isNewsOpen: boolean, isLoading: boolean) {
+  return isNewsOpen && isLoading;
+}
+
 export const LINKTREE_QUORUM_FALLBACK = {
   title: "Ceuta ha dicho basta.",
   excerpt: "Análisis de la actualidad política y social desde Quorum.",
@@ -136,6 +140,35 @@ export const SOCIAL_LINKS: SocialLink[] = [
   { name: "Bluesky", url: "https://bsky.app/profile/bcultural-es.bsky.social", label: "Síguenos en Bluesky", logo: "/assets/icons/bluesky-logo.png", invertOnDark: false },
   { name: "Instagram", url: "https://www.instagram.com/bcultural_es/", label: "Contenido visual", icon: Instagram, invertOnDark: false },
 ];
+
+function QuorumArticleSkeleton({ isDark }: { isDark: boolean }) {
+  const shimmer = isDark ? "bg-white/10" : "bg-slate-200";
+  const surface = isDark ? "border-emerald-300/25 bg-emerald-400/[0.08]" : "border-emerald-200 bg-emerald-50";
+
+  return (
+    <div
+      className={`relative block overflow-hidden rounded-2xl border p-4 shadow-lg ${surface}`}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Cargando la última publicación de Quorum"
+      data-testid="quorum-article-skeleton"
+    >
+      <span className="flex items-start gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${shimmer} motion-safe:animate-pulse motion-reduce:animate-none`} aria-hidden="true" />
+        <span className="min-w-0 flex-1 space-y-2" aria-hidden="true">
+          <span className={`block h-2.5 w-40 rounded-full ${shimmer} motion-safe:animate-pulse motion-reduce:animate-none`} />
+          <span className={`block h-4 w-4/5 rounded-full ${shimmer} motion-safe:animate-pulse motion-reduce:animate-none`} />
+          <span className={`block h-3 w-full rounded-full ${shimmer} motion-safe:animate-pulse motion-reduce:animate-none`} />
+          <span className={`block h-3 w-3/4 rounded-full ${shimmer} motion-safe:animate-pulse motion-reduce:animate-none`} />
+          <span className={`block h-2.5 w-48 rounded-full ${shimmer} motion-safe:animate-pulse motion-reduce:animate-none`} />
+        </span>
+        <span className={`mt-1 h-4 w-4 shrink-0 rounded-full ${shimmer} motion-safe:animate-pulse motion-reduce:animate-none`} aria-hidden="true" />
+      </span>
+      <span className="sr-only">Cargando la última publicación de Quorum.</span>
+    </div>
+  );
+}
 
 export default function Bio() {
   const [, setLocation] = useLocation();
@@ -282,7 +315,7 @@ export default function Bio() {
           >
             Noticias de Quorum <span aria-hidden="true">{isNewsOpen ? "−" : "+"}</span>
           </button>
-          {isNewsOpen && <a
+          {isQuorumArticleLoading(isNewsOpen, latestQuorum.isLoading) ? <QuorumArticleSkeleton isDark={isDark} /> : isNewsOpen ? <a
           href={article.articleUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -312,7 +345,7 @@ export default function Bio() {
             </span>
             <ArrowRight className={`mt-1 h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 ${isDark ? "text-emerald-100" : "text-emerald-700"}`} />
           </span>
-        </a>}
+        </a> : null}
         </section>
 
         <section className="mb-8">

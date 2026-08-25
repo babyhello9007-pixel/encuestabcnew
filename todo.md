@@ -807,3 +807,4 @@
 - [x] Localizar y eliminar la ruta exacta que aún muestra logos antiguos en Results.tsx, comparando cada src visible con party_configuration.logo_url
 - [x] Corregir dependencia e import de qrcode en Bio.tsx y verificar build
 - [x] Integrar el favicon de Batalla Cultural en la página Linktree/Bio y verificar su visualización
+- [x] Añadir skeleton animado y accesible en Bio mientras se cargan los datos remotos
