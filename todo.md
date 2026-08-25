@@ -856,3 +856,9 @@
 - [x] Exportar desglose provincial de votos y escaños en PDF
 - [x] Añadir mejora interpretativa: resumen de concentración territorial y provincias sin asignación
 - [x] Añadir pruebas unitarias de CSV, PDF y resumen interpretativo
+
+## Comparador territorial compartible - SESIÓN ACTUAL
+- [x] Exportar el comparador visual completo en PNG con leyenda y contexto
+- [x] Mostrar porcentaje de voto junto a los escaños de cada provincia
+- [x] Ordenar el desglose provincial por participación o escaños asignados
+- [x] Añadir pruebas unitarias para porcentajes, ordenación y exportación PNG

@@ -5,6 +5,7 @@ export interface ProvincialBreakdownExportRow {
   provincia: string;
   cupoEscanos: number;
   votos: number;
+  porcentajeVoto: number;
   escanosAsignados: number;
   partidos: string;
 }
@@ -35,7 +36,7 @@ export function buildProvincialBreakdownCsv(
     ["Ámbito", context.ambito],
     ["Generado", context.generadoEn || new Date().toISOString()],
   ];
-  const header = ["Comunidad autónoma", "Provincia", "Cupo provincial", "Votos válidos", "Escaños asignados", "Partidos y escaños"];
+  const header = ["Comunidad autónoma", "Provincia", "Cupo provincial", "Votos válidos", "% del ámbito", "Escaños asignados", "Partidos y escaños"];
   const lines = metadata.map(([label, value]) => `${csvEscape(label)},${csvEscape(value)}`);
   lines.push("");
   lines.push(header.map(csvEscape).join(","));
@@ -45,6 +46,7 @@ export function buildProvincialBreakdownCsv(
       row.provincia,
       row.cupoEscanos,
       formatNumber(row.votos),
+      row.porcentajeVoto.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
       row.escanosAsignados,
       row.partidos,
     ].map(csvEscape).join(","));
@@ -71,7 +73,7 @@ export function createProvincialBreakdownPdf(
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 12;
   const tableWidth = pageWidth - margin * 2;
-  const columnWidths = [48, 48, 34, 34, 39, tableWidth - 48 - 48 - 34 - 34 - 39];
+  const columnWidths = [44, 44, 30, 31, 27, 34, tableWidth - 44 - 44 - 30 - 31 - 27 - 34];
   const rowHeight = 7;
   let y = 31;
 
@@ -85,7 +87,7 @@ export function createProvincialBreakdownPdf(
   doc.setFontSize(9);
   doc.text(`Ámbito: ${context.ambito} · ${formatNumber(context.respuestas)} respuestas · ${context.generadoEn || new Date().toLocaleString("es-ES")}`, margin, 19);
 
-  const headers = ["Comunidad autónoma", "Provincia", "Cupo", "Votos válidos", "Escaños asignados", "Partidos y escaños"];
+  const headers = ["Comunidad autónoma", "Provincia", "Cupo", "Votos válidos", "% ámbito", "Escaños", "Partidos y escaños"];
   const drawHeader = () => {
     doc.setFillColor(...hexToRgb("#c41e3a"));
     doc.rect(margin, y, tableWidth, rowHeight, "F");
@@ -117,7 +119,7 @@ export function createProvincialBreakdownPdf(
     }
     doc.setDrawColor(218, 223, 232);
     doc.rect(margin, y, tableWidth, rowHeight);
-    const values = [row.ccaa, row.provincia, String(row.cupoEscanos), formatNumber(row.votos), String(row.escanosAsignados), row.partidos || "—"];
+    const values = [row.ccaa, row.provincia, String(row.cupoEscanos), formatNumber(row.votos), `${row.porcentajeVoto.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`, String(row.escanosAsignados), row.partidos || "—"];
     let x = margin;
     values.forEach((value, valueIndex) => {
       doc.setTextColor(25, 32, 48);

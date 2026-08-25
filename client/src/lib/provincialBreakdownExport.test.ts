@@ -19,6 +19,7 @@ const rows: ProvincialBreakdownExportRow[] = [
     provincia: "Madrid",
     cupoEscanos: 37,
     votos: 42,
+    porcentajeVoto: 100,
     escanosAsignados: 37,
     partidos: "PP: 18 · PSOE: 10 · VOX: 9",
   },
@@ -29,9 +30,10 @@ describe("provincialBreakdownExport", () => {
     const csv = buildProvincialBreakdownCsv(rows, context);
 
     expect(csv.startsWith("\uFEFF")).toBe(true);
-    expect(csv).toContain("Comunidad autónoma,Provincia,Cupo provincial,Votos válidos,Escaños asignados,Partidos y escaños");
-    expect(csv).toContain("Comunidad de Madrid,Madrid,37,42,37");
+    expect(csv).toContain("Comunidad autónoma,Provincia,Cupo provincial,Votos válidos,% del ámbito,Escaños asignados,Partidos y escaños");
+    expect(csv).toContain("Comunidad de Madrid,Madrid,37,42,\"100,0\",37");
     expect(csv).toContain("PP: 18 · PSOE: 10 · VOX: 9");
+    expect(csv).toContain("% del ámbito");
     expect(csv).toContain("2026-08-25T12:00:00.000Z");
   });
 
