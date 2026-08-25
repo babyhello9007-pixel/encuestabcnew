@@ -32,8 +32,20 @@ export function registerStorageProxy(app: Express) {
         res.status(502).send("Empty signed URL from backend");
         return;
       }
-      res.set("Cache-Control", "public, max-age=31536000, immutable");
-      res.redirect(307, url);
+      const assetResp = await fetch(url);
+      if (!assetResp.ok) {
+        console.error(`[StorageProxy] asset error: ${assetResp.status}`);
+        res.status(502).send("Storage asset error");
+        return;
+      }
+      const assetBody = Buffer.from(await assetResp.arrayBuffer());
+      res.set({
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": assetResp.headers.get("content-type") || "font/ttf",
+        "Content-Length": String(assetBody.length),
+      });
+      res.status(200).send(assetBody);
     } catch (err) {
       console.error("[StorageProxy] failed:", err);
       res.status(502).send("Storage proxy error");

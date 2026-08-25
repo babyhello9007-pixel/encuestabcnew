@@ -862,3 +862,15 @@
 - [x] Mostrar porcentaje de voto junto a los escaños de cada provincia
 - [x] Ordenar el desglose provincial por participación o escaños asignados
 - [x] Añadir pruebas unitarias para porcentajes, ordenación y exportación PNG
+
+## Filtros, Top 5 y tooltips - SESIÓN ACTUAL
+- [x] Añadir tooltip con votos exactos en los porcentajes del desglose provincial
+- [x] Hacer colapsable el panel de filtros desde el botón de filtro
+- [x] Abrir el Top 5 de líderes al pulsar el botón de corona
+- [x] Añadir cierre, foco y estados accesibles a filtros y Top 5
+- [x] Añadir mejora UX: conservar el último panel abierto y anunciarlo a lectores de pantalla
+
+## Entrega de tipografía en Vercel - SESIÓN ACTUAL
+- [x] Servir TVP.ttf desde una ruta pública compatible con Vercel
+- [x] Configurar precarga y cabeceras MIME/cache de la fuente sin depender del proxy local
+- [x] Verificar carga efectiva de TVP en el despliegue de Vercel

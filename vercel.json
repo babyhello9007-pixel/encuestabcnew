@@ -3,8 +3,31 @@
   "outputDirectory": "dist/public",
   "rewrites": [
     {
+      "source": "/fonts/TVP.ttf",
+      "destination": "https://encuestabc-6q57y6uz.manus.space/manus-storage/TVP_24a34a2b.ttf"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/fonts/TVP.ttf",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Content-Type",
+          "value": "font/ttf"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
     }
   ]
 }

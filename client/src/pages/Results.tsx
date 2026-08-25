@@ -62,6 +62,7 @@ import { createCanonicalPartyIndex, normalizePartyReference, resolveCanonicalPar
 import { buildResultsSharePayload } from "@/lib/resultsShare";
 import { buildResultsCsv, buildResultsExcelHtml, type ResultsExportContext, type ResultsExportRow } from "@/lib/resultsExport";
 import { buildProvincialBreakdownCsv, downloadProvincialBreakdownPdf, type ProvincialBreakdownExportContext, type ProvincialBreakdownExportRow } from "@/lib/provincialBreakdownExport";
+import { formatExactVoteTooltip } from "@/lib/resultsTooltip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -171,6 +172,11 @@ const RESULTS_CSS = `
   .r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
   .r-hbtn-share { background: rgba(45,212,191,0.14); border: 1px solid rgba(45,212,191,0.32); color: #5eead4; }
   .r-hbtn-share:hover { background: rgba(45,212,191,0.24); transform: translateY(-1px); }
+  .r-hbtn-panel { background: rgba(96,165,250,.13); border: 1px solid rgba(96,165,250,.30); color: #bfdbfe; }
+  .r-hbtn-panel:hover, .r-hbtn-panel.is-active { background: rgba(96,165,250,.24); transform: translateY(-1px); }
+  .r-hbtn-crown { background: rgba(251,191,36,.13); border: 1px solid rgba(251,191,36,.30); color: #fde68a; }
+  .r-hbtn-crown:hover, .r-hbtn-crown.is-active { background: rgba(251,191,36,.24); transform: translateY(-1px); }
+  .r-panel-badge { padding: 2px 5px; border-radius: 999px; background: rgba(94,234,212,.16); color: #99f6e4; font-size: 9px; font-weight: 900; }
   .r-share-feedback { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 8px; background: rgba(16,185,129,.13); border: 1px solid rgba(110,231,183,.28); color: #a7f3d0; font-size: 12px; font-weight: 700; animation: fadeIn .2s ease-out both; }
 
 /* Subnav */
@@ -214,7 +220,14 @@ const RESULTS_CSS = `
 .r-sort-hint { margin-left: auto; font-size: 12px; color: #5a596a; }
 
 /* Advanced result filters */
-.r-filter-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 12px 30px rgba(0,0,0,.18); }
+  .r-top5-collapsible-panel { animation: filterPanelIn .24s ease both; scroll-margin-top: 18px; }
+  .r-filter-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 42px; padding: 9px 13px; border: 1px solid rgba(96,165,250,.24); border-radius: 12px; background: linear-gradient(135deg, rgba(96,165,250,.10), rgba(255,255,255,.035)); color: #dbeafe; font: inherit; cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+  .r-filter-trigger:hover, .r-filter-trigger:focus-visible, .r-filter-trigger.is-active { transform: translateY(-1px); border-color: rgba(96,165,250,.55); background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(255,255,255,.055)); outline: none; box-shadow: 0 0 0 3px rgba(96,165,250,.11); }
+  .r-filter-trigger-label { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 800; }
+  .r-filter-trigger-state { color: #93c5fd; font-size: 11px; font-weight: 700; }
+  .r-filter-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 12px 30px rgba(0,0,0,.18); animation: filterPanelIn .22s ease both; }
+  @keyframes filterPanelIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
 .r-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .r-filter-title { display: inline-flex; align-items: center; gap: 7px; color: #f0eff8; font-size: 13px; font-weight: 800; }
 .r-filter-description { margin: 2px 0 0; color: #8b8aa0; font-size: 11px; }
@@ -2554,6 +2567,13 @@ export default function Results() {
   const [porcentajeLiderPorPartido, setPorcentajeLiderPorPartido] = useState<Record<string, number>>({});
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [resultFilters, setResultFilters] = useState<ResultFilterState>({ ccaa: "all", provincia: "all", edad: "all" });
+  const [openResultsPanel, setOpenResultsPanel] = useState<"filters" | "top5" | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = window.sessionStorage.getItem("bc-results-open-panel");
+    return saved === "filters" || saved === "top5" ? saved : null;
+  });
+  const [panelAnnouncement, setPanelAnnouncement] = useState("");
+  const panelInteractionRef = useRef(false);
   const [showNationalComparison, setShowNationalComparison] = useState(false);
   const [hoveredCCAA, setHoveredCCAA] = useState<string | null>(null);
   const [provinceSortBy, setProvinceSortBy] = useState<"participacion" | "escanos">("participacion");
@@ -2561,6 +2581,27 @@ export default function Results() {
   const [filterRows, setFilterRows] = useState<ResultFilterRow[]>([]);
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
+  useEffect(() => {
+    if (typeof window === "undefined" || !openResultsPanel) return;
+    window.sessionStorage.setItem("bc-results-open-panel", openResultsPanel);
+  }, [openResultsPanel]);
+  useEffect(() => {
+    const label = openResultsPanel === "filters" ? "Filtros avanzados abiertos" : openResultsPanel === "top5" ? "Top 5 de líderes abierto" : "Panel cerrado";
+    setPanelAnnouncement(label);
+    if (!panelInteractionRef.current || !openResultsPanel) return;
+    panelInteractionRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(openResultsPanel === "filters" ? "results-filters-panel" : "results-top5-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [openResultsPanel]);
+
+  const toggleResultsPanel = (panel: "filters" | "top5") => {
+    panelInteractionRef.current = true;
+    setOpenResultsPanel((current) => current === panel ? null : panel);
+  };
+  const filtersOpen = openResultsPanel === "filters";
+  const top5Open = openResultsPanel === "top5";
 
   const handleShareResults = async () => {
     const { title, text, url } = buildResultsSharePayload(window.location.origin, activeTab, totalResponses);
@@ -3309,6 +3350,28 @@ export default function Results() {
             }} title="Exportar informe oficial en PDF">
               <FileText size={12} /><span>PDF</span>
             </button>
+            {showSortBar && (
+              <button
+                className={`r-hbtn r-hbtn-panel${filtersOpen ? " is-active" : ""}`}
+                onClick={() => toggleResultsPanel("filters")}
+                aria-expanded={filtersOpen}
+                aria-controls="results-filters-panel"
+                title="Mostrar u ocultar los filtros avanzados"
+              >
+                <Filter size={12} /><span>Filtros</span>{filtersAreActive && <span className="r-panel-badge">Activos</span>}
+              </button>
+            )}
+            {activeTab === "general" && !filtersAreActive && (
+              <button
+                className={`r-hbtn r-hbtn-crown${top5Open ? " is-active" : ""}`}
+                onClick={() => toggleResultsPanel("top5")}
+                aria-expanded={top5Open}
+                aria-controls="results-top5-panel"
+                title="Mostrar u ocultar el Top 5 de líderes"
+              >
+                <Crown size={12} /><span>Top 5</span>
+              </button>
+            )}
             <button className="r-hbtn r-hbtn-share" onClick={handleShareResults} title="Compartir un enlace a estos resultados">
               <Share2 size={12} /><span>Compartir</span>
             </button>
@@ -3333,6 +3396,7 @@ export default function Results() {
         {/* NavBar */}
         <ResultsNavBar activeTab={activeTab} onTabChange={setActiveTab} />
 
+        <span className="sr-only" aria-live="polite">{panelAnnouncement}</span>
         <main className="r-main" style={{ animation: 'fadeIn 0.6s ease-out' }}>
           <div className="r-space" style={{ animation: 'slideInUp 0.8s ease-out 0.2s both' }}>
               {/* Quick stats */}
@@ -3375,7 +3439,19 @@ export default function Results() {
               </div>
 
               {showSortBar && (
-                <section className="r-filter-panel" aria-label="Filtros avanzados de resultados">
+                <>
+                  <button
+                    type="button"
+                    className={`r-filter-trigger${filtersOpen ? " is-active" : ""}`}
+                    onClick={() => toggleResultsPanel("filters")}
+                    aria-expanded={filtersOpen}
+                    aria-controls="results-filters-panel"
+                  >
+                    <span className="r-filter-trigger-label"><Filter size={14} /> Filtros avanzados</span>
+                    <span className="r-filter-trigger-state">{filtersOpen ? "Ocultar" : filtersAreActive ? "Mostrar · activos" : "Mostrar"}</span>
+                  </button>
+                  {filtersOpen && (
+                    <section id="results-filters-panel" className="r-filter-panel" aria-label="Filtros avanzados de resultados">
                   <div className="r-filter-head">
                     <div>
                       <div className="r-filter-title"><Filter size={14} /> Filtros avanzados</div>
@@ -3481,15 +3557,15 @@ export default function Results() {
                                   <div className="r-province-breakdown-name">{province.provincia}</div>
                                   <div className="r-province-breakdown-ccaa">{province.ccaa}</div>
                                 </div>
-                                <span className="r-province-seat-pill">{province.escanosAsignados}/{province.cupoEscanos} escaños · {province.porcentajeVoto.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% voto</span>
+                                <span className="r-province-seat-pill" title={formatExactVoteTooltip(province.votos, province.porcentajeVoto)}>{province.escanosAsignados}/{province.cupoEscanos} escaños · {province.porcentajeVoto.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% voto</span>
                               </div>
                               <div className="r-province-breakdown-meta">
-                                <span>{province.votos.toLocaleString("es-ES")} votos válidos · {province.porcentajeVoto.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% del ámbito</span>
-                                <span>{province.respuestas.toLocaleString("es-ES")} respuestas · {province.porcentajeParticipacion.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% participación</span>
+                                <span title={formatExactVoteTooltip(province.votos, province.porcentajeVoto)}>{province.votos.toLocaleString("es-ES")} votos válidos · {province.porcentajeVoto.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% del ámbito</span>
+                                <span title={`${province.porcentajeParticipacion.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% de participación calculada sobre ${province.respuestas.toLocaleString("es-ES")} respuestas`}>{province.respuestas.toLocaleString("es-ES")} respuestas · {province.porcentajeParticipacion.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% participación</span>
                               </div>
                               <div className="r-province-party-list">
                                 {province.partidos.length > 0 ? province.partidos.slice(0, 5).map((party) => (
-                                  <span className="r-province-party-chip" key={`${province.provincia}-${party.id}`} style={{ borderLeft: `3px solid ${party.color}` }}>
+                                    <span className="r-province-party-chip" key={`${province.provincia}-${party.id}`} title={`${party.nombre}: ${party.votos.toLocaleString("es-ES")} votos · ${party.porcentaje.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% de la provincia`} style={{ borderLeft: `3px solid ${party.color}` }}>
                                     <span>{party.nombre}</span><strong>{party.escanos} · {party.porcentaje.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</strong>
                                   </span>
                                 )) : <span className="r-territory-block-note">Sin voto de partido válido</span>}
@@ -3609,9 +3685,10 @@ export default function Results() {
                       )}
                     </div>
                   )}
-                </section>
+                                </section>
+                  )}
+                </>
               )}
-
               {showSortBar && (
                 <div className="r-sort-bar">
                   <span style={{ fontSize: 11, color: "#7a7990" }}>Ordenar:</span>
@@ -3650,8 +3727,10 @@ export default function Results() {
                 </div>
               )}
 
-              {showPartyList && activeTab === "general" && !filtersAreActive && (
-                <Top5LideresWidget />
+              {showPartyList && activeTab === "general" && !filtersAreActive && top5Open && (
+                <div id="results-top5-panel" role="region" aria-label="Top 5 de líderes más valorados" className="r-top5-collapsible-panel">
+                  <Top5LideresWidget />
+                </div>
               )}
 
               {showPartyList && (
