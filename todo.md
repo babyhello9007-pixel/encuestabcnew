@@ -832,3 +832,14 @@
 - [x] Completar comparativa histórica con datos reales y estado vacío
 - [x] Revisar y ampliar dashboard administrativo con estadísticas de participación
 - [x] Añadir pruebas unitarias y validación responsive del alcance priorizado
+
+## Incidencia de tipografía - SESIÓN ACTUAL
+- [x] Verificar que TVP.ttf se descarga correctamente y que el navegador la usa en los textos visibles
+- [x] Corregir cualquier ruta, peso, regla heredada o fallback que impida aplicar TVP globalmente
+- [x] Validar la fuente corregida en Results, Home y móvil con TypeScript, tests y build
+
+## Corrección de filtros electorales provinciales - SESIÓN ACTUAL
+- [x] Evitar repartir 350 escaños nacionales dentro de una muestra filtrada
+- [x] Usar la distribución predefinida de escaños de cada provincia en los filtros
+- [x] Agregar por CCAA los escaños calculados provincia a provincia
+- [x] Añadir pruebas para garantizar que cada provincia conserva su cupo electoral

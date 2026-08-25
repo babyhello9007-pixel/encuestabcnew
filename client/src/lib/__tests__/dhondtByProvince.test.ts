@@ -165,3 +165,57 @@ describe('Ley d\'Hondt por Provincia', () => {
     });
   });
 });
+
+
+describe('Cálculo provincial para ámbitos filtrados', () => {
+  it('usa sólo el cupo de Madrid al filtrar una provincia', async () => {
+    const {
+      calcularEscanosFiltradosPorAmbito,
+      calcularEscanosProvincia,
+      getEscanosPorProvincia,
+    } = await import('../dhondtByProvince');
+    const resultado = calcularEscanosFiltradosPorAmbito(
+      { Madrid: { PP: 100, PSOE: 80, VOX: 40 } },
+      ['Madrid'],
+      getEscanosPorProvincia(),
+      calcularEscanosProvincia,
+    );
+
+    expect(resultado.totalEscanosEnAmbito).toBe(37);
+    expect(Object.values(resultado.escanos).reduce((total, value) => total + value, 0)).toBe(37);
+    expect(resultado.provincias).toEqual(['Madrid']);
+  });
+
+  it('suma los cupos de Madrid y Barcelona sin redistribuir 350 escaños', async () => {
+    const {
+      calcularEscanosFiltradosPorAmbito,
+      calcularEscanosProvincia,
+      getEscanosPorProvincia,
+    } = await import('../dhondtByProvince');
+    const resultado = calcularEscanosFiltradosPorAmbito(
+      {
+        Madrid: { PP: 100, PSOE: 80 },
+        Barcelona: { PP: 50, PSOE: 100 },
+      },
+      ['Madrid', 'Barcelona'],
+      getEscanosPorProvincia(),
+      calcularEscanosProvincia,
+    );
+
+    expect(resultado.totalEscanosEnAmbito).toBe(69);
+    expect(Object.values(resultado.escanos).reduce((total, value) => total + value, 0)).toBe(69);
+  });
+
+  it('resuelve nombres alternativos de provincias antes de sumar el cupo', async () => {
+    const { calcularEscanosFiltradosPorAmbito, calcularEscanosProvincia, getEscanosPorProvincia } = await import('../dhondtByProvince');
+    const resultado = calcularEscanosFiltradosPorAmbito(
+      { Vizcaya: { PP: 100, PSOE: 80 } },
+      ['Vizcaya'],
+      getEscanosPorProvincia(),
+      calcularEscanosProvincia,
+    );
+
+    expect(resultado.provincias).toEqual(['Bizkaia']);
+    expect(resultado.totalEscanosEnAmbito).toBe(8);
+  });
+});

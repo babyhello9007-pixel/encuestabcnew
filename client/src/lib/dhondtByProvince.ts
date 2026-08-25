@@ -279,3 +279,132 @@ export function calcularEscanosJuvenilesProvincia(
   const escanosEnProvincia = ESCANOS_JUVENILES_POR_PROVINCIA[provincia] || 0;
   return calcularEscanosDHondt(votos, escanosEnProvincia, 4);
 }
+
+/**
+ * Distribución territorial de escaños de asociaciones juveniles.
+ * Se expone para que filtros y visualizaciones puedan sumar el cupo real
+ * de las provincias incluidas sin recurrir al total nacional.
+ */
+export function getEscanosJuvenilesPorProvincia(): Record<string, number> {
+  return {
+    'Madrid': 11,
+    'Barcelona': 10,
+    'Valencia': 6,
+    'Sevilla': 4,
+    'Alicante': 4,
+    'Málaga': 4,
+    'Murcia': 3,
+    'Cádiz': 2,
+    'A Coruña': 2,
+    'Las Palmas': 2,
+    'Bizkaia': 2,
+    'Illes Balears': 2,
+    'Zaragoza': 2,
+    'Santa Cruz de Tenerife': 2,
+    'Asturias': 2,
+    'Granada': 2,
+    'Pontevedra': 2,
+    'Almería': 1,
+    'Córdoba': 1,
+    'Gipuzkoa': 1,
+    'Girona': 1,
+    'Tarragona': 1,
+    'Toledo': 1,
+    'Badajoz': 1,
+    'Cantabria': 1,
+    'Castellón': 1,
+    'Ciudad Real': 1,
+    'Huelva': 1,
+    'Jaén': 1,
+    'Navarra': 1,
+    'Valladolid': 1,
+    'Álava': 1,
+    'Albacete': 1,
+    'Burgos': 1,
+    'Cáceres': 1,
+    'La Rioja': 1,
+    'León': 1,
+    'Lleida': 1,
+    'Lugo': 1,
+    'Ourense': 1,
+    'Palencia': 1,
+    'Salamanca': 4,
+    'Segovia': 1,
+    'Soria': 1,
+    'Teruel': 1,
+    'Ávila': 1,
+    'Cuenca': 1,
+    'Guadalajara': 1,
+    'Huesca': 1,
+    'Zamora': 1,
+    'Ceuta': 1,
+    'Melilla': 1,
+  };
+}
+
+/**
+ * Resuelve etiquetas de provincia procedentes de respuestas o vistas a la clave
+ * oficial del mapa de cupos electorales.
+ */
+export function resolverProvinciaParaCupo(
+  provincia: string | null | undefined,
+  escanosPorProvincia: Record<string, number>,
+): string | null {
+  if (!provincia) return null;
+  const aliases: Record<string, string> = {
+    vizcaya: "bizkaia",
+    guipuzcoa: "gipuzkoa",
+    "la coruna": "a coruna",
+    coruna: "a coruna",
+    baleares: "illes balears",
+  };
+  const normalize = (value: string) => {
+    const withoutAccents = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const compact = withoutAccents.trim().replace(/\s+/g, " ").toLocaleLowerCase("es-ES");
+    return aliases[compact] || compact;
+  };
+  const normalizedProvince = normalize(String(provincia));
+  return Object.keys(escanosPorProvincia).find((key) => normalize(key) === normalizedProvince) || null;
+}
+
+/**
+ * Recalcula un resultado filtrado manteniendo la circunscripción provincial.
+ * El total de escaños del ámbito es la suma de los cupos de sus provincias;
+ * nunca se redistribuye el total nacional dentro de la muestra.
+ */
+export function calcularEscanosFiltradosPorAmbito(
+  votosPorProvincia: Record<string, Record<string, number>>,
+  provinciasIncluidas: string[],
+  escanosPorProvincia: Record<string, number>,
+  calcularProvincia: (provincia: string, votos: Record<string, number>) => Record<string, number>,
+): { escanos: Record<string, number>; totalEscanosEnAmbito: number; provincias: string[] } {
+  const provincias = Array.from(new Set(
+    provinciasIncluidas
+      .map((provincia) => resolverProvinciaParaCupo(provincia, escanosPorProvincia))
+      .filter((provincia): provincia is string => Boolean(provincia)),
+  ));
+  const votosNormalizados: Record<string, Record<string, number>> = {};
+
+  Object.entries(votosPorProvincia).forEach(([provinciaOriginal, votos]) => {
+    const provincia = resolverProvinciaParaCupo(provinciaOriginal, escanosPorProvincia);
+    if (!provincia || !provincias.includes(provincia)) return;
+    const acumulado = votosNormalizados[provincia] || (votosNormalizados[provincia] = {});
+    Object.entries(votos).forEach(([partido, cantidad]) => {
+      acumulado[partido] = (acumulado[partido] || 0) + (Number(cantidad) || 0);
+    });
+  });
+
+  const escanos: Record<string, number> = {};
+  provincias.forEach((provincia) => {
+    const escanosProvinciales = calcularProvincia(provincia, votosNormalizados[provincia] || {});
+    Object.entries(escanosProvinciales).forEach(([partido, cantidad]) => {
+      escanos[partido] = (escanos[partido] || 0) + cantidad;
+    });
+  });
+
+  return {
+    escanos,
+    totalEscanosEnAmbito: provincias.reduce((total, provincia) => total + (escanosPorProvincia[provincia] || 0), 0),
+    provincias,
+  };
+}

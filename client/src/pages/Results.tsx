@@ -10,7 +10,16 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
-import { calcularEscanosGeneralesPorProvincia, calcularEscanosJuvenilesPorProvincia } from "@/lib/dhondtByProvince";
+import {
+  calcularEscanosGeneralesPorProvincia,
+  calcularEscanosJuvenilesPorProvincia,
+  calcularEscanosProvincia,
+  calcularEscanosJuvenilesProvincia,
+  calcularEscanosFiltradosPorAmbito,
+  getEscanosPorProvincia,
+  getEscanosJuvenilesPorProvincia,
+  resolverProvinciaParaCupo,
+} from "@/lib/dhondtByProvince";
 import {
   Loader2, Download, Plus, Trash2, RefreshCw,
   Map, Grid3x3, ChevronDown, Users, BarChart2, MapPin,
@@ -2836,6 +2845,42 @@ export default function Results() {
       return matchesCcaa && matchesProvincia && matchesEdad;
     });
   }, [filterRows, resultFilters]);
+  const filteredSeatScope = useMemo(() => {
+    if (!filtersAreActive) {
+      return { escanos: {}, totalEscanosEnAmbito: totalEscanos, provincias: [] as string[] };
+    }
+
+    const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
+    const voteField = activeTab === "general" ? "voto_generales" : "voto_asociacion_juvenil";
+    const provinceSeats = activeTab === "general"
+      ? getEscanosPorProvincia()
+      : getEscanosJuvenilesPorProvincia();
+    const provinceVotes: Record<string, Record<string, number>> = {};
+    const filteredProvinces: string[] = [];
+
+    filteredRows.forEach(row => {
+      const province = resolverProvinciaParaCupo(row.provincia, provinceSeats);
+      if (!province) return;
+      if (!filteredProvinces.includes(province)) filteredProvinces.push(province);
+
+      const rawVote = String(row[voteField] || "").trim();
+      if (!rawVote || rawVote.toLocaleLowerCase("es-ES") === "otro") return;
+      const partyKey = resolvePartyKey(rawVote, partyMap);
+      if (!partyMap[partyKey]) return;
+      if (!provinceVotes[province]) provinceVotes[province] = {};
+      provinceVotes[province][partyKey] = (provinceVotes[province][partyKey] || 0) + 1;
+    });
+
+    const calculateProvince = activeTab === "general"
+      ? calcularEscanosProvincia
+      : calcularEscanosJuvenilesProvincia;
+    return calcularEscanosFiltradosPorAmbito(
+      provinceVotes,
+      filteredProvinces,
+      provinceSeats,
+      calculateProvince,
+    );
+  }, [activeTab, filtersAreActive, filteredRows, generalPartyMap, totalEscanos, youthPartyMap]);
   const filteredStats = useMemo(() => {
     if (!filtersAreActive) return stats;
     const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
@@ -2848,17 +2893,17 @@ export default function Results() {
       const partyKey = resolvePartyKey(rawVote, partyMap);
       if (partyMap[partyKey]) votes[partyKey] = (votes[partyKey] || 0) + 1;
     });
-    const seats = activeTab === "general" ? calcularEscanosGenerales(votes) : calcularEscanosJuveniles(votes);
     const names: Record<string, string> = {};
     const logos: Record<string, string> = {};
     Object.entries(partyMap).forEach(([key, party]) => { names[key] = party.name; logos[key] = party.logo; });
-    return obtenerEstadisticas(votes, seats, names, logos).map(party => ({
+    return obtenerEstadisticas(votes, filteredSeatScope.escanos, names, logos).map(party => ({
       ...party,
       color: partyMap[resolvePartyKey(party.id, partyMap)]?.color,
     }));
-  }, [activeTab, filtersAreActive, filteredRows, generalPartyMap, stats, youthPartyMap]);
+  }, [activeTab, filtersAreActive, filteredRows, filteredSeatScope.escanos, generalPartyMap, stats, youthPartyMap]);
   const displayedStats = filtersAreActive ? filteredStats : stats;
   const displayedResponseCount = filtersAreActive ? filteredRows.length : totalResponses;
+  const displayedTotalEscanos = filtersAreActive ? filteredSeatScope.totalEscanosEnAmbito : totalEscanos;
   const exportRows = useMemo<ResultsExportRow[]>(() => {
     const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
     return displayedStats.map(party => {
@@ -3197,7 +3242,7 @@ export default function Results() {
                       {opt === "votos" ? "Votos" : opt === "escanos" ? "Escaños" : opt === "barometro" ? "BarómetroBC" : "Media"}
                     </button>
                   ))}
-                  <span className="r-sort-hint">{totalEscanos} escaños en juego</span>
+                  <span className="r-sort-hint">{displayedTotalEscanos} escaños en juego{filtersAreActive ? " en el ámbito filtrado" : ""}</span>
                   {activeTab === "general" && (
                     <button
                       onClick={() => setShowTransferenciaModal(true)}
@@ -3295,7 +3340,7 @@ export default function Results() {
                         <div className="r-party-bar-wrap">
                           <div className="r-party-bar-labels">
                             <span>{party.porcentaje.toFixed(1)}% votos</span>
-                            <span>{((party.escanos / totalEscanos) * 100).toFixed(1)}% escaños</span>
+                            <span>{displayedTotalEscanos > 0 ? ((party.escanos / displayedTotalEscanos) * 100).toFixed(1) : "0.0"}% escaños</span>
                           </div>
                           <div className="r-party-bar-track">
                             <div className="r-party-bar-fill" style={{ background: partyColor, width: `${party.porcentaje}%` }} />
