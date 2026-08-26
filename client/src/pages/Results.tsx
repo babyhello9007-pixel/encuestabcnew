@@ -3506,9 +3506,6 @@ export default function Results() {
                 <Download size={12} /><span>CSV</span>
               </button>
             )}
-            <button className="r-hbtn r-hbtn-pdf" onClick={() => void handlePreparePdfPreview()} disabled={!!exportingFormat} aria-busy={exportingFormat === "pdf"} title="Previsualizar y exportar el resumen electoral optimizado para impresión">
-              <FileText size={12} /><span>PDF</span>
-            </button>
             {showSortBar && (
               <button
                 className={`r-hbtn r-hbtn-panel${filtersOpen ? " is-active" : ""}`}
@@ -3545,8 +3542,8 @@ export default function Results() {
                 <option value="csv">CSV</option>
               </select>
             </label>
-            <button className="r-hbtn r-hbtn-outline" onClick={handlePreferredExport} title={`Exportar en formato preferido: ${preferredExportFormat.toUpperCase()}`}>
-              <Download size={12} /><span>Preferido</span>
+            <button className={`r-hbtn ${preferredExportFormat === "pdf" ? "r-hbtn-pdf" : "r-hbtn-outline"}`} onClick={handlePreferredExport} disabled={!!exportingFormat} aria-busy={preferredExportFormat === "pdf" && exportingFormat === "pdf"} title={preferredExportFormat === "pdf" ? "Previsualizar y descargar el resumen electoral en PDF" : `Exportar en formato preferido: ${preferredExportFormat.toUpperCase()}`}>
+              {preferredExportFormat === "pdf" ? <FileText size={12} /> : <Download size={12} />}<span>{preferredExportFormat === "pdf" ? "PDF" : "Preferido"}</span>
             </button>
             {exportingFormat && <span className="r-export-progress" role="status" aria-live="polite"><span className="r-export-spinner" aria-hidden="true" /> {exportingFormat === "pdf" ? `Generando PDF ${exportProgress}%` : exportingFormat === "share" ? `Preparando imagen ${exportProgress}%` : `Generando PNG ${exportProgress}%`}</span>}
             {shareFeedback && <span className="r-share-feedback" role="status" aria-live="polite">{shareFeedback}</span>}
@@ -3578,7 +3575,7 @@ export default function Results() {
               <option value="csv">CSV</option>
             </select>
           </label>
-          <button type="button" className="r-hbtn r-hbtn-outline" onClick={handlePreferredExport} title={`Exportar en formato preferido: ${preferredExportFormat.toUpperCase()}`}><Download size={12} /> Exportar</button>
+          <button type="button" className={`r-hbtn ${preferredExportFormat === "pdf" ? "r-hbtn-pdf" : "r-hbtn-outline"}`} onClick={handlePreferredExport} disabled={!!exportingFormat} aria-busy={preferredExportFormat === "pdf" && exportingFormat === "pdf"} title={preferredExportFormat === "pdf" ? "Previsualizar y descargar el resumen electoral en PDF" : `Exportar en formato preferido: ${preferredExportFormat.toUpperCase()}`}>{preferredExportFormat === "pdf" ? <FileText size={12} /> : <Download size={12} />} {preferredExportFormat === "pdf" ? "PDF" : "Exportar"}</button>
           <button type="button" className="r-hbtn r-hbtn-share" onClick={handleSharePng} title="Compartir la imagen de resultados"><Image size={12} /> Compartir</button>
         </div>
 

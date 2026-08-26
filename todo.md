@@ -933,3 +933,21 @@
 - [x] Mantener el diseño legible en PNG de escritorio y móvil
 - [x] Añadir pruebas para el cálculo y orden de las regiones destacadas
 - [x] Validar la infografía y publicar el checkpoint
+
+## Regiones, Sankey y validación de líderes - SESIÓN ACTUAL
+- [ ] Reutilizar en el PDF las mismas regiones destacadas y métricas de la infografía general
+- [ ] Añadir al PDF una sección Sankey con flujos electorales reales y leyenda legible
+- [ ] Mostrar indicador o tooltip de líder validado oficialmente frente a introducido manualmente
+- [ ] Aplicar el indicador de validación en tarjetas, ranking, Top 5 e infografías donde corresponda
+- [ ] Añadir filtro interactivo para explorar cada región destacada en la infografía general
+- [ ] Mostrar datos territoriales específicos al seleccionar una región destacada
+- [ ] Añadir pruebas unitarias para regiones, Sankey y estado de validación
+- [ ] Validar PDF, PNG, responsive, TypeScript, tests y build
+- [ ] Guardar checkpoint publicado con la mejora
+
+## Corrección de controles PDF - SESIÓN ACTUAL
+- [x] Eliminar cualquier botón PDF redundante que duplique la misma exportación
+- [x] Mantener vista previa, orientación y descarga dentro de un único flujo PDF
+- [x] Validar que la interfaz no muestre dos acciones equivalentes en móvil ni escritorio
+- [x] Ejecutar TypeScript, tests, build y revisión responsive
+- [x] Guardar checkpoint publicado con la corrección
