@@ -885,3 +885,16 @@
 - [x] Añadir pruebas unitarias para preferencias y exportación
 - [x] Ejecutar TypeScript, tests, build y validación responsive final
 - [x] Guardar checkpoint publicado con las mejoras
+
+## Exportación PDF y compartir nativo - SESIÓN ACTUAL
+- [x] Diseñar un resumen electoral PDF optimizado para impresión
+- [x] Incluir en el PDF medias globales: encuestas, valoración del gobierno y participación
+- [x] Incluir en el PDF medias y datos electorales por partido del ámbito visible
+- [x] Añadir contexto metodológico, fecha, filtros activos y totales al PDF
+- [x] Añadir selector de formato de exportación preferido
+- [x] Persistir la preferencia de formato de exportación en el navegador
+- [x] Añadir compartir nativo de la imagen PNG exportada mediante Web Share API
+- [x] Añadir fallback accesible para compartir o descargar cuando el dispositivo no soporte archivos compartidos
+- [x] Crear pruebas unitarias para el PDF, la preferencia y el flujo de compartir
+- [x] Validar exportaciones, responsive, accesibilidad, TypeScript y build
+- [x] Guardar checkpoint publicado con la mejora de exportaciones

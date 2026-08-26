@@ -54,7 +54,7 @@ import { Top5LideresWidget } from "@/components/results/Top5LideresWidget";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
 import GovernmentBuilder from "@/components/GovernmentBuilder";
-import { downloadPDFWithMetrics } from "@/lib/pdfExportMetrics";
+import { exportElectoralSummaryPdf, type ElectoralPdfParty, type ElectoralPdfContext } from "@/lib/electoralSummaryPdf";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
@@ -64,6 +64,7 @@ import { buildResultsCsv, buildResultsExcelHtml, type ResultsExportContext, type
 import { buildProvincialBreakdownCsv, downloadProvincialBreakdownPdf, type ProvincialBreakdownExportContext, type ProvincialBreakdownExportRow } from "@/lib/provincialBreakdownExport";
 import { formatExactVoteTooltip } from "@/lib/resultsTooltip";
 import { readResultsPanelPreference, writeResultsPanelPreference, type ResultsPanelPreference } from "@/lib/resultsPanelPreference";
+import { readExportFormatPreference, writeExportFormatPreference, type ExportFormatPreference } from "@/lib/exportFormatPreference";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -177,6 +178,10 @@ const RESULTS_CSS = `
   .r-hbtn-share:hover { background: rgba(45,212,191,0.24); transform: translateY(-1px); }
   .r-hbtn-panel { background: rgba(96,165,250,.13); border: 1px solid rgba(96,165,250,.30); color: #bfdbfe; }
   .r-hbtn-panel:hover, .r-hbtn-panel.is-active { background: rgba(96,165,250,.24); transform: translateY(-1px); }
+  .r-export-preference { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px 4px 9px; border-radius: 8px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #b8c0d4; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .r-export-preference select { appearance: none; border: 0; outline: 0; background: rgba(12,17,32,.74); color: #f8fafc; border-radius: 5px; padding: 3px 18px 3px 5px; font: inherit; cursor: pointer; }
+  .r-export-preference:focus-within { border-color: rgba(45,212,191,.64); box-shadow: 0 0 0 2px rgba(45,212,191,.18); }
+  .r-mobile-export-tools { display: none; }
   .r-hbtn-crown { background: rgba(251,191,36,.13); border: 1px solid rgba(251,191,36,.30); color: #fde68a; }
   .r-hbtn-crown:hover, .r-hbtn-crown.is-active { background: rgba(251,191,36,.24); transform: translateY(-1px); }
   .r-panel-badge { padding: 2px 5px; border-radius: 999px; background: rgba(94,234,212,.16); color: #99f6e4; font-size: 9px; font-weight: 900; }
@@ -639,6 +644,11 @@ const RESULTS_CSS = `
   box-shadow: 0 10px 24px rgba(2, 6, 23, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 @media (max-width: 768px) {
+  .r-mobile-export-tools { display: flex; align-items: center; gap: 7px; margin: 8px 12px 0; padding: 8px; border: 1px solid rgba(148,163,184,.18); border-radius: 12px; background: rgba(15,23,42,.52); overflow-x: auto; }
+  .r-mobile-export-tools .r-export-preference { flex: 1 1 auto; min-width: 118px; }
+  .r-mobile-export-tools .r-hbtn { flex: 0 0 auto; }
+  .r-export-preference span { display: none; }
+  .r-export-preference { padding-left: 5px; }
   .r-stat-card,
   .r-party-card,
   .r-section,
@@ -655,7 +665,7 @@ type TabKey =
 
 interface TabGroup { label: string; icon: React.ReactNode; tabs: { key: TabKey; label: string }[]; }
 
-async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, totalResponses: number) {
+async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, totalResponses: number, options: { download?: boolean } = {}) {
   const canvas = document.createElement("canvas");
   canvas.width = 1800;
   canvas.height = 1120;
@@ -730,14 +740,17 @@ async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, t
   context.fillText("Resultados de participación anónima · Batalla Cultural", 96, 1065);
 
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((file) => file ? resolve(file) : reject(new Error("El navegador no pudo crear el PNG.")), "image/png"));
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `batalla-cultural-${activeTab}-${Date.now()}.png`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+  if (options.download !== false) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `batalla-cultural-${activeTab}-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+  }
+  return blob;
 }
 
 const TAB_GROUPS: TabGroup[] = [
@@ -2581,6 +2594,10 @@ export default function Results() {
     return readResultsPanelPreference(window.localStorage) ?? readResultsPanelPreference(window.sessionStorage);
   });
   const [panelAnnouncement, setPanelAnnouncement] = useState("");
+  const [preferredExportFormat, setPreferredExportFormat] = useState<ExportFormatPreference>(() => {
+    if (typeof window === "undefined") return "pdf";
+    return readExportFormatPreference(window.localStorage);
+  });
   const panelInteractionRef = useRef(false);
   const [showNationalComparison, setShowNationalComparison] = useState(false);
   const [hoveredCCAA, setHoveredCCAA] = useState<string | null>(null);
@@ -2594,6 +2611,10 @@ export default function Results() {
     writeResultsPanelPreference(window.localStorage, openResultsPanel);
     writeResultsPanelPreference(window.sessionStorage, openResultsPanel);
   }, [openResultsPanel]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    writeExportFormatPreference(window.localStorage, preferredExportFormat);
+  }, [preferredExportFormat]);
   useEffect(() => {
     const label = openResultsPanel === "filters" ? "Filtros avanzados abiertos" : openResultsPanel === "top5" ? "Top 5 de líderes abierto" : "Panel cerrado";
     setPanelAnnouncement(label);
@@ -3159,6 +3180,73 @@ export default function Results() {
   }, []);
   const handleExportCsv = () => downloadExportFile(buildResultsCsv(exportRows, exportContext), "text/csv;charset=utf-8", "csv");
   const handleExportExcel = () => downloadExportFile(buildResultsExcelHtml(exportRows, exportContext), "application/vnd.ms-excel;charset=utf-8", "xls");
+  const electoralPdfParties = useMemo<ElectoralPdfParty[]>(() => {
+    const partyMap = activeTab === "general" ? generalPartyMap : youthPartyMap;
+    return exportRows.map((row) => {
+      const partyKey = resolvePartyKey(row.partido, partyMap);
+      return {
+        partido: row.partido,
+        votos: row.votos,
+        porcentaje: row.porcentaje,
+        escanos: row.escanos,
+        barometro: row.barometro,
+        mediaEncuestas: row.media,
+        edadMedia: edadMediaPorPartido[partyKey] ?? edadMediaPorPartido[row.partido] ?? null,
+        lider: liderPorPartido[partyKey] ?? liderPorPartido[row.partido] ?? null,
+        apoyoLider: porcentajeLiderPorPartido[partyKey] ?? porcentajeLiderPorPartido[row.partido] ?? null,
+        color: partyMap[partyKey]?.color,
+      };
+    });
+  }, [activeTab, edadMediaPorPartido, exportRows, generalPartyMap, liderPorPartido, porcentajeLiderPorPartido, youthPartyMap]);
+  const electoralPdfContext = useMemo<ElectoralPdfContext>(() => ({
+    titulo: exportContext.titulo,
+    respuestas: exportContext.respuestas,
+    ambito: filtersAreActive ? `${exportContext.ccaa} · ${exportContext.provincia}` : "Nacional",
+    ccaa: exportContext.ccaa,
+    provincia: exportContext.provincia,
+    edad: exportContext.edad,
+    edadPromedio,
+    ideologiaPromedio,
+    notaEjecutivo,
+    abstencionBarometro: 40,
+    nivelCabreo: 7,
+    totalEscanos: displayedTotalEscanos,
+    umbral: activeTab === "general" ? "3%" : "7%",
+    tipoEleccion: activeTab === "general" ? "las Elecciones Generales" : "las Asociaciones Juveniles",
+  }), [activeTab, displayedTotalEscanos, edadPromedio, exportContext, filtersAreActive, ideologiaPromedio, notaEjecutivo]);
+  const handleExportElectoralPdf = () => exportElectoralSummaryPdf(electoralPdfParties, electoralPdfContext);
+  const handlePreferredExport = () => {
+    if (preferredExportFormat === "pdf") return void handleExportElectoralPdf();
+    if (preferredExportFormat === "png") return void exportResultsSummaryPng(displayedStats, activeTab, displayedResponseCount);
+    return handleExportCsv();
+  };
+  const handleSharePng = async () => {
+    try {
+      const blob = await exportResultsSummaryPng(displayedStats, activeTab, displayedResponseCount, { download: false });
+      const filename = `batalla-cultural-${activeTab}-${new Date().toISOString().slice(0, 10)}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
+      if (typeof navigator.share === "function" && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+        await navigator.share({ title: "Resultados de Batalla Cultural", text: "Resumen electoral de Batalla Cultural", files: [file] });
+        setShareFeedback("Imagen compartida");
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+        setShareFeedback("Tu navegador no permite compartir archivos; imagen descargada");
+      }
+    } catch (error) {
+      if ((error as Error)?.name !== "AbortError") {
+        console.error("Error compartiendo PNG:", error);
+        setShareFeedback("No se pudo compartir la imagen");
+      }
+    }
+    window.setTimeout(() => setShareFeedback(null), 3500);
+  };
   const provincialExportRows = useMemo<ProvincialBreakdownExportRow[]>(() => filteredSeatScope.desglose.map((province) => ({
     ccaa: province.ccaa,
     provincia: province.provincia,
@@ -3353,15 +3441,16 @@ export default function Results() {
                 <Download size={12} /><span>CSV</span>
               </button>
             )}
-            <button className="r-hbtn r-hbtn-pdf" onClick={async () => {
+            <button className="r-hbtn r-hbtn-pdf" onClick={() => {
               try {
-                await downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null);
-                alert("¡PDF generado y descargado con éxito!");
-              } catch (e) {
-                console.error("Error PDF:", e);
-                alert("Error generando PDF. Comprueba que las librerías estén cargadas.");
+                handleExportElectoralPdf();
+                setShareFeedback("PDF generado y descargado");
+              } catch (error) {
+                console.error("Error PDF:", error);
+                setShareFeedback("No se pudo generar el PDF");
               }
-            }} title="Exportar informe oficial en PDF">
+              window.setTimeout(() => setShareFeedback(null), 3500);
+            }} title="Exportar resumen electoral optimizado para impresión">
               <FileText size={12} /><span>PDF</span>
             </button>
             {showSortBar && (
@@ -3387,12 +3476,26 @@ export default function Results() {
               </button>
             )}
             <button className="r-hbtn r-hbtn-share" onClick={handleShareResults} title="Compartir un enlace a estos resultados">
-              <Share2 size={12} /><span>Compartir</span>
+              <Share2 size={12} /><span>Enlace</span>
+            </button>
+            <button className="r-hbtn r-hbtn-share" onClick={handleSharePng} title="Compartir la imagen de resultados con aplicaciones compatibles">
+              <Image size={12} /><span>Compartir imagen</span>
+            </button>
+            <label className="r-export-preference" title="Selecciona el formato que usará Exportar preferido">
+              <span>Preferido</span>
+              <select aria-label="Formato de exportación preferido" value={preferredExportFormat} onChange={(event) => setPreferredExportFormat(event.target.value as ExportFormatPreference)}>
+                <option value="pdf">PDF</option>
+                <option value="png">PNG</option>
+                <option value="csv">CSV</option>
+              </select>
+            </label>
+            <button className="r-hbtn r-hbtn-outline" onClick={handlePreferredExport} title={`Exportar en formato preferido: ${preferredExportFormat.toUpperCase()}`}>
+              <Download size={12} /><span>Preferido</span>
             </button>
             {shareFeedback && <span className="r-share-feedback" role="status" aria-live="polite">{shareFeedback}</span>}
             <button className="r-hbtn r-hbtn-ai" onClick={async () => {
               try {
-                await exportResultsSummaryPng(stats, activeTab, totalResponses);
+                await exportResultsSummaryPng(displayedStats, activeTab, displayedResponseCount);
                 alert("¡Resumen PNG descargado con éxito!");
               } catch (err) {
                 console.error("Error exportando imagen PNG:", err);
@@ -3409,6 +3512,18 @@ export default function Results() {
 
         {/* NavBar */}
         <ResultsNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="r-mobile-export-tools" aria-label="Exportación rápida">
+          <label className="r-export-preference" title="Formato usado por Exportar preferido">
+            <span>Formato preferido</span>
+            <select aria-label="Formato de exportación preferido en móvil" value={preferredExportFormat} onChange={(event) => setPreferredExportFormat(event.target.value as ExportFormatPreference)}>
+              <option value="pdf">PDF</option>
+              <option value="png">PNG</option>
+              <option value="csv">CSV</option>
+            </select>
+          </label>
+          <button type="button" className="r-hbtn r-hbtn-outline" onClick={handlePreferredExport} title={`Exportar en formato preferido: ${preferredExportFormat.toUpperCase()}`}><Download size={12} /> Exportar</button>
+          <button type="button" className="r-hbtn r-hbtn-share" onClick={handleSharePng} title="Compartir la imagen de resultados"><Image size={12} /> Compartir</button>
+        </div>
 
         <span className="sr-only" aria-live="polite">{panelAnnouncement}</span>
         <main className="r-main" style={{ animation: 'fadeIn 0.6s ease-out' }}>
