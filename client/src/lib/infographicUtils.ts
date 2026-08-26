@@ -35,6 +35,26 @@ export interface TopRegionByParty {
   votos: number;
 }
 
+export interface TopRegionSummary {
+  region: string;
+  votos: number;
+  porcentaje: number;
+}
+
+export function getTopRegions(rows: RegionResponseRow[], limit = 5): TopRegionSummary[] {
+  const counts = new Map<string, number>();
+  rows.forEach((row) => {
+    const region = String(row.comunidad_autonoma ?? "").trim();
+    if (!region) return;
+    counts.set(region, (counts.get(region) ?? 0) + 1);
+  });
+  const total = Array.from(counts.values()).reduce((sum, value) => sum + value, 0);
+  return Array.from(counts.entries())
+    .sort(([firstRegion, firstVotes], [secondRegion, secondVotes]) => secondVotes - firstVotes || firstRegion.localeCompare(secondRegion, "es"))
+    .slice(0, limit)
+    .map(([region, votos]) => ({ region, votos, porcentaje: total > 0 ? (votos / total) * 100 : 0 }));
+}
+
 export function getTopRegionsByParty(rows: RegionResponseRow[]): TopRegionByParty[] {
   const countsByParty = new Map<string, Map<string, number>>();
 

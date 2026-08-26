@@ -917,3 +917,19 @@
 - [x] Añadir prueba de integración o fallback para la disponibilidad de autotable
 - [x] Validar TypeScript, tests, build y botón PDF en Results
 - [x] Guardar checkpoint publicado con la reparación
+
+## Auditoría de líderes por partido - SESIÓN ACTUAL
+- [x] Auditar cualquier líder mostrado bajo un partido distinto al registrado en Supabase
+- [x] Eliminar inferencias por nombre, alias o coincidencias aproximadas entre partidos y líderes
+- [x] Usar exclusivamente party_leaders.party_key unido a party_configuration.party_key
+- [x] Sincronizar tarjetas, ranking, Top 5 y PDF con la relación canónica
+- [x] Añadir pruebas para impedir líderes cruzados entre partidos
+- [x] Validar TypeScript, tests, build y resultados antes de publicar
+- [x] Guardar checkpoint publicado con la corrección
+
+## Infografía general con regiones destacadas - SESIÓN ACTUAL
+- [x] Identificar la fuente territorial real usada por Results para regiones y participación
+- [x] Añadir regiones destacadas con votos, respuestas y porcentaje a la infografía general
+- [x] Mantener el diseño legible en PNG de escritorio y móvil
+- [x] Añadir pruebas para el cálculo y orden de las regiones destacadas
+- [x] Validar la infografía y publicar el checkpoint

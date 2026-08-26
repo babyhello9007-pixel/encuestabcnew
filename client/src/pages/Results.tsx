@@ -57,7 +57,8 @@ import GovernmentBuilder from "@/components/GovernmentBuilder";
 import { createElectoralSummaryPdfBlob, exportElectoralSummaryPdf, type ElectoralPdfOrientation, type ElectoralPdfParty, type ElectoralPdfContext } from "@/lib/electoralSummaryPdf";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
-import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
+import { getTopRegions, getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
+import { canonicalizeLeaderPreferences } from "@/lib/leaderPartyIntegrity";
 import { createCanonicalPartyIndex, normalizePartyReference, resolveCanonicalParty, sanitizePartyColor, type CanonicalPartyConfigRow } from "@/lib/canonicalPartyConfig";
 import { buildResultsSharePayload } from "@/lib/resultsShare";
 import { buildResultsCsv, buildResultsExcelHtml, type ResultsExportContext, type ResultsExportRow } from "@/lib/resultsExport";
@@ -1408,20 +1409,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
         setLeaders(mapped);
         const { data: pd } = await supabase.from("ranking_lideres_por_partido").select("partido, lider_preferido, total_votos, porcentaje");
         if (pd?.length) {
-          const arr: LiderPreferido[] = pd.map((r: any) => {
-            const li = mapped.find(l => l.party_key === r.partido && l.leader_name === r.lider_preferido);
-            const pi = mapped.find(l => l.party_key === r.partido);
-            return {
-              partido: r.partido,
-              lider_preferido: r.lider_preferido,
-              votos: Number(r.total_votos || 0),
-              porcentaje: Number(r.porcentaje || 0),
-              photo_url: li?.photo_url,
-              color: pi?.color,
-              display_name: pi?.display_name ?? r.partido,
-              logo_url: pi?.logo_url
-            };
-          });
+          const arr = canonicalizeLeaderPreferences(pd as Array<{ partido: string; lider_preferido: string; total_votos?: number | string | null; porcentaje?: number | string | null }>, mapped);
           setLideresPreferidos(arr);
         }
       } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -2302,6 +2290,7 @@ async function generarInfografiaPNG(
   topLeaders?: Array<{ name: string; party: string; votes: number; average?: number; color: string }>,
   topLiderPorPartido?: Array<{ partido: string; lider: string; votos: number; porcentaje: number }>,
   topRegionPorPartido?: Array<{ partido: string; region: string; votos: number }>,
+  topRegions?: Array<{ region: string; votos: number; porcentaje: number }>,
   top5LideresPorPartido?: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>>,
   preguntasVariasPorPartido?: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }>,
   partyLogos?: Record<string, string>
@@ -2405,6 +2394,7 @@ async function generarInfografiaPNG(
     });
     const topLeaderRows = (topLiderPorPartido || []).slice(0, 5);
     const topRegionRows = (topRegionPorPartido || []).slice(0, 5);
+    const topGeneralRegionRows = (topRegions || []).slice(0, 5);
     ctx.fillStyle = "rgba(255,255,255,0.04)";
     ctx.beginPath(); ctx.roundRect(780, 230, 380, 250, 12); ctx.fill();
     ctx.fillStyle = "#C41E3A"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
@@ -2416,12 +2406,11 @@ async function generarInfografiaPNG(
     });
     ctx.fillStyle = "rgba(255,255,255,0.04)";
     ctx.beginPath(); ctx.roundRect(780, 500, 380, 250, 12); ctx.fill();
-    ctx.fillStyle = "#3b82f6"; ctx.font = "bold 12px monospace"; ctx.fillText("REGIÓN TOP POR PARTIDO", 800, 526);
-    topRegionRows.forEach((row, i) => {
+    ctx.fillStyle = "#3b82f6"; ctx.font = "bold 12px monospace"; ctx.fillText("REGIONES MÁS PARTICIPATIVAS", 800, 526);
+    topGeneralRegionRows.forEach((row, i) => {
       const y = 560 + i * 34;
-      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif"; ctx.fillText(row.partido, 800, y);
-      ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'TVP', sans-serif"; ctx.fillText(row.region, 870, y);
-      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(String(row.votos), 1110, y);
+      ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif"; ctx.fillText(`${i + 1}. ${row.region}`.slice(0, 29), 800, y);
+      ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.textAlign = "right"; ctx.fillText(`${row.votos.toLocaleString("es-ES")} · ${row.porcentaje.toFixed(1)}%`, 1140, y); ctx.textAlign = "left";
     });
   } else if (type === "leaders") {
     const ranking = [...(topLeaders || [])].sort((a, b) => (b.average || 0) - (a.average || 0)).slice(0, 5);
@@ -3403,6 +3392,7 @@ export default function Results() {
   const handleGenerarInfografia = async (type: "general" | "party" | "leaders", party?: string) => {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
     let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
+    let topRegions: Array<{ region: string; votos: number; porcentaje: number }> = [];
     let top5LideresPorPartido: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>> = {};
     let preguntasVarias: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }> = {};
     let partyLogos: Record<string, string> = {};
@@ -3482,12 +3472,13 @@ export default function Results() {
         .limit(10_000);
       if (!regionRowsError && regionRows?.length) {
         topRegionPorPartido = getTopRegionsByParty(regionRows);
+        topRegions = getTopRegions(regionRows, 5);
       }
     } catch (e) {
       console.error("Error cargando datos extendidos para infografía:", e);
     }
     const topLeaders = leaderRatings.slice().sort((a, b) => b.average - a.average).map((leader) => ({ name: leader.name, party: "Valoración BC", votes: leader.count, average: leader.average, color: leader.average >= 7 ? "#34d399" : leader.average >= 4 ? "#fbbf24" : "#fb7185" }));
-    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, topLeaders, top1PorPartido, topRegionPorPartido, top5LideresPorPartido, preguntasVarias, partyLogos);
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, topLeaders, top1PorPartido, topRegionPorPartido, topRegions, top5LideresPorPartido, preguntasVarias, partyLogos);
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";
