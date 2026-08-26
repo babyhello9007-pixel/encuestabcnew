@@ -145,6 +145,9 @@ export function Top5LideresWidget() {
                   <span className="text-xs font-bold text-gray-900 dark:text-white truncate group-hover:text-[#C41E3A] transition">
                     {lider.leader_name}
                   </span>
+                  <span title={lider.is_official ? "Líder validado oficialmente en la configuración del partido" : "Nombre introducido manualmente; no consta como líder configurado"} className={`inline-flex shrink-0 items-center rounded px-1 py-0.5 text-[8px] font-bold ${lider.is_official ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                    {lider.is_official ? "Oficial" : "Manual"}
+                  </span>
                   <MovementBadge indicator={positionIndicators[lider.leader_name.trim().toLocaleLowerCase()]} />
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -161,6 +164,7 @@ export function Top5LideresWidget() {
               <p className="font-bold text-yellow-400 mb-0.5">{lider.leader_name}</p>
               <p className="text-slate-300">Valoración media: <span className="font-bold text-white">{lider.media_valoracion.toFixed(1)} / 10</span></p>
               <p className="text-slate-300">Total valoraciones: <span className="font-bold text-white">{lider.total_valoraciones}</span></p>
+              <p className={lider.is_official ? "text-emerald-300" : "text-amber-300"}>{lider.is_official ? "Líder validado oficialmente" : "Introducido manualmente"}</p>
               <p className="text-[10px] text-sky-400 mt-1">Haz clic para ver desglose completo</p>
               <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
             </div>

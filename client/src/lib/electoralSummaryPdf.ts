@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
+import type { ElectoralPdfFlow, ElectoralPdfRegion } from "./electoralPdfExtras";
 
 export interface ElectoralPdfParty {
   partido: string;
@@ -30,6 +31,8 @@ export interface ElectoralPdfContext {
   umbral: string;
   tipoEleccion: string;
   generadoEn?: Date;
+  regionesDestacadas?: ElectoralPdfRegion[];
+  sankeyFlujos?: ElectoralPdfFlow[];
 }
 
 export function buildElectoralPdfRows(parties: ElectoralPdfParty[]) {
@@ -174,8 +177,106 @@ export function buildElectoralSummaryPdf(parties: ElectoralPdfParty[], context: 
 
   const finalY = ((doc as any).lastAutoTable?.finalY ?? y + 30) + 12;
   const availableHeight = doc.internal.pageSize.getHeight() - 28;
-  if (finalY > availableHeight - 35) doc.addPage();
-  let noteY = finalY > availableHeight - 35 ? 24 : finalY;
+  let noteY = finalY;
+  const topRegions = context.regionesDestacadas ?? [];
+  const sankeyFlows = context.sankeyFlujos ?? [];
+  if (topRegions.length || sankeyFlows.length) {
+    doc.addPage();
+    let extrasY = 24;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(20, 26, 38);
+    doc.text("Lectura territorial y transferencia de voto", 14, extrasY);
+    extrasY += 8;
+    if (topRegions.length) {
+      autoTable(doc, {
+        startY: extrasY,
+        head: [["Región destacada", "Respuestas", "% del ámbito"]],
+        body: topRegions.map((region) => [region.region, region.votos.toLocaleString("es-ES"), `${region.porcentaje.toFixed(1)}%`]),
+        theme: "grid",
+        margin: { left: 14, right: 14 },
+        styles: { font: "helvetica", fontSize: 9, cellPadding: 3, textColor: [35, 42, 55] },
+        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [247, 248, 251] },
+        columnStyles: { 0: { cellWidth: 90, fontStyle: "bold" }, 1: { cellWidth: 42, halign: "right" }, 2: { cellWidth: 42, halign: "right" } },
+      });
+      extrasY = ((doc as any).lastAutoTable?.finalY ?? extrasY + 30) + 14;
+    }
+    if (sankeyFlows.length) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(20, 26, 38);
+      doc.text("Sankey de transferencia de voto", 14, extrasY);
+      extrasY += 6;
+      const originTotals = new Map<string, number>();
+      const destinationTotals = new Map<string, number>();
+      sankeyFlows.forEach((flow) => {
+        originTotals.set(flow.origen, (originTotals.get(flow.origen) ?? 0) + flow.votos);
+        destinationTotals.set(flow.destino, (destinationTotals.get(flow.destino) ?? 0) + flow.votos);
+      });
+      const origins = Array.from(originTotals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 7);
+      const destinations = Array.from(destinationTotals.entries()).sort((a, b) => b[1] - a[1]).slice(0, 7);
+      const diagramTop = extrasY + 5;
+      const diagramHeight = Math.min(92, Math.max(48, Math.max(origins.length, destinations.length) * 13));
+      const leftX = 18;
+      const rightX = pageWidth - 52;
+      const nodeWidth = 28;
+      const yFor = (index: number, count: number) => diagramTop + (index + 0.5) * (diagramHeight / Math.max(count, 1));
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      origins.forEach(([label, total], index) => {
+        const nodeY = yFor(index, origins.length) - 3;
+        doc.setFillColor(220, 38, 52);
+        doc.roundedRect(leftX, nodeY, nodeWidth, 6, 1.5, 1.5, "F");
+        doc.setTextColor(20, 26, 38);
+        doc.text(`${label.slice(0, 14)} (${total})`, leftX, nodeY - 2);
+      });
+      destinations.forEach(([label, total], index) => {
+        const nodeY = yFor(index, destinations.length) - 3;
+        doc.setFillColor(37, 99, 235);
+        doc.roundedRect(rightX, nodeY, nodeWidth, 6, 1.5, 1.5, "F");
+        doc.setTextColor(20, 26, 38);
+        doc.text(`${label.slice(0, 14)} (${total})`, rightX, nodeY - 2, { align: "right" });
+      });
+      sankeyFlows.slice(0, 12).forEach((flow, index) => {
+        const originIndex = origins.findIndex(([label]) => label === flow.origen);
+        const destinationIndex = destinations.findIndex(([label]) => label === flow.destino);
+        if (originIndex < 0 || destinationIndex < 0) return;
+        const y1 = yFor(originIndex, origins.length);
+        const y2 = yFor(destinationIndex, destinations.length);
+        doc.setDrawColor(140, 148, 165);
+        doc.setLineWidth(Math.max(0.35, Math.min(2.2, flow.votos / 4)));
+        doc.line(leftX + nodeWidth, y1, rightX, y2);
+        if (index < 4) {
+          doc.setFontSize(6.5);
+          doc.setTextColor(82, 92, 108);
+          doc.text(String(flow.votos), (leftX + nodeWidth + rightX) / 2, (y1 + y2) / 2 - 1);
+        }
+      });
+      doc.setFontSize(7);
+      doc.setTextColor(82, 92, 108);
+      doc.text("Origen", leftX, diagramTop + diagramHeight + 8);
+      doc.text("Destino", rightX + nodeWidth, diagramTop + diagramHeight + 8, { align: "right" });
+      autoTable(doc, {
+        startY: diagramTop + diagramHeight + 14,
+        head: [["Origen", "Destino", "Votos"]],
+        body: sankeyFlows.slice(0, 12).map((flow) => [flow.origen, flow.destino, flow.votos.toLocaleString("es-ES")]),
+        theme: "grid",
+        margin: { left: 14, right: 14 },
+        styles: { font: "helvetica", fontSize: 7.5, cellPadding: 2, textColor: [35, 42, 55] },
+        headStyles: { fillColor: [12, 17, 32], textColor: [255, 255, 255], fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [247, 248, 251] },
+        columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 60 }, 2: { cellWidth: 30, halign: "right" } },
+      });
+      noteY = ((doc as any).lastAutoTable?.finalY ?? extrasY + 80) + 12;
+    } else {
+      noteY = extrasY;
+    }
+  }
+  if (noteY > availableHeight - 35) {
+    doc.addPage();
+    noteY = 24;
+  }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(20, 26, 38);

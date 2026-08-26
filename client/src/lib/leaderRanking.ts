@@ -60,6 +60,7 @@ export async function fetchLeaderRanking(): Promise<LiderRanking[]> {
         logo_url: party?.logo_url || "",
       }],
       primary_color: party?.color || "#9CA3AF",
+      is_official: Boolean(leader),
     } satisfies LiderRanking;
   }).sort((a, b) => b.media_valoracion - a.media_valoracion || b.total_valoraciones - a.total_valoraciones || a.leader_name.localeCompare(b.leader_name, "es"));
 }

@@ -12,6 +12,7 @@ export interface LiderRanking {
   photo_url: string;
   parties: PartyBadge[];
   primary_color: string;
+  is_official: boolean;
 }
 
 export interface MediaValoracionRow {
@@ -103,6 +104,7 @@ export function buildLeaderRanking(
       photo_url: data.photo_url,
       parties,
       primary_color: parties[0]?.color || "#6366f1",
+      is_official: parties.length > 0 && data.photo_url !== "" || false,
     } satisfies LiderRanking;
   });
 

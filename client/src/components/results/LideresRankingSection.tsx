@@ -327,9 +327,14 @@ function PodioCard({
       </div>
 
       <div className="text-center mb-4">
-        <h4 className="font-extrabold text-gray-900 dark:text-white text-base sm:text-lg line-clamp-1">
-          {lider.leader_name}
-        </h4>
+        <div className="flex items-center justify-center gap-1.5">
+          <h4 className="font-extrabold text-gray-900 dark:text-white text-base sm:text-lg line-clamp-1">
+            {lider.leader_name}
+          </h4>
+          <span title={lider.is_official ? "Líder validado oficialmente en party_leaders" : "Nombre introducido manualmente; no consta en party_leaders"} className={`rounded px-1 py-0.5 text-[8px] font-bold ${lider.is_official ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+            {lider.is_official ? "Oficial" : "Manual"}
+          </span>
+        </div>
         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">
           {partyNames}
         </p>
@@ -469,6 +474,9 @@ function RankingRow({
           <div>
             <span className="font-bold text-gray-900 dark:text-gray-100 text-sm block group-hover:text-[#C41E3A] transition-colors">
               {lider.leader_name}
+            </span>
+            <span title={lider.is_official ? "Líder validado oficialmente en party_leaders" : "Nombre introducido manualmente; no consta en party_leaders"} className={`mt-0.5 inline-block rounded px-1 py-0.5 text-[8px] font-bold ${lider.is_official ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+              {lider.is_official ? "Oficial" : "Manual"}
             </span>
           </div>
         </div>

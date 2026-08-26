@@ -58,6 +58,7 @@ import { createElectoralSummaryPdfBlob, exportElectoralSummaryPdf, type Electora
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 import { getTopRegions, getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
+import { buildElectoralPdfExtras } from "@/lib/electoralPdfExtras";
 import { canonicalizeLeaderPreferences } from "@/lib/leaderPartyIntegrity";
 import { createCanonicalPartyIndex, normalizePartyReference, resolveCanonicalParty, sanitizePartyColor, type CanonicalPartyConfigRow } from "@/lib/canonicalPartyConfig";
 import { buildResultsSharePayload } from "@/lib/resultsShare";
@@ -1289,12 +1290,13 @@ function GobiernoModal({
 }
 
 // ─── InfografiaModal mejorada ─────────────────────────────────────────────────
-function InfografiaModal({ parties, onClose, onGenerate }: {
-  parties: PartyStats[]; onClose: () => void;
-  onGenerate: (type: "general" | "party" | "leaders", party?: string) => Promise<void>;
+function InfografiaModal({ parties, regions, onClose, onGenerate }: {
+  parties: PartyStats[]; regions: string[]; onClose: () => void;
+  onGenerate: (type: "general" | "party" | "leaders", party?: string, region?: string) => Promise<void>;
 }) {
   const [type, setType] = useState<"general" | "party" | "leaders">("general");
   const [selectedParty, setSelectedParty] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
@@ -1306,7 +1308,7 @@ function InfografiaModal({ parties, onClose, onGenerate }: {
     setGenerationError(null);
     setIsGenerating(true);
     try {
-      await onGenerate(type, selectedParty || undefined);
+      await onGenerate(type, selectedParty || undefined, selectedRegion || undefined);
       onClose();
     } catch (error) {
       console.error("No se pudo generar la infografía:", error);
@@ -1336,6 +1338,12 @@ function InfografiaModal({ parties, onClose, onGenerate }: {
             </button>
           ))}
         </div>
+        {type === "general" && (
+          <select className="r-select" style={{ marginBottom: 16 }} value={selectedRegion} onChange={e => setSelectedRegion(e.target.value)} aria-label="Región destacada para la infografía general">
+            <option value="">Todas las regiones destacadas</option>
+            {regions.map(region => <option key={region} value={region}>{region}</option>)}
+          </select>
+        )}
         {type === "party" && (
           <select className="r-select" style={{ marginBottom: 16 }} value={selectedParty} onChange={e => setSelectedParty(e.target.value)}>
             <option value="">Selecciona un partido...</option>
@@ -2293,7 +2301,8 @@ async function generarInfografiaPNG(
   topRegions?: Array<{ region: string; votos: number; porcentaje: number }>,
   top5LideresPorPartido?: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>>,
   preguntasVariasPorPartido?: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }>,
-  partyLogos?: Record<string, string>
+  partyLogos?: Record<string, string>,
+  officialLeaderNames?: string[]
 ) {
   if (!stats.length) {
     throw new Error("No hay resultados disponibles para generar la infografía.");
@@ -2402,6 +2411,8 @@ async function generarInfografiaPNG(
       const y = 290 + i * 34;
       ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif"; ctx.fillText(row.partido, 800, y);
       ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.font = "11px 'TVP', sans-serif"; ctx.fillText(row.lider, 870, y);
+      const isOfficialLeader = (officialLeaderNames || []).some((name) => name.localeCompare(row.lider, "es", { sensitivity: "base" }) === 0);
+      ctx.fillStyle = isOfficialLeader ? "#6ee7b7" : "#fbbf24"; ctx.font = "bold 8px monospace"; ctx.fillText(isOfficialLeader ? "OFICIAL" : "MANUAL", 1030, y);
       ctx.fillStyle = "#7a7990"; ctx.font = "10px monospace"; ctx.fillText(`${row.porcentaje.toFixed(1)}%`, 1110, y);
     });
     ctx.fillStyle = "rgba(255,255,255,0.04)";
@@ -2579,6 +2590,7 @@ export default function Results() {
   const [escanosProvinciaJuveniles, setEscanosProvinciaJuveniles] = useState<Record<string, number>>({});
   const [provinciaMetricsMap, setProvinciaMetricsMap] = useState<Record<string, { edad_promedio: number; ideologia_promedio: number }>>({});
   const [showInfografiaModal, setShowInfografiaModal] = useState(false);
+  const [infographicRegions, setInfographicRegions] = useState<string[]>([]);
   const [showTransferenciaModal, setShowTransferenciaModal] = useState(() =>
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("transferencia") === "1"
   );
@@ -2598,6 +2610,7 @@ export default function Results() {
   const [mediaEncuestas, setMediaEncuestas] = useState<Record<string, number>>({});
   const [liderPorPartido, setLiderPorPartido] = useState<Record<string, string>>({});
   const [porcentajeLiderPorPartido, setPorcentajeLiderPorPartido] = useState<Record<string, number>>({});
+  const [lideresOficialesPorPartido, setLideresOficialesPorPartido] = useState<Record<string, string[]>>({});
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [resultFilters, setResultFilters] = useState<ResultFilterState>({ ccaa: "all", provincia: "all", edad: "all" });
   const [openResultsPanel, setOpenResultsPanel] = useState<ResultsPanelPreference>(() => {
@@ -2903,6 +2916,17 @@ export default function Results() {
             setMediaEncuestas(meMap);
           }
         } catch (e) { console.warn("Error loading MediaEncuestas:", e); }
+
+        try {
+          const { data: officialLeaderRows } = await supabase.from("party_leaders").select("party_key, leader_name").eq("is_active", true);
+          const officialMap: Record<string, string[]> = {};
+          (officialLeaderRows || []).forEach((row: any) => {
+            const key = resolvePartyKey(String(row.party_key || ""), generalPartyMap);
+            if (!key || !row.leader_name) return;
+            officialMap[key] = [...(officialMap[key] || []), String(row.leader_name).trim()];
+          });
+          setLideresOficialesPorPartido(officialMap);
+        } catch (e) { console.warn("Error loading official leaders:", e); }
 
         try {
           const { data: topLideres } = await supabase.from("top_lider_por_partido").select("partido, lider_top, porcentaje_lider_top");
@@ -3236,7 +3260,16 @@ export default function Results() {
     setExportProgress(12);
     await new Promise((resolve) => window.setTimeout(resolve, 40));
     try {
-      const { blob, filename } = createElectoralSummaryPdfBlob(electoralPdfParties, electoralPdfContext, orientation);
+      const { data: pdfExtraRows, error: pdfExtraError } = await supabase.from("respuestas").select("comunidad_autonoma, provincia, edad, voto_generales, anteriores_eegg").limit(10_000);
+      const visiblePdfRows = (pdfExtraRows || []).filter((row: any) => {
+        const matchesCcaa = resultFilters.ccaa === "all" || String(row.comunidad_autonoma ?? "").trim() === resultFilters.ccaa;
+        const matchesProvince = resultFilters.provincia === "all" || String(row.provincia ?? "").trim() === resultFilters.provincia;
+        const numericAge = Number(row.edad);
+        const matchesAge = resultFilters.edad === "all" || (Number.isFinite(numericAge) && ((resultFilters.edad === "18-30" && numericAge >= 18 && numericAge <= 30) || (resultFilters.edad === "31-45" && numericAge >= 31 && numericAge <= 45) || (resultFilters.edad === "46-60" && numericAge >= 46 && numericAge <= 60) || (resultFilters.edad === "60+" && numericAge >= 61)));
+        return matchesCcaa && matchesProvince && matchesAge;
+      });
+      const pdfExtras = !pdfExtraError ? buildElectoralPdfExtras(visiblePdfRows) : { topRegions: [], sankeyFlows: [] };
+      const { blob, filename } = createElectoralSummaryPdfBlob(electoralPdfParties, { ...electoralPdfContext, regionesDestacadas: pdfExtras.topRegions, sankeyFlujos: pdfExtras.sankeyFlows }, orientation);
       setExportProgress(82);
       if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
       setPdfOrientation(orientation);
@@ -3249,7 +3282,7 @@ export default function Results() {
     } finally {
       window.setTimeout(() => { setExportingFormat(null); setExportProgress(0); }, 450);
     }
-  }, [electoralPdfContext, electoralPdfParties, exportingFormat, pdfOrientation, pdfPreviewUrl]);
+  }, [electoralPdfContext, electoralPdfParties, exportingFormat, pdfOrientation, pdfPreviewUrl, resultFilters]);
   const closePdfPreview = useCallback(() => {
     if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
     setPdfPreviewUrl(null);
@@ -3389,13 +3422,25 @@ export default function Results() {
     });
   }, [historicoElecciones, generalStats]);
 
-  const handleGenerarInfografia = async (type: "general" | "party" | "leaders", party?: string) => {
+  const openInfografiaModal = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from("respuestas").select("comunidad_autonoma").not("comunidad_autonoma", "is", null).limit(10_000);
+      if (!error && data) setInfographicRegions(getTopRegions(data, 5).map((row) => row.region));
+    } catch (error) {
+      console.error("No se pudieron cargar las regiones de la infografía:", error);
+      setInfographicRegions([]);
+    }
+    setShowInfografiaModal(true);
+  }, []);
+
+  const handleGenerarInfografia = async (type: "general" | "party" | "leaders", party?: string, region?: string) => {
     let top1PorPartido: Array<{ partido: string; lider: string; votos: number; porcentaje: number }> = [];
     let topRegionPorPartido: Array<{ partido: string; region: string; votos: number }> = [];
     let topRegions: Array<{ region: string; votos: number; porcentaje: number }> = [];
     let top5LideresPorPartido: Record<string, Array<{ nombre: string; votos: number; porcentaje: number; photo_url?: string }>> = {};
     let preguntasVarias: Record<string, { division_territorial?: string; monarquia_republica?: string; sistema_pensiones?: string }> = {};
     let partyLogos: Record<string, string> = {};
+    let officialLeaderNames: string[] = [];
     
     try {
       const { data: partyConfig } = await supabase.from("party_configuration").select("party_key, display_name, logo_url");
@@ -3417,6 +3462,7 @@ export default function Results() {
       if (topLeaderRows?.length) top1PorPartido = topLeaderRows.map((r: any) => ({ partido: r.partido, lider: r.lider_top, votos: Number(r.votos_lider_top || 0), porcentaje: Number(r.porcentaje_lider_top || 0) }));
 
       const { data: leaderPhotosRows } = await supabase.from("party_leaders").select("leader_name, photo_url").eq("is_active", true);
+      officialLeaderNames = (leaderPhotosRows || []).map((leader: any) => String(leader.leader_name || "").trim()).filter(Boolean);
       const photoByLeader: Record<string, string> = {};
       (leaderPhotosRows || []).forEach((l: any) => {
         if (l?.leader_name && l?.photo_url) photoByLeader[String(l.leader_name).trim().toLowerCase()] = l.photo_url;
@@ -3471,14 +3517,15 @@ export default function Results() {
         .not("comunidad_autonoma", "is", null)
         .limit(10_000);
       if (!regionRowsError && regionRows?.length) {
-        topRegionPorPartido = getTopRegionsByParty(regionRows);
-        topRegions = getTopRegions(regionRows, 5);
+        const selectedRegionRows = region ? regionRows.filter((row) => String(row.comunidad_autonoma ?? "").trim() === region) : regionRows;
+        topRegionPorPartido = getTopRegionsByParty(selectedRegionRows);
+        topRegions = getTopRegions(selectedRegionRows, 5);
       }
     } catch (e) {
       console.error("Error cargando datos extendidos para infografía:", e);
     }
     const topLeaders = leaderRatings.slice().sort((a, b) => b.average - a.average).map((leader) => ({ name: leader.name, party: "Valoración BC", votes: leader.count, average: leader.average, color: leader.average >= 7 ? "#34d399" : leader.average >= 4 ? "#fbbf24" : "#fb7185" }));
-    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, topLeaders, top1PorPartido, topRegionPorPartido, topRegions, top5LideresPorPartido, preguntasVarias, partyLogos);
+    await generarInfografiaPNG(generalStats, totalResponses, edadPromedio, ideologiaPromedio, type, party, topLeaders, top1PorPartido, topRegionPorPartido, topRegions, top5LideresPorPartido, preguntasVarias, partyLogos, officialLeaderNames);
   };
 
   const showSortBar = activeTab === "general" || activeTab === "youth";
@@ -3498,7 +3545,7 @@ export default function Results() {
             </div>
           </div>
           <div className="r-header-actions">
-            <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
+            <button className="r-hbtn r-hbtn-infog" onClick={() => void openInfografiaModal()}>
               <Image size={12} /><span>Infografía</span>
             </button>
             {showSortBar && (
@@ -3941,6 +3988,9 @@ export default function Results() {
                             )}
                             {activeTab === "general" && liderPorPartido[party.id] && (
                               <div style={{ marginTop: 6 }}>
+                                <div title={lideresOficialesPorPartido[party.id]?.some((name) => name.localeCompare(liderPorPartido[party.id], "es", { sensitivity: "base" }) === 0) ? "Líder validado oficialmente en party_leaders" : "Nombre introducido manualmente o no validado en party_leaders"} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: lideresOficialesPorPartido[party.id]?.some((name) => name.localeCompare(liderPorPartido[party.id], "es", { sensitivity: "base" }) === 0) ? "#6ee7b7" : "#fbbf24", fontSize: 9, fontWeight: 700, marginBottom: 3 }}>
+                                  {lideresOficialesPorPartido[party.id]?.some((name) => name.localeCompare(liderPorPartido[party.id], "es", { sensitivity: "base" }) === 0) ? "✓ Oficial" : "⚠ Manual"}
+                                </div>
                                 <div style={{ fontSize: 12, color: partyColor, fontWeight: 600, marginBottom: 4 }}>
                                   Líder: {liderPorPartido[party.id]}
                                 </div>
@@ -4254,7 +4304,7 @@ export default function Results() {
         </footer>
 
         <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} partyKey={selectedPartyForStats ? resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup) : undefined} />
-        {showInfografiaModal && <InfografiaModal parties={generalStats} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
+        {showInfografiaModal && <InfografiaModal parties={generalStats} regions={infographicRegions} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
         <TransferenciaVotoModal isOpen={showTransferenciaModal} onClose={() => setShowTransferenciaModal(false)} partyColors={partyColorMap} />
         {pdfPreviewUrl && (
           <div className="r-pdf-preview-backdrop" role="dialog" aria-modal="true" aria-labelledby="pdf-preview-title">
