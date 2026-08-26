@@ -900,16 +900,16 @@
 - [x] Guardar checkpoint publicado con la mejora de exportaciones
 
 ## Vista previa PDF, orientación y progreso - SESIÓN ACTUAL
-- [ ] Añadir modal de vista previa del resumen PDF antes de descargar
-- [ ] Permitir elegir orientación vertical u horizontal para el PDF
-- [ ] Generar una vista previa fiel a la orientación seleccionada
-- [ ] Añadir indicador de progreso durante la generación del PDF
-- [ ] Añadir indicador de progreso durante la generación o compartir del PNG
-- [ ] Permitir cancelar o cerrar la vista previa sin descargar
-- [ ] Añadir pruebas unitarias para orientación, estados de exportación y nombres de archivo
-- [ ] Validar TypeScript, tests, build y responsive
-- [ ] Guardar checkpoint publicado con la mejora de exportación
-- [ ] Consolidar la vista previa, orientación y progreso dentro de los botones de exportación existentes, sin añadir acciones redundantes
+- [x] Añadir modal de vista previa del resumen PDF antes de descargar
+- [x] Permitir elegir orientación vertical u horizontal para el PDF
+- [x] Generar una vista previa fiel a la orientación seleccionada
+- [x] Añadir indicador de progreso durante la generación del PDF
+- [x] Añadir indicador de progreso durante la generación o compartir del PNG
+- [x] Permitir cancelar o cerrar la vista previa sin descargar
+- [x] Añadir pruebas unitarias para orientación, estados de exportación y nombres de archivo
+- [x] Validar TypeScript, tests, build y responsive
+- [x] Guardar checkpoint publicado con la mejora de exportación
+- [x] Consolidar la vista previa, orientación y progreso dentro de los botones de exportación existentes, sin añadir acciones redundantes
 
 ## Incidencia exportación PDF - SESIÓN ACTUAL
 - [x] Corregir `doc.autoTable is not a function` en el resumen electoral PDF

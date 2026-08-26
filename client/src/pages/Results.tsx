@@ -54,7 +54,7 @@ import { Top5LideresWidget } from "@/components/results/Top5LideresWidget";
 import FollowUsMenu from "@/components/FollowUsMenu";
 import PactometerInteractive from "@/components/PactometerInteractive";
 import GovernmentBuilder from "@/components/GovernmentBuilder";
-import { exportElectoralSummaryPdf, type ElectoralPdfParty, type ElectoralPdfContext } from "@/lib/electoralSummaryPdf";
+import { createElectoralSummaryPdfBlob, exportElectoralSummaryPdf, type ElectoralPdfOrientation, type ElectoralPdfParty, type ElectoralPdfContext } from "@/lib/electoralSummaryPdf";
 import { usePartySync } from "@/hooks/usePartySync";
 import { setRuntimePartyConfig } from "@/lib/partyRuntimeConfig";
 import { getTopRegionsByParty, normalizeInfographicColor, withInfographicAlpha } from "@/lib/infographicUtils";
@@ -186,6 +186,21 @@ const RESULTS_CSS = `
   .r-hbtn-crown:hover, .r-hbtn-crown.is-active { background: rgba(251,191,36,.24); transform: translateY(-1px); }
   .r-panel-badge { padding: 2px 5px; border-radius: 999px; background: rgba(94,234,212,.16); color: #99f6e4; font-size: 9px; font-weight: 900; }
   .r-share-feedback { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 8px; background: rgba(16,185,129,.13); border: 1px solid rgba(110,231,183,.28); color: #a7f3d0; font-size: 12px; font-weight: 700; animation: fadeIn .2s ease-out both; }
+  .r-export-progress { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 8px; color: #bfdbfe; background: rgba(59,130,246,.13); border: 1px solid rgba(96,165,250,.25); font-size: 10px; font-weight: 800; white-space: nowrap; }
+  .r-export-spinner { width: 10px; height: 10px; border: 2px solid rgba(191,219,254,.28); border-top-color: #bfdbfe; border-radius: 50%; animation: rSpin .7s linear infinite; }
+  .r-pdf-preview-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(2,6,23,.74); backdrop-filter: blur(12px); animation: fadeIn .18s ease-out both; }
+  .r-pdf-preview-modal { width: min(940px, 100%); height: min(92vh, 820px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(148,163,184,.28); border-radius: 18px; background: rgba(15,23,42,.96); box-shadow: 0 24px 80px rgba(0,0,0,.45); }
+  .r-pdf-preview-head, .r-pdf-preview-options, .r-pdf-preview-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
+  .r-pdf-preview-head { border-bottom: 1px solid rgba(148,163,184,.14); }
+  .r-pdf-preview-title { color: #f8fafc; font-size: 15px; font-weight: 900; }
+  .r-pdf-preview-subtitle, .r-pdf-preview-hint { color: #94a3b8; font-size: 11px; }
+  .r-pdf-preview-close { width: 28px; height: 28px; border: 1px solid rgba(148,163,184,.24); border-radius: 8px; background: rgba(255,255,255,.06); color: #e2e8f0; cursor: pointer; font-size: 20px; line-height: 1; }
+  .r-pdf-preview-options { justify-content: flex-start; flex-wrap: wrap; background: rgba(2,6,23,.24); }
+  .r-pdf-orientation { display: inline-flex; align-items: center; gap: 8px; color: #cbd5e1; font-size: 11px; font-weight: 800; }
+  .r-pdf-orientation select { border: 1px solid rgba(148,163,184,.25); border-radius: 7px; padding: 6px 9px; background: #0f172a; color: #f8fafc; font: inherit; }
+  .r-pdf-preview-frame { flex: 1; width: 100%; min-height: 0; border: 0; background: #e2e8f0; }
+  .r-pdf-preview-actions { justify-content: flex-end; border-top: 1px solid rgba(148,163,184,.14); }
+  @keyframes rSpin { to { transform: rotate(360deg); } }
 
 /* Subnav */
 .r-subnav { position: relative; top: 0; z-index: 50; background: rgba(17,17,24,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
@@ -235,7 +250,9 @@ const RESULTS_CSS = `
   .r-filter-trigger-state { color: #93c5fd; font-size: 11px; font-weight: 700; }
   .r-filter-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 12px 30px rgba(0,0,0,.18); animation: filterPanelIn .22s cubic-bezier(.23,1,.32,1) both; will-change: transform, opacity; }
   @keyframes filterPanelIn { from { opacity: 0; transform: translateY(-7px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  @media (prefers-reduced-motion: reduce) { .r-filter-panel, .r-top5-collapsible-panel { animation: none; will-change: auto; } }
+    @media (prefers-reduced-motion: reduce) {
+    .r-export-spinner { animation: none; }
+ .r-filter-panel, .r-top5-collapsible-panel { animation: none; will-change: auto; } }
 
 .r-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .r-filter-title { display: inline-flex; align-items: center; gap: 7px; color: #f0eff8; font-size: 13px; font-weight: 800; }
@@ -644,6 +661,11 @@ const RESULTS_CSS = `
   box-shadow: 0 10px 24px rgba(2, 6, 23, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 @media (max-width: 768px) {
+  .r-export-progress { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .r-pdf-preview-backdrop { padding: 8px; }
+  .r-pdf-preview-modal { height: calc(100vh - 16px); border-radius: 14px; }
+  .r-pdf-preview-head, .r-pdf-preview-options, .r-pdf-preview-actions { padding: 10px; }
+  .r-pdf-preview-hint { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .r-mobile-export-tools { display: flex; align-items: center; gap: 7px; margin: 8px 12px 0; padding: 8px; border: 1px solid rgba(148,163,184,.18); border-radius: 12px; background: rgba(15,23,42,.52); overflow-x: auto; }
   .r-mobile-export-tools .r-export-preference { flex: 1 1 auto; min-width: 118px; }
   .r-mobile-export-tools .r-hbtn { flex: 0 0 auto; }
@@ -2598,6 +2620,11 @@ export default function Results() {
     if (typeof window === "undefined") return "pdf";
     return readExportFormatPreference(window.localStorage);
   });
+  const [pdfOrientation, setPdfOrientation] = useState<ElectoralPdfOrientation>("portrait");
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [pdfPreviewFilename, setPdfPreviewFilename] = useState("");
+  const [exportingFormat, setExportingFormat] = useState<"pdf" | "png" | "share" | null>(null);
+  const [exportProgress, setExportProgress] = useState(0);
   const panelInteractionRef = useRef(false);
   const [showNationalComparison, setShowNationalComparison] = useState(false);
   const [hoveredCCAA, setHoveredCCAA] = useState<string | null>(null);
@@ -3214,15 +3241,59 @@ export default function Results() {
     umbral: activeTab === "general" ? "3%" : "7%",
     tipoEleccion: activeTab === "general" ? "las Elecciones Generales" : "las Asociaciones Juveniles",
   }), [activeTab, displayedTotalEscanos, edadPromedio, exportContext, filtersAreActive, ideologiaPromedio, notaEjecutivo]);
-  const handleExportElectoralPdf = () => exportElectoralSummaryPdf(electoralPdfParties, electoralPdfContext);
+  const handlePreparePdfPreview = useCallback(async (orientation: ElectoralPdfOrientation = pdfOrientation) => {
+    if (exportingFormat) return;
+    setExportingFormat("pdf");
+    setExportProgress(12);
+    await new Promise((resolve) => window.setTimeout(resolve, 40));
+    try {
+      const { blob, filename } = createElectoralSummaryPdfBlob(electoralPdfParties, electoralPdfContext, orientation);
+      setExportProgress(82);
+      if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfOrientation(orientation);
+      setPdfPreviewUrl(URL.createObjectURL(blob));
+      setPdfPreviewFilename(filename);
+      setExportProgress(100);
+    } catch (error) {
+      console.error("Error preparando vista previa PDF:", error);
+      setShareFeedback("No se pudo preparar el PDF");
+    } finally {
+      window.setTimeout(() => { setExportingFormat(null); setExportProgress(0); }, 450);
+    }
+  }, [electoralPdfContext, electoralPdfParties, exportingFormat, pdfOrientation, pdfPreviewUrl]);
+  const closePdfPreview = useCallback(() => {
+    if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+    setPdfPreviewUrl(null);
+    setPdfPreviewFilename("");
+  }, [pdfPreviewUrl]);
+  const handleExportElectoralPdf = () => exportElectoralSummaryPdf(electoralPdfParties, electoralPdfContext, pdfOrientation);
+  const handleExportPng = async () => {
+    if (exportingFormat) return;
+    setExportingFormat("png");
+    setExportProgress(14);
+    try {
+      await new Promise((resolve) => window.setTimeout(resolve, 40));
+      await exportResultsSummaryPng(displayedStats, activeTab, displayedResponseCount);
+      setExportProgress(100);
+    } catch (error) {
+      console.error("Error exportando imagen PNG:", error);
+      setShareFeedback("No se pudo exportar la imagen");
+    } finally {
+      window.setTimeout(() => { setExportingFormat(null); setExportProgress(0); }, 450);
+    }
+  };
   const handlePreferredExport = () => {
-    if (preferredExportFormat === "pdf") return void handleExportElectoralPdf();
-    if (preferredExportFormat === "png") return void exportResultsSummaryPng(displayedStats, activeTab, displayedResponseCount);
+    if (preferredExportFormat === "pdf") return void handlePreparePdfPreview();
+    if (preferredExportFormat === "png") return void handleExportPng();
     return handleExportCsv();
   };
   const handleSharePng = async () => {
+    if (exportingFormat) return;
+    setExportingFormat("share");
+    setExportProgress(12);
     try {
       const blob = await exportResultsSummaryPng(displayedStats, activeTab, displayedResponseCount, { download: false });
+      setExportProgress(72);
       const filename = `batalla-cultural-${activeTab}-${new Date().toISOString().slice(0, 10)}.png`;
       const file = new File([blob], filename, { type: "image/png" });
       if (typeof navigator.share === "function" && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
@@ -3239,11 +3310,14 @@ export default function Results() {
         window.setTimeout(() => URL.revokeObjectURL(url), 1200);
         setShareFeedback("Tu navegador no permite compartir archivos; imagen descargada");
       }
+      setExportProgress(100);
     } catch (error) {
       if ((error as Error)?.name !== "AbortError") {
         console.error("Error compartiendo PNG:", error);
         setShareFeedback("No se pudo compartir la imagen");
       }
+    } finally {
+      window.setTimeout(() => { setExportingFormat(null); setExportProgress(0); }, 450);
     }
     window.setTimeout(() => setShareFeedback(null), 3500);
   };
@@ -3441,16 +3515,7 @@ export default function Results() {
                 <Download size={12} /><span>CSV</span>
               </button>
             )}
-            <button className="r-hbtn r-hbtn-pdf" onClick={() => {
-              try {
-                handleExportElectoralPdf();
-                setShareFeedback("PDF generado y descargado");
-              } catch (error) {
-                console.error("Error PDF:", error);
-                setShareFeedback("No se pudo generar el PDF");
-              }
-              window.setTimeout(() => setShareFeedback(null), 3500);
-            }} title="Exportar resumen electoral optimizado para impresión">
+            <button className="r-hbtn r-hbtn-pdf" onClick={() => void handlePreparePdfPreview()} disabled={!!exportingFormat} aria-busy={exportingFormat === "pdf"} title="Previsualizar y exportar el resumen electoral optimizado para impresión">
               <FileText size={12} /><span>PDF</span>
             </button>
             {showSortBar && (
@@ -3492,6 +3557,7 @@ export default function Results() {
             <button className="r-hbtn r-hbtn-outline" onClick={handlePreferredExport} title={`Exportar en formato preferido: ${preferredExportFormat.toUpperCase()}`}>
               <Download size={12} /><span>Preferido</span>
             </button>
+            {exportingFormat && <span className="r-export-progress" role="status" aria-live="polite"><span className="r-export-spinner" aria-hidden="true" /> {exportingFormat === "pdf" ? `Generando PDF ${exportProgress}%` : exportingFormat === "share" ? `Preparando imagen ${exportProgress}%` : `Generando PNG ${exportProgress}%`}</span>}
             {shareFeedback && <span className="r-share-feedback" role="status" aria-live="polite">{shareFeedback}</span>}
             <button className="r-hbtn r-hbtn-ai" onClick={async () => {
               try {
@@ -4202,6 +4268,28 @@ export default function Results() {
         <PartyStatsModal isOpen={!!selectedPartyForStats} onClose={() => setSelectedPartyForStats(null)} partyName={selectedPartyForStats || ""} partyType={activeTab === "general" ? "general" : "youth"} accentColor={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.color : undefined} partyLogo={selectedPartyForStats ? (activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)[resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup)]?.logo : undefined} partyKey={selectedPartyForStats ? resolvePartyKey(selectedPartyForStats, activeTab === "general" ? generalPartyMetaLookup : youthPartyMetaLookup) : undefined} />
         {showInfografiaModal && <InfografiaModal parties={generalStats} onClose={() => setShowInfografiaModal(false)} onGenerate={handleGenerarInfografia} />}
         <TransferenciaVotoModal isOpen={showTransferenciaModal} onClose={() => setShowTransferenciaModal(false)} partyColors={partyColorMap} />
+        {pdfPreviewUrl && (
+          <div className="r-pdf-preview-backdrop" role="dialog" aria-modal="true" aria-labelledby="pdf-preview-title">
+            <div className={`r-pdf-preview-modal ${pdfOrientation === "landscape" ? "is-landscape" : "is-portrait"}`}>
+              <div className="r-pdf-preview-head">
+                <div>
+                  <div id="pdf-preview-title" className="r-pdf-preview-title">Vista previa del resumen PDF</div>
+                  <div className="r-pdf-preview-subtitle">Comprueba el documento antes de descargarlo</div>
+                </div>
+                <button type="button" className="r-pdf-preview-close" onClick={closePdfPreview} aria-label="Cerrar vista previa PDF">×</button>
+              </div>
+              <div className="r-pdf-preview-options">
+                <label className="r-pdf-orientation"><span>Orientación</span><select value={pdfOrientation} onChange={(event) => void handlePreparePdfPreview(event.target.value as ElectoralPdfOrientation)} aria-label="Orientación del documento PDF"><option value="portrait">Vertical</option><option value="landscape">Horizontal</option></select></label>
+                <span className="r-pdf-preview-hint">{pdfPreviewFilename}</span>
+              </div>
+              <iframe className="r-pdf-preview-frame" src={pdfPreviewUrl} title="Vista previa del documento PDF" />
+              <div className="r-pdf-preview-actions">
+                <button type="button" className="r-hbtn r-hbtn-outline" onClick={closePdfPreview}>Cerrar</button>
+                <button type="button" className="r-hbtn r-hbtn-pdf" onClick={() => { handleExportElectoralPdf(); closePdfPreview(); }}><FileText size={12} /> Descargar PDF</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -69,8 +69,10 @@ function addFooter(doc: jsPDF) {
   }
 }
 
-export function exportElectoralSummaryPdf(parties: ElectoralPdfParty[], context: ElectoralPdfContext) {
-  const doc = new jsPDF("p", "mm", "a4");
+export type ElectoralPdfOrientation = "portrait" | "landscape";
+
+export function buildElectoralSummaryPdf(parties: ElectoralPdfParty[], context: ElectoralPdfContext, orientation: ElectoralPdfOrientation = "portrait") {
+  const doc = new jsPDF(orientation, "mm", "a4");
   const pageWidth = doc.internal.pageSize.getWidth();
   const generatedAt = context.generadoEn ?? new Date();
   const dateLabel = generatedAt.toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
@@ -187,7 +189,29 @@ export function exportElectoralSummaryPdf(parties: ElectoralPdfParty[], context:
   doc.text(lines, 14, noteY, { maxWidth: pageWidth - 28 });
   addFooter(doc);
 
-  const filename = `resumen-electoral-batalla-cultural-${generatedAt.toISOString().slice(0, 10)}.pdf`;
+  return doc;
+}
+
+export function getElectoralPdfFilename(generatedAt = new Date()) {
+  return `resumen-electoral-batalla-cultural-${generatedAt.toISOString().slice(0, 10)}.pdf`;
+}
+
+export function createElectoralSummaryPdfBlob(
+  parties: ElectoralPdfParty[],
+  context: ElectoralPdfContext,
+  orientation: ElectoralPdfOrientation = "portrait",
+) {
+  const doc = buildElectoralSummaryPdf(parties, context, orientation);
+  return { blob: doc.output("blob") as Blob, filename: getElectoralPdfFilename(context.generadoEn ?? new Date()) };
+}
+
+export function exportElectoralSummaryPdf(
+  parties: ElectoralPdfParty[],
+  context: ElectoralPdfContext,
+  orientation: ElectoralPdfOrientation = "portrait",
+) {
+  const doc = buildElectoralSummaryPdf(parties, context, orientation);
+  const filename = getElectoralPdfFilename(context.generadoEn ?? new Date());
   doc.save(filename);
   return filename;
 }
