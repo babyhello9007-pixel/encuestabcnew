@@ -63,6 +63,7 @@ import { buildResultsSharePayload } from "@/lib/resultsShare";
 import { buildResultsCsv, buildResultsExcelHtml, type ResultsExportContext, type ResultsExportRow } from "@/lib/resultsExport";
 import { buildProvincialBreakdownCsv, downloadProvincialBreakdownPdf, type ProvincialBreakdownExportContext, type ProvincialBreakdownExportRow } from "@/lib/provincialBreakdownExport";
 import { formatExactVoteTooltip } from "@/lib/resultsTooltip";
+import { readResultsPanelPreference, writeResultsPanelPreference, type ResultsPanelPreference } from "@/lib/resultsPanelPreference";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PartyStats {
@@ -169,6 +170,8 @@ const RESULTS_CSS = `
 .r-hbtn-gov { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
 .r-hbtn-gov:hover { background: rgba(16,185,129,0.25); }
   .r-hbtn-pdf { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
+  .r-hbtn-csv { background: rgba(52,211,153,.13); border: 1px solid rgba(52,211,153,.30); color: #86efac; }
+  .r-hbtn-csv:hover { background: rgba(52,211,153,.23); transform: translateY(-1px); }
   .r-hbtn-pdf:hover { background: rgba(139,92,246,0.25); }
   .r-hbtn-share { background: rgba(45,212,191,0.14); border: 1px solid rgba(45,212,191,0.32); color: #5eead4; }
   .r-hbtn-share:hover { background: rgba(45,212,191,0.24); transform: translateY(-1px); }
@@ -220,13 +223,14 @@ const RESULTS_CSS = `
 .r-sort-hint { margin-left: auto; font-size: 12px; color: #5a596a; }
 
 /* Advanced result filters */
-  .r-top5-collapsible-panel { animation: filterPanelIn .24s ease both; scroll-margin-top: 18px; }
+  .r-top5-collapsible-panel { animation: filterPanelIn .24s cubic-bezier(.23,1,.32,1) both; scroll-margin-top: 18px; will-change: transform, opacity; }
   .r-filter-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 42px; padding: 9px 13px; border: 1px solid rgba(96,165,250,.24); border-radius: 12px; background: linear-gradient(135deg, rgba(96,165,250,.10), rgba(255,255,255,.035)); color: #dbeafe; font: inherit; cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
   .r-filter-trigger:hover, .r-filter-trigger:focus-visible, .r-filter-trigger.is-active { transform: translateY(-1px); border-color: rgba(96,165,250,.55); background: linear-gradient(135deg, rgba(96,165,250,.18), rgba(255,255,255,.055)); outline: none; box-shadow: 0 0 0 3px rgba(96,165,250,.11); }
   .r-filter-trigger-label { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 800; }
   .r-filter-trigger-state { color: #93c5fd; font-size: 11px; font-weight: 700; }
-  .r-filter-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 12px 30px rgba(0,0,0,.18); animation: filterPanelIn .22s ease both; }
-  @keyframes filterPanelIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  .r-filter-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 12px 30px rgba(0,0,0,.18); animation: filterPanelIn .22s cubic-bezier(.23,1,.32,1) both; will-change: transform, opacity; }
+  @keyframes filterPanelIn { from { opacity: 0; transform: translateY(-7px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .r-filter-panel, .r-top5-collapsible-panel { animation: none; will-change: auto; } }
 
 .r-filter-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .r-filter-title { display: inline-flex; align-items: center; gap: 7px; color: #f0eff8; font-size: 13px; font-weight: 800; }
@@ -306,6 +310,8 @@ const RESULTS_CSS = `
   }
 .r-export-btn-excel:hover { background: rgba(52,211,153,.20); }
 @media (max-width: 768px) {
+  .r-header-actions { gap: 5px; }
+  .r-hbtn { min-height: 36px; padding: 7px 9px; }
   .r-filter-grid { grid-template-columns: 1fr; }
   .r-filter-panel { padding: 13px; }
   .r-filter-title { font-size: 12px; }
@@ -520,11 +526,14 @@ const RESULTS_CSS = `
 
 /* ── MOBILE ── */
 @media (max-width: 768px) {
-  .r-header { padding: 0 12px; height: 52px; }
+  .r-header { padding: 0 12px; height: 52px; min-height: 52px; overflow: hidden; }
+  .r-brand { flex: 0 0 auto; }
   .r-brand-title { font-size: 13px; }
   .r-brand-sub { display: none; }
+  .r-header-actions { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; justify-content: flex-end; overflow-x: auto; scrollbar-width: none; }
+  .r-header-actions::-webkit-scrollbar { display: none; }
   .r-header-actions .r-hbtn span { display: none; }
-  .r-header-actions .r-hbtn { padding: 6px 8px; }
+  .r-header-actions .r-hbtn { flex: 0 0 auto; padding: 6px 8px; }
   .r-main { padding: 14px 12px 50px; }
   .r-quickstats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .r-stat-value { font-size: 20px; }
@@ -2567,10 +2576,9 @@ export default function Results() {
   const [porcentajeLiderPorPartido, setPorcentajeLiderPorPartido] = useState<Record<string, number>>({});
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [resultFilters, setResultFilters] = useState<ResultFilterState>({ ccaa: "all", provincia: "all", edad: "all" });
-  const [openResultsPanel, setOpenResultsPanel] = useState<"filters" | "top5" | null>(() => {
+  const [openResultsPanel, setOpenResultsPanel] = useState<ResultsPanelPreference>(() => {
     if (typeof window === "undefined") return null;
-    const saved = window.sessionStorage.getItem("bc-results-open-panel");
-    return saved === "filters" || saved === "top5" ? saved : null;
+    return readResultsPanelPreference(window.localStorage) ?? readResultsPanelPreference(window.sessionStorage);
   });
   const [panelAnnouncement, setPanelAnnouncement] = useState("");
   const panelInteractionRef = useRef(false);
@@ -2582,8 +2590,9 @@ export default function Results() {
 
   useEffect(() => { document.title = "La Encuesta de BC"; }, []);
   useEffect(() => {
-    if (typeof window === "undefined" || !openResultsPanel) return;
-    window.sessionStorage.setItem("bc-results-open-panel", openResultsPanel);
+    if (typeof window === "undefined") return;
+    writeResultsPanelPreference(window.localStorage, openResultsPanel);
+    writeResultsPanelPreference(window.sessionStorage, openResultsPanel);
   }, [openResultsPanel]);
   useEffect(() => {
     const label = openResultsPanel === "filters" ? "Filtros avanzados abiertos" : openResultsPanel === "top5" ? "Top 5 de líderes abierto" : "Panel cerrado";
@@ -3339,6 +3348,11 @@ export default function Results() {
             <button className="r-hbtn r-hbtn-infog" onClick={() => setShowInfografiaModal(true)}>
               <Image size={12} /><span>Infografía</span>
             </button>
+            {showSortBar && (
+              <button className="r-hbtn r-hbtn-csv" onClick={handleExportCsv} title="Exportar los resultados electorales visibles en CSV">
+                <Download size={12} /><span>CSV</span>
+              </button>
+            )}
             <button className="r-hbtn r-hbtn-pdf" onClick={async () => {
               try {
                 await downloadPDFWithMetrics(generalStats, activeTab, totalResponses, null, null);

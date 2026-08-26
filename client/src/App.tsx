@@ -1,33 +1,34 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { initFavicon } from "./lib/faviconLoader";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import Home from "./pages/Home";
-import Survey from "./pages/Survey";
-import NanoEncuestaBC from "./pages/NanoEncuestaBC";
-import Results from "./pages/Results";
-import About from "./pages/About";
-import Admin from "./pages/Admin";
-import CodeEditor from "./pages/CodeEditor";
-import LeaderSurvey from "./pages/LeaderSurvey";
-import SurveysVarias from "./pages/SurveysVarias";
-import Bio from "./pages/Bio";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import AdminBlogLogin from "./pages/AdminBlogLogin";
-import DiscordCallback from "./pages/DiscordCallback";
-import CoalitionsComparison from "./pages/CoalitionsComparison";
-import PartiesDocumentation from "./pages/PartiesDocumentation";
-import AdminParties from "./pages/AdminParties";
-import AdminStatistics from "./pages/AdminStatistics";
-import SimuladorBCGuide from "./pages/SimuladorBCGuide";
-import Primarias from "./pages/Primarias";
-import TestPolitico from "./pages/TestPolitico";
-import ValorarLideres from "./pages/ValorarLideres";
+import NotFound from "@/pages/NotFound";
+
+const Survey = lazy(() => import("./pages/Survey"));
+const NanoEncuestaBC = lazy(() => import("./pages/NanoEncuestaBC"));
+const Results = lazy(() => import("./pages/Results"));
+const About = lazy(() => import("./pages/About"));
+const Admin = lazy(() => import("./pages/Admin"));
+const CodeEditor = lazy(() => import("./pages/CodeEditor"));
+const LeaderSurvey = lazy(() => import("./pages/LeaderSurvey"));
+const SurveysVarias = lazy(() => import("./pages/SurveysVarias"));
+const Bio = lazy(() => import("./pages/Bio"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const AdminBlogLogin = lazy(() => import("./pages/AdminBlogLogin"));
+const DiscordCallback = lazy(() => import("./pages/DiscordCallback"));
+const CoalitionsComparison = lazy(() => import("./pages/CoalitionsComparison"));
+const PartiesDocumentation = lazy(() => import("./pages/PartiesDocumentation"));
+const AdminParties = lazy(() => import("./pages/AdminParties"));
+const AdminStatistics = lazy(() => import("./pages/AdminStatistics"));
+const SimuladorBCGuide = lazy(() => import("./pages/SimuladorBCGuide"));
+const Primarias = lazy(() => import("./pages/Primarias"));
+const TestPolitico = lazy(() => import("./pages/TestPolitico"));
+const ValorarLideres = lazy(() => import("./pages/ValorarLideres"));
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -76,7 +77,9 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <Suspense fallback={<div className="min-h-screen bg-[#080b17] text-white flex items-center justify-center font-[TVP]">Cargando…</div>}>
+            <Router />
+          </Suspense>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

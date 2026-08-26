@@ -874,3 +874,14 @@
 - [x] Servir TVP.ttf desde una ruta pública compatible con Vercel
 - [x] Configurar precarga y cabeceras MIME/cache de la fuente sin depender del proxy local
 - [x] Verificar carga efectiva de TVP en el despliegue de Vercel
+
+## Mejoras móviles, exportación y rendimiento - SESIÓN ACTUAL
+- [x] Añadir animaciones suaves y accesibles al abrir y cerrar los paneles de Filtros y Top 5 en móvil
+- [x] Persistir la preferencia del usuario sobre paneles Filtros y Top 5 abiertos
+- [x] Añadir exportación CSV de los resultados electorales visibles
+- [x] Añadir exportación como imagen de los resultados electorales visibles
+- [ ] Verificar tooltips y paneles en producción con viewport móvil
+- [x] Revisar y mejorar la división del bundle de producción para reducir la carga inicial
+- [x] Añadir pruebas unitarias para preferencias y exportación
+- [ ] Ejecutar TypeScript, tests, build y validación responsive final
+- [ ] Guardar checkpoint publicado con las mejoras

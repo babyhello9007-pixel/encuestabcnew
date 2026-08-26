@@ -24,6 +24,17 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "wouter"],
+          charts: ["recharts"],
+          maps: ["leaflet", "react-leaflet", "geojson-vt"],
+          export: ["html2canvas", "jspdf"],
+          ui: ["lucide-react", "sonner"],
+        },
+      },
+    },
   },
   server: {
     host: true,
