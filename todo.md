@@ -880,8 +880,8 @@
 - [x] Persistir la preferencia del usuario sobre paneles Filtros y Top 5 abiertos
 - [x] Añadir exportación CSV de los resultados electorales visibles
 - [x] Añadir exportación como imagen de los resultados electorales visibles
-- [ ] Verificar tooltips y paneles en producción con viewport móvil
+- [x] Verificar tooltips y paneles en producción con viewport móvil
 - [x] Revisar y mejorar la división del bundle de producción para reducir la carga inicial
 - [x] Añadir pruebas unitarias para preferencias y exportación
-- [ ] Ejecutar TypeScript, tests, build y validación responsive final
-- [ ] Guardar checkpoint publicado con las mejoras
+- [x] Ejecutar TypeScript, tests, build y validación responsive final
+- [x] Guardar checkpoint publicado con las mejoras

@@ -1,5 +1,16 @@
-import { useState, useEffect } from 'react';
-import { EMBEDDED_LOGOS } from '@/lib/embeddedLogos';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+type EmbeddedLogos = Record<string, string>;
+
+const findEmbeddedLogo = (source: string, logos: EmbeddedLogos) => {
+  const filename = source.split('/').pop() || '';
+  if (filename && logos[filename]) return logos[filename];
+  const basename = filename.replace(/\.[^.]+$/, '').toLowerCase();
+  const embeddedKey = Object.keys(logos).find(key =>
+    key.toLowerCase().includes(basename) || basename.includes(key.toLowerCase().replace(/\.[^.]+$/, ''))
+  );
+  return embeddedKey ? logos[embeddedKey] : undefined;
+};
 
 interface ImageLoaderProps {
   src: string;
@@ -34,22 +45,21 @@ export default function ImageLoader({
   // de iniciales hasta que se cargue una imagen persistente en la configuración.
   const isEphemeralProfileUrl = (value: string) => /(^|\/\/)(pbs\.twimg\.com|media\.licdn\.com)\//i.test(value);
 
+  const embeddedLogosRef = useRef<EmbeddedLogos | null>(null);
+  const embeddedLogosPromiseRef = useRef<Promise<EmbeddedLogos> | null>(null);
+  const loadEmbeddedLogos = useCallback(async () => {
+    if (embeddedLogosRef.current) return embeddedLogosRef.current;
+    if (!embeddedLogosPromiseRef.current) {
+      embeddedLogosPromiseRef.current = import('@/lib/embeddedLogos').then(module => {
+        embeddedLogosRef.current = module.EMBEDDED_LOGOS;
+        return module.EMBEDDED_LOGOS;
+      });
+    }
+    return embeddedLogosPromiseRef.current;
+  }, []);
+
   const [currentSrc, setCurrentSrc] = useState<string>(() => {
     if (!isValidImageSource(src) || (!strictExternal && isEphemeralProfileUrl(src))) return '';
-    if (strictExternal) return src;
-    // Primero intenta obtener desde logos embebidos
-    const filename = src.split('/').pop() || '';
-    if (filename && EMBEDDED_LOGOS[filename]) {
-      return EMBEDDED_LOGOS[filename];
-    }
-    // Buscar variantes (ej: arran-new.png si busca arran.png)
-    const basename = filename.replace(/\.[^.]+$/, '').toLowerCase();
-    const embeddedKey = Object.keys(EMBEDDED_LOGOS).find(key => 
-      key.toLowerCase().includes(basename) || basename.includes(key.toLowerCase().replace(/\.[^.]+$/, ''))
-    );
-    if (embeddedKey) {
-      return EMBEDDED_LOGOS[embeddedKey];
-    }
     return src;
   });
   const [hasError, setHasError] = useState(false);
@@ -63,40 +73,21 @@ export default function ImageLoader({
       setIsLoading(false);
       return;
     }
-    if (strictExternal) {
-      setCurrentSrc(src);
-      setHasError(false);
-      setIsLoading(true);
-      setAttemptCount(0);
-      return;
-    }
-    const filename = src.split('/').pop() || '';
-    if (filename && EMBEDDED_LOGOS[filename]) {
-      setCurrentSrc(EMBEDDED_LOGOS[filename]);
-    } else {
-      // Buscar variantes (ej: arran-new.png si busca arran.png)
-      const basename = filename.replace(/\.[^.]+$/, '').toLowerCase();
-      const embeddedKey = Object.keys(EMBEDDED_LOGOS).find(key => 
-        key.toLowerCase().includes(basename) || basename.includes(key.toLowerCase().replace(/\.[^.]+$/, ''))
-      );
-      if (embeddedKey) {
-        setCurrentSrc(EMBEDDED_LOGOS[embeddedKey]);
-      } else {
-        setCurrentSrc(src);
-      }
-    }
+
+    setCurrentSrc(src);
     setHasError(false);
     setIsLoading(true);
     setAttemptCount(0);
-  }, [src, strictExternal]);
+  }, [loadEmbeddedLogos, src, strictExternal]);
 
   const generateFallbacks = (originalSrc: string): string[] => {
+    const embeddedLogos = embeddedLogosRef.current ?? {};
     const fallbacks = [originalSrc];
     const filename = originalSrc.split('/').pop() || '';
     
     // Si existe en logos embebidos, agregarlo como fallback
-    if (filename && EMBEDDED_LOGOS[filename] && !fallbacks.includes(EMBEDDED_LOGOS[filename])) {
-      fallbacks.push(EMBEDDED_LOGOS[filename]);
+    if (filename && embeddedLogos[filename] && !fallbacks.includes(embeddedLogos[filename])) {
+      fallbacks.push(embeddedLogos[filename]);
     }
     
     // Variante 1: Cambiar acentos
@@ -110,8 +101,8 @@ export default function ImageLoader({
     if (noAccents !== originalSrc) {
       fallbacks.push(noAccents);
       const noAccentsFilename = noAccents.split('/').pop() || '';
-      if (noAccentsFilename && EMBEDDED_LOGOS[noAccentsFilename]) {
-        fallbacks.push(EMBEDDED_LOGOS[noAccentsFilename]);
+      if (noAccentsFilename && embeddedLogos[noAccentsFilename]) {
+        fallbacks.push(embeddedLogos[noAccentsFilename]);
       }
     }
     
@@ -148,49 +139,53 @@ export default function ImageLoader({
       setIsLoading(false);
       return;
     }
-    const fallbacks = generateFallbacks(currentSrc);
-    const currentIndex = fallbacks.indexOf(currentSrc);
+
+    const failedSrc = currentSrc;
+    const fallbacks = generateFallbacks(failedSrc);
+    const currentIndex = fallbacks.indexOf(failedSrc);
     const newAttempt = attemptCount + 1;
     setAttemptCount(newAttempt);
-    
+
     if (currentIndex < fallbacks.length - 1) {
-      // Reintentar con siguiente fallback
       const nextSrc = fallbacks[currentIndex + 1];
       if (import.meta.env.DEV) {
-        console.warn(`ImageLoader: Failed to load ${currentSrc}, trying ${nextSrc}`);
+        console.warn(`ImageLoader: Failed to load ${failedSrc}, trying ${nextSrc}`);
       }
       setCurrentSrc(nextSrc);
-    } else if (newAttempt < 3) {
-      // Último intento: buscar en EMBEDDED_LOGOS por similitud exhaustiva
-      const filename = src.split('/').pop() || '';
-      const basename = filename.replace(/\.[^.]+$/, '').toLowerCase();
-      
-      const embeddedKeys = Object.keys(EMBEDDED_LOGOS);
-      const similarKey = embeddedKeys.find(key => {
-        const keyBase = key.replace(/\.[^.]+$/, '').toLowerCase();
-        return keyBase.includes(basename) || basename.includes(keyBase) || 
-               keyBase.replace(/[-_]/g, '') === basename.replace(/[-_]/g, '');
-      });
-      
-      if (similarKey && EMBEDDED_LOGOS[similarKey]) {
-        if (import.meta.env.DEV) {
-          console.warn(`ImageLoader: Using embedded logo ${similarKey} for ${filename}`);
-        }
-        setCurrentSrc(EMBEDDED_LOGOS[similarKey]);
-      } else {
-        if (import.meta.env.DEV) {
-          console.error(`ImageLoader: No logo found for ${filename}`);
-        }
-        setHasError(true);
-        setIsLoading(false);
-      }
-    } else {
-      if (import.meta.env.DEV) {
-        console.error(`ImageLoader: Failed after multiple attempts for ${src}`);
-      }
-      setHasError(true);
-      setIsLoading(false);
+      return;
     }
+
+    if (newAttempt < 3) {
+      const filename = src.split('/').pop() || '';
+      void loadEmbeddedLogos().then(logos => {
+        if (currentSrc !== failedSrc) return;
+        const embeddedSrc = findEmbeddedLogo(src, logos);
+        if (embeddedSrc) {
+          if (import.meta.env.DEV) {
+            console.warn(`ImageLoader: Using embedded logo for ${filename}`);
+          }
+          setCurrentSrc(embeddedSrc);
+        } else {
+          if (import.meta.env.DEV) {
+            console.error(`ImageLoader: No logo found for ${filename}`);
+          }
+          setHasError(true);
+          setIsLoading(false);
+        }
+      }).catch(() => {
+        if (currentSrc === failedSrc) {
+          setHasError(true);
+          setIsLoading(false);
+        }
+      });
+      return;
+    }
+
+    if (import.meta.env.DEV) {
+      console.error(`ImageLoader: Failed after multiple attempts for ${src}`);
+    }
+    setHasError(true);
+    setIsLoading(false);
   };
 
   const handleLoad = () => {
