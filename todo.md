@@ -898,3 +898,22 @@
 - [x] Crear pruebas unitarias para el PDF, la preferencia y el flujo de compartir
 - [x] Validar exportaciones, responsive, accesibilidad, TypeScript y build
 - [x] Guardar checkpoint publicado con la mejora de exportaciones
+
+## Vista previa PDF, orientación y progreso - SESIÓN ACTUAL
+- [ ] Añadir modal de vista previa del resumen PDF antes de descargar
+- [ ] Permitir elegir orientación vertical u horizontal para el PDF
+- [ ] Generar una vista previa fiel a la orientación seleccionada
+- [ ] Añadir indicador de progreso durante la generación del PDF
+- [ ] Añadir indicador de progreso durante la generación o compartir del PNG
+- [ ] Permitir cancelar o cerrar la vista previa sin descargar
+- [ ] Añadir pruebas unitarias para orientación, estados de exportación y nombres de archivo
+- [ ] Validar TypeScript, tests, build y responsive
+- [ ] Guardar checkpoint publicado con la mejora de exportación
+- [ ] Consolidar la vista previa, orientación y progreso dentro de los botones de exportación existentes, sin añadir acciones redundantes
+
+## Incidencia exportación PDF - SESIÓN ACTUAL
+- [x] Corregir `doc.autoTable is not a function` en el resumen electoral PDF
+- [x] Mantener la tabla imprimible y sus métricas tras la reparación
+- [x] Añadir prueba de integración o fallback para la disponibilidad de autotable
+- [x] Validar TypeScript, tests, build y botón PDF en Results
+- [x] Guardar checkpoint publicado con la reparación

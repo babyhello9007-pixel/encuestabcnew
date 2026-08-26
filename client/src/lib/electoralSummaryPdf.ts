@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import { autoTable } from "jspdf-autotable";
 
 export interface ElectoralPdfParty {
   partido: string;
@@ -119,7 +119,7 @@ export function exportElectoralSummaryPdf(parties: ElectoralPdfParty[], context:
   doc.setFontSize(12);
   doc.setTextColor(20, 26, 38);
   doc.text("Resumen ejecutivo", 14, y);
-  (doc as any).autoTable({
+  autoTable(doc, {
     startY: y + 4,
     head: [["Indicador", "Valor"]],
     body: summaryRows,
@@ -139,7 +139,7 @@ export function exportElectoralSummaryPdf(parties: ElectoralPdfParty[], context:
   doc.text("Resultados por partido", 14, y);
   y += 4;
   const tableRows = buildElectoralPdfRows(parties);
-  (doc as any).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["#", "Partido", "Votos", "%", "Esc.", "Barómetro", "Media", "Edad media", "Líder mejor valorado", "Apoyo"]],
     body: tableRows,
