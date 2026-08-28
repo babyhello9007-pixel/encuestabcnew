@@ -951,3 +951,11 @@
 - [x] Validar que la interfaz no muestre dos acciones equivalentes en móvil ni escritorio
 - [x] Ejecutar TypeScript, tests, build y revisión responsive
 - [x] Guardar checkpoint publicado con la corrección
+
+## Leyenda persistente de validación de líderes - SESIÓN ACTUAL
+- [x] Añadir una leyenda persistente para explicar Oficial y Manual
+- [x] Mostrar la leyenda en las superficies relevantes sin duplicar botones ni controles
+- [x] Garantizar contraste, lectura móvil y compatibilidad con lectores de pantalla
+- [x] Añadir o actualizar pruebas de la leyenda
+- [x] Validar TypeScript, tests, build y responsive
+- [x] Guardar checkpoint publicado con la mejora

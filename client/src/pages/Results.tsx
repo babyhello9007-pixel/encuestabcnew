@@ -3613,6 +3613,33 @@ export default function Results() {
 
         {/* NavBar */}
         <ResultsNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <div
+          className="r-validation-legend"
+          role="note"
+          aria-label="Leyenda de validación de líderes"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+            margin: "10px 14px 0",
+            padding: "8px 12px",
+            borderRadius: 12,
+            border: "1px solid rgba(148,163,184,.24)",
+            background: "rgba(15,23,42,.42)",
+            color: "#cbd5e1",
+            fontSize: 11,
+            lineHeight: 1.35,
+          }}
+        >
+          <span style={{ fontWeight: 800, color: "#f8fafc" }}>Validación de líderes</span>
+          <span title="El nombre coincide con un líder activo configurado en party_leaders" style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#6ee7b7", fontWeight: 700 }}>
+            <span aria-hidden="true">✓</span> Oficial: configurado en Supabase
+          </span>
+          <span title="El nombre procede de una valoración manual y no coincide con party_leaders" style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "#fbbf24", fontWeight: 700 }}>
+            <span aria-hidden="true">⚠</span> Manual: no validado en Supabase
+          </span>
+        </div>
         <div className="r-mobile-export-tools" aria-label="Exportación rápida">
           <label className="r-export-preference" title="Formato usado por Exportar preferido">
             <span>Formato preferido</span>
