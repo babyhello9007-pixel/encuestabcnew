@@ -99,63 +99,67 @@ export default function Home() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;800&display=swap');
 
         .bc-home-shell .frosted-glass {
-          position: relative;
-          overflow: hidden;
-          background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
-          backdrop-filter: blur(24px) saturate(150%);
-          -webkit-backdrop-filter: blur(24px) saturate(150%);
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          border-radius: 22px;
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.28), 12px 16px 34px rgba(0,0,0,0.25);
-        }
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.28), 12px 16px 34px rgba(0,0,0,0.25);
+}
 
-        .bc-home-shell .liquid-glass {
-          position: relative;
-          overflow: hidden;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.045) 48%, rgba(244, 63, 94, 0.07) 100%);
-          backdrop-filter: blur(32px) saturate(165%);
-          -webkit-backdrop-filter: blur(32px) saturate(165%);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 26px;
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.28), 18px 24px 52px rgba(0,0,0,0.32), 0 0 40px rgba(244,63,94,0.06);
-        }
+.bc-home-shell .liquid-glass {
+  position: relative;
+  overflow: hidden;
+  /* Cambio a tinte morado/púrpura al final del degradado */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.045) 48%, rgba(168, 85, 247, 0.12) 100%);
+  backdrop-filter: blur(32px) saturate(165%);
+  -webkit-backdrop-filter: blur(32px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 26px;
+  /* Glow/Sombra morada exterior */
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.28), 18px 24px 52px rgba(0,0,0,0.32), 0 0 40px rgba(168, 85, 247, 0.15);
+}
 
-        .bc-home-shell .frosted-glass::after,
-        .bc-home-shell .liquid-glass::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: linear-gradient(120deg, rgba(255,255,255,0.12), transparent 34%, transparent 70%, rgba(255,255,255,0.04));
-        }
+.bc-home-shell .frosted-glass::after,
+.bc-home-shell .liquid-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255,255,255,0.12), transparent 34%, transparent 70%, rgba(255,255,255,0.04));
+}
 
-        .bc-home-shell .frosted-glass,
-        .bc-home-shell .liquid-glass {
-          transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-        }
+.bc-home-shell .frosted-glass,
+.bc-home-shell .liquid-glass {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
 
-        .bc-home-shell .frosted-glass:hover,
-        .bc-home-shell .liquid-glass:hover {
-          transform: translateY(-3px);
-          border-color: rgba(255, 255, 255, 0.28);
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.2), 18px 26px 54px rgba(0,0,0,0.36), 0 0 34px rgba(244,63,94,0.09);
-        }
+.bc-home-shell .frosted-glass:hover,
+.bc-home-shell .liquid-glass:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.28);
+  /* Hover con resplandor morado enriquecido */
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.2), 18px 26px 54px rgba(0,0,0,0.36), 0 0 34px rgba(168, 85, 247, 0.22);
+}
 
-        .bc-home-shell header {
-          background: linear-gradient(180deg, rgba(5, 8, 22, 0.76), rgba(5, 8, 22, 0.28));
-          backdrop-filter: blur(18px) saturate(135%);
-          -webkit-backdrop-filter: blur(18px) saturate(135%);
-          border-bottom-color: rgba(255, 255, 255, 0.1);
-        }
+.bc-home-shell header {
+  background: linear-gradient(180deg, rgba(5, 8, 22, 0.76), rgba(5, 8, 22, 0.28));
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
 
-        @media (prefers-reduced-motion: reduce) {
-          .bc-home-shell .frosted-glass:hover,
-          .bc-home-shell .liquid-glass:hover { transform: none; }
-        }
+@media (prefers-reduced-motion: reduce) {
+  .bc-home-shell .frosted-glass:hover,
+  .bc-home-shell .liquid-glass:hover { transform: none; }
+}
 
-        .font-playfair {
-          font-family: 'TVP', sans-serif;
-        }
+.font-playfair {
+  font-family: 'TVP', sans-serif;
+}
+
       `}</style>
 
       {/* Navigation Header */}
@@ -167,15 +171,20 @@ export default function Home() {
           <span className="text-lg font-bold text-white hidden sm:inline tracking-tight">Batalla Cultural</span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/")}>Inicio</button>
-          <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/encuesta")}>Encuesta</button>
-          <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/resultados")}>Resultados</button>
-          <a href={QUORUM_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20">
-            <Newspaper size={15} />
-            Quorum
-          </a>
-        </nav>
+<nav className="hidden md:flex items-center gap-6">
+  <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/")}>Inicio</button>
+  <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/encuesta")}>Encuesta</button>
+  <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/resultados")}>Resultados</button>
+  <a 
+    href={QUORUM_URL} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="text-sm font-medium text-[#54D59F] hover:text-[#54D59F]/80 transition-colors flex items-center gap-1.5 bg-[#54D59F]/10 px-3 py-1.5 rounded-lg border border-[#54D59F]/20"
+  >
+    <Newspaper size={15} />
+    Quorum
+  </a>
+</nav>
 
         <div className="flex items-center gap-3">
           <button 
