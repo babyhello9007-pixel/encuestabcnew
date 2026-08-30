@@ -976,4 +976,4 @@
 - [x] Ejecutar TypeScript, tests y build
 - [x] Guardar checkpoint publicado con la corrección
 - [x] Asegurar contraste de los logotipos blancos nuevos en el tema claro de Linktree/Bio
-- [ ] Sincronizar el cambio de logos de Quorum con el despliegue de Vercel
+- [x] Sincronizar el cambio de logos de Quorum con el despliegue de Vercel
