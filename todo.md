@@ -974,5 +974,5 @@
 - [x] Sincronizar ambas referencias de Quorum en Linktree/Bio
 - [x] Validar visualmente Home y Linktree en móvil y escritorio
 - [x] Ejecutar TypeScript, tests y build
-- [ ] Guardar checkpoint publicado con la corrección
+- [x] Guardar checkpoint publicado con la corrección
 - [x] Asegurar contraste de los logotipos blancos nuevos en el tema claro de Linktree/Bio
