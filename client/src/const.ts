@@ -3,12 +3,12 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 export const APP_TITLE = import.meta.env.VITE_APP_TITLE || "App";
 
 /** Logos de marca servidos desde almacenamiento persistente de WebDev. */
-export const BC_LOGO_URL = "/manus-storage/batalla-cultural-logo-20260830_df309405.png";
-export const QUORUM_LOGO_URL = "/manus-storage/quorum-logo-20260830_ad98aa8e.png";
+export const BC_LOGO_URL = "/favicon.png";
+export const QUORUM_LOGO_URL = "/quorum.png";
 
 export const APP_LOGO =
   import.meta.env.VITE_APP_LOGO ||
-  "https://placehold.co/128x128/E1E7EF/1F2937?text=App";
+  "/favicon.png";
 
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
