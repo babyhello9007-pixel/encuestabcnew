@@ -63,7 +63,7 @@ export const generateAdvancedInfographic = async (
   const logoContainer = document.createElement('div');
   logoContainer.style.marginBottom = '20px';
   const logoImg = document.createElement('img');
-  logoImg.src = '/favicon.png';
+  logoImg.src = '/manus-storage/batalla-cultural-logo-20260830_df309405.png';
   logoImg.style.width = '60px';
   logoImg.style.height = '60px';
   logoContainer.appendChild(logoImg);
@@ -299,7 +299,7 @@ export const generateAllLogosInfographic = async (
   const logoContainer = document.createElement('div');
   logoContainer.style.marginBottom = '20px';
   const logoImg = document.createElement('img');
-  logoImg.src = '/favicon.png';
+  logoImg.src = '/manus-storage/batalla-cultural-logo-20260830_df309405.png';
   logoImg.style.width = '60px';
   logoImg.style.height = '60px';
   logoContainer.appendChild(logoImg);

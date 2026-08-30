@@ -14,13 +14,14 @@ import {
   QUORUM_URL,
   SOCIAL_LINKS,
 } from "./Bio";
+import { QUORUM_LOGO_URL } from "@/const";
 
 describe("configuración del Linktree de Batalla Cultural", () => {
   it("enlaza Quorum a su sitio oficial con un logotipo identificado", () => {
     const quorum = PRIMARY_LINKS.find((link) => link.title === "Quorum");
 
     expect(quorum?.externalUrl).toBe(QUORUM_URL);
-    expect(quorum?.logo).toBe("https://batallaperi-avauhaz8.manus.space/logo.png");
+    expect(quorum?.logo).toBe(QUORUM_LOGO_URL);
   });
 
   it("incluye los cuatro perfiles sociales oficiales con sus activos visuales", () => {

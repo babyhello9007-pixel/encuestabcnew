@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import QRCode from "qrcode";
-import { APP_LOGO } from "@/const";
+import { APP_LOGO, BC_LOGO_URL, QUORUM_LOGO_URL } from "@/const";
 import { trpc } from "@/lib/trpc";
 
 type InternalLink = {
@@ -47,7 +47,7 @@ export const LINKTREE_SHARE_TITLE = "Batalla Cultural";
 export const LINKTREE_SHARE_TEXT = "Encuesta, análisis y comunidad para entender la opinión política y cultural de España.";
 export const LINKTREE_THEME_STORAGE_KEY = "bc-linktree-theme";
 export const LINKTREE_CLICK_STORAGE_KEY = "bc-linktree-click-counts";
-export const BIO_FAVICON = "/favicon.png";
+export const BIO_FAVICON = BC_LOGO_URL;
 
 export function isQuorumArticleLoading(isNewsOpen: boolean, isLoading: boolean) {
   return isNewsOpen && isLoading;
@@ -98,7 +98,7 @@ export const PRIMARY_LINKS: InternalLink[] = [
     title: "Quorum",
     description: "Análisis político y cultural para mirar más allá de los titulares.",
     externalUrl: QUORUM_URL,
-    logo: "https://batallaperi-avauhaz8.manus.space/logo.png",
+    logo: QUORUM_LOGO_URL,
     icon: BookOpen,
     accent: "text-violet-200 bg-violet-400/10 border-violet-300/20 hover:border-violet-300/60",
     featured: true,
@@ -276,7 +276,7 @@ export default function Bio() {
         <header className="mb-7 text-center">
           <div className="mb-4 flex items-start justify-between">
             <span className="h-11 w-11" aria-hidden="true" />
-            <div className={`linktree-logo-shell flex h-24 w-24 items-center justify-center rounded-[2rem] border p-2 shadow-2xl backdrop-blur-xl ${isDark ? "border-white/20 bg-white/10 shadow-rose-950/30" : "border-slate-200 bg-white shadow-slate-300/40"}`}>
+            <div className={`linktree-logo-shell flex h-24 w-24 items-center justify-center rounded-[2rem] border p-2 shadow-2xl backdrop-blur-xl ${isDark ? "border-white/20 bg-white/10 shadow-rose-950/30" : "border-slate-300 bg-slate-900 shadow-slate-400/40"}`}>
               <img
                 src={BIO_FAVICON}
                 alt="Favicon de Batalla Cultural"
@@ -324,8 +324,8 @@ export default function Bio() {
           style={{ animationDelay: "60ms" }}
         >
           <span className="flex items-start gap-3">
-            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isDark ? "bg-emerald-300/10 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`}>
-              <Newspaper className="h-5 w-5" />
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl p-1.5 ${isDark ? "bg-emerald-300/10" : "bg-slate-900"}`}>
+              <img src={QUORUM_LOGO_URL} alt="Logo de Quorum" className="h-full w-full object-contain" />
             </span>
             <span className="min-w-0 flex-1">
               <span className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] ${isDark ? "text-emerald-200" : "text-emerald-700"}`}>
@@ -373,7 +373,7 @@ export default function Bio() {
                 className={`linktree-reveal linktree-card group flex w-full items-center gap-4 rounded-2xl border p-4 text-left shadow-lg backdrop-blur-xl transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-1 hover:scale-[1.01] hover:shadow-2xl active:translate-y-0 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none ${link.accent}`}
                 style={{ animationDelay: `${120 + index * 70}ms` }}
               >
-                <span className={`linktree-icon-shell flex h-11 shrink-0 items-center justify-center rounded-xl border border-white/15 ${link.logo ? "w-28 bg-white/90 px-2" : "w-11 bg-slate-950/35"}`}>
+                <span className={`linktree-icon-shell flex h-11 shrink-0 items-center justify-center rounded-xl border border-white/15 ${link.logo ? `w-28 px-2 ${link.title === "Quorum" ? "!bg-slate-950/90" : "bg-white/90"}` : "w-11 bg-slate-950/35"}`}>
                   {link.logo ? (
                     <img src={link.logo} alt="Logotipo Quorum" className="h-7 w-full object-contain" />
                   ) : (

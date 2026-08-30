@@ -18,7 +18,7 @@ function setMeta(selector: string, attribute: "name" | "property", value: string
   element.content = value;
 }
 
-export function SeoHead({ title, description, path = "/", image = "/favicon.png", robots = "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" }: SeoHeadProps) {
+export function SeoHead({ title, description, path = "/", image = "/manus-storage/batalla-cultural-logo-20260830_df309405.png", robots = "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" }: SeoHeadProps) {
   useEffect(() => {
     const baseUrl = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, "");
     const canonicalUrl = `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;

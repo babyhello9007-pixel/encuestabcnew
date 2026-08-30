@@ -38,7 +38,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+              <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-8 w-8" />
               <h3 className="font-bold text-lg text-foreground">Batalla Cultural</h3>
             </div>
             <p className="text-sm text-muted-foreground">

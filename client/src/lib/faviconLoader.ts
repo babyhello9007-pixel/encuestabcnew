@@ -13,10 +13,10 @@ export function forceFaviconLoad() {
   
   // Crear y agregar nuevos links de favicon con múltiples formatos
   const formats = [
-    { rel: 'icon', type: 'image/png', href: `/favicon.png?v=${version}` },
+    { rel: 'icon', type: 'image/png', href: `/manus-storage/batalla-cultural-logo-20260830_df309405.png?v=${version}` },
     { rel: 'icon', type: 'image/x-icon', href: `/favicon.ico?v=${version}` },
-    { rel: 'apple-touch-icon', type: 'image/png', href: `/favicon.png?v=${version}` },
-    { rel: 'shortcut icon', type: 'image/png', href: `/favicon.png?v=${version}` },
+    { rel: 'apple-touch-icon', type: 'image/png', href: `/manus-storage/batalla-cultural-logo-20260830_df309405.png?v=${version}` },
+    { rel: 'shortcut icon', type: 'image/png', href: `/manus-storage/batalla-cultural-logo-20260830_df309405.png?v=${version}` },
   ];
   
   const head = document.head;
@@ -32,7 +32,7 @@ export function forceFaviconLoad() {
   });
   
   // Log para verificar que se cargó correctamente
-  console.log('✅ Favicon forzado a cargar:', `/favicon.png?v=${version}`);
+  console.log('✅ Favicon forzado a cargar:', `/manus-storage/batalla-cultural-logo-20260830_df309405.png?v=${version}`);
   
   // Forzar recarga del favicon después de 100ms
   setTimeout(() => {
@@ -40,7 +40,7 @@ export function forceFaviconLoad() {
     const dynamicFavicon = document.createElement('link');
     dynamicFavicon.rel = 'icon';
     dynamicFavicon.type = 'image/png';
-    dynamicFavicon.href = `/favicon.png?v=${version}&t=${Date.now()}`;
+    dynamicFavicon.href = `/manus-storage/batalla-cultural-logo-20260830_df309405.png?v=${version}&t=${Date.now()}`;
     document.head.appendChild(dynamicFavicon);
   }, 100);
 }

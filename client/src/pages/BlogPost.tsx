@@ -49,7 +49,7 @@ export default function BlogPostPage() {
         <header className="sticky top-0 z-50 frosted-glass border-0 shadow-none">
           <div className="container flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+              <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-8 w-8" />
               <h1 className="text-lg font-semibold text-primary">Batalla Cultural</h1>
             </div>
             <nav className="hidden md:flex gap-8 text-sm items-center">
@@ -115,7 +115,7 @@ export default function BlogPostPage() {
       <header className="sticky top-0 z-50 frosted-glass border-0 shadow-none">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+            <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-8 w-8" />
             <h1 className="text-lg font-semibold text-primary">Batalla Cultural</h1>
           </div>
           <nav className="hidden md:flex gap-8 text-sm items-center">

@@ -10,7 +10,7 @@ export function LoadingAnimation() {
             <div className="absolute inset-0 rounded-full border-4 border-[#D5D5D7] border-t-[#C41E3A] animate-spin"></div>
             <div className="absolute inset-2 rounded-full border-4 border-transparent border-r-[#C41E3A] animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }}></div>
             <img 
-              src="/favicon.png" 
+              src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" 
               alt="BC Logo" 
               className="absolute inset-0 w-full h-full p-4 object-contain"
             />

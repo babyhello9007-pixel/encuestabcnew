@@ -469,7 +469,7 @@ export function ShareResultsAdvanced({
                       </p>
                       <div className="flex items-center justify-center gap-2">
                         <img
-                          src="/favicon.png"
+                          src="/manus-storage/batalla-cultural-logo-20260830_df309405.png"
                           alt="BC Logo"
                           className="h-7 w-7"
                         />
@@ -514,7 +514,7 @@ export function ShareResultsAdvanced({
                     >
                       <div className="flex items-center justify-center gap-2 mb-4">
                         <img
-                          src="/favicon.png"
+                          src="/manus-storage/batalla-cultural-logo-20260830_df309405.png"
                           alt="BC Logo"
                           className="h-9 w-9"
                         />

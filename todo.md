@@ -959,3 +959,20 @@
 - [x] Añadir o actualizar pruebas de la leyenda
 - [x] Validar TypeScript, tests, build y responsive
 - [x] Guardar checkpoint publicado con la mejora
+
+## Sustitución de logotipos - SESIÓN ACTUAL
+- [x] Inspeccionar Logos.zip e identificar el logo de Quorum y el de Batalla Cultural
+- [x] Sustituir los activos de marca en las rutas públicas o de almacenamiento correctas
+- [x] Actualizar las referencias visuales sin alterar funcionalidades ni navegación
+- [x] Validar cabeceras, footer, Bio/Linktree y usos de los logotipos en móvil y escritorio
+- [x] Ejecutar TypeScript, tests y build
+- [x] Guardar checkpoint publicado con los nuevos logotipos
+
+## Corrección logo Quorum en Home y Linktree - SESIÓN ACTUAL
+- [x] Auditar los dos usos de Quorum en Home y Linktree/Bio
+- [x] Sustituir la referencia antigua de Quorum en Home
+- [x] Sincronizar ambas referencias de Quorum en Linktree/Bio
+- [x] Validar visualmente Home y Linktree en móvil y escritorio
+- [x] Ejecutar TypeScript, tests y build
+- [ ] Guardar checkpoint publicado con la corrección
+- [x] Asegurar contraste de los logotipos blancos nuevos en el tema claro de Linktree/Bio

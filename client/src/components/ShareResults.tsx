@@ -56,7 +56,7 @@ export function ShareResults({ activeTab, topParty, topPartyVotes, totalVotes }:
                   {activeTab === "general" ? "Elecciones Generales" : "Asociaciones Juveniles"}
                 </p>
                 <div className="flex items-center justify-center gap-2 mt-4">
-                  <img src="/favicon.png" alt="BC Logo" className="h-6 w-6" />
+                  <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-6 w-6" />
                   <span className="text-[#C41E3A] font-semibold">Batalla Cultural</span>
                 </div>
               </div>

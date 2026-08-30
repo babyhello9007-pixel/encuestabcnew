@@ -193,7 +193,7 @@ export function ShareInfographicComplete({
                   {/* Header con logo BC */}
                   <div className="flex items-center justify-center gap-3 pb-4 border-b border-[#2D2D2D]">
                     <img
-                      src="/favicon.png"
+                      src="/manus-storage/batalla-cultural-logo-20260830_df309405.png"
                       alt="BC Logo"
                       className="h-10 w-10 drop-shadow-lg"
                     />

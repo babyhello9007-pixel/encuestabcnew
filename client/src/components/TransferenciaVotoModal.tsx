@@ -541,7 +541,7 @@ export function TransferenciaVotoModal({
         context.fillStyle = palette.metadata;
         context.font = "500 10px Arial, sans-serif";
         context.fillText("Lectura: el grosor de cada enlace representa el volumen de transferencia entre partidos.", 28, 102);
-        const watermark = await loadCanvasImage(new URL("/favicon.png", window.location.origin).href);
+        const watermark = await loadCanvasImage(new URL("/manus-storage/batalla-cultural-logo-20260830_df309405.png", window.location.origin).href);
         context.save();
         context.globalAlpha = 0.9;
         context.beginPath();

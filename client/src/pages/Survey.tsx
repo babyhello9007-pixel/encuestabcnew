@@ -262,7 +262,7 @@ function SurveyOld() {
       <header className="sticky top-0 z-50 header-dark border-b">
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+            <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-8 w-8" />
             <h1 className="text-lg font-bold text-[#C41E3A]">Batalla Cultural</h1>
           </div>
           <div className="text-sm text-[#666666]">

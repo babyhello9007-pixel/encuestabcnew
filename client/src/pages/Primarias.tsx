@@ -184,7 +184,7 @@ export default function Primarias() {
             {selectedPrimaria.logo_url && (
               <img src={selectedPrimaria.logo_url} alt="Party Logo" className="h-8 w-8 object-contain" />
             )}
-            <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+            <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-8 w-8" />
             <h1 className="text-xl font-bold" style={{ color: "var(--primary)" }}>
               Primarias BC
             </h1>

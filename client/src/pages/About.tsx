@@ -11,7 +11,7 @@ export default function About() {
       <header className="sticky top-0 z-50 border-b border-[#D5D5D7] bg-white/80 backdrop-blur-md">
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="BC Logo" className="h-8 w-8" />
+            <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-8 w-8" />
             <h1 className="text-lg font-semibold text-[#1D1D1F]">Acerca de</h1>
           </div>
           <Button

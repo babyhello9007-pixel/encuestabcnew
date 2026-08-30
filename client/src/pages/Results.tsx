@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import html2canvas from "html2canvas";
 import { useLocation } from "wouter";
+import { BC_LOGO_URL } from "@/const";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { calcularEscanosGenerales, calcularEscanosJuveniles, obtenerEstadisticas } from "@/lib/dhondt";
@@ -3538,7 +3539,7 @@ export default function Results() {
         {/* Header */}
         <header className="r-header">
           <div className="r-brand">
-            <img src="/favicon.png" alt="BC" />
+            <img src={BC_LOGO_URL} alt="Batalla Cultural" />
             <div>
               <div className="r-brand-title">Resultados en Vivo</div>
               <div className="r-brand-sub">{displayedResponseCount.toLocaleString("es-ES")} respuestas{filtersAreActive ? " filtradas" : ""} · Batalla Cultural</div>
