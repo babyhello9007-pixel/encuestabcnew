@@ -163,7 +163,7 @@ export default function Home() {
         scrolled ? 'bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-lg' : 'bg-transparent'
       }`}>
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setLocation("/")}>
-          <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC" className="h-8 w-8 object-contain" />
+          <img src="/favicon.png" alt="BC" className="h-8 w-8 object-contain" />
           <span className="text-lg font-bold text-white hidden sm:inline tracking-tight">Batalla Cultural</span>
         </div>
 
@@ -290,7 +290,7 @@ export default function Home() {
               <div className="lg:col-span-4 flex flex-col items-center lg:items-start text-center lg:text-left border-b lg:border-b-0 lg:border-r border-white/10 pb-8 lg:pb-0 lg:pr-8">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 mb-4 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center overflow-hidden p-3 shadow-xl">
                   <img 
-                    src="/manus-storage/quorum-logo-20260830_ad98aa8e.png" 
+                    src="/quorum.png" 
                     alt="Logo QUORUM" 
                     className="w-full h-full object-contain"
                     onError={(e) => {
