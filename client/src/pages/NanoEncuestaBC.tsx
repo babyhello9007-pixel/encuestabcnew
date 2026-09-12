@@ -1222,7 +1222,7 @@ export default function NanoEncuestaBC() {
         {/* Header */}
         <header className="nc-header">
           <div className="nc-header-brand">
-            <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC" />
+            <img src="/favicon.png" alt="BC" />
             <span>NanoEncuestaBC</span>
           </div>
           <div className="nc-header-progress-text">

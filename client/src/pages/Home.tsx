@@ -98,26 +98,33 @@ export default function Home() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;800&display=swap');
 
+        :root {
+          --purple: #4b0082;
+          --purple-light: #7434a5;
+        }
+
+        /* Frosted Glass: tinte y glow morado */
         .bc-home-shell .frosted-glass {
           position: relative;
           overflow: hidden;
-          background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
+          background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(116, 52, 165, 0.08));
           backdrop-filter: blur(24px) saturate(150%);
           -webkit-backdrop-filter: blur(24px) saturate(150%);
           border: 1px solid rgba(255, 255, 255, 0.16);
           border-radius: 22px;
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.28), 12px 16px 34px rgba(0,0,0,0.25);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.28), 12px 16px 34px rgba(0,0,0,0.25), 0 0 25px rgba(116, 52, 165, 0.12);
         }
 
+        /* Liquid Glass: tinte e iluminación morada */
         .bc-home-shell .liquid-glass {
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.045) 48%, rgba(244, 63, 94, 0.07) 100%);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.045) 48%, rgba(116, 52, 165, 0.18) 100%);
           backdrop-filter: blur(32px) saturate(165%);
           -webkit-backdrop-filter: blur(32px) saturate(165%);
           border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 26px;
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.28), 18px 24px 52px rgba(0,0,0,0.32), 0 0 40px rgba(244,63,94,0.06);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(0,0,0,0.28), 18px 24px 52px rgba(0,0,0,0.32), 0 0 40px rgba(116, 52, 165, 0.22);
         }
 
         .bc-home-shell .frosted-glass::after,
@@ -138,7 +145,7 @@ export default function Home() {
         .bc-home-shell .liquid-glass:hover {
           transform: translateY(-3px);
           border-color: rgba(255, 255, 255, 0.28);
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.2), 18px 26px 54px rgba(0,0,0,0.36), 0 0 34px rgba(244,63,94,0.09);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.2), 18px 26px 54px rgba(0,0,0,0.36), 0 0 34px rgba(116, 52, 165, 0.3);
         }
 
         .bc-home-shell header {
@@ -163,7 +170,7 @@ export default function Home() {
         scrolled ? 'bg-slate-950/80 backdrop-blur-md border-b border-white/10 shadow-lg' : 'bg-transparent'
       }`}>
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setLocation("/")}>
-          <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC" className="h-8 w-8 object-contain" />
+          <img src="/favicon.png" alt="BC" className="h-8 w-8 object-contain" />
           <span className="text-lg font-bold text-white hidden sm:inline tracking-tight">Batalla Cultural</span>
         </div>
 
@@ -290,7 +297,7 @@ export default function Home() {
               <div className="lg:col-span-4 flex flex-col items-center lg:items-start text-center lg:text-left border-b lg:border-b-0 lg:border-r border-white/10 pb-8 lg:pb-0 lg:pr-8">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 mb-4 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center overflow-hidden p-3 shadow-xl">
                   <img 
-                    src="/manus-storage/quorum-logo-20260830_ad98aa8e.png" 
+                    src="/quorum.png" 
                     alt="Logo QUORUM" 
                     className="w-full h-full object-contain"
                     onError={(e) => {
