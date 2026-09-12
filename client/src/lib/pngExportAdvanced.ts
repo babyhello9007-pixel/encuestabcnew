@@ -57,7 +57,7 @@ export const generateAdvancedInfographic = async (
   const header = document.createElement('div');
   header.style.textAlign = 'center';
   header.style.marginBottom = '50px';
-  header.style.borderBottom = '2px solid #C41E3A';
+  header.style.borderBottom = '2px solid #4b0082';
   header.style.paddingBottom = '30px';
 
   const logoContainer = document.createElement('div');
@@ -70,7 +70,7 @@ export const generateAdvancedInfographic = async (
 
   const title = document.createElement('h1');
   title.textContent = 'Batalla Cultural';
-  title.style.color = '#C41E3A';
+  title.style.color = '#4b0082';
   title.style.fontSize = '48px';
   title.style.fontWeight = 'bold';
   title.style.margin = '0 0 10px 0';
@@ -113,7 +113,7 @@ export const generateAdvancedInfographic = async (
 
     const valueEl = document.createElement('p');
     valueEl.textContent = value;
-    valueEl.style.color = '#C41E3A';
+    valueEl.style.color = '#4b0082';
     valueEl.style.fontSize = '32px';
     valueEl.style.fontWeight = 'bold';
     valueEl.style.margin = '0';
@@ -138,7 +138,7 @@ export const generateAdvancedInfographic = async (
   for (const party of stats.slice(0, 6)) {
     const card = document.createElement('div');
     card.style.backgroundColor = '#FFFFFF';
-    card.style.border = `2px solid ${party.color || '#C41E3A'}`;
+    card.style.border = `2px solid ${party.color || '#4b0082'}`;
     card.style.borderRadius = '12px';
     card.style.padding = '30px';
     card.style.display = 'flex';
@@ -197,9 +197,9 @@ export const generateAdvancedInfographic = async (
       return stat;
     };
 
-    stats.appendChild(createStat('Votos', party.votos.toLocaleString(), party.color || '#C41E3A'));
+    stats.appendChild(createStat('Votos', party.votos.toLocaleString(), party.color || '#4b0082'));
     stats.appendChild(createStat('Porcentaje', `${party.porcentaje.toFixed(1)}%`, '#1D1D1F'));
-    stats.appendChild(createStat('Escaños', party.escanos.toString(), party.color || '#C41E3A'));
+    stats.appendChild(createStat('Escaños', party.escanos.toString(), party.color || '#4b0082'));
 
     info.appendChild(name);
     info.appendChild(stats);
@@ -293,7 +293,7 @@ export const generateAllLogosInfographic = async (
   const header = document.createElement('div');
   header.style.textAlign = 'center';
   header.style.marginBottom = '50px';
-  header.style.borderBottom = '2px solid #C41E3A';
+  header.style.borderBottom = '2px solid #4b0082';
   header.style.paddingBottom = '30px';
 
   const logoContainer = document.createElement('div');
@@ -306,7 +306,7 @@ export const generateAllLogosInfographic = async (
 
   const title = document.createElement('h1');
   title.textContent = 'Batalla Cultural';
-  title.style.color = '#C41E3A';
+  title.style.color = '#4b0082';
   title.style.fontSize = '48px';
   title.style.fontWeight = 'bold';
   title.style.margin = '0 0 10px 0';

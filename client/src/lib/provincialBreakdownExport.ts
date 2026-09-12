@@ -56,7 +56,7 @@ export function buildProvincialBreakdownCsv(
 
 function hexToRgb(hex: string): [number, number, number] {
   const normalized = hex.replace("#", "");
-  if (!/^[0-9a-f]{6}$/i.test(normalized)) return [196, 30, 58];
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) return [75, 0, 130];
   return [
     parseInt(normalized.slice(0, 2), 16),
     parseInt(normalized.slice(2, 4), 16),
@@ -89,7 +89,7 @@ export function createProvincialBreakdownPdf(
 
   const headers = ["Comunidad autónoma", "Provincia", "Cupo", "Votos válidos", "% ámbito", "Escaños", "Partidos y escaños"];
   const drawHeader = () => {
-    doc.setFillColor(...hexToRgb("#c41e3a"));
+    doc.setFillColor(...hexToRgb("#4b0082"));
     doc.rect(margin, y, tableWidth, rowHeight, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");

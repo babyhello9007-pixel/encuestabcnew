@@ -75,7 +75,7 @@ export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionP
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <Loader2 className="animate-spin w-8 h-8 text-red-600" />
+        <Loader2 className="animate-spin w-8 h-8 text-purple-600" />
       </div>
     );
   }
@@ -115,7 +115,7 @@ export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionP
           onClick={() => setViewMode("summary")}
           className={`px-4 py-2 rounded-lg font-medium transition ${
             viewMode === "summary"
-              ? "bg-red-600 text-white"
+              ? "bg-purple-600 text-white"
               : "bg-slate-200 text-slate-900 hover:bg-slate-300"
           }`}
         >
@@ -125,7 +125,7 @@ export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionP
           onClick={() => setViewMode("detail")}
           className={`px-4 py-2 rounded-lg font-medium transition ${
             viewMode === "detail"
-              ? "bg-red-600 text-white"
+              ? "bg-purple-600 text-white"
               : "bg-slate-200 text-slate-900 hover:bg-slate-300"
           }`}
         >
@@ -144,7 +144,7 @@ export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionP
               placeholder="Buscar provincia..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-red-600"
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-600"
             />
           </div>
 
@@ -157,13 +157,13 @@ export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionP
                   setSelectedProvince(province.provincia);
                   setViewMode("detail");
                 }}
-                className="bg-white rounded-lg p-4 border border-slate-200 hover:border-red-600 hover:shadow-lg cursor-pointer transition"
+                className="bg-white rounded-lg p-4 border border-slate-200 hover:border-purple-600 hover:shadow-lg cursor-pointer transition"
               >
                 <h3 className="font-bold text-lg text-slate-900 mb-2">{province.provincia}</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p className="text-slate-600">Total de votos</p>
-                    <p className="font-bold text-red-600">{province.total_votos}</p>
+                    <p className="font-bold text-purple-600">{province.total_votos}</p>
                   </div>
                   <div>
                     <p className="text-slate-600">Partidos</p>
@@ -203,7 +203,7 @@ export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionP
                             return (
                               <div className="bg-white p-2 border border-slate-200 rounded shadow-lg">
                                 <div className="flex items-center gap-2"><PartyLogo src={data.logo} partyName={data.name} size={22} strictExternal /><p className="font-bold text-sm">{data.name}</p></div>
-                                <p className="text-sm text-red-600">Votos: {data.votos}</p>
+                                <p className="text-sm text-purple-600">Votos: {data.votos}</p>
                                 <p className="text-sm text-slate-600">Porcentaje: {data.porcentaje}%</p>
                               </div>
                             );
@@ -240,7 +240,7 @@ export function ProvincesResultsSection({ partyIndex }: ProvincesResultsSectionP
                       const meta = getPartyMeta(result);
                       return <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
                         <td className="px-4 py-3 text-sm font-medium text-slate-900"><span className="inline-flex items-center gap-2"><PartyLogo src={meta.logo} partyName={meta.name} size={32} strictExternal /><span style={{ borderLeft: `4px solid ${meta.color}`, paddingLeft: 8 }}>{meta.name}</span></span></td>
-                        <td className="px-4 py-3 text-right text-sm font-bold text-red-600">{result.votos}</td>
+                        <td className="px-4 py-3 text-right text-sm font-bold text-purple-600">{result.votos}</td>
                         <td className="px-4 py-3 text-right text-sm text-slate-600">{result.porcentaje}%</td>
                         <td className="px-4 py-3 text-right text-sm text-slate-600">{result.edad_promedio}</td>
                       </tr>;

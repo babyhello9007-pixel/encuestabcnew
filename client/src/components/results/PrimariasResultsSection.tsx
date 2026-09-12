@@ -87,7 +87,7 @@ export function PrimariasResultsSection() {
   if (loading) {
     return (
       <div style={{ textAlign: "center", color: "#7a7990", padding: "40px 20px" }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C41E3A] mx-auto mb-4"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4b0082] mx-auto mb-4"></div>
         Cargando resultados de primarias...
       </div>
     );
@@ -124,7 +124,7 @@ export function PrimariasResultsSection() {
               <span style={{
                 display: "inline-block",
                 padding: "6px 12px",
-                backgroundColor: primaria.color_primario || "#C41E3A",
+                backgroundColor: primaria.color_primario || "#4b0082",
                 color: "white",
                 borderRadius: "6px",
                 fontSize: "12px",
@@ -135,8 +135,8 @@ export function PrimariasResultsSection() {
               <span style={{
                 display: "inline-block",
                 padding: "6px 12px",
-                backgroundColor: "rgba(196, 30, 58, 0.1)",
-                color: "#C41E3A",
+                backgroundColor: "rgba(75, 0, 130, 0.1)",
+                color: "#4b0082",
                 borderRadius: "6px",
                 fontSize: "12px",
                 fontWeight: "600",
@@ -160,13 +160,13 @@ export function PrimariasResultsSection() {
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1a1a2e",
-                    border: "1px solid #C41E3A",
+                    border: "1px solid #4b0082",
                     borderRadius: "6px",
                     color: "#f0eff8",
                   }}
                   formatter={(value) => [`${value} votos`, "Votos"]}
                 />
-                <Bar dataKey="total_votos" fill={primaria.color_primario || "#C41E3A"} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="total_votos" fill={primaria.color_primario || "#4b0082"} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -182,8 +182,8 @@ export function PrimariasResultsSection() {
                 key={candidato.candidato_id}
                 style={{
                   padding: "15px",
-                  backgroundColor: `${primaria.color_primario || "#C41E3A"}0d`,
-                  border: `1px solid ${primaria.color_primario || "#C41E3A"}33`,
+                  backgroundColor: `${primaria.color_primario || "#4b0082"}0d`,
+                  border: `1px solid ${primaria.color_primario || "#4b0082"}33`,
                   borderRadius: "8px",
                   display: "flex",
                   flexDirection: "column",
@@ -220,7 +220,7 @@ export function PrimariasResultsSection() {
                     color: "#7a7990",
                   }}>
                     <span>{candidato.total_votos} votos</span>
-                    <span style={{ color: primaria.color_primario || "#C41E3A", fontWeight: "600" }}>
+                    <span style={{ color: primaria.color_primario || "#4b0082", fontWeight: "600" }}>
                       {candidato.porcentaje.toFixed(1)}%
                     </span>
                   </div>
@@ -238,7 +238,7 @@ export function PrimariasResultsSection() {
                     style={{
                       height: "100%",
                       width: `${candidato.porcentaje}%`,
-                      backgroundColor: primaria.color_primario || "#C41E3A",
+                      backgroundColor: primaria.color_primario || "#4b0082",
                       transition: "width 0.3s ease",
                     }}
                   />

@@ -279,7 +279,7 @@ export default function SavedCoalitionsPanel({
                     onClick={() => onDelete(coalition.id)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700 text-sm"
+                    className="text-purple-600 hover:text-purple-700 text-sm"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

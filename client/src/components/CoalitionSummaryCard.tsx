@@ -127,7 +127,7 @@ export default function CoalitionSummaryCard({
             <div className="relative h-8 bg-slate-200 rounded-lg overflow-hidden border border-slate-300">
               {/* Línea de mayoría */}
               <div
-                className="absolute top-0 bottom-0 border-l-2 border-red-500 z-10"
+                className="absolute top-0 bottom-0 border-l-2 border-purple-500 z-10"
                 style={{ left: `${(requiredForMajority / totalSeats) * 100}%` }}
               />
               

@@ -33,7 +33,7 @@ export async function exportResultsToPDFAdvanced(
     
     // Título
     doc.setFontSize(18);
-    doc.setTextColor(196, 30, 58); // Color rojo #C41E3A
+    doc.setTextColor(75, 0, 130); // Color rojo #4b0082
     doc.text(title, 14, 20);
     
     // Fecha
@@ -60,7 +60,7 @@ export async function exportResultsToPDFAdvanced(
       startY: 42,
       theme: 'grid',
       headStyles: {
-        fillColor: [196, 30, 58],
+        fillColor: [75, 0, 130],
         textColor: [255, 255, 255],
         fontStyle: 'bold'
       },
@@ -73,7 +73,7 @@ export async function exportResultsToPDFAdvanced(
     let finalY = (doc as any).lastAutoTable.finalY + 15;
     
     doc.setFontSize(12);
-    doc.setTextColor(196, 30, 58);
+    doc.setTextColor(75, 0, 130);
     doc.text('Métricas Demográficas Generales', 14, finalY);
     finalY += 8;
     
@@ -93,7 +93,7 @@ export async function exportResultsToPDFAdvanced(
         startY: finalY,
         theme: 'grid',
         headStyles: {
-          fillColor: [196, 30, 58],
+          fillColor: [75, 0, 130],
           textColor: [255, 255, 255],
           fontStyle: 'bold'
         }
@@ -104,7 +104,7 @@ export async function exportResultsToPDFAdvanced(
     finalY = (doc as any).lastAutoTable.finalY + 15;
     
     doc.setFontSize(12);
-    doc.setTextColor(196, 30, 58);
+    doc.setTextColor(75, 0, 130);
     doc.text('Métricas por Partido/Asociación', 14, finalY);
     finalY += 8;
     
@@ -122,7 +122,7 @@ export async function exportResultsToPDFAdvanced(
         startY: finalY,
         theme: 'grid',
         headStyles: {
-          fillColor: [196, 30, 58],
+          fillColor: [75, 0, 130],
           textColor: [255, 255, 255],
           fontStyle: 'bold'
         },

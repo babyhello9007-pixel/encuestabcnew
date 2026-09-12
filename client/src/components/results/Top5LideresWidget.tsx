@@ -23,7 +23,7 @@ function MovementBadge({ indicator }: { indicator?: PositionIndicator }) {
           ? "bg-slate-100 text-slate-600"
           : isUp
             ? "bg-emerald-100 text-emerald-700"
-            : "bg-rose-100 text-rose-700"
+            : "bg-purple-100 text-purple-700"
       }`}
     >
       {label}
@@ -109,7 +109,7 @@ export function Top5LideresWidget() {
                 onClick={() => setSelectedLeader(lider)}
                 title={`Ver desglose de valoraciones de ${lider.leader_name}`}
                 aria-label={`Abrir desglose de valoraciones de ${lider.leader_name}`}
-                className="bc-top5-leader w-full flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#C41E3A]/50 hover:shadow transition text-left cursor-pointer group"
+                className="bc-top5-leader w-full flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#4b0082]/50 hover:shadow transition text-left cursor-pointer group"
               >
               {/* Mini avatar y medalla */}
               <div className="relative flex-shrink-0">
@@ -142,7 +142,7 @@ export function Top5LideresWidget() {
               {/* Info principal compacta */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs font-bold text-gray-900 dark:text-white truncate group-hover:text-[#C41E3A] transition">
+                  <span className="text-xs font-bold text-gray-900 dark:text-white truncate group-hover:text-[#4b0082] transition">
                     {lider.leader_name}
                   </span>
                   <span title={lider.is_official ? "Líder validado oficialmente en la configuración del partido" : "Nombre introducido manualmente; no consta como líder configurado"} className={`inline-flex shrink-0 items-center rounded px-1 py-0.5 text-[8px] font-bold ${lider.is_official ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>

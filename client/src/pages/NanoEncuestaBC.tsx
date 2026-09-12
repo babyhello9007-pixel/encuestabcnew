@@ -87,36 +87,36 @@ function CooldownScreen({ remainingSeconds, onBack }: { remainingSeconds: number
     <div className="nc-cooldown-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div className="nc-cooldown-card" style={{ maxWidth: "500px", textAlign: "center", padding: "50px 40px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
         <div className="nc-cooldown-icon" style={{ marginBottom: "30px", animation: "pulse 2s infinite" }}>
-          <div style={{ width: "100px", height: "100px", margin: "0 auto", background: "rgba(196,30,58,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Clock size={56} color="#C41E3A" strokeWidth={1.5} />
+          <div style={{ width: "100px", height: "100px", margin: "0 auto", background: "rgba(75, 0, 130,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Clock size={56} color="#4b0082" strokeWidth={1.5} />
           </div>
         </div>
         <h2 className="nc-cooldown-title" style={{ fontSize: "32px", fontWeight: "700", marginBottom: "10px", color: "#fff" }}>¡Gracias por participar!</h2>
         <p className="nc-cooldown-sub" style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "30px", lineHeight: "1.6" }}>Ya has votado recientemente. Podrás volver a participar cuando expire el período de espera.</p>
         
         <div style={{ width: "100%", height: "4px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", marginBottom: "30px", overflow: "hidden" }}>
-          <div style={{ width: `${progressPercent}%`, height: "100%", background: "linear-gradient(90deg, #C41E3A, #ff6b6b)", transition: "width 0.3s ease" }} />
+          <div style={{ width: `${progressPercent}%`, height: "100%", background: "linear-gradient(90deg, #4b0082, #ff6b6b)", transition: "width 0.3s ease" }} />
         </div>
         
         <div className="nc-cooldown-timer" style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "30px" }}>
-          <div className="nc-timer-block" style={{ background: "rgba(196,30,58,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
-            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#C41E3A", display: "block" }}>{pad(hours)}</span>
+          <div className="nc-timer-block" style={{ background: "rgba(75, 0, 130,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
+            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#4b0082", display: "block" }}>{pad(hours)}</span>
             <span className="nc-timer-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>horas</span>
           </div>
           <span className="nc-timer-sep" style={{ fontSize: "20px", color: "rgba(255,255,255,0.3)", alignSelf: "center" }}>:</span>
-          <div className="nc-timer-block" style={{ background: "rgba(196,30,58,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
-            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#C41E3A", display: "block" }}>{pad(mins)}</span>
+          <div className="nc-timer-block" style={{ background: "rgba(75, 0, 130,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
+            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#4b0082", display: "block" }}>{pad(mins)}</span>
             <span className="nc-timer-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>min</span>
           </div>
           <span className="nc-timer-sep" style={{ fontSize: "20px", color: "rgba(255,255,255,0.3)", alignSelf: "center" }}>:</span>
-          <div className="nc-timer-block" style={{ background: "rgba(196,30,58,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
-            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#C41E3A", display: "block" }}>{pad(secs)}</span>
+          <div className="nc-timer-block" style={{ background: "rgba(75, 0, 130,0.2)", padding: "15px 12px", borderRadius: "10px", minWidth: "60px" }}>
+            <span className="nc-timer-num" style={{ fontSize: "28px", fontWeight: "700", color: "#4b0082", display: "block" }}>{pad(secs)}</span>
             <span className="nc-timer-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "4px" }}>seg</span>
           </div>
         </div>
         
         <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "25px" }}>Vuelve en {remainingSeconds} segundos</p>
-        <button className="nc-btn-outline" onClick={onBack} style={{ width: "100%", padding: "12px 20px", background: "rgba(196,30,58,0.15)", border: "1px solid #C41E3A", color: "#C41E3A", borderRadius: "10px", fontSize: "14px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.3)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.15)"; }}>← Volver al inicio</button>
+        <button className="nc-btn-outline" onClick={onBack} style={{ width: "100%", padding: "12px 20px", background: "rgba(75, 0, 130,0.15)", border: "1px solid #4b0082", color: "#4b0082", borderRadius: "10px", fontSize: "14px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(75, 0, 130,0.3)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(75, 0, 130,0.15)"; }}>← Volver al inicio</button>
       </div>
       <style>{`
         @keyframes pulse {
@@ -135,8 +135,8 @@ function ThankYouScreen({ onResults, onRateLeaders, onHome }: { onResults: () =>
     <div className="nc-thankyou-screen" style={{ background: "linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,10,30,0.95) 100%)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div className="nc-thankyou-card" style={{ maxWidth: "500px", textAlign: "center", padding: "50px 40px", borderRadius: "20px", background: "rgba(255,255,255,0.05)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
         <div className="nc-thankyou-check" style={{ marginBottom: "30px", animation: "scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
-          <div style={{ width: "80px", height: "80px", margin: "0 auto", background: "rgba(196,30,58,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Check size={48} strokeWidth={2} color="#C41E3A" />
+          <div style={{ width: "80px", height: "80px", margin: "0 auto", background: "rgba(75, 0, 130,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Check size={48} strokeWidth={2} color="#4b0082" />
           </div>
         </div>
         <h2 className="nc-thankyou-title" style={{ fontSize: "32px", fontWeight: "700", marginBottom: "15px", color: "#fff" }}>¡Gracias por participar!</h2>
@@ -145,8 +145,8 @@ function ThankYouScreen({ onResults, onRateLeaders, onHome }: { onResults: () =>
         
         <div className="nc-thankyou-btns" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <button className="nc-btn-primary" onClick={onRateLeaders} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(124,58,237,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; }}>★ Valorar a los líderes</button>
-          <button className="nc-btn-primary" onClick={onResults} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #C41E3A, #ff6b6b)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(196,30,58,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; (e.target as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(196,30,58,0.4)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; (e.target as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(196,30,58,0.3)"; }}>📊 Ver Resultados en Vivo</button>
-          <button className="nc-btn-outline" onClick={onHome} style={{ width: "100%", padding: "14px 24px", background: "rgba(196,30,58,0.15)", border: "1px solid #C41E3A", color: "#C41E3A", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.25)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(196,30,58,0.15)"; }}>← Volver al Inicio</button>
+          <button className="nc-btn-primary" onClick={onResults} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #4b0082, #ff6b6b)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(75, 0, 130,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; (e.target as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(75, 0, 130,0.4)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; (e.target as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(75, 0, 130,0.3)"; }}>📊 Ver Resultados en Vivo</button>
+          <button className="nc-btn-outline" onClick={onHome} style={{ width: "100%", padding: "14px 24px", background: "rgba(75, 0, 130,0.15)", border: "1px solid #4b0082", color: "#4b0082", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(75, 0, 130,0.25)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(75, 0, 130,0.15)"; }}>← Volver al Inicio</button>
         </div>
         
         <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "25px", paddingTop: "25px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>Comparte tus resultados en redes sociales</p>

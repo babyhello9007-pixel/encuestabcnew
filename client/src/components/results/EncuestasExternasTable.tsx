@@ -98,7 +98,7 @@ export default function EncuestasExternasTable({ tipoEncuesta, diasAtras = 30 }:
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-500" />
+            <AlertCircle className="w-5 h-5 text-purple-500" />
             Error al cargar encuestas
           </CardTitle>
         </CardHeader>

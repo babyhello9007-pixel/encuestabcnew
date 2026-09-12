@@ -1015,7 +1015,7 @@ function GobiernoModal({
         </div>
       </article>`;
     }).join('');
-    preview.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview Gobierno</title></head><body style="margin:0;padding:20px;background:#0c0f1a;font-family:TVP"><h1 style="color:#fff">${nombreGobierno}</h1><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${cards}</div><div style="margin-top:16px"><button onclick="window.print()" style="padding:10px 14px;border-radius:10px;border:0;background:#C41E3A;color:#fff">Capturar / Guardar (Imprimir)</button></div></body></html>`);
+    preview.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Preview Gobierno</title></head><body style="margin:0;padding:20px;background:#0c0f1a;font-family:TVP"><h1 style="color:#fff">${nombreGobierno}</h1><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">${cards}</div><div style="margin-top:16px"><button onclick="window.print()" style="padding:10px 14px;border-radius:10px;border:0;background:#4b0082;color:#fff">Capturar / Guardar (Imprimir)</button></div></body></html>`);
     preview.document.close();
   };
 
@@ -1050,7 +1050,7 @@ function GobiernoModal({
       ctx.fillRect(0, 0, 1600, 1000);
 
       // Franja roja superior
-      ctx.fillStyle = "#C41E3A";
+      ctx.fillStyle = "#4b0082";
       ctx.fillRect(0, 0, 1600, 6);
 
       // Logo presidencia
@@ -2331,13 +2331,13 @@ async function generarInfografiaPNG(
 
   // Franja roja izquierda
   const redGrad = ctx.createLinearGradient(0, 0, 0, 800);
-  redGrad.addColorStop(0, "#C41E3A");
+  redGrad.addColorStop(0, "#4b0082");
   redGrad.addColorStop(1, "#8B0000");
   ctx.fillStyle = redGrad;
   ctx.fillRect(0, 0, 8, 800);
 
   // Header
-  ctx.fillStyle = "#C41E3A";
+  ctx.fillStyle = "#4b0082";
   ctx.font = "bold 13px monospace";
   ctx.fillText("LA ENCUESTA DE BATALLA CULTURAL", 40, 38);
   ctx.fillStyle = "rgba(255,255,255,0.15)";
@@ -2355,7 +2355,7 @@ async function generarInfografiaPNG(
 
   // Stats principales
   const statBoxes = [
-    { label: "RESPUESTAS", value: totalResponses.toLocaleString("es-ES"), color: "#C41E3A" },
+    { label: "RESPUESTAS", value: totalResponses.toLocaleString("es-ES"), color: "#4b0082" },
     { label: "EDAD MEDIA", value: edadPromedio ? `${edadPromedio.toFixed(1)} años` : "—", color: "#3B82F6" },
     { label: "IDEOLOGÍA", value: ideologiaPromedio ? `${ideologiaPromedio.toFixed(1)}/10` : "—", color: "#8B5CF6" },
   ];
@@ -2407,7 +2407,7 @@ async function generarInfografiaPNG(
     const topGeneralRegionRows = (topRegions || []).slice(0, 5);
     ctx.fillStyle = "rgba(255,255,255,0.04)";
     ctx.beginPath(); ctx.roundRect(780, 230, 380, 250, 12); ctx.fill();
-    ctx.fillStyle = "#C41E3A"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
+    ctx.fillStyle = "#4b0082"; ctx.font = "bold 12px monospace"; ctx.fillText("TOP 1 LÍDER POR PARTIDO", 800, 256);
     topLeaderRows.forEach((row, i) => {
       const y = 290 + i * 34;
       ctx.fillStyle = "#f0eff8"; ctx.font = "bold 11px 'TVP', sans-serif"; ctx.fillText(row.partido, 800, y);

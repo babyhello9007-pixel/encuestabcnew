@@ -191,7 +191,7 @@ export function LeaderRatingBreakdownModal({
       // Fondo claro opaco: evita PNGs negros o transparentes al exportar.
       ctx.fillStyle = "#F8FAFC";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#C41E3A";
+      ctx.fillStyle = "#4b0082";
       ctx.fillRect(0, 0, canvas.width, 24);
       ctx.fillStyle = "#111827";
       ctx.font = "700 24px Arial, sans-serif";
@@ -301,7 +301,7 @@ export function LeaderRatingBreakdownModal({
       doc.rect(0, 0, 210, 297, 'F');
 
       // Cabecera institucional con logotipo y fecha
-      doc.setFillColor(196, 30, 58);
+      doc.setFillColor(75, 0, 130);
       doc.rect(0, 0, 210, 18, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
@@ -468,7 +468,7 @@ export function LeaderRatingBreakdownModal({
             onClick={handleExportModalPNG}
             className="flex items-center gap-1.5 bg-white/10 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium border border-white/10"
           >
-            <Download className="w-3.5 h-3.5 text-[#C41E3A]" /> Imagen PNG
+            <Download className="w-3.5 h-3.5 text-[#4b0082]" /> Imagen PNG
           </button>
           <button
             onClick={handleExportModalPDF}
@@ -513,7 +513,7 @@ export function LeaderRatingBreakdownModal({
             onClick={() => setActiveTab("distribucion")}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
               activeTab === "distribucion"
-                ? "bg-[#C41E3A] text-white shadow-lg"
+                ? "bg-[#4b0082] text-white shadow-lg"
                 : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
             }`}
           >
@@ -524,7 +524,7 @@ export function LeaderRatingBreakdownModal({
             onClick={() => setActiveTab("historial")}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
               activeTab === "historial"
-                ? "bg-[#C41E3A] text-white shadow-lg"
+                ? "bg-[#4b0082] text-white shadow-lg"
                 : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
             }`}
           >
@@ -534,10 +534,10 @@ export function LeaderRatingBreakdownModal({
 
         {loading ? (
           <div className="flex min-h-48 items-center justify-center text-white/60">
-            <Loader2 className="h-6 w-6 animate-spin text-[#C41E3A]" />
+            <Loader2 className="h-6 w-6 animate-spin text-[#4b0082]" />
           </div>
         ) : error ? (
-          <p className="mt-8 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm text-rose-200">{error}</p>
+          <p className="mt-8 rounded-2xl border border-purple-400/20 bg-purple-400/10 p-4 text-sm text-purple-200">{error}</p>
         ) : activeTab === "distribucion" ? (
           <>
             <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -652,7 +652,7 @@ export function LeaderRatingBreakdownModal({
               {compareLeaderName && compareAverage !== null && percentageDiff !== null && (
                 <div className="flex items-center gap-2 bg-purple-900/40 px-3 py-1.5 rounded-lg border border-purple-500/40">
                   <span className="text-purple-300">Diferencia:</span>
-                  <span className={`font-black ${percentageDiff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <span className={`font-black ${percentageDiff >= 0 ? 'text-emerald-400' : 'text-purple-400'}`}>
                     {percentageDiff > 0 ? '+' : ''}{percentageDiff.toFixed(1)}%
                   </span>
                 </div>

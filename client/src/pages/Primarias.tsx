@@ -142,7 +142,7 @@ export default function Primarias() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A1A1A] via-[#0F0F0F] to-[#1A1A1A]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C41E3A] mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4b0082] mx-auto mb-4" />
           <p className="text-[#A3A3A3]">Cargando primarias...</p>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function Primarias() {
           <p className="text-[#A3A3A3] mb-4">No hay primarias activas en este momento</p>
           <Button
             onClick={() => setLocation("/")}
-            className="bg-[#C41E3A] hover:bg-[#A01830] text-white transition-colors"
+            className="bg-[#4b0082] hover:bg-[#35005c] text-white transition-colors"
           >
             Volver al inicio
           </Button>
@@ -165,8 +165,8 @@ export default function Primarias() {
     );
   }
 
-  const primaryColor = selectedPrimaria.color_primario || "#C41E3A";
-  const secondaryColor = selectedPrimaria.color_secundario || "#A01830";
+  const primaryColor = selectedPrimaria.color_primario || "#4b0082";
+  const secondaryColor = selectedPrimaria.color_secundario || "#35005c";
   const yaVoto = votosRegistrados[selectedPrimaria.id];
 
   return (
@@ -207,7 +207,7 @@ export default function Primarias() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {primarias.map((primaria) => {
                 const isCurrent = selectedPrimaria.id === primaria.id;
-                const pColor = primaria.color_primario || "#C41E3A";
+                const pColor = primaria.color_primario || "#4b0082";
                 return (
                   <button
                     key={primaria.id}

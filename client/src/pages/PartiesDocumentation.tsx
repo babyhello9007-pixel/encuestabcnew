@@ -62,7 +62,7 @@ export default function PartiesDocumentation() {
             onClick={() => setActiveTab('parties')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'parties'
-                ? 'text-red-600 border-b-2 border-red-600'
+                ? 'text-purple-600 border-b-2 border-purple-600'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -72,7 +72,7 @@ export default function PartiesDocumentation() {
             onClick={() => setActiveTab('youth')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'youth'
-                ? 'text-red-600 border-b-2 border-red-600'
+                ? 'text-purple-600 border-b-2 border-purple-600'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >

@@ -162,7 +162,7 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
   return (
     <div className="space-y-6 bg-black rounded-2xl p-8">
       <div className="flex items-center gap-2 mb-6">
-        <MessageCircle className="h-5 w-5 text-[#C41E3A]" />
+        <MessageCircle className="h-5 w-5 text-[#4b0082]" />
         <h3 className="text-xl font-bold text-white">Comentarios de Usuarios</h3>
       </div>
 
@@ -174,25 +174,25 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
             placeholder="Tu nombre (opcional)"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            className="px-4 py-2 bg-[#1A1A1A] border border-[#333333] rounded-lg text-white placeholder-[#888888] focus:outline-none focus:border-[#C41E3A]"
+            className="px-4 py-2 bg-[#1A1A1A] border border-[#333333] rounded-lg text-white placeholder-[#888888] focus:outline-none focus:border-[#4b0082]"
           />
           <textarea
             placeholder="Tu comentario"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             rows={3}
-            className="px-4 py-2 bg-[#1A1A1A] border border-[#333333] rounded-lg text-white placeholder-[#888888] focus:outline-none focus:border-[#C41E3A] md:col-span-2"
+            className="px-4 py-2 bg-[#1A1A1A] border border-[#333333] rounded-lg text-white placeholder-[#888888] focus:outline-none focus:border-[#4b0082] md:col-span-2"
           />
         </div>
 
         {error && (
-          <p className="text-red-500 text-sm">{error}</p>
+          <p className="text-purple-500 text-sm">{error}</p>
         )}
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full md:w-auto bg-[#C41E3A] hover:bg-[#A01830] disabled:bg-[#666666] text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 transition"
+          className="w-full md:w-auto bg-[#4b0082] hover:bg-[#35005c] disabled:bg-[#666666] text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 transition"
         >
           <Send className="h-4 w-4" />
           {submitting ? "Publicando..." : "Publicar Comentario"}
@@ -211,7 +211,7 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
           comments.map((comment) => (
             <div
               key={comment.id}
-              className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-2 hover:border-[#C41E3A] transition"
+              className="bg-[#1A1A1A] border border-[#333333] rounded-lg p-4 space-y-2 hover:border-[#4b0082] transition"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -224,7 +224,7 @@ export function CommentsSection({ activeTab }: CommentsSectionProps) {
 
               <button
                 onClick={() => handleLike(comment.id, comment.likes)}
-                className="flex items-center gap-2 text-[#888888] hover:text-[#C41E3A] transition text-sm"
+                className="flex items-center gap-2 text-[#888888] hover:text-[#4b0082] transition text-sm"
               >
                 <ThumbsUp className="h-4 w-4" />
                 {comment.likes > 0 && <span>{comment.likes}</span>}

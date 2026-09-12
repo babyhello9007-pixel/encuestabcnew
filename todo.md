@@ -977,3 +977,6 @@
 - [x] Guardar checkpoint publicado con la corrección
 - [x] Asegurar contraste de los logotipos blancos nuevos en el tema claro de Linktree/Bio
 - [x] Sincronizar el cambio de logos de Quorum con el despliegue de Vercel
+- [x] Aplicar el morado corporativo #4b0082 a los botones
+- [x] Corregir la entrega de los logos persistentes en Vercel y validar la compilación
+- [x] Migrar todos los acentos rojos de marca a #4b0082 y conservar rojo solo en errores/estados destructivos

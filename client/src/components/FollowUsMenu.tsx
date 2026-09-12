@@ -51,7 +51,7 @@ function SocialLogo({ src, alt, name }: LogoProps) {
 
   if (hasError) {
     return (
-      <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-[#C41E3A] to-[#A01830] rounded-lg text-xs font-bold text-white shadow-md">
+      <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-[#4b0082] to-[#35005c] rounded-lg text-xs font-bold text-white shadow-md">
         {name.charAt(0).toUpperCase()}
       </div>
     );
@@ -104,8 +104,8 @@ export default function FollowUsMenu() {
           }}
         >
           {/* Header del menú */}
-          <div className="px-6 py-4 border-b border-white/20 bg-gradient-to-r from-[#C41E3A]/5 to-transparent">
-            <p className="text-xs font-semibold text-[#C41E3A] uppercase tracking-widest">
+          <div className="px-6 py-4 border-b border-white/20 bg-gradient-to-r from-[#4b0082]/5 to-transparent">
+            <p className="text-xs font-semibold text-[#4b0082] uppercase tracking-widest">
               Síguenos en Redes
             </p>
           </div>
@@ -137,16 +137,16 @@ export default function FollowUsMenu() {
 
                 {/* Nombre del enlace */}
                 <div className="flex-1">
-                  <span className="text-sm font-semibold text-foreground group-hover:text-[#C41E3A] transition-colors duration-200 block">
+                  <span className="text-sm font-semibold text-foreground group-hover:text-[#4b0082] transition-colors duration-200 block">
                     {link.name}
                   </span>
-                  <span className="text-xs text-gray-500 group-hover:text-[#C41E3A]/70 transition-colors duration-200">
+                  <span className="text-xs text-gray-500 group-hover:text-[#4b0082]/70 transition-colors duration-200">
                     Síguenos
                   </span>
                 </div>
 
                 {/* Icono de flecha */}
-                <div className="text-gray-400 group-hover:text-[#C41E3A] transition-colors duration-200">
+                <div className="text-gray-400 group-hover:text-[#4b0082] transition-colors duration-200">
                   <svg
                     className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
                     fill="none"
@@ -166,7 +166,7 @@ export default function FollowUsMenu() {
           </div>
 
           {/* Footer del menú */}
-          <div className="px-6 py-3 border-t border-white/20 bg-gradient-to-r from-transparent to-[#C41E3A]/5">
+          <div className="px-6 py-3 border-t border-white/20 bg-gradient-to-r from-transparent to-[#4b0082]/5">
             <p className="text-xs text-gray-600 text-center">
               Únete a nuestra comunidad
             </p>

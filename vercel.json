@@ -7,6 +7,10 @@
       "destination": "https://encuestabc-6q57y6uz.manus.space/manus-storage/TVP_24a34a2b.ttf"
     },
     {
+      "source": "/manus-storage/:path*",
+      "destination": "https://encuestabc-6q57y6uz.manus.space/manus-storage/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -29,7 +29,7 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
   return (
     <div className="w-80 p-4 bg-white rounded-lg shadow-lg">
       {/* Título */}
-      <h3 className="text-lg font-bold text-gray-900 mb-3 pb-2 border-b-2 border-red-500">
+      <h3 className="text-lg font-bold text-gray-900 mb-3 pb-2 border-b-2 border-purple-500">
         {provinceName}
       </h3>
 
@@ -97,7 +97,7 @@ export const ProvincePopup: React.FC<ProvincePopupProps> = ({
                 <div className="text-right flex-shrink-0 flex flex-col items-end gap-0.5">
                   <p className="text-xs font-bold text-gray-900">{votos} votos</p>
                   {escanosPartido > 0 && (
-                    <p className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                    <p className="text-xs font-bold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
                       {escanosPartido} esc.
                     </p>
                   )}

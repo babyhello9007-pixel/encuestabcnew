@@ -77,7 +77,7 @@ export default function ReviewNanoEncuesta({ responses, onEdit, onConfirm, isSub
         <div className="max-w-2xl mx-auto">
           <div className="liquid-glass p-8 rounded-2xl border border-[#2D2D2D] space-y-6">
             <div>
-              <p className="text-sm font-semibold text-[#C41E3A] uppercase tracking-wide mb-2">
+              <p className="text-sm font-semibold text-[#4b0082] uppercase tracking-wide mb-2">
                 Resumen de respuestas
               </p>
               <h2 className="text-2xl font-bold text-white">
@@ -91,7 +91,7 @@ export default function ReviewNanoEncuesta({ responses, onEdit, onConfirm, isSub
                 const value = responses[key];
                 return (
                   <div key={key} className="p-4 rounded-lg bg-[#0F1419] border border-[#2D2D2D]">
-                    <p className="text-sm font-semibold text-[#C41E3A] mb-2">
+                    <p className="text-sm font-semibold text-[#4b0082] mb-2">
                       {formatLabel(key)}
                     </p>
                     <p className="text-white break-words">
@@ -107,14 +107,14 @@ export default function ReviewNanoEncuesta({ responses, onEdit, onConfirm, isSub
               <Button
                 onClick={onEdit}
                 variant="outline"
-                className="flex-1 border-[#C41E3A] text-[#C41E3A] h-12 rounded-lg font-semibold hover:bg-white hover:bg-opacity-10"
+                className="flex-1 border-[#4b0082] text-[#4b0082] h-12 rounded-lg font-semibold hover:bg-white hover:bg-opacity-10"
               >
                 Editar respuestas
               </Button>
               <Button
                 onClick={onConfirm}
                 disabled={isSubmitting}
-                className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold disabled:opacity-50"
+                className="flex-1 bg-[#4b0082] hover:bg-[#35005c] text-white h-12 rounded-lg font-semibold disabled:opacity-50"
               >
                 {isSubmitting ? 'Enviando...' : 'Confirmar y enviar'}
               </Button>

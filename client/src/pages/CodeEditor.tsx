@@ -197,7 +197,7 @@ export default function CodeEditor() {
                     onClick={() => { setViewMode("uploaded"); setActiveFileId(null); }}
                     className={`pb-2 px-2 text-sm transition-colors ${
                       viewMode === "uploaded"
-                        ? "text-red-500 border-b-2 border-red-500"
+                        ? "text-purple-500 border-b-2 border-purple-500"
                         : "text-gray-400 hover:text-gray-300"
                     }`}
                   >
@@ -207,7 +207,7 @@ export default function CodeEditor() {
                     onClick={() => { setViewMode("project"); setActiveProjectFile(null); getProjectFiles.refetch(); }}
                     className={`pb-2 px-2 text-sm transition-colors ${
                       viewMode === "project"
-                        ? "text-red-500 border-b-2 border-red-500"
+                        ? "text-purple-500 border-b-2 border-purple-500"
                         : "text-gray-400 hover:text-gray-300"
                     }`}
                   >
@@ -231,7 +231,7 @@ export default function CodeEditor() {
                       <button
                         onClick={handleCreateNewFile}
                         disabled={saving}
-                        className="flex-1 bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm transition disabled:opacity-50"
+                        className="flex-1 bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded text-sm transition disabled:opacity-50"
                       >
                         Crear
                       </button>
@@ -255,7 +255,7 @@ export default function CodeEditor() {
                           key={file.id}
                           className={`p-2 rounded cursor-pointer transition flex items-center justify-between group ${
                             activeFileId === file.id
-                              ? "bg-red-600 text-white"
+                              ? "bg-purple-600 text-white"
                               : "bg-gray-800 hover:bg-gray-700 text-gray-300"
                           }`}
                           onClick={() => {
@@ -272,7 +272,7 @@ export default function CodeEditor() {
                               e.stopPropagation();
                               handleDelete(file.id);
                             }}
-                            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-red-700 rounded transition"
+                            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-purple-700 rounded transition"
                           >
                             <Trash2 className="w-3 h-3" />
                           </button>
@@ -287,7 +287,7 @@ export default function CodeEditor() {
                         key={file.path}
                         className={`p-2 rounded cursor-pointer transition flex items-center justify-between group ${
                           activeProjectFile === file.path
-                            ? "bg-red-600 text-white"
+                            ? "bg-purple-600 text-white"
                             : "bg-gray-800 hover:bg-gray-700 text-gray-300"
                         }`}
                         onClick={() => {
@@ -326,7 +326,7 @@ export default function CodeEditor() {
                       <Button
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
+                        className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2"
                       >
                         <Save className="w-4 h-4" />
                         {saving ? "Guardando..." : "Guardar"}

@@ -50,7 +50,7 @@ export default function SurveysResultsSection() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
       </div>
     );
   }
@@ -62,7 +62,7 @@ export default function SurveysResultsSection() {
         <p className="text-slate-600 mb-4">{error || 'No hay encuestas disponibles'}</p>
         <Button
           onClick={() => window.location.href = '/encuestas-varias'}
-          className="bg-red-600 hover:bg-red-700"
+          className="bg-purple-600 hover:bg-purple-700"
         >
           Participar en Encuestas
         </Button>
@@ -73,7 +73,7 @@ export default function SurveysResultsSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <BarChart3 className="w-6 h-6 text-red-600" />
+        <BarChart3 className="w-6 h-6 text-purple-600" />
         <h2 className="text-2xl font-bold text-slate-900">Encuestas Varias</h2>
       </div>
 
@@ -92,13 +92,13 @@ export default function SurveysResultsSection() {
             <div className="space-y-2">
               <div className="flex justify-between items-center mb-2">
                 <span className="font-semibold text-slate-900">{result.option_o1}</span>
-                <span className="text-sm font-bold text-red-600">
+                <span className="text-sm font-bold text-purple-600">
                   {result.pct_o1}%
                 </span>
               </div>
               <div className="h-8 bg-slate-200 rounded-lg overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-500 flex items-center justify-center"
+                  className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500 flex items-center justify-center"
                   style={{ width: `${result.pct_o1}%` }}
                 >
                   {result.pct_o1 > 15 && (
@@ -166,7 +166,7 @@ export default function SurveysResultsSection() {
             <Button
               onClick={() => window.location.href = '/encuestas-varias'}
               variant="outline"
-              className="text-red-600 border-red-600 hover:bg-red-50"
+              className="text-purple-600 border-purple-600 hover:bg-purple-50"
             >
               Participar
             </Button>

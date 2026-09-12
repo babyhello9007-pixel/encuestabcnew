@@ -13,7 +13,7 @@ interface PartyStatsModalProps {
   partyKey?: string;
 }
 
-export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentColor = "#C41E3A", partyLogo, partyKey }: PartyStatsModalProps) {
+export function PartyStatsModal({ isOpen, onClose, partyName, partyType, accentColor = "#4b0082", partyLogo, partyKey }: PartyStatsModalProps) {
   const [metrics, setMetrics] = useState<PartyMetricsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [topLeaders, setTopLeaders] = useState<Array<{ name: string; votes: number; pct: number; photo?: string }>>([]);

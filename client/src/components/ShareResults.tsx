@@ -33,7 +33,7 @@ export function ShareResults({ activeTab, topParty, topPartyVotes, totalVotes }:
     <>
       <Button
         onClick={() => setShowShareModal(true)}
-        className="bg-[#C41E3A] hover:bg-[#A01830] text-white px-6 py-2 rounded-lg flex items-center gap-2"
+        className="bg-[#4b0082] hover:bg-[#35005c] text-white px-6 py-2 rounded-lg flex items-center gap-2"
       >
         <Share2 className="h-4 w-4" />
         Compartir Resultados
@@ -48,7 +48,7 @@ export function ShareResults({ activeTab, topParty, topPartyVotes, totalVotes }:
             <div className="bg-gradient-to-br from-[#0F1419] to-[#1A1A1A] rounded-lg p-6 mb-6 border border-[#2D2D2D]">
               <div className="text-center space-y-3">
                 <p className="text-[#999999] text-sm">ENCUESTA DE BATALLA CULTURAL</p>
-                <p className="text-2xl font-bold text-[#C41E3A]">{topParty}</p>
+                <p className="text-2xl font-bold text-[#4b0082]">{topParty}</p>
                 <p className="text-4xl font-bold text-white">
                   {((topPartyVotes / totalVotes) * 100).toFixed(1)}%
                 </p>
@@ -57,7 +57,7 @@ export function ShareResults({ activeTab, topParty, topPartyVotes, totalVotes }:
                 </p>
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-6 w-6" />
-                  <span className="text-[#C41E3A] font-semibold">Batalla Cultural</span>
+                  <span className="text-[#4b0082] font-semibold">Batalla Cultural</span>
                 </div>
               </div>
             </div>
@@ -89,7 +89,7 @@ export function ShareResults({ activeTab, topParty, topPartyVotes, totalVotes }:
                   navigator.clipboard.writeText(generateShareText());
                   alert("Texto copiado al portapapeles");
                 }}
-                className="mt-3 w-full bg-[#C41E3A] hover:bg-[#A01830] text-white py-2 rounded text-sm transition"
+                className="mt-3 w-full bg-[#4b0082] hover:bg-[#35005c] text-white py-2 rounded text-sm transition"
               >
                 Copiar Texto
               </button>

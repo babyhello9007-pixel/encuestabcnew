@@ -28,7 +28,7 @@ export function ShareLeadersModal({ leadersByParty, selectedParty }: ShareLeader
       <Button
         onClick={() => setIsOpen(true)}
         variant="outline"
-        className="border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white text-sm flex items-center gap-2"
+        className="border-[#4b0082] text-[#4b0082] hover:bg-[#4b0082] hover:text-white text-sm flex items-center gap-2"
       >
         <Share2 className="h-4 w-4" />
         Compartir

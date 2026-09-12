@@ -253,8 +253,8 @@ export const SpainMapRealistic: React.FC<SpainMapRealisticProps> = ({
 
   if (error || !geoJsonData) {
     return (
-      <div className="w-full h-[300px] sm:h-[400px] md:h-[600px] flex items-center justify-center p-4 sm:p-8 bg-slate-950 rounded-2xl border border-red-900/30">
-        <p className="text-red-400 text-xs sm:text-sm font-medium">{error || 'Error al cargar el mapa'}</p>
+      <div className="w-full h-[300px] sm:h-[400px] md:h-[600px] flex items-center justify-center p-4 sm:p-8 bg-slate-950 rounded-2xl border border-purple-900/30">
+        <p className="text-purple-400 text-xs sm:text-sm font-medium">{error || 'Error al cargar el mapa'}</p>
       </div>
     );
   }

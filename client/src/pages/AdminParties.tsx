@@ -225,7 +225,7 @@ export default function AdminParties() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4" />
           <p className="text-slate-600">Cargando partidos...</p>
         </div>
       </div>
@@ -244,7 +244,7 @@ export default function AdminParties() {
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : syncStatus === 'connecting'
                   ? 'bg-amber-50 text-amber-700 border-amber-200'
-                  : 'bg-red-50 text-red-700 border-red-200'
+                  : 'bg-purple-50 text-purple-700 border-purple-200'
               }`}
             >
               {syncStatus === 'connected' ? 'Sincronizado con Supabase' : syncStatus === 'connecting' ? 'Conectando Supabase…' : 'Error de sincronización'}
@@ -261,7 +261,7 @@ export default function AdminParties() {
               <button
                 onClick={() => setActiveTab('parties')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                  activeTab === 'parties' ? 'bg-red-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                  activeTab === 'parties' ? 'bg-purple-600 text-white' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Partidos ({parties.length})
@@ -269,7 +269,7 @@ export default function AdminParties() {
               <button
                 onClick={() => setActiveTab('youth')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                  activeTab === 'youth' ? 'bg-red-600 text-white' : 'text-slate-600 hover:text-slate-900'
+                  activeTab === 'youth' ? 'bg-purple-600 text-white' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Asociaciones ({youth.length})

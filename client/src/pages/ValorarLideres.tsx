@@ -159,7 +159,7 @@ export default function ValorarLideres() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F] text-white">
         <div className="text-center">
-          <Loader2 className="animate-spin w-10 h-10 text-[#C41E3A] mx-auto mb-4" />
+          <Loader2 className="animate-spin w-10 h-10 text-[#4b0082] mx-auto mb-4" />
           <p className="text-gray-400 font-medium">Cargando líderes políticos...</p>
         </div>
       </div>
@@ -170,12 +170,12 @@ export default function ValorarLideres() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F] text-white p-4">
         <div className="text-center max-w-md bg-white/5 border border-white/10 p-6 rounded-2xl backdrop-blur-md">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <AlertCircle className="w-12 h-12 text-purple-500 mx-auto mb-3" />
           <h2 className="text-lg font-bold mb-2">Error de conexión</h2>
           <p className="text-gray-400 text-sm mb-6">{errorMsg}</p>
           <button
             onClick={fetchLeaders}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C41E3A] hover:bg-[#A01830] transition font-medium text-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4b0082] hover:bg-[#35005c] transition font-medium text-sm"
           >
             <RefreshCw className="w-4 h-4" />
             Reintentar
@@ -193,7 +193,7 @@ export default function ValorarLideres() {
           <h2 className="text-2xl font-bold text-white mb-2">¡Valoraciones enviadas!</h2>
           <p className="text-gray-400 text-sm mb-6">Muchas gracias por participar en la evaluación.</p>
           <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-            <Loader2 className="w-4 h-4 animate-spin text-[#C41E3A]" />
+            <Loader2 className="w-4 h-4 animate-spin text-[#4b0082]" />
             Redirigiendo a resultados...
           </div>
         </div>
@@ -202,7 +202,7 @@ export default function ValorarLideres() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-gray-100 flex flex-col selection:bg-[#C41E3A] selection:text-white">
+    <div className="min-h-screen bg-[#0F0F0F] text-gray-100 flex flex-col selection:bg-[#4b0082] selection:text-white">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#141414]/80 backdrop-blur-md border-b border-white/10">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-16">
@@ -219,7 +219,7 @@ export default function ValorarLideres() {
 
           {/* Badge del progreso */}
           <div className="text-xs bg-white/5 border border-white/10 px-3 py-1.5 rounded-full text-gray-300">
-            Evaluados: <span className="font-bold text-[#C41E3A]">{ratedCount}</span> / {leaders.length}
+            Evaluados: <span className="font-bold text-[#4b0082]">{ratedCount}</span> / {leaders.length}
           </div>
         </div>
       </header>
@@ -317,7 +317,7 @@ export default function ValorarLideres() {
                         onMouseLeave={() => handleMouseLeave(key)}
                         className={`h-9 rounded-lg flex items-center justify-center transition-all text-xs font-semibold ${
                           star <= displayRating
-                            ? "bg-[#C41E3A] text-white shadow-lg shadow-[#C41E3A]/20"
+                            ? "bg-[#4b0082] text-white shadow-lg shadow-[#4b0082]/20"
                             : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
                         }`}
                       >
@@ -345,7 +345,7 @@ export default function ValorarLideres() {
             type="button"
             onClick={handleSubmit}
             disabled={submitting || ratedCount === 0}
-            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#C41E3A] hover:bg-[#A01830] text-white transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#C41E3A]/20"
+            className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#4b0082] hover:bg-[#35005c] text-white transition font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#4b0082]/20"
           >
             {submitting ? (
               <>

@@ -54,7 +54,7 @@ export const VerifySeatsModal: React.FC<VerifySeatsModalProps> = ({
               </div>
               <div className="text-center">
                 <p className="text-sm text-gray-600">Estado</p>
-                <p className={`text-2xl font-bold ${todosCorrectos ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`text-2xl font-bold ${todosCorrectos ? 'text-green-600' : 'text-purple-600'}`}>
                   {todosCorrectos ? '✓ Correcto' : '✗ Error'}
                 </p>
               </div>
@@ -103,7 +103,7 @@ export const VerifySeatsModal: React.FC<VerifySeatsModalProps> = ({
                           {esCorrecta ? (
                             <span className="text-green-600 font-bold">✓</span>
                           ) : (
-                            <span className="text-red-600 font-bold">✗</span>
+                            <span className="text-purple-600 font-bold">✗</span>
                           )}
                         </td>
                       </tr>
@@ -114,8 +114,8 @@ export const VerifySeatsModal: React.FC<VerifySeatsModalProps> = ({
           </div>
 
           {/* Información de verificación */}
-          <div className={`p-4 rounded-lg ${todosCorrectos ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'}`}>
-            <p className={`text-sm font-semibold ${todosCorrectos ? 'text-green-800' : 'text-red-800'}`}>
+          <div className={`p-4 rounded-lg ${todosCorrectos ? 'bg-green-100 border border-green-300' : 'bg-purple-100 border border-purple-300'}`}>
+            <p className={`text-sm font-semibold ${todosCorrectos ? 'text-green-800' : 'text-purple-800'}`}>
               {todosCorrectos
                 ? '✓ La distribución de escaños es correcta según la Ley d\'Hondt.'
                 : '✗ Hay discrepancias en la distribución de escaños. Revisa los cálculos.'}

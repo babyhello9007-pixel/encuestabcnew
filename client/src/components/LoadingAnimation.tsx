@@ -7,8 +7,8 @@ export function LoadingAnimation() {
         {/* Logo animado */}
         <div className="flex justify-center">
           <div className="relative w-24 h-24">
-            <div className="absolute inset-0 rounded-full border-4 border-[#D5D5D7] border-t-[#C41E3A] animate-spin"></div>
-            <div className="absolute inset-2 rounded-full border-4 border-transparent border-r-[#C41E3A] animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }}></div>
+            <div className="absolute inset-0 rounded-full border-4 border-[#D5D5D7] border-t-[#4b0082] animate-spin"></div>
+            <div className="absolute inset-2 rounded-full border-4 border-transparent border-r-[#4b0082] animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }}></div>
             <img 
               src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" 
               alt="BC Logo" 
@@ -26,7 +26,7 @@ export function LoadingAnimation() {
         {/* Barra de progreso animada */}
         <div className="w-64 h-1 bg-[#D5D5D7] rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-[#C41E3A] to-[#E85C5C] rounded-full animate-pulse"
+            className="h-full bg-gradient-to-r from-[#4b0082] to-[#E85C5C] rounded-full animate-pulse"
             style={{
               animation: "progress 2s ease-in-out infinite"
             }}
@@ -35,9 +35,9 @@ export function LoadingAnimation() {
 
         {/* Puntos animados */}
         <div className="flex justify-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-bounce" style={{ animationDelay: "0s" }}></div>
-          <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-          <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-bounce" style={{ animationDelay: "0.4s" }}></div>
+          <div className="w-2 h-2 rounded-full bg-[#4b0082] animate-bounce" style={{ animationDelay: "0s" }}></div>
+          <div className="w-2 h-2 rounded-full bg-[#4b0082] animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+          <div className="w-2 h-2 rounded-full bg-[#4b0082] animate-bounce" style={{ animationDelay: "0.4s" }}></div>
         </div>
 
         {/* Mensaje de estado */}

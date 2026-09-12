@@ -135,10 +135,10 @@ export default function Pactometer({
       {/* Línea de mayoría */}
       <div className="relative h-12 bg-slate-100 rounded-lg border-2 border-slate-300">
         <div
-          className="absolute top-0 bottom-0 border-l-4 border-red-600 flex items-center"
+          className="absolute top-0 bottom-0 border-l-4 border-purple-600 flex items-center"
           style={{ left: `${(requiredForMajority / totalSeats) * 100}%` }}
         >
-          <span className="text-xs font-bold text-red-600 ml-2 whitespace-nowrap">
+          <span className="text-xs font-bold text-purple-600 ml-2 whitespace-nowrap">
             Mayoría ({requiredForMajority})
           </span>
         </div>

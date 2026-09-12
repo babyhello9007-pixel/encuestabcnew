@@ -128,7 +128,7 @@ export function LeadersResultsChart({ partyColors = {} }: LeadersResultsChartPro
             onClick={() => setSelectedParty(party)}
             className={`px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
               selectedParty === party
-                ? "bg-[#C41E3A] text-white"
+                ? "bg-[#4b0082] text-white"
                 : "bg-[#F5F1E8] text-[#2D2D2D] hover:bg-[#E0D5CC]"
             }`}
             style={
@@ -214,7 +214,7 @@ export function LeadersResultsChart({ partyColors = {} }: LeadersResultsChartPro
             <tbody>
               {selectedLeaders.map((leader, index) => (
                 <tr key={index} className="border-b border-[#F5F1E8] hover:bg-[#F5F1E8]">
-                  <td className="py-3 px-4 font-semibold text-[#C41E3A]">{index + 1}</td>
+                  <td className="py-3 px-4 font-semibold text-[#4b0082]">{index + 1}</td>
                   <td className="py-3 px-4 text-[#2D2D2D]">{leader.lider_preferido}</td>
                   <td className="py-3 px-4 text-center text-[#2D2D2D]">{leader.total_votos}</td>
                   <td className="py-3 px-4 text-center">
@@ -252,7 +252,7 @@ export function LeadersResultsChart({ partyColors = {} }: LeadersResultsChartPro
         <div className="flex gap-2 bg-white p-4 rounded-xl shadow-sm">
           <Button
             onClick={() => exportLeadersToPDFV4(selectedParty)}
-            className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
+            className="flex-1 bg-[#4b0082] hover:bg-[#35005c] text-white font-semibold flex items-center justify-center gap-2"
           >
             <Download className="h-4 w-4" />
             PDF

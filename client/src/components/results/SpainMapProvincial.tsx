@@ -150,7 +150,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
   return (
     <div className="w-full space-y-4">
       {/* Llamada a la accion */}
-      <div className="p-4 bg-gradient-to-r from-red-900 to-red-800 rounded-lg border border-red-600">
+      <div className="p-4 bg-gradient-to-r from-purple-900 to-purple-800 rounded-lg border border-purple-600">
         <p className="text-white text-sm mb-2">
           <strong>Tu provincia no aparece?</strong> Ayudanos respondiendo la encuesta.
         </p>
@@ -158,7 +158,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
           href="https://encuestabc-6q57y6uz.manus.space/nano-encuesta"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block px-4 py-2 bg-white text-red-900 font-semibold rounded hover:bg-gray-100 transition-colors text-sm"
+          className="inline-block px-4 py-2 bg-white text-purple-900 font-semibold rounded hover:bg-gray-100 transition-colors text-sm"
         >
           Responder Encuesta
         </a>
@@ -171,8 +171,8 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
           variant={mapView === "schematic" ? "default" : "outline"}
           className={`flex items-center gap-2 ${
             mapView === "schematic"
-              ? "bg-[#C41E3A] hover:bg-[#A01830]"
-              : "border-[#C41E3A] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white"
+              ? "bg-[#4b0082] hover:bg-[#35005c]"
+              : "border-[#4b0082] text-[#4b0082] hover:bg-[#4b0082] hover:text-white"
           }`}
         >
           <Grid3x3 className="w-4 h-4" />
@@ -221,7 +221,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
         <div className="w-full flex justify-center p-4 bg-gray-900 rounded-lg">
           <svg
             viewBox="0 0 900 650"
-            className="w-full max-w-4xl border border-[#C41E3A] rounded-lg bg-[#F5F5F7]"
+            className="w-full max-w-4xl border border-[#4b0082] rounded-lg bg-[#F5F5F7]"
             style={{ aspectRatio: "16/11" }}
           >
             {/* Fondo del mapa */}
@@ -245,7 +245,7 @@ export const SpainMapProvincial: React.FC<SpainMapProvincialProps> = ({
                     r={isHovered || isSelected ? 28 : 22}
                     fill={winnerColor}
                     opacity={tieneData ? 1 : 0.3}
-                    stroke={isSelected ? "#1D1D1F" : isHovered ? "#C41E3A" : "white"}
+                    stroke={isSelected ? "#1D1D1F" : isHovered ? "#4b0082" : "white"}
                     strokeWidth={isSelected ? 3 : isHovered ? 2 : 1}
                     className="cursor-pointer transition-all"
                     onMouseEnter={() => tieneData && setHoveredProvince(province)}

@@ -79,7 +79,7 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
   return (
     <div className="w-full bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 bg-gradient-to-r from-red-50 to-red-100 border-b border-gray-200">
+      <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-purple-100 border-b border-gray-200">
         <h3 className="text-sm font-bold text-gray-900">Filtros Dinámicos</h3>
         <p className="text-xs text-gray-600 mt-1">Segmenta los resultados por edad, ideología y partido</p>
       </div>
@@ -112,7 +112,7 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
                   max="80"
                   value={ageRange[0]}
                   onChange={(e) => handleAgeChange('min', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-red-500"
+                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-500"
                 />
               </div>
               <div className="space-y-2">
@@ -125,7 +125,7 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
                   max="80"
                   value={ageRange[1]}
                   onChange={(e) => handleAgeChange('max', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-red-500"
+                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-500"
                 />
               </div>
               <p className="text-xs text-gray-600 bg-white p-2 rounded border border-gray-200">
@@ -161,7 +161,7 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
                   max="10"
                   value={ideologyRange[0]}
                   onChange={(e) => handleIdeologyChange('min', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-red-500"
+                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-500"
                 />
               </div>
               <div className="space-y-2">
@@ -174,7 +174,7 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
                   max="10"
                   value={ideologyRange[1]}
                   onChange={(e) => handleIdeologyChange('max', parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-red-500"
+                  className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-500"
                 />
               </div>
               <div className="text-xs text-gray-600 bg-white p-2 rounded border border-gray-200">
@@ -208,7 +208,7 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
               <div className="flex gap-2 mb-3">
                 <button
                   onClick={handleSelectAll}
-                  className="flex-1 px-3 py-1.5 text-xs font-semibold bg-red-500 text-white rounded hover:bg-red-600 transition"
+                  className="flex-1 px-3 py-1.5 text-xs font-semibold bg-purple-500 text-white rounded hover:bg-purple-600 transition"
                 >
                   Todos
                 </button>
@@ -231,7 +231,7 @@ export const MapFilters: React.FC<MapFiltersProps> = ({
                       type="checkbox"
                       checked={selectedParties.includes(party)}
                       onChange={() => handlePartyToggle(party)}
-                      className="w-4 h-4 rounded border-gray-300 text-red-500 cursor-pointer accent-red-500"
+                      className="w-4 h-4 rounded border-gray-300 text-purple-500 cursor-pointer accent-purple-500"
                     />
                     <span className="text-sm text-gray-900 flex-1">{party}</span>
                   </label>

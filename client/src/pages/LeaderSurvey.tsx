@@ -62,7 +62,7 @@ export default function LeaderSurvey() {
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12 space-y-4">
             <h2 className="text-5xl md:text-6xl font-bold text-[#1D1D1F] leading-tight tracking-tight">
-              ¿Quién quieres que sea el <span className="text-[#C41E3A]">líder de tu partido?</span>
+              ¿Quién quieres que sea el <span className="text-[#4b0082]">líder de tu partido?</span>
             </h2>
             <p className="text-lg text-[#555555] max-w-2xl mx-auto">
               Selecciona tu partido político y elige quién crees que debería liderarlo.
@@ -70,7 +70,7 @@ export default function LeaderSurvey() {
           </div>
 
           {submitted && (
-            <div className="mb-8 p-8 bg-[#F5F5F7] border-2 border-[#C41E3A] rounded-2xl text-center space-y-6">
+            <div className="mb-8 p-8 bg-[#F5F5F7] border-2 border-[#4b0082] rounded-2xl text-center space-y-6">
               <div className="space-y-2">
                 <p className="text-[#1D1D1F] font-semibold text-lg">
                   ✓ Gracias por tu participación
@@ -81,7 +81,7 @@ export default function LeaderSurvey() {
               </div>
               <Button
                 onClick={() => setLocation("/resultados")}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold px-8 py-3 rounded-lg"
+                className="bg-[#4b0082] hover:bg-[#35005c] text-white font-semibold px-8 py-3 rounded-lg"
               >
                 Ver Resultados de Líderes
               </Button>
@@ -96,7 +96,7 @@ export default function LeaderSurvey() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="frosted-glass p-8 rounded-2xl space-y-4 hover:shadow-lg transition">
-              <div className="h-12 w-12 rounded-lg bg-[#C41E3A] bg-opacity-10 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-lg bg-[#4b0082] bg-opacity-10 flex items-center justify-center">
                 <span className="text-2xl">🗳️</span>
               </div>
               <h3 className="font-semibold text-[#1D1D1F] text-lg">Tu voz importa</h3>
@@ -106,7 +106,7 @@ export default function LeaderSurvey() {
             </div>
 
             <div className="frosted-glass p-8 rounded-2xl space-y-4 hover:shadow-lg transition">
-              <div className="h-12 w-12 rounded-lg bg-[#C41E3A] bg-opacity-10 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-lg bg-[#4b0082] bg-opacity-10 flex items-center justify-center">
                 <span className="text-2xl">📊</span>
               </div>
               <h3 className="font-semibold text-[#1D1D1F] text-lg">Resultados en vivo</h3>

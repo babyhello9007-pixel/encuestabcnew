@@ -145,7 +145,7 @@ export function ShareInfographicComplete({
     <>
       <button
         onClick={() => setShowShareModal(true)}
-        className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white px-6 py-2 rounded-lg flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
+        className="bg-gradient-to-r from-[#4b0082] to-[#35005c] hover:from-[#35005c] hover:to-[#8B1428] text-white px-6 py-2 rounded-lg flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
       >
         <Share2 className="h-4 w-4" />
         Compartir Resultados
@@ -175,12 +175,12 @@ export function ShareInfographicComplete({
                   backdropFilter: "blur(20px)",
                   borderColor: "rgba(255, 255, 255, 0.15)",
                   boxShadow:
-                    "0 8px 32px 0 rgba(196, 30, 58, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)",
+                    "0 8px 32px 0 rgba(75, 0, 130, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1)",
                 }}
               >
                 {/* Fondo con gradiente decorativo */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  <div className="absolute top-0 right-0 w-96 h-96 bg-[#C41E3A] rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-[#4b0082] rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
                   <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-5"></div>
                 </div>
 
@@ -197,7 +197,7 @@ export function ShareInfographicComplete({
                       alt="BC Logo"
                       className="h-10 w-10 drop-shadow-lg"
                     />
-                    <span className="text-[#C41E3A] font-bold text-xl drop-shadow-lg">
+                    <span className="text-[#4b0082] font-bold text-xl drop-shadow-lg">
                       Batalla Cultural
                     </span>
                   </div>
@@ -216,7 +216,7 @@ export function ShareInfographicComplete({
                             className="flex items-center gap-3 px-4 py-2 rounded-lg"
                             style={{
                               background: "rgba(255, 255, 255, 0.05)",
-                              borderLeft: `3px solid #C41E3A`,
+                              borderLeft: `3px solid #4b0082`,
                             }}
                           >
                             <span className="text-[#999999] font-bold w-6">
@@ -238,7 +238,7 @@ export function ShareInfographicComplete({
                               {party.nombre}
                             </span>
 
-                            <span className="text-[#C41E3A] font-bold">
+                            <span className="text-[#4b0082] font-bold">
                               {party.porcentaje.toFixed(1)}%
                             </span>
 
@@ -268,7 +268,7 @@ export function ShareInfographicComplete({
                         Edad promedio: {edadPromedio.toFixed(1)} años
                       </p>
                     )}
-                    <p className="text-[#C41E3A] text-xs mt-2 font-semibold">
+                    <p className="text-[#4b0082] text-xs mt-2 font-semibold">
                       #BatallaaCultural - ¡Participa y haz oír tu voz!
                     </p>
                   </div>

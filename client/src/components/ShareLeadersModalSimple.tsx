@@ -29,7 +29,7 @@ export function ShareLeadersModalSimple({ leadersByParty, selectedParty }: Share
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white text-sm flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+        className="bg-gradient-to-r from-[#4b0082] to-[#35005c] hover:from-[#35005c] hover:to-[#8B1428] text-white text-sm flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
       >
         <Share2 className="h-4 w-4" />
         Compartir Resultados

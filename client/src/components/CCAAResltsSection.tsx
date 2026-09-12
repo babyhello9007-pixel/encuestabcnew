@@ -135,7 +135,7 @@ export function CCAAResltsSection({ partyIndex }: CCAAResltsSectionProps) {
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center py-16 space-y-4">
-        <Loader2 className="animate-spin w-10 h-10 text-red-600" />
+        <Loader2 className="animate-spin w-10 h-10 text-purple-600" />
         <p className="text-slate-500 font-medium text-sm">Cargando datos electorales...</p>
       </div>
     );
@@ -143,7 +143,7 @@ export function CCAAResltsSection({ partyIndex }: CCAAResltsSectionProps) {
 
   if (error) {
     return (
-      <div className="flex items-center gap-3 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+      <div className="flex items-center gap-3 p-4 bg-purple-50 text-purple-700 rounded-lg border border-purple-200">
         <AlertCircle className="w-5 h-5 flex-shrink-0" />
         <p className="text-sm font-medium">{error}</p>
       </div>
@@ -172,7 +172,7 @@ export function CCAAResltsSection({ partyIndex }: CCAAResltsSectionProps) {
             }}
             className={`px-4 py-2 text-sm font-medium rounded-md transition ${
               analysisType === "generales"
-                ? "bg-red-600 text-white shadow-sm"
+                ? "bg-purple-600 text-white shadow-sm"
                 : "text-slate-700 hover:text-slate-900"
             }`}
           >
@@ -185,7 +185,7 @@ export function CCAAResltsSection({ partyIndex }: CCAAResltsSectionProps) {
             }}
             className={`px-4 py-2 text-sm font-medium rounded-md transition ${
               analysisType === "autonomicas"
-                ? "bg-red-600 text-white shadow-sm"
+                ? "bg-purple-600 text-white shadow-sm"
                 : "text-slate-700 hover:text-slate-900"
             }`}
           >
@@ -228,10 +228,10 @@ export function CCAAResltsSection({ partyIndex }: CCAAResltsSectionProps) {
                   setSelectedCCAA(ccaa.ccaa);
                   setViewMode("detail");
                 }}
-                className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-red-500 hover:shadow-md cursor-pointer transition-all duration-200"
+                className="group bg-white rounded-xl p-5 border border-slate-200 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all duration-200"
               >
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-bold text-lg text-slate-900 group-hover:text-red-600 transition-colors">
+                  <h3 className="font-bold text-lg text-slate-900 group-hover:text-purple-600 transition-colors">
                     {ccaa.ccaa}
                   </h3>
                   <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
@@ -269,7 +269,7 @@ export function CCAAResltsSection({ partyIndex }: CCAAResltsSectionProps) {
               id="ccaa-select"
               value={selectedCCAA || ""}
               onChange={(e) => setSelectedCCAA(e.target.value)}
-              className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none"
+              className="bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none"
             >
               {ccaaSummary.map((item) => (
                 <option key={item.ccaa} value={item.ccaa}>

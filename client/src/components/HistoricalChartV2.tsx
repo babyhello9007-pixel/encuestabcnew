@@ -9,7 +9,7 @@ interface HistoricalData {
 }
 
 const COLORS = [
-  "#C41E3A", "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE"
+  "#4b0082", "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE"
 ];
 
 export function HistoricalChartV2({ activeTab }: { activeTab: "general" | "youth" }) {
@@ -136,7 +136,7 @@ export function HistoricalChartV2({ activeTab }: { activeTab: "general" | "youth
                 onClick={() => toggleParty(key)}
                 className={`px-4 py-2 rounded-lg transition-all ${
                   selectedParties.includes(key)
-                    ? "bg-[#C41E3A] text-white"
+                    ? "bg-[#4b0082] text-white"
                     : "bg-[#E0D5CC] text-[#2D2D2D] hover:bg-[#D0C5BC]"
                 }`}
               >
@@ -197,8 +197,8 @@ export function HistoricalChartV2({ activeTab }: { activeTab: "general" | "youth
               return (
                 <div key={partyId} className="frosted-glass p-4 rounded-lg space-y-2">
                   <p className="text-sm font-semibold text-[#666666]">{party?.name}</p>
-                  <p className="text-2xl font-bold text-[#C41E3A]">{current}</p>
-                  <p className={`text-xs font-semibold ${change >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  <p className="text-2xl font-bold text-[#4b0082]">{current}</p>
+                  <p className={`text-xs font-semibold ${change >= 0 ? "text-green-600" : "text-purple-600"}`}>
                     {change >= 0 ? "↑" : "↓"} {Math.abs(parseFloat(percentChange))}%
                   </p>
                 </div>

@@ -237,14 +237,14 @@ export default function PreguntasVariasSection({ partyIndex }: PreguntasVariasSe
       <div className="bg-slate-900/70 backdrop-blur-md p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-[#C41E3A]" />
+            <Filter className="w-4 h-4 text-[#4b0082]" />
             <span className="text-xs font-bold uppercase tracking-wider text-slate-200">Segmentación Avanzada de Preguntas Varias</span>
           </div>
 
           {(selectedEdad !== "todos" || selectedCCAAs.length > 0) && (
             <button
               onClick={resetAllFilters}
-              className="flex items-center gap-1 text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 px-3 py-1 rounded-lg transition font-semibold"
+              className="flex items-center gap-1 text-xs bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/30 px-3 py-1 rounded-lg transition font-semibold"
             >
               <X className="w-3.5 h-3.5" /> Restablecer todos los filtros
             </button>
@@ -258,7 +258,7 @@ export default function PreguntasVariasSection({ partyIndex }: PreguntasVariasSe
             {selectedCCAAs.map((ccaa) => (
               <span
                 key={ccaa}
-                className="inline-flex items-center gap-1 text-xs bg-[#C41E3A]/20 text-rose-200 border border-[#C41E3A]/40 px-2.5 py-1 rounded-md font-medium"
+                className="inline-flex items-center gap-1 text-xs bg-[#4b0082]/20 text-purple-200 border border-[#4b0082]/40 px-2.5 py-1 rounded-md font-medium"
               >
                 {ccaa}
                 <button
@@ -281,7 +281,7 @@ export default function PreguntasVariasSection({ partyIndex }: PreguntasVariasSe
             <select
               value={selectedEdad}
               onChange={(e) => setSelectedEdad(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-[#C41E3A]"
+              className="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-2 focus:outline-none focus:border-[#4b0082]"
             >
               <option value="todos">Todas las edades</option>
               <option value="18-30">18 - 30 años</option>
@@ -316,7 +316,7 @@ export default function PreguntasVariasSection({ partyIndex }: PreguntasVariasSe
                     onClick={() => toggleCCAA(ccaa)}
                     className={`text-[11px] px-2.5 py-1 rounded-md transition font-medium border ${
                       isSelected
-                        ? "bg-[#C41E3A] text-white border-[#C41E3A] shadow"
+                        ? "bg-[#4b0082] text-white border-[#4b0082] shadow"
                         : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
                     }`}
                   >
@@ -331,7 +331,7 @@ export default function PreguntasVariasSection({ partyIndex }: PreguntasVariasSe
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C41E3A]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#4b0082]" />
           <p className="text-xs text-slate-400">Aplicando filtros y calculando resultados...</p>
         </div>
       ) : (

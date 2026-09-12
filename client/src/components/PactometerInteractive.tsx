@@ -154,7 +154,7 @@ export default function PactometerInteractive({
                 onClick={clearSelection}
                 variant="outline"
                 size="sm"
-                className="text-red-600 hover:text-red-700"
+                className="text-purple-600 hover:text-purple-700"
               >
                 <X className="w-4 h-4 mr-1" />
                 Limpiar

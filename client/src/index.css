@@ -334,17 +334,17 @@ textarea {
 
 :root {
   /* Paleta Premium - Batalla Cultural */
-  --primary: #C41E3A;
+  --primary: #4b0082;
   --primary-foreground: #FFFFFF;
-  --primary-light: #E74C3C;
-  --primary-dark: #8B1528;
+  --primary-light: #6d1bb0;
+  --primary-dark: #35005c;
   
-  --sidebar-primary: #8B1528;
+  --sidebar-primary: #35005c;
   --sidebar-primary-foreground: #FFFFFF;
   
   /* Colores del logo */
-  --chart-1: #C41E3A;
-  --chart-2: #E74C3C;
+  --chart-1: #4b0082;
+  --chart-2: #6d1bb0;
   --chart-3: #F39C12;
   --chart-4: #27AE60;
   --chart-5: #3498DB;
@@ -372,34 +372,34 @@ textarea {
   --muted-foreground: #6B6B70;
   
   /* Acento */
-  --accent: #C41E3A;
+  --accent: #4b0082;
   --accent-foreground: #FFFFFF;
   
   /* Destructivo */
-  --destructive: #FF3B30;
+  --destructive: #4b0082;
   --destructive-foreground: #FFFFFF;
   
   /* Bordes sutiles - Mejorados para mejor visibilidad */
   --border: #BFBFBF;
   --input: #FFFFFF;
-  --ring: #C41E3A;
+  --ring: #4b0082;
   
   /* Sidebar */
   --sidebar: #FFFFFF;
   --sidebar-foreground: #1D1D1F;
-  --sidebar-accent: #C41E3A;
+  --sidebar-accent: #4b0082;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #D5D5D7;
-  --sidebar-ring: #C41E3A;
+  --sidebar-ring: #4b0082;
 }
 
 .dark {
-  --primary: #FF453A;
+  --primary: #4b0082;
   --primary-foreground: #FFFFFF;
-  --primary-light: #FF6B63;
-  --primary-dark: #D70015;
+  --primary-light: #6d1bb0;
+  --primary-dark: #35005c;
   
-  --sidebar-primary: #D70015;
+  --sidebar-primary: #35005c;
   --sidebar-primary-foreground: #FFFFFF;
   
   --background: #000000;
@@ -417,28 +417,28 @@ textarea {
   --muted: #A1A1A6;
   --muted-foreground: #86868B;
   
-  --accent: #FF453A;
+  --accent: #4b0082;
   --accent-foreground: #FFFFFF;
   
-  --destructive: #FF453A;
+  --destructive: #4b0082;
   --destructive-foreground: #FFFFFF;
   
   --border: #424245;
   --input: #1D1D1F;
-  --ring: #FF453A;
+  --ring: #4b0082;
   
-  --chart-1: #FF453A;
-  --chart-2: #FF6B63;
+  --chart-1: #4b0082;
+  --chart-2: #6d1bb0;
   --chart-3: #FFD60A;
   --chart-4: #34C759;
   --chart-5: #00B4D8;
   
   --sidebar: #1D1D1F;
   --sidebar-foreground: #F5F5F7;
-  --sidebar-accent: #FF453A;
+  --sidebar-accent: #4b0082;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #424245;
-  --sidebar-ring: #FF453A;
+  --sidebar-ring: #4b0082;
 }
 
 @layer base {
@@ -589,8 +589,8 @@ textarea {
 
   .corp-card:hover {
     background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 8px 20px rgba(196, 30, 58, 0.12);
-    border-color: rgba(196, 30, 58, 0.2);
+    box-shadow: 0 8px 20px rgba(75, 0, 130, 0.12);
+    border-color: rgba(75, 0, 130, 0.2);
   }
 
   .dark .corp-card {
@@ -607,19 +607,19 @@ textarea {
 
   /* Gradient Header - Premium */
   .header-gradient {
-    background: linear-gradient(135deg, #C41E3A 0%, #8B1528 100%);
+    background: linear-gradient(135deg, #4b0082 0%, #35005c 100%);
     color: white;
   }
 
   /* Accent Line */
   .accent-line {
-    background: linear-gradient(90deg, #C41E3A 0%, #E74C3C 100%);
+    background: linear-gradient(90deg, #4b0082 0%, #6d1bb0 100%);
     height: 4px;
   }
 
   /* Modern Button Styles */
   .btn-primary {
-    background: linear-gradient(135deg, #C41E3A 0%, #8B1528 100%);
+    background: linear-gradient(135deg, #4b0082 0%, #35005c 100%);
     color: white;
     border: none;
     border-radius: 0.75rem;
@@ -627,11 +627,11 @@ textarea {
     font-weight: 600;
     font-size: 1rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+    box-shadow: 0 4px 12px rgba(75, 0, 130, 0.3);
   }
 
   .btn-primary:hover {
-    box-shadow: 0 8px 24px rgba(196, 30, 58, 0.4);
+    box-shadow: 0 8px 24px rgba(75, 0, 130, 0.4);
     transform: translateY(-2px);
   }
 
@@ -669,7 +669,7 @@ textarea {
   /* Gradiente mejorado para tarjetas */
   .gradient-card {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 245, 247, 0.9) 100%);
-    border: 1px solid rgba(196, 30, 58, 0.1);
+    border: 1px solid rgba(75, 0, 130, 0.1);
   }
 
   /* Sombra suave mejorada */
@@ -761,7 +761,7 @@ textarea {
   .input-modern:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+    box-shadow: 0 0 0 3px rgba(75, 0, 130, 0.1);
     background: rgba(255, 255, 255, 0.95);
   }
 
@@ -789,13 +789,13 @@ textarea {
 
   /* Badge Styles */
   .badge-primary {
-    background: rgba(196, 30, 58, 0.1);
-    color: #C41E3A;
+    background: rgba(75, 0, 130, 0.1);
+    color: #4b0082;
     border-radius: 9999px;
     padding: 0.375rem 0.875rem;
     font-size: 0.875rem;
     font-weight: 600;
-    border: 1px solid rgba(196, 30, 58, 0.2);
+    border: 1px solid rgba(75, 0, 130, 0.2);
   }
 
   /* Stat Box - Glass Effect */
@@ -812,7 +812,7 @@ textarea {
   .stat-box:hover {
     background: rgba(255, 255, 255, 0.95);
     border-color: var(--primary);
-    box-shadow: 0 8px 24px rgba(196, 30, 58, 0.12);
+    box-shadow: 0 8px 24px rgba(75, 0, 130, 0.12);
   }
 
   .dark .stat-box {
@@ -997,6 +997,21 @@ textarea {
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Color corporativo de botones legacy. Se limita a controles y no altera gráficos, alertas ni colores de partidos. */
+button[class*="bg-[#4b0082]"],
+button[class*="bg-red-500"],
+button[class*="bg-red-600"],
+button[class*="bg-red-700"] {
+  background-color: #4b0082 !important;
+}
+
+button[class*="bg-[#4b0082]"]:hover,
+button[class*="bg-red-500"]:hover,
+button[class*="bg-red-600"]:hover,
+button[class*="bg-red-700"]:hover {
+  background-color: #35005c !important;
+}
+
 @keyframes linktree-card-in {
   from {
     opacity: 0;
@@ -1142,7 +1157,7 @@ textarea {
 
 body {
   background:
-    radial-gradient(circle at 8% 0%, rgba(196, 30, 58, 0.09), transparent 28%),
+    radial-gradient(circle at 8% 0%, rgba(75, 0, 130, 0.09), transparent 28%),
     radial-gradient(circle at 92% 12%, rgba(56, 189, 248, 0.11), transparent 30%),
     linear-gradient(145deg, #f8fafc 0%, #eef2ff 48%, #f8fafc 100%);
 }

@@ -95,11 +95,11 @@ export function LideresRankingSection() {
 
   if (error) {
     return (
-      <div className="text-center py-12 bg-red-500/5 backdrop-blur-md border border-red-500/20 p-8 rounded-3xl space-y-4 max-w-lg mx-auto">
-        <p className="text-red-600 font-medium">{error}</p>
+      <div className="text-center py-12 bg-purple-500/5 backdrop-blur-md border border-purple-500/20 p-8 rounded-3xl space-y-4 max-w-lg mx-auto">
+        <p className="text-purple-600 font-medium">{error}</p>
         <button
           onClick={fetchLideresRanking}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C41E3A] text-white rounded-xl text-sm font-semibold hover:bg-[#A01830] shadow-lg shadow-red-900/20 active:scale-95 transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#4b0082] text-white rounded-xl text-sm font-semibold hover:bg-[#35005c] shadow-lg shadow-purple-900/20 active:scale-95 transition-all"
         >
           <RefreshCw className="w-4 h-4 animate-spin-once" /> Reintentar
         </button>
@@ -110,7 +110,7 @@ export function LideresRankingSection() {
   if (lideres.length === 0) {
     return (
       <div className="text-center py-16 bg-white/40 dark:bg-gray-900/40 backdrop-blur-xl border border-white/20 dark:border-gray-800 p-8 rounded-3xl max-w-lg mx-auto shadow-xl">
-        <Sparkles className="w-12 h-12 text-[#C41E3A] mx-auto mb-3 animate-bounce" />
+        <Sparkles className="w-12 h-12 text-[#4b0082] mx-auto mb-3 animate-bounce" />
         <h4 className="text-lg font-bold text-gray-800 dark:text-gray-100">
           Aún no hay valoraciones
         </h4>
@@ -119,7 +119,7 @@ export function LideresRankingSection() {
         </p>
         <a
           href="/valorar-lideres"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#C41E3A] hover:bg-[#A01830] text-white rounded-xl font-semibold shadow-lg shadow-red-900/20 transition-all hover:scale-105"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[#4b0082] hover:bg-[#35005c] text-white rounded-xl font-semibold shadow-lg shadow-purple-900/20 transition-all hover:scale-105"
         >
           <TrendingUp className="w-4 h-4" />
           Valorar Líderes
@@ -133,7 +133,7 @@ export function LideresRankingSection() {
       {/* Encabezado Principal */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200/60 dark:border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#C41E3A] to-red-700 text-white shadow-lg shadow-red-600/20">
+          <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#4b0082] to-purple-700 text-white shadow-lg shadow-purple-600/20">
             <Award className="w-6 h-6" />
           </div>
           <div>
@@ -148,7 +148,7 @@ export function LideresRankingSection() {
 
         <a
           href="/valorar-lideres"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#C41E3A] hover:bg-[#A01830] text-white rounded-xl font-semibold text-sm shadow-md shadow-red-900/20 transition-all hover:scale-105 active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#4b0082] hover:bg-[#35005c] text-white rounded-xl font-semibold text-sm shadow-md shadow-purple-900/20 transition-all hover:scale-105 active:scale-95"
         >
           <TrendingUp className="w-4 h-4" />
           Valorar Líderes
@@ -185,7 +185,7 @@ export function LideresRankingSection() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar líder o partido..."
-              className="w-full pl-9 pr-4 py-2 bg-gray-100/80 dark:bg-gray-800/80 text-gray-900 dark:text-white placeholder-gray-400 text-xs rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C41E3A]/50 transition"
+              className="w-full pl-9 pr-4 py-2 bg-gray-100/80 dark:bg-gray-800/80 text-gray-900 dark:text-white placeholder-gray-400 text-xs rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b0082]/50 transition"
             />
           </div>
         </div>
@@ -414,7 +414,7 @@ function PositionMovementBadge({
           ? "bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300"
           : isUp
             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
-            : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400"
+            : "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-400"
       }`}
     >
       <Icon className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
@@ -472,7 +472,7 @@ function RankingRow({
             )}
           </div>
           <div>
-            <span className="font-bold text-gray-900 dark:text-gray-100 text-sm block group-hover:text-[#C41E3A] transition-colors">
+            <span className="font-bold text-gray-900 dark:text-gray-100 text-sm block group-hover:text-[#4b0082] transition-colors">
               {lider.leader_name}
             </span>
             <span title={lider.is_official ? "Líder validado oficialmente en party_leaders" : "Nombre introducido manualmente; no consta en party_leaders"} className={`mt-0.5 inline-block rounded px-1 py-0.5 text-[8px] font-bold ${lider.is_official ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>

@@ -121,7 +121,7 @@ export function TrendenciesChart({ partyColors = {} }: TrendenciesChartProps) {
   }, []);
 
   const fallbackColors = [
-    "#C41E3A", "#0066CC", "#FFC400", "#00AA00", 
+    "#4b0082", "#0066CC", "#FFC400", "#00AA00", 
     "#FF6600", "#9933FF", "#00CCCC", "#FF0099",
     "#33CC33", "#FF3333", "#3333FF", "#FFCC00",
     "#FF9900", "#00FF99", "#9900FF", "#FF00CC"
@@ -184,7 +184,7 @@ export function TrendenciesChart({ partyColors = {} }: TrendenciesChartProps) {
   if (loading) {
     return (
       <div className="liquid-glass p-8 rounded-2xl text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#C41E3A]" />
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#4b0082]" />
         <p className="text-[#666666] mt-4">Cargando datos de tendencias...</p>
       </div>
     );

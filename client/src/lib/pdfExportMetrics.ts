@@ -62,18 +62,18 @@ function drawTable(
   const cellPadding = 2;
 
   // Draw header
-  doc.setFillColor(196, 30, 58);
+  doc.setFillColor(75, 0, 130);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
 
   let xPos = margin;
   // Dibujar fondo rojo para todo el encabezado
-  doc.setFillColor(196, 30, 58);
+  doc.setFillColor(75, 0, 130);
   doc.rect(margin, yPos, availableWidth, headerHeight, 'F');
   
   // Dibujar bordes de cada columna
-  doc.setDrawColor(196, 30, 58);
+  doc.setDrawColor(75, 0, 130);
   xPos = margin;
   headers.forEach((header, i) => {
     doc.rect(xPos, yPos, columnWidths![i], headerHeight);
@@ -156,9 +156,9 @@ export async function exportPDFWithMetrics(
   }
 
   // Header
-  doc.setFillColor(196, 30, 58);
+  doc.setFillColor(75, 0, 130);
   doc.rect(0, 0, pageWidth, 22, 'F');
-  doc.setFillColor(139, 21, 40);
+  doc.setFillColor(53, 0, 92);
   doc.rect(0, 22, pageWidth, 8, 'F');
 
   doc.setTextColor(255, 255, 255);
@@ -253,7 +253,7 @@ export async function exportPDFWithMetrics(
     const metrics = metricsPerParty[party.nombre] || { edad_promedio: 0, ideologia_promedio: 0 };
     return [
       party.nombre,
-      (party.color || '#C41E3A').toUpperCase(),
+      (party.color || '#4b0082').toUpperCase(),
       party.votos.toString(),
       `${party.porcentaje.toFixed(2)}%`,
       party.escanos.toString(),

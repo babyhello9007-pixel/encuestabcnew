@@ -93,7 +93,7 @@ export default function Home() {
   const QUORUM_URL = "https://batallaperi-avauhaz8.manus.space/";
 
   return (
-    <div className="bc-home-shell min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans selection:bg-red-500 selection:text-white">
+    <div className="bc-home-shell min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 font-sans selection:bg-purple-500 selection:text-white">
       <SeoHead title="Batalla Cultural | Encuesta y resultados políticos en vivo" description="Participa en la encuesta política y cultural de Batalla Cultural. Consulta resultados en vivo, mapas electorales y análisis de opinión en España." path="/" />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@700;800&display=swap');
@@ -171,7 +171,7 @@ export default function Home() {
           <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/")}>Inicio</button>
           <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/encuesta")}>Encuesta</button>
           <button className="text-sm font-medium text-white/70 hover:text-white transition-colors" onClick={() => setLocation("/resultados")}>Resultados</button>
-          <a href={QUORUM_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20">
+          <a href={QUORUM_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
             <Newspaper size={15} />
             Quorum
           </a>
@@ -179,7 +179,7 @@ export default function Home() {
 
         <div className="flex items-center gap-3">
           <button 
-            className="hidden sm:inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-all shadow-lg shadow-red-600/20 hover:scale-[1.02]"
+            className="hidden sm:inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm px-4 py-2 rounded-lg transition-all shadow-lg shadow-purple-600/20 hover:scale-[1.02]"
             onClick={() => setLocation("/nano-encuesta")}
           >
             Participar
@@ -198,12 +198,12 @@ export default function Home() {
           <button className="text-left text-base font-medium text-white/80 py-2 border-b border-white/5" onClick={() => { setLocation("/"); setMobileMenuOpen(false); }}>Inicio</button>
           <button className="text-left text-base font-medium text-white/80 py-2 border-b border-white/5" onClick={() => { setLocation("/encuesta"); setMobileMenuOpen(false); }}>Encuesta</button>
           <button className="text-left text-base font-medium text-white/80 py-2 border-b border-white/5" onClick={() => { setLocation("/resultados"); setMobileMenuOpen(false); }}>Resultados</button>
-          <a href={QUORUM_URL} target="_blank" rel="noopener noreferrer" className="text-left text-base font-medium text-red-400 py-2 flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+          <a href={QUORUM_URL} target="_blank" rel="noopener noreferrer" className="text-left text-base font-medium text-purple-400 py-2 flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
             <Newspaper size={18} />
             Medio Quorum <ExternalLink size={14} />
           </a>
           <button 
-            className="w-full mt-2 bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-red-600/20 text-center"
+            className="w-full mt-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-purple-600/20 text-center"
             onClick={() => { setLocation("/nano-encuesta"); setMobileMenuOpen(false); }}
           >
             Participar Ahora
@@ -218,12 +218,12 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
             {/* Contenido Izquierdo */}
             <div>
-              <div className="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 frosted-glass rounded-full border border-red-500/20">
-                <Sparkles size={14} className="text-red-400 animate-pulse" />
-                <span className="text-xs font-semibold text-red-300 uppercase tracking-wide">En vivo • España 2026</span>
+              <div className="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 frosted-glass rounded-full border border-purple-500/20">
+                <Sparkles size={14} className="text-purple-400 animate-pulse" />
+                <span className="text-xs font-semibold text-purple-300 uppercase tracking-wide">En vivo • España 2026</span>
               </div>
               <h1 className="font-playfair text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6">
-                La voz de <span className="text-red-500">España</span>, sin filtros
+                La voz de <span className="text-purple-500">España</span>, sin filtros
               </h1>
               <p className="text-lg sm:text-xl text-white/60 mb-8 max-w-lg leading-relaxed">
                 Participa en la encuesta política y cultural más importante del año. Tus respuestas construyen el mapa real de la opinión española.
@@ -231,7 +231,7 @@ export default function Home() {
               
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <button 
-                  className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold px-6 py-3.5 rounded-xl transition-all shadow-xl shadow-red-600/25 hover:translate-y-[-2px]"
+                  className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3.5 rounded-xl transition-all shadow-xl shadow-purple-600/25 hover:translate-y-[-2px]"
                   onClick={() => setLocation("/nano-encuesta")}
                 >
                   Comenzar Encuesta <ArrowRight size={18} />
@@ -250,14 +250,14 @@ export default function Home() {
               <div className="liquid-glass p-6 sm:p-8 rounded-2xl relative overflow-hidden shadow-2xl">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="text-4xl sm:text-5xl font-bold text-red-500 mb-2 font-mono">
+                    <div className="text-4xl sm:text-5xl font-bold text-purple-500 mb-2 font-mono">
                       +{animatedCount.toLocaleString('es-ES')}
                     </div>
                     <div className="text-xs sm:text-sm font-semibold text-white/60 uppercase tracking-wider">
                       Ciudadanos participando
                     </div>
                   </div>
-                  <BarChart3 size={38} className="text-red-400 opacity-30" />
+                  <BarChart3 size={38} className="text-purple-400 opacity-30" />
                 </div>
                 <p className="text-xs text-white/40 border-t border-white/10 pt-4">
                   Datos públicos y anónimos • Actualizado en tiempo real
@@ -280,9 +280,9 @@ export default function Home() {
 
         {/* --- NUEVO APARTADO: MEDIO QUORUM --- */}
         <section className="px-4 sm:px-8 py-12 max-w-7xl mx-auto w-full">
-          <div className="liquid-glass relative overflow-hidden rounded-3xl p-8 md:p-12 border border-red-500/20 bg-gradient-to-r from-red-950/20 via-slate-900/60 to-slate-950">
+          <div className="liquid-glass relative overflow-hidden rounded-3xl p-8 md:p-12 border border-purple-500/20 bg-gradient-to-r from-purple-950/20 via-slate-900/60 to-slate-950">
             {/* Glow de fondo */}
-            <div className="absolute -top-24 -right-24 w-72 h-72 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -top-24 -right-24 w-72 h-72 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
             
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
               
@@ -296,11 +296,11 @@ export default function Home() {
                     onError={(e) => {
                       // Fallback en caso de que aún no exista la imagen estática
                       e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement!.innerHTML = '<span class="font-bold text-red-500 text-2xl tracking-tighter">Q</span>';
+                      e.currentTarget.parentElement!.innerHTML = '<span class="font-bold text-purple-500 text-2xl tracking-tighter">Q</span>';
                     }}
                   />
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-semibold tracking-wider uppercase mb-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-semibold tracking-wider uppercase mb-2">
                   El medio de Batalla Cultural
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
@@ -321,7 +321,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-start gap-3 frosted-glass p-4 rounded-xl">
-                    <PenTool className="text-red-400 shrink-0 mt-1" size={20} />
+                    <PenTool className="text-purple-400 shrink-0 mt-1" size={20} />
                     <div>
                       <h4 className="font-semibold text-white text-sm">Libertad de Cátedra</h4>
                       <p className="text-xs text-white/50 mt-0.5">Escribe sobre política, sociedad o cultura sin líneas editoriales impuestas.</p>
@@ -329,7 +329,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex items-start gap-3 frosted-glass p-4 rounded-xl">
-                    <Users className="text-red-400 shrink-0 mt-1" size={20} />
+                    <Users className="text-purple-400 shrink-0 mt-1" size={20} />
                     <div>
                       <h4 className="font-semibold text-white text-sm">Pluralismo Real</h4>
                       <p className="text-xs text-white/50 mt-0.5">Todas las opiniones fundamentadas tienen cabida y repercusión.</p>
@@ -342,7 +342,7 @@ export default function Home() {
                     href={QUORUM_URL} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-all shadow-lg shadow-red-900/30 w-full sm:w-auto justify-center"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-all shadow-lg shadow-purple-900/30 w-full sm:w-auto justify-center"
                   >
                     Ir a Medio Quorum / Publicar Artículo
                     <ExternalLink size={18} />
@@ -366,7 +366,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="frosted-glass p-6 rounded-2xl flex flex-col gap-3 hover:border-white/20 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center text-red-400">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center text-purple-400">
                 <Lock size={20} />
               </div>
               <h3 className="text-lg font-semibold text-white">Privacidad Total</h3>
@@ -374,7 +374,7 @@ export default function Home() {
             </div>
 
             <div className="frosted-glass p-6 rounded-2xl flex flex-col gap-3 hover:border-white/20 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center text-red-400">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center text-purple-400">
                 <BarChart3 size={20} />
               </div>
               <h3 className="text-lg font-semibold text-white">Resultados en Vivo</h3>
@@ -382,7 +382,7 @@ export default function Home() {
             </div>
 
             <div className="frosted-glass p-6 rounded-2xl flex flex-col gap-3 hover:border-white/20 transition-all">
-              <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center text-red-400">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center text-purple-400">
                 <Zap size={20} />
               </div>
               <h3 className="text-lg font-semibold text-white">Impacto Real</h3>
@@ -399,7 +399,7 @@ export default function Home() {
               Dedica 5 minutos a responder la encuesta y forma parte de este importante análisis sobre el futuro político de España.
             </p>
             <button 
-              className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-xl shadow-red-600/30 hover:scale-[1.02]"
+              className="inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-8 py-4 rounded-xl transition-all shadow-xl shadow-purple-600/30 hover:scale-[1.02]"
               onClick={() => setLocation("/nano-encuesta")}
             >
               Comenzar Encuesta <ArrowRight size={18} />

@@ -260,7 +260,7 @@ export function ShareResultsAdvanced({
     <>
       <Button
         onClick={() => setShowShareModal(true)}
-        className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white px-6 py-2 rounded-lg flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
+        className="bg-gradient-to-r from-[#4b0082] to-[#35005c] hover:from-[#35005c] hover:to-[#8B1428] text-white px-6 py-2 rounded-lg flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
       >
         <Share2 className="h-4 w-4" />
         Compartir Resultados
@@ -282,7 +282,7 @@ export function ShareResultsAdvanced({
                 onClick={() => setInfographyMode("individual")}
                 className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all duration-200 ${
                   infographyMode === "individual"
-                    ? "bg-[#C41E3A] text-white"
+                    ? "bg-[#4b0082] text-white"
                     : "bg-[#F5F5F5] text-[#666666] hover:bg-[#EEEEEE]"
                 }`}
               >
@@ -292,7 +292,7 @@ export function ShareResultsAdvanced({
                 onClick={() => setInfographyMode("complete")}
                 className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-all duration-200 ${
                   infographyMode === "complete"
-                    ? "bg-[#C41E3A] text-white"
+                    ? "bg-[#4b0082] text-white"
                     : "bg-[#F5F5F5] text-[#666666] hover:bg-[#EEEEEE]"
                 }`}
               >
@@ -312,8 +312,8 @@ export function ShareResultsAdvanced({
                     onClick={() => setSelectedTheme(themeOption.id)}
                     className={`p-2 sm:p-4 rounded-lg border-2 transition-all duration-200 ${
                       selectedTheme === themeOption.id
-                        ? "border-[#C41E3A] bg-[#FFF5F7]"
-                        : "border-[#E0E0E0] bg-white hover:border-[#C41E3A]"
+                        ? "border-[#4b0082] bg-[#FFF5F7]"
+                        : "border-[#E0E0E0] bg-white hover:border-[#4b0082]"
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3">
@@ -347,8 +347,8 @@ export function ShareResultsAdvanced({
                         onClick={() => setSelectedParty(party)}
                         className={`p-2 sm:p-3 rounded-lg border-2 transition text-xs sm:text-sm font-semibold ${
                           selectedParty?.id === party.id
-                            ? "border-[#C41E3A] bg-[#FFF5F7] text-[#C41E3A]"
-                            : "border-[#E0E0E0] bg-white text-[#666666] hover:border-[#C41E3A]"
+                            ? "border-[#4b0082] bg-[#FFF5F7] text-[#4b0082]"
+                            : "border-[#E0E0E0] bg-white text-[#666666] hover:border-[#4b0082]"
                         }`}
                       >
                         <div className="flex items-center gap-1 sm:gap-2 justify-center">
@@ -656,7 +656,7 @@ export function ShareResultsAdvanced({
                       edadPromedio
                     )
                   }
-                  className="w-full bg-gradient-to-r from-[#C41E3A] to-[#A01830] hover:from-[#A01830] hover:to-[#8B1428] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
+                  className="w-full bg-gradient-to-r from-[#4b0082] to-[#35005c] hover:from-[#35005c] hover:to-[#8B1428] text-white py-2 sm:py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg font-semibold text-xs sm:text-base"
                 >
                   <Image className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="hidden sm:inline">Descargar Completa</span>

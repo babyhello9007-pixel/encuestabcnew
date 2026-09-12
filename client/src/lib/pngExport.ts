@@ -35,7 +35,7 @@ export async function generateInfographicPNG(data: InfographicData): Promise<Blo
   const header = document.createElement('div');
   header.style.marginBottom = '30px';
   header.innerHTML = `
-    <h1 style="font-size: 48px; font-weight: bold; margin: 0; color: #C41E3A;">${data.title}</h1>
+    <h1 style="font-size: 48px; font-weight: bold; margin: 0; color: #4b0082;">${data.title}</h1>
     <p style="font-size: 18px; color: #999999; margin: 10px 0 0 0;">La Encuesta de Batalla Cultural</p>
   `;
   container.appendChild(header);
@@ -80,7 +80,7 @@ export async function generateInfographicPNG(data: InfographicData): Promise<Blo
     const seats = document.createElement('div');
     seats.style.fontSize = '20px';
     seats.style.fontWeight = 'bold';
-    seats.style.color = '#C41E3A';
+    seats.style.color = '#4b0082';
     seats.textContent = `${result.seats} escaños`;
 
     resultItem.appendChild(logo);
@@ -110,11 +110,11 @@ export async function generateInfographicPNG(data: InfographicData): Promise<Blo
     metricItem.style.padding = '15px';
     metricItem.style.backgroundColor = '#2a2a2a';
     metricItem.style.borderRadius = '8px';
-    metricItem.style.borderLeft = '4px solid #C41E3A';
+    metricItem.style.borderLeft = '4px solid #4b0082';
 
     metricItem.innerHTML = `
       <div style="font-size: 14px; color: #999999;">${metric.label}</div>
-      <div style="font-size: 28px; font-weight: bold; color: #C41E3A; margin-top: 5px;">${metric.value}</div>
+      <div style="font-size: 28px; font-weight: bold; color: #4b0082; margin-top: 5px;">${metric.value}</div>
     `;
 
     rightSide.appendChild(metricItem);

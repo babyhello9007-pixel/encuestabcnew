@@ -504,11 +504,11 @@ function Capa2AgregacionTendencia({ mediaEncuestas, tendencias, loading, tipoEnc
                             {t.tendencia > 0 ? (
                               <TrendingUp className="w-4 h-4 text-green-500" />
                             ) : t.tendencia < 0 ? (
-                              <TrendingDown className="w-4 h-4 text-red-500" />
+                              <TrendingDown className="w-4 h-4 text-purple-500" />
                             ) : (
                               <Minus className="w-4 h-4 text-gray-500" />
                             )}
-                            <span className={t.tendencia > 0 ? "text-green-600" : t.tendencia < 0 ? "text-red-600" : ""}>
+                            <span className={t.tendencia > 0 ? "text-green-600" : t.tendencia < 0 ? "text-purple-600" : ""}>
                               {t.tendencia > 0 ? "+" : ""}{t.tendencia.toFixed(2)}%
                             </span>
                           </div>
@@ -572,7 +572,7 @@ function Capa3LecturaPolitica({ alertas, tendencias, loading }: Capa3Props) {
                   key={idx}
                   className={`p-3 rounded-lg border ${
                     alerta.tipo_alerta === "CAMBIO_SIGNIFICATIVO"
-                      ? "bg-red-50 border-red-200"
+                      ? "bg-purple-50 border-purple-200"
                       : alerta.tipo_alerta === "CAMBIO_MODERADO"
                         ? "bg-orange-50 border-orange-200"
                         : alerta.tipo_alerta === "CAMBIO_LEVE"
@@ -601,7 +601,7 @@ function Capa3LecturaPolitica({ alertas, tendencias, loading }: Capa3Props) {
                         {alerta.direccion === "SUBIDA" ? (
                           <TrendingUp className="w-5 h-5 text-green-500" />
                         ) : alerta.direccion === "BAJADA" ? (
-                          <TrendingDown className="w-5 h-5 text-red-500" />
+                          <TrendingDown className="w-5 h-5 text-purple-500" />
                         ) : (
                           <Minus className="w-5 h-5 text-gray-500" />
                         )}
@@ -610,7 +610,7 @@ function Capa3LecturaPolitica({ alertas, tendencias, loading }: Capa3Props) {
                             alerta.direccion === "SUBIDA"
                               ? "text-green-600"
                               : alerta.direccion === "BAJADA"
-                                ? "text-red-600"
+                                ? "text-purple-600"
                                 : "text-gray-600"
                           }`}
                         >

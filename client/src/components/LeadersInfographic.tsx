@@ -73,7 +73,7 @@ export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInf
         <div className="flex gap-2">
           <Button
             onClick={() => exportLeadersToPDFV3(selectedParty)}
-            className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white font-semibold flex items-center justify-center gap-2"
+            className="flex-1 bg-[#4b0082] hover:bg-[#35005c] text-white font-semibold flex items-center justify-center gap-2"
           >
             <Download className="h-4 w-4" />
             PDF
@@ -105,17 +105,17 @@ export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInf
       {/* Infographic Container */}
       <div
         ref={infographicRef}
-        className="bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] p-8 rounded-2xl border-2 border-[#C41E3A]"
+        className="bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] p-8 rounded-2xl border-2 border-[#4b0082]"
       >
         <div className="text-center space-y-6 text-white">
           {/* Header */}
           <div>
-            <h3 className="text-3xl font-bold text-[#C41E3A] mb-2">La Encuesta de Batalla Cultural</h3>
+            <h3 className="text-3xl font-bold text-[#4b0082] mb-2">La Encuesta de Batalla Cultural</h3>
             <p className="text-lg text-gray-300">¿Quién quieres que sea el líder de tu partido?</p>
           </div>
 
           {/* Party Title */}
-          <div className="text-2xl font-bold text-[#C41E3A]">{selectedParty}</div>
+          <div className="text-2xl font-bold text-[#4b0082]">{selectedParty}</div>
 
           {/* Leaders Ranking */}
           <div className="space-y-4">
@@ -127,11 +127,11 @@ export function LeadersInfographic({ leadersByParty, selectedParty }: LeadersInf
                       {index + 1}. {leader.lider_preferido}
                     </p>
                   </div>
-                  <p className="text-xl font-bold text-[#C41E3A]">{leader.porcentaje}%</p>
+                  <p className="text-xl font-bold text-[#4b0082]">{leader.porcentaje}%</p>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-[#C41E3A] to-[#A01830] h-full rounded-full"
+                    className="bg-gradient-to-r from-[#4b0082] to-[#35005c] h-full rounded-full"
                     style={{ width: `${leader.porcentaje}%` }}
                   />
                 </div>

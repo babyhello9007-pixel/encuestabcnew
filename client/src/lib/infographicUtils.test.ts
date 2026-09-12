@@ -14,8 +14,8 @@ describe("infographicUtils", () => {
   });
 
   it("aplica un color de respaldo para valores inválidos", () => {
-    expect(normalizeInfographicColor("#00000")).toBe("#C41E3A");
-    expect(withInfographicAlpha("#00000")).toBe("#C41E3A88");
+    expect(normalizeInfographicColor("#00000")).toBe("#4b0082");
+    expect(withInfographicAlpha("#00000")).toBe("#4b008288");
   });
 
   it("calcula las regiones generales más participativas con porcentajes ordenados", () => {

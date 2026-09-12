@@ -108,7 +108,7 @@ export const PRIMARY_LINKS: InternalLink[] = [
     description: "Comparte tu opinión y ayuda a dibujar el pulso político de España.",
     route: "/nano-encuesta",
     icon: Vote,
-    accent: "text-rose-100 bg-rose-500/15 border-rose-300/30 hover:border-rose-200/70",
+    accent: "text-purple-100 bg-purple-500/15 border-purple-300/30 hover:border-purple-200/70",
     featured: true,
   },
   {
@@ -270,13 +270,13 @@ export default function Bio() {
 
   return (
     <main className={`linktree-page min-h-screen overflow-hidden px-4 py-10 sm:py-14 ${isDark ? "linktree-dark bg-[#050816] text-white" : "linktree-light bg-slate-100 text-slate-950"}`}>
-      <div className={`pointer-events-none fixed inset-0 ${isDark ? "bg-[radial-gradient(circle_at_top,_rgba(196,30,58,0.24),transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.18),transparent_38%)]" : "bg-[radial-gradient(circle_at_top,_rgba(251,113,133,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(96,165,250,0.18),transparent_38%)]"}`} />
+      <div className={`pointer-events-none fixed inset-0 ${isDark ? "bg-[radial-gradient(circle_at_top,_rgba(75, 0, 130,0.24),transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.18),transparent_38%)]" : "bg-[radial-gradient(circle_at_top,_rgba(251,113,133,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(96,165,250,0.18),transparent_38%)]"}`} />
 
       <section className="relative mx-auto w-full max-w-xl">
         <header className="mb-7 text-center">
           <div className="mb-4 flex items-start justify-between">
             <span className="h-11 w-11" aria-hidden="true" />
-            <div className={`linktree-logo-shell flex h-24 w-24 items-center justify-center rounded-[2rem] border p-2 shadow-2xl backdrop-blur-xl ${isDark ? "border-white/20 bg-white/10 shadow-rose-950/30" : "border-slate-300 bg-slate-900 shadow-slate-400/40"}`}>
+            <div className={`linktree-logo-shell flex h-24 w-24 items-center justify-center rounded-[2rem] border p-2 shadow-2xl backdrop-blur-xl ${isDark ? "border-white/20 bg-white/10 shadow-purple-950/30" : "border-slate-300 bg-slate-900 shadow-slate-400/40"}`}>
               <img
                 src={BIO_FAVICON}
                 alt="Favicon de Batalla Cultural"
@@ -290,15 +290,15 @@ export default function Bio() {
             <button
               type="button"
               onClick={toggleTheme}
-              className={`linktree-utility inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+              className={`linktree-utility inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-purple-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
               aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
               title={isDark ? "Activar modo claro" : "Activar modo oscuro"}
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
           </div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-rose-300/25 bg-rose-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-rose-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-300 animate-pulse" /> Comunidad en directo
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-purple-300/25 bg-purple-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-purple-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-purple-300 animate-pulse" /> Comunidad en directo
           </div>
           <h1 className="linktree-heading text-3xl font-black tracking-tight sm:text-4xl">Batalla Cultural</h1>
           <p className="linktree-subtitle mx-auto mt-3 max-w-md text-sm leading-6 sm:text-base">
@@ -352,7 +352,7 @@ export default function Bio() {
           <button
             type="button"
             onClick={() => setIsResourcesOpen((current) => !current)}
-            className={`mb-2 flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-[11px] font-bold uppercase tracking-[0.14em] transition focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "text-rose-100 hover:bg-white/5" : "text-rose-700 hover:bg-rose-100/70"}`}
+            className={`mb-2 flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-[11px] font-bold uppercase tracking-[0.14em] transition focus:outline-none focus:ring-2 focus:ring-purple-300/70 ${isDark ? "text-purple-100 hover:bg-white/5" : "text-purple-700 hover:bg-purple-100/70"}`}
             aria-expanded={isResourcesOpen}
           >
             Participa y explora <span aria-hidden="true">{isResourcesOpen ? "−" : "+"}</span>
@@ -370,7 +370,7 @@ export default function Bio() {
                   if (link.externalUrl) window.open(link.externalUrl, "_blank", "noopener,noreferrer");
                   else if (link.route) setLocation(link.route);
                 }}
-                className={`linktree-reveal linktree-card group flex w-full items-center gap-4 rounded-2xl border p-4 text-left shadow-lg backdrop-blur-xl transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-1 hover:scale-[1.01] hover:shadow-2xl active:translate-y-0 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none ${link.accent}`}
+                className={`linktree-reveal linktree-card group flex w-full items-center gap-4 rounded-2xl border p-4 text-left shadow-lg backdrop-blur-xl transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-1 hover:scale-[1.01] hover:shadow-2xl active:translate-y-0 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-purple-300/70 motion-reduce:transform-none motion-reduce:transition-none ${link.accent}`}
                 style={{ animationDelay: `${120 + index * 70}ms` }}
               >
                 <span className={`linktree-icon-shell flex h-11 shrink-0 items-center justify-center rounded-xl border border-white/15 ${link.logo ? `w-28 px-2 ${link.title === "Quorum" ? "!bg-slate-950/90" : "bg-white/90"}` : "w-11 bg-slate-950/35"}`}>
@@ -399,15 +399,15 @@ export default function Bio() {
 
         <section className={`linktree-surface mt-8 rounded-3xl border p-5 shadow-xl backdrop-blur-xl ${isDark ? "border-white/10 bg-white/[0.06]" : "border-slate-200 bg-white/85"}`}>
           <div className="mb-4 flex items-center justify-between gap-4">
-            <button type="button" onClick={() => setIsSocialOpen((current) => !current)} className="rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-rose-300/70" aria-expanded={isSocialOpen}>
-              <h2 className="linktree-heading text-sm font-bold">Redes oficiales <span className="ml-1 text-rose-400">{isSocialOpen ? "−" : "+"}</span></h2>
+            <button type="button" onClick={() => setIsSocialOpen((current) => !current)} className="rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-purple-300/70" aria-expanded={isSocialOpen}>
+              <h2 className="linktree-heading text-sm font-bold">Redes oficiales <span className="ml-1 text-purple-400">{isSocialOpen ? "−" : "+"}</span></h2>
               <p className="linktree-muted mt-1 text-xs">Sigue a la comunidad de Batalla Cultural.</p>
             </button>
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={openQr}
-                className={`linktree-utility inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-200 hover:border-white/30 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
+                className={`linktree-utility inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-purple-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-200 hover:border-white/30 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}
                 aria-label="Generar código QR descargable del Linktree"
               >
                 <QrCode className="h-3.5 w-3.5" /> QR
@@ -415,7 +415,7 @@ export default function Bio() {
               <button
                 type="button"
                 onClick={shareLink}
-                className={`linktree-utility inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 hover:border-rose-200/50 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+                className={`linktree-utility inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold transition-[transform,background-color,border-color] duration-300 hover:-translate-y-0.5 hover:border-purple-200/50 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-purple-300/70 ${isDark ? "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
                 aria-label="Compartir el enlace de Batalla Cultural"
               >
                 {shareFeedback ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Share2 className="h-3.5 w-3.5" />}
@@ -435,7 +435,7 @@ export default function Bio() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => registerClick(countKey)}
-                className={`linktree-reveal linktree-social-card group rounded-2xl border p-3 text-center transition-[transform,background-color,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-rose-300/70 motion-reduce:transform-none motion-reduce:transition-none ${isDark ? "border-white/10 bg-slate-950/35 hover:border-rose-200/50 hover:bg-white/10 hover:shadow-rose-950/20" : "border-slate-200 bg-slate-50 hover:border-rose-300 hover:bg-white hover:shadow-slate-300/40"}`}
+                className={`linktree-reveal linktree-social-card group rounded-2xl border p-3 text-center transition-[transform,background-color,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-300/70 motion-reduce:transform-none motion-reduce:transition-none ${isDark ? "border-white/10 bg-slate-950/35 hover:border-purple-200/50 hover:bg-white/10 hover:shadow-purple-950/20" : "border-slate-200 bg-slate-50 hover:border-purple-300 hover:bg-white hover:shadow-slate-300/40"}`}
                 style={{ animationDelay: `${560 + index * 70}ms` }}
                 aria-label={`${social.name}: ${social.label}`}
               >
@@ -452,7 +452,7 @@ export default function Bio() {
         </section>
 
         <footer className="linktree-muted mt-7 flex items-center justify-center gap-2 text-center text-[11px]">
-          <Heart className="h-3.5 w-3.5 text-rose-300" />
+          <Heart className="h-3.5 w-3.5 text-purple-300" />
           <span>Batalla Cultural · Datos anónimos, conversación pública</span>
         </footer>
       </section>
@@ -462,10 +462,10 @@ export default function Bio() {
           <section className={`w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl ${isDark ? "border-white/15 bg-[#11172a] text-white" : "border-slate-200 bg-white text-slate-950"}`}>
             <div className="mb-4 flex items-center justify-between gap-4 text-left">
               <div>
-                <p className={`text-xs font-bold uppercase tracking-[0.14em] ${isDark ? "text-rose-200" : "text-rose-600"}`}>Compartir presencialmente</p>
+                <p className={`text-xs font-bold uppercase tracking-[0.14em] ${isDark ? "text-purple-200" : "text-purple-600"}`}>Compartir presencialmente</p>
                 <h2 className="mt-1 text-lg font-black">Código QR de Batalla Cultural</h2>
               </div>
-              <button type="button" onClick={() => setIsQrOpen(false)} className={`rounded-lg p-2 transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-rose-300/70 ${isDark ? "hover:bg-white/10" : "hover:bg-slate-100"}`} aria-label="Cerrar código QR">
+              <button type="button" onClick={() => setIsQrOpen(false)} className={`rounded-lg p-2 transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-300/70 ${isDark ? "hover:bg-white/10" : "hover:bg-slate-100"}`} aria-label="Cerrar código QR">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -473,7 +473,7 @@ export default function Bio() {
             <div className="mx-auto flex aspect-square w-full max-w-[260px] items-center justify-center rounded-2xl bg-white p-3 shadow-inner">
               {qrDataUrl ? <img src={qrDataUrl} alt="Código QR del Linktree de Batalla Cultural" className="h-full w-full object-contain" /> : <QrCode className="h-16 w-16 animate-pulse text-slate-400" aria-hidden="true" />}
             </div>
-            <button type="button" onClick={downloadQr} disabled={!qrDataUrl || isGeneratingQr} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-rose-300/70">
+            <button type="button" onClick={downloadQr} disabled={!qrDataUrl || isGeneratingQr} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-purple-300/70">
               <Download className="h-4 w-4" />
               {isGeneratingQr ? "Generando QR…" : "Descargar PNG"}
             </button>

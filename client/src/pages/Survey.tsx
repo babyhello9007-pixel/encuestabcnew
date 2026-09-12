@@ -28,7 +28,7 @@ export default function Survey() {
         <div className="space-y-3 pt-4">
           <Button
             onClick={() => setLocation("/nano-encuesta")}
-            className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold text-lg"
+            className="w-full bg-[#4b0082] hover:bg-[#35005c] text-white h-12 rounded-lg font-semibold text-lg"
           >
             Ir a NanoEncuestaBC
           </Button>
@@ -239,14 +239,14 @@ function SurveyOld() {
           <div className="space-y-3">
             <Button
               onClick={() => setLocation("/resultados")}
-              className="w-full bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold"
+              className="w-full bg-[#4b0082] hover:bg-[#35005c] text-white h-12 rounded-lg font-semibold"
             >
               Ver Resultados
             </Button>
             <Button
               onClick={() => setLocation("/")}
               variant="outline"
-              className="w-full border-[#C41E3A] text-[#C41E3A] h-12 rounded-lg font-semibold"
+              className="w-full border-[#4b0082] text-[#4b0082] h-12 rounded-lg font-semibold"
             >
               Volver al Inicio
             </Button>
@@ -263,7 +263,7 @@ function SurveyOld() {
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/manus-storage/batalla-cultural-logo-20260830_df309405.png" alt="BC Logo" className="h-8 w-8" />
-            <h1 className="text-lg font-bold text-[#C41E3A]">Batalla Cultural</h1>
+            <h1 className="text-lg font-bold text-[#4b0082]">Batalla Cultural</h1>
           </div>
           <div className="text-sm text-[#666666]">
             Pregunta {currentQuestionIndex + 1} de {surveyQuestions.length}
@@ -272,7 +272,7 @@ function SurveyOld() {
         {/* Progress Bar */}
         <div className="h-1 bg-[#E0D5CC]">
           <div
-            className="h-full bg-[#C41E3A] transition-all duration-300"
+            className="h-full bg-[#4b0082] transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -283,7 +283,7 @@ function SurveyOld() {
         <div className="liquid-glass p-8 rounded-2xl space-y-8">
           {/* Question */}
           <div className="space-y-4">
-            <p className="text-sm font-semibold text-[#C41E3A] uppercase tracking-wide">
+            <p className="text-sm font-semibold text-[#4b0082] uppercase tracking-wide">
               {currentQuestion.section}
             </p>
             <h2 className="text-2xl md:text-3xl font-bold text-[#2D2D2D]">
@@ -313,7 +313,7 @@ function SurveyOld() {
                           value={option}
                           checked={responses[currentQuestion.fieldName] === option || isOtrosSelected}
                           onChange={(e) => handleAnswer(e.target.value)}
-                          className="w-4 h-4 accent-[#C41E3A]"
+                          className="w-4 h-4 accent-[#4b0082]"
                         />
                         <span className="text-[#2D2D2D]">{option}</span>
                       </label>
@@ -329,7 +329,7 @@ function SurveyOld() {
                             return '';
                           })()}
                           onChange={(e) => handleAnswer(e.target.value ? `Otros: ${e.target.value}` : 'Otros:')}
-                          className="w-full mt-2 ml-7 p-3 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#C41E3A] box-border overflow-hidden"
+                          className="w-full mt-2 ml-7 p-3 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#4b0082] box-border overflow-hidden"
                         />
                       )}
                     </div>
@@ -350,7 +350,7 @@ function SurveyOld() {
                       value={option}
                       checked={(responses[currentQuestion.fieldName] as string[])?.includes(option) || false}
                       onChange={(e) => handleAnswer(e.target.value)}
-                      className="w-4 h-4 accent-[#C41E3A]"
+                      className="w-4 h-4 accent-[#4b0082]"
                     />
                     <span className="text-[#2D2D2D]">{option}</span>
                   </label>
@@ -370,18 +370,18 @@ function SurveyOld() {
                   max={currentQuestion.max}
                   value={(responses[currentQuestion.fieldName] as number) || currentQuestion.min}
                   onChange={(e) => handleAnswer(parseInt(e.target.value))}
-                  className="w-full h-2 bg-[#E0D5CC] rounded-lg appearance-none cursor-pointer accent-[#C41E3A]"
+                  className="w-full h-2 bg-[#E0D5CC] rounded-lg appearance-none cursor-pointer accent-[#4b0082]"
                 />
                 {currentQuestion.max !== undefined && currentQuestion.min !== undefined && (
                   <div className="flex justify-between text-xs text-[#999999] px-1">
                     {Array.from({ length: (currentQuestion.max - currentQuestion.min) + 1 }, (_, i) => currentQuestion.min! + i).map((num) => (
-                      <span key={num} className={num === (responses[currentQuestion.fieldName] as number) ? "text-[#C41E3A] font-semibold" : ""}>
+                      <span key={num} className={num === (responses[currentQuestion.fieldName] as number) ? "text-[#4b0082] font-semibold" : ""}>
                         {num}
                       </span>
                     ))}
                   </div>
                 )}
-                <div className="text-center text-lg font-semibold text-[#C41E3A]">
+                <div className="text-center text-lg font-semibold text-[#4b0082]">
                   {responses[currentQuestion.fieldName] !== undefined && responses[currentQuestion.fieldName] !== null ? responses[currentQuestion.fieldName] : "Sin seleccionar"}
                 </div>
               </div>
@@ -392,7 +392,7 @@ function SurveyOld() {
                 value={(responses[currentQuestion.fieldName] as string) || ""}
                 onChange={(e) => handleAnswer(e.target.value)}
                 placeholder="Escribe tu respuesta aquí..."
-                className="w-full p-4 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#C41E3A] resize-none"
+                className="w-full p-4 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#4b0082] resize-none"
                 rows={4}
               />
             )}
@@ -403,7 +403,7 @@ function SurveyOld() {
                 value={(responses[currentQuestion.fieldName] as number) || ""}
                 onChange={(e) => handleAnswer(parseInt(e.target.value) || null)}
                 placeholder="Ingresa un número..."
-                className="w-full p-4 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#C41E3A]"
+                className="w-full p-4 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] placeholder-[#999999] focus:outline-none focus:ring-2 focus:ring-[#4b0082]"
               />
             )}
           </div>
@@ -414,7 +414,7 @@ function SurveyOld() {
               onClick={handlePrevious}
               disabled={currentQuestionIndex === 0}
               variant="outline"
-              className="flex-1 border-[#C41E3A] text-[#C41E3A] h-12 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 border-[#4b0082] text-[#4b0082] h-12 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Anterior
             </Button>
@@ -423,14 +423,14 @@ function SurveyOld() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold disabled:opacity-50"
+                className="flex-1 bg-[#4b0082] hover:bg-[#35005c] text-white h-12 rounded-lg font-semibold disabled:opacity-50"
               >
                 {isSubmitting ? "Enviando..." : "Enviar Encuesta"}
               </Button>
             ) : (
               <Button
                 onClick={handleNext}
-                className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold"
+                className="flex-1 bg-[#4b0082] hover:bg-[#35005c] text-white h-12 rounded-lg font-semibold"
               >
                 Siguiente
               </Button>

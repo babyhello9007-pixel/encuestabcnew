@@ -26,7 +26,7 @@ const PARTY_LEADERS: PartyLeaders = {
   "JUNTS": ["Carles Puigdemont"],
 };
 
-const COLORS = ["#C41E3A", "#E74C3C", "#F39C12", "#27AE60", "#3498DB", "#9B59B6", "#1ABC9C", "#34495E"];
+const COLORS = ["#4b0082", "#6d1bb0", "#F39C12", "#27AE60", "#3498DB", "#9B59B6", "#1ABC9C", "#34495E"];
 
 export function PreferredLeaders() {
   const [leaderData, setLeaderData] = useState<LeaderVote[]>([]);
@@ -90,8 +90,8 @@ export function PreferredLeaders() {
                 variant={selectedParty === party ? "default" : "outline"}
                 className={`${
                   selectedParty === party
-                    ? "bg-[#C41E3A] text-white"
-                    : "border-[#C41E3A] text-[#C41E3A]"
+                    ? "bg-[#4b0082] text-white"
+                    : "border-[#4b0082] text-[#4b0082]"
                 }`}
               >
                 {party}
@@ -112,7 +112,7 @@ export function PreferredLeaders() {
                   formatter={(value: any) => [`${value} votos`, "Votos"]}
                   contentStyle={{ backgroundColor: "#fff", border: "1px solid #ccc" }}
                 />
-                <Bar dataKey="votos" fill="#C41E3A" radius={[8, 8, 0, 0]}>
+                <Bar dataKey="votos" fill="#4b0082" radius={[8, 8, 0, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
@@ -131,10 +131,10 @@ export function PreferredLeaders() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b-2 border-[#C41E3A]">
-                  <th className="text-left py-2 px-4 font-bold text-[#C41E3A]">Líder</th>
-                  <th className="text-right py-2 px-4 font-bold text-[#C41E3A]">Votos</th>
-                  <th className="text-right py-2 px-4 font-bold text-[#C41E3A]">Porcentaje</th>
+                <tr className="border-b-2 border-[#4b0082]">
+                  <th className="text-left py-2 px-4 font-bold text-[#4b0082]">Líder</th>
+                  <th className="text-right py-2 px-4 font-bold text-[#4b0082]">Votos</th>
+                  <th className="text-right py-2 px-4 font-bold text-[#4b0082]">Porcentaje</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,7 +142,7 @@ export function PreferredLeaders() {
                   <tr key={idx} className="border-b border-[#E0D5CC] hover:bg-[#F5F5F5]">
                     <td className="py-2 px-4">{item.name}</td>
                     <td className="text-right py-2 px-4 font-semibold">{item.votos}</td>
-                    <td className="text-right py-2 px-4 font-semibold text-[#C41E3A]">{item.porcentaje}%</td>
+                    <td className="text-right py-2 px-4 font-semibold text-[#4b0082]">{item.porcentaje}%</td>
                   </tr>
                 ))}
               </tbody>

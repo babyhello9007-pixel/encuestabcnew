@@ -112,7 +112,7 @@ export default function SurveysVarias() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-12 h-12 animate-spin text-red-700" />
+          <Loader2 className="w-12 h-12 animate-spin text-purple-700" />
           <p className="text-slate-600">Cargando encuestas...</p>
         </div>
       </div>
@@ -159,7 +159,7 @@ export default function SurveysVarias() {
         <div className="mb-8">
           <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-red-600 to-red-700 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-purple-600 to-purple-700 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -180,15 +180,15 @@ export default function SurveysVarias() {
               onClick={() => handleOptionSelect(currentSurvey.question_number, 'O1')}
               className={`w-full p-4 rounded-lg border-2 transition ${
                 currentResponse?.selected_option === 'O1'
-                  ? 'border-red-600 bg-red-50'
-                  : 'border-slate-200 bg-white hover:border-red-300'
+                  ? 'border-purple-600 bg-purple-50'
+                  : 'border-slate-200 bg-white hover:border-purple-300'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                     currentResponse?.selected_option === 'O1'
-                      ? 'border-red-600 bg-red-600'
+                      ? 'border-purple-600 bg-purple-600'
                       : 'border-slate-300'
                   }`}
                 >
@@ -206,15 +206,15 @@ export default function SurveysVarias() {
               onClick={() => handleOptionSelect(currentSurvey.question_number, 'O2')}
               className={`w-full p-4 rounded-lg border-2 transition ${
                 currentResponse?.selected_option === 'O2'
-                  ? 'border-red-600 bg-red-50'
-                  : 'border-slate-200 bg-white hover:border-red-300'
+                  ? 'border-purple-600 bg-purple-50'
+                  : 'border-slate-200 bg-white hover:border-purple-300'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                     currentResponse?.selected_option === 'O2'
-                      ? 'border-red-600 bg-red-600'
+                      ? 'border-purple-600 bg-purple-600'
                       : 'border-slate-300'
                   }`}
                 >
@@ -231,7 +231,7 @@ export default function SurveysVarias() {
             <div
               className={`p-4 rounded-lg border-2 transition ${
                 currentResponse?.selected_option === 'OO'
-                  ? 'border-red-600 bg-red-50'
+                  ? 'border-purple-600 bg-purple-50'
                   : 'border-slate-200 bg-white'
               }`}
             >
@@ -242,7 +242,7 @@ export default function SurveysVarias() {
                 <div
                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                     currentResponse?.selected_option === 'OO'
-                      ? 'border-red-600 bg-red-600'
+                      ? 'border-purple-600 bg-purple-600'
                       : 'border-slate-300'
                   }`}
                 >
@@ -263,7 +263,7 @@ export default function SurveysVarias() {
                   onChange={(e) =>
                     handleOtherTextChange(currentSurvey.question_number, e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-600"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-600"
                   autoFocus
                 />
               )}
@@ -282,7 +282,7 @@ export default function SurveysVarias() {
             <Button
               onClick={handleSubmitSurvey}
               disabled={submitting || !currentResponse}
-              className="flex-1 bg-red-600 hover:bg-red-700"
+              className="flex-1 bg-purple-600 hover:bg-purple-700"
             >
               {submitting ? (
                 <>

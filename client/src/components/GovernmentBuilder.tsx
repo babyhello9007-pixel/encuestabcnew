@@ -120,7 +120,7 @@ const MinisterItem = memo(function MinisterItem({
 
       <button
         onClick={() => onRemove(minister.id)}
-        className="p-2 hover:bg-red-500/20 text-red-400 rounded-lg transition"
+        className="p-2 hover:bg-purple-500/20 text-purple-400 rounded-lg transition"
         title="Eliminar ministerio"
         aria-label="Eliminar ministerio"
       >
@@ -442,7 +442,7 @@ export default function GovernmentBuilder({
           <div className="sticky bottom-0 bg-slate-800 border-t border-white/10 p-6 flex gap-3">
             <button
               onClick={downloadAsImage}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition"
+              className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition"
             >
               <Download size={20} />
               Descargar como imagen (HD)
@@ -587,7 +587,7 @@ export default function GovernmentBuilder({
           </button>
           <button
             onClick={downloadAsImage}
-            className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition text-sm"
+            className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition text-sm"
           >
             <Download size={18} />
             Descargar

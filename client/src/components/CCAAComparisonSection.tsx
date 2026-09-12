@@ -151,7 +151,7 @@ export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps
   if (loading) {
     return (
       <div className="flex flex-col justify-center items-center py-12 space-y-3">
-        <Loader2 className="animate-spin w-8 h-8 text-red-600" />
+        <Loader2 className="animate-spin w-8 h-8 text-purple-600" />
         <p className="text-slate-500 font-medium text-sm">Cargando datos comparativos...</p>
       </div>
     );
@@ -174,7 +174,7 @@ export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps
           }}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
             analysisType === "generales"
-              ? "bg-red-600 text-white shadow-sm"
+              ? "bg-purple-600 text-white shadow-sm"
               : "bg-slate-100 text-slate-700 hover:bg-slate-200"
           }`}
         >
@@ -187,7 +187,7 @@ export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps
           }}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
             analysisType === "autonomicas"
-              ? "bg-red-600 text-white shadow-sm"
+              ? "bg-purple-600 text-white shadow-sm"
               : "bg-slate-100 text-slate-700 hover:bg-slate-200"
           }`}
         >
@@ -199,7 +199,7 @@ export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps
       <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
         <h3 className="text-lg font-bold text-slate-900 mb-1">Selecciona de 2 a 3 Comunidades Autónomas</h3>
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-          Seleccionadas: <span className="text-red-600">{selectedCCAAs.length}</span>/3
+          Seleccionadas: <span className="text-purple-600">{selectedCCAAs.length}</span>/3
         </p>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -214,12 +214,12 @@ export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps
                 disabled={isDisabled}
                 className={`p-3 rounded-lg font-medium transition text-sm flex justify-between items-center ${
                   isSelected
-                    ? "bg-red-600 text-white border-2 border-red-700 shadow-sm"
-                    : "bg-slate-50 text-slate-800 border border-slate-200 hover:border-red-500 hover:bg-white"
+                    ? "bg-purple-600 text-white border-2 border-purple-700 shadow-sm"
+                    : "bg-slate-50 text-slate-800 border border-slate-200 hover:border-purple-500 hover:bg-white"
                 } ${isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
               >
                 <span>{ccaa.ccaa}</span>
-                {isSelected && <span className="text-xs bg-red-700 px-2 py-0.5 rounded-full font-bold">✓</span>}
+                {isSelected && <span className="text-xs bg-purple-700 px-2 py-0.5 rounded-full font-bold">✓</span>}
               </button>
             );
           })}
@@ -246,7 +246,7 @@ export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps
                   {summaryComparison.map((ccaa) => (
                     <tr key={ccaa.ccaa} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3.5 text-sm font-bold text-slate-900">{ccaa.ccaa}</td>
-                      <td className="px-4 py-3.5 text-right text-sm font-bold text-red-600">{formatNumber(ccaa.total_votos)}</td>
+                      <td className="px-4 py-3.5 text-right text-sm font-bold text-purple-600">{formatNumber(ccaa.total_votos)}</td>
                       <td className="px-4 py-3.5 text-right text-sm text-slate-600">{ccaa.num_partidos}</td>
                       <td className="px-4 py-3.5 text-right text-sm text-slate-600">{formatDecimal(ccaa.edad_promedio)} años</td>
                       <td className="px-4 py-3.5 text-right text-sm text-slate-600">{formatDecimal(ccaa.ideologia_promedio)} / 10</td>
@@ -285,7 +285,7 @@ export function CCAAComparisonSection({ partyIndex }: CCAAComparisonSectionProps
                 return (
                   <div key={ccaa} className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0">
                     <h4 className="font-bold text-base text-slate-900 mb-3 flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
                       {ccaa}
                     </h4>
                     <div className="overflow-x-auto rounded-lg border border-slate-100">

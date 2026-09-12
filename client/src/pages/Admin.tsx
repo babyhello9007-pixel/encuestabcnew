@@ -112,7 +112,7 @@ export default function Admin() {
             </h2>
           </div>
 
-          <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-red-500 transition">
+          <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-purple-500 transition">
             <input
               type="file"
               onChange={handleFileUpload}
@@ -182,7 +182,7 @@ export default function Admin() {
                             </a>
                             <button
                               onClick={() => handleDelete(file.id)}
-                              className="p-2 hover:bg-red-900 rounded transition text-red-400"
+                              className="p-2 hover:bg-purple-900 rounded transition text-purple-400"
                               title="Eliminar"
                             >
                               <Trash2 className="w-4 h-4" />

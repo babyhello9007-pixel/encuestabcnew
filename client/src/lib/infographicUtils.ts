@@ -1,4 +1,4 @@
-export const INFOGRAPHIC_FALLBACK_COLOR = "#C41E3A";
+export const INFOGRAPHIC_FALLBACK_COLOR = "#4b0082";
 
 export function normalizeInfographicColor(
   value: unknown,

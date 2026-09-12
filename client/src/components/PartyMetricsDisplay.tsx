@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { calculateMetricsByParty, PartyMetrics } from "@/lib/metricsCalculator";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-const COLORS = ["#C41E3A", "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A"];
+const COLORS = ["#4b0082", "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A"];
 
 export function PartyMetricsDisplay({ activeTab }: { activeTab: "general" | "youth" }) {
   const [metrics, setMetrics] = useState<PartyMetrics[]>([]);
@@ -55,7 +55,7 @@ export function PartyMetricsDisplay({ activeTab }: { activeTab: "general" | "you
           <select
             value={selectedParty || ""}
             onChange={(e) => setSelectedParty(e.target.value)}
-            className="w-full md:w-64 px-4 py-2 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] focus:outline-none focus:ring-2 focus:ring-[#C41E3A]"
+            className="w-full md:w-64 px-4 py-2 rounded-lg border border-[#E0D5CC] bg-white text-[#2D2D2D] focus:outline-none focus:ring-2 focus:ring-[#4b0082]"
           >
             {metrics.map((m) => (
               <option key={m.partyId} value={m.partyId}>
@@ -71,16 +71,16 @@ export function PartyMetricsDisplay({ activeTab }: { activeTab: "general" | "you
             <div className="grid md:grid-cols-3 gap-4">
               <div className="frosted-glass p-4 rounded-lg text-center">
                 <p className="text-sm text-[#666666]">Total de Votos</p>
-                <p className="text-3xl font-bold text-[#C41E3A]">{selectedMetrics.totalVotes}</p>
+                <p className="text-3xl font-bold text-[#4b0082]">{selectedMetrics.totalVotes}</p>
               </div>
               <div className="frosted-glass p-4 rounded-lg text-center">
                 <p className="text-sm text-[#666666]">Edad Media</p>
-                <p className="text-3xl font-bold text-[#C41E3A]">{selectedMetrics.averageAge}</p>
+                <p className="text-3xl font-bold text-[#4b0082]">{selectedMetrics.averageAge}</p>
                 <p className="text-xs text-[#999999]">años</p>
               </div>
               <div className="frosted-glass p-4 rounded-lg text-center">
                 <p className="text-sm text-[#666666]">Ideología Media</p>
-                <p className="text-3xl font-bold text-[#C41E3A]">{selectedMetrics.averageIdeology}</p>
+                <p className="text-3xl font-bold text-[#4b0082]">{selectedMetrics.averageIdeology}</p>
                 <p className="text-xs text-[#999999]">escala 1-10</p>
               </div>
             </div>
@@ -97,7 +97,7 @@ export function PartyMetricsDisplay({ activeTab }: { activeTab: "general" | "you
                     contentStyle={{ backgroundColor: "#F5F1E8", border: "1px solid #E0D5CC", borderRadius: "8px" }}
                     labelStyle={{ color: "#2D2D2D" }}
                   />
-                  <Bar dataKey="count" fill="#C41E3A" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="count" fill="#4b0082" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -147,11 +147,11 @@ export function PartyMetricsDisplay({ activeTab }: { activeTab: "general" | "you
                       <tr
                         key={m.partyId}
                         className={`border-b border-[#E0D5CC] ${
-                          selectedParty === m.partyId ? "bg-[#C41E3A] bg-opacity-10" : ""
+                          selectedParty === m.partyId ? "bg-[#4b0082] bg-opacity-10" : ""
                         }`}
                       >
                         <td className="py-2 px-4 font-semibold text-[#2D2D2D]">{m.partyName}</td>
-                        <td className="py-2 px-4 text-right text-[#C41E3A] font-bold">{m.totalVotes}</td>
+                        <td className="py-2 px-4 text-right text-[#4b0082] font-bold">{m.totalVotes}</td>
                         <td className="py-2 px-4 text-right text-[#666666]">{m.averageAge}</td>
                         <td className="py-2 px-4 text-right text-[#666666]">{m.averageIdeology}/10</td>
                       </tr>

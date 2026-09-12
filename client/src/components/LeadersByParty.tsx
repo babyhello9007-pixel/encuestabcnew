@@ -87,7 +87,7 @@ export function LeadersByParty() {
           <select
             value={selectedParty}
             onChange={(e) => setSelectedParty(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-2xl bg-white/60 backdrop-blur-md border border-white/80 text-slate-800 font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:bg-white/80"
+            className="w-full px-4 py-2.5 rounded-2xl bg-white/60 backdrop-blur-md border border-white/80 text-slate-800 font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white/80"
           >
             {Object.entries(PARTIES_GENERAL).map(([key, party]) => (
               <option key={key} value={key}>
@@ -100,7 +100,7 @@ export function LeadersByParty() {
 
       {loading ? (
         <div className="p-12 rounded-3xl bg-white/30 backdrop-blur-xl border border-white/50 text-center text-slate-500 shadow-xl">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600 mb-3" />
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-3" />
           <p className="font-medium text-sm">Cargando datos...</p>
         </div>
       ) : leadersByParty.length === 0 ? (
@@ -119,12 +119,12 @@ export function LeadersByParty() {
                   <div key={`${leader.partido}-${leader.lider_preferido}-${index}`} className="space-y-1.5">
                     <div className="flex justify-between items-center text-sm">
                       <span className="font-medium text-slate-700">{leader.lider_preferido}</span>
-                      <span className="font-bold text-rose-600">{leader.porcentaje.toFixed(1)}%</span>
+                      <span className="font-bold text-purple-600">{leader.porcentaje.toFixed(1)}%</span>
                     </div>
                     {/* Barra de progreso de cristal */}
                     <div className="h-3 w-full bg-slate-200/50 rounded-full p-0.5 backdrop-blur-sm inset-shadow">
                       <div
-                        className="h-full bg-gradient-to-r from-rose-500 to-rose-600 rounded-full transition-all duration-700 ease-out shadow-sm"
+                        className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-700 ease-out shadow-sm"
                         style={{ width: `${leader.porcentaje}%` }}
                       />
                     </div>
@@ -150,7 +150,7 @@ export function LeadersByParty() {
                   <span className="text-xs text-slate-500 font-medium block mb-1">Líder preferido</span>
                   <div className="flex items-baseline justify-between">
                     <span className="text-xl font-bold text-slate-900">{topLeader?.lider_preferido || "N/A"}</span>
-                    <span className="text-lg font-bold text-rose-600">{topLeader ? `${topLeader.porcentaje.toFixed(1)}%` : "0%"}</span>
+                    <span className="text-lg font-bold text-purple-600">{topLeader ? `${topLeader.porcentaje.toFixed(1)}%` : "0%"}</span>
                   </div>
                 </div>
               </div>

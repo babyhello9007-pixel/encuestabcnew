@@ -31,7 +31,7 @@ export default function About() {
           <div className="space-y-6 text-center">
             <div className="space-y-3">
               <h2 className="text-5xl font-bold text-[#1D1D1F] tracking-tight">Batalla Cultural</h2>
-              <p className="text-xl text-[#C41E3A] font-semibold">
+              <p className="text-xl text-[#4b0082] font-semibold">
                 Contra el pensamiento único
               </p>
               <p className="text-lg text-[#666666] font-light">
@@ -233,13 +233,13 @@ export default function About() {
             <div className="flex gap-4 justify-center flex-wrap">
               <Button
                 onClick={() => setLocation("/nano-encuesta")}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white px-8 h-12 rounded-lg font-semibold"
+                className="bg-[#4b0082] hover:bg-[#35005c] text-white px-8 h-12 rounded-lg font-semibold"
               >
                 NanoEncuestaBC (5 min)
               </Button>
               <Button
                 onClick={() => setLocation("/encuesta")}
-                className="bg-[#C41E3A] hover:bg-[#A01830] text-white px-8 h-12 rounded-lg font-semibold"
+                className="bg-[#4b0082] hover:bg-[#35005c] text-white px-8 h-12 rounded-lg font-semibold"
               >
                 Encuesta Completa (20 min)
               </Button>

@@ -38,7 +38,7 @@ export default function ReviewSurvey({ responses, onEdit, onConfirm, isSubmittin
       <main className="flex-1 container py-12 max-w-2xl">
         <div className="liquid-glass p-8 rounded-2xl space-y-8">
           <div className="space-y-4">
-            <p className="text-sm font-semibold text-[#C41E3A] uppercase tracking-wide">
+            <p className="text-sm font-semibold text-[#4b0082] uppercase tracking-wide">
               Resumen de respuestas
             </p>
             <h2 className="text-2xl md:text-3xl font-bold text-[#2D2D2D]">
@@ -50,7 +50,7 @@ export default function ReviewSurvey({ responses, onEdit, onConfirm, isSubmittin
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {Object.entries(responses).map(([key, value]) => (
               <div key={key} className="p-4 rounded-lg bg-white bg-opacity-50 border border-[#E0D5CC]">
-                <p className="text-sm font-semibold text-[#C41E3A] mb-2">
+                <p className="text-sm font-semibold text-[#4b0082] mb-2">
                   {getQuestionLabel(key)}
                 </p>
                 <p className="text-[#2D2D2D] break-words">
@@ -65,14 +65,14 @@ export default function ReviewSurvey({ responses, onEdit, onConfirm, isSubmittin
             <Button
               onClick={onEdit}
               variant="outline"
-              className="flex-1 border-[#C41E3A] text-[#C41E3A] h-12 rounded-lg font-semibold hover:bg-white hover:bg-opacity-10"
+              className="flex-1 border-[#4b0082] text-[#4b0082] h-12 rounded-lg font-semibold hover:bg-white hover:bg-opacity-10"
             >
               Editar respuestas
             </Button>
             <Button
               onClick={onConfirm}
               disabled={isSubmitting}
-              className="flex-1 bg-[#C41E3A] hover:bg-[#A01830] text-white h-12 rounded-lg font-semibold disabled:opacity-50"
+              className="flex-1 bg-[#4b0082] hover:bg-[#35005c] text-white h-12 rounded-lg font-semibold disabled:opacity-50"
             >
               {isSubmitting ? 'Enviando...' : 'Confirmar y enviar'}
             </Button>

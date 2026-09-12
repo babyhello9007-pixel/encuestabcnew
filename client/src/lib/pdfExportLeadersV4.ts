@@ -45,7 +45,7 @@ export async function exportLeadersToPDFV4(selectedParty: string | null) {
 
     // Title
     doc.setFontSize(24);
-    doc.setTextColor(196, 30, 58); // #C41E3A
+    doc.setTextColor(75, 0, 130); // #4b0082
     doc.text('La Encuesta de Batalla Cultural', pageWidth / 2, yPosition, { align: 'center' });
 
     yPosition += 15;
@@ -62,14 +62,14 @@ export async function exportLeadersToPDFV4(selectedParty: string | null) {
 
     // Party title
     doc.setFontSize(14);
-    doc.setTextColor(196, 30, 58); // #C41E3A
+    doc.setTextColor(75, 0, 130); // #4b0082
     doc.text(`${selectedParty}`, 15, yPosition);
     yPosition += 12;
 
     // Table headers
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
-    doc.setFillColor(196, 30, 58);
+    doc.setFillColor(75, 0, 130);
     
     const colWidths = [15, 80, 30, 30];
     const headers = ['Pos.', 'Líder', 'Votos', '%'];

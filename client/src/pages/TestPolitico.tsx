@@ -473,7 +473,7 @@ const AXIS_LABELS: { key: keyof Weights; name: string; desc: string; barClass: s
   { key: "progressive", name: "Progresismo e Igualdad", desc: "Fuerte énfasis en la justicia social, los servicios públicos financiados mediante fiscalidad progresiva y la ampliación de libertades civiles y transiciones verdes.", barClass: "from-indigo-500 to-indigo-600" },
   { key: "conservative", name: "Conservadurismo y Orden", desc: "Garantía de la estabilidad institucional y económica, moderación del gasto, respeto a la propiedad, seguridad jurídica y marco constitucional sólido.", barClass: "from-blue-500 to-blue-600" },
   { key: "identity", name: "Identidad, Fronteras y Soberanía", desc: "Enfoque identitario riguroso sobre la cultura tradicional, límites firmes de fronteras y migración controlada, y preferencia nacional o regional.", barClass: "from-emerald-500 to-emerald-600" },
-  { key: "disruptive", name: "Disrupción, Libertad e Individualismo", desc: "Minimización del papel intervencionista del Estado en favor del libre mercado, desregulación digital y rechazo a las estructuras políticas tradicionales.", barClass: "from-rose-500 to-rose-600" },
+  { key: "disruptive", name: "Disrupción, Libertad e Individualismo", desc: "Minimización del papel intervencionista del Estado en favor del libre mercado, desregulación digital y rechazo a las estructuras políticas tradicionales.", barClass: "from-purple-500 to-purple-600" },
 ];
 
 const LEADER_FILTERS: { key: "all" | "national" | "regional" | "global"; label: string }[] = [
@@ -634,7 +634,7 @@ export default function TestPoliticoBC() {
       <header className="border-b border-white/10 bg-black/30 backdrop-blur sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-indigo-500 to-rose-500 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+            <div className="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
               <Compass className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -716,7 +716,7 @@ export default function TestPoliticoBC() {
             <div className="pt-4">
               <Button
                 onClick={startTest}
-                className="gap-2 bg-gradient-to-r from-indigo-600 to-rose-600 hover:from-indigo-500 hover:to-rose-500 text-white font-bold px-8 py-6 rounded-2xl text-lg"
+                className="gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold px-8 py-6 rounded-2xl text-lg"
               >
                 Comenzar Test <ArrowRight className="w-5 h-5" />
               </Button>
@@ -741,7 +741,7 @@ export default function TestPoliticoBC() {
               </div>
               <div className="w-full bg-black/40 rounded-full h-2.5 overflow-hidden border border-white/10">
                 <div
-                  className="bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500 h-full transition-all duration-300"
+                  className="bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-500 h-full transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
