@@ -980,7 +980,7 @@
 - [x] Aplicar el morado corporativo #4b0082 a los botones
 - [x] Corregir la entrega de los logos persistentes en Vercel y validar la compilación
 - [x] Migrar todos los acentos rojos de marca a #4b0082 y conservar rojo solo en errores/estados destructivos
-- [ ] Añadir transición suave y estado activo a los botones morados
-- [ ] Actualizar indicadores de carga y barras de progreso de NanoEncuesta al morado #4b0082
-- [ ] Actualizar indicadores de carga y barras de progreso de Resultados al morado #4b0082
-- [ ] Validar visualmente, con tests y build antes del checkpoint
+- [x] Añadir transición suave y estado activo a los botones morados
+- [x] Actualizar indicadores de carga y barras de progreso de NanoEncuesta al morado #4b0082
+- [x] Actualizar indicadores de carga y barras de progreso de Resultados al morado #4b0082
+- [x] Validar visualmente, con tests y build antes del checkpoint
