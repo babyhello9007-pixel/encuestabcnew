@@ -95,7 +95,7 @@ function CooldownScreen({ remainingSeconds, onBack }: { remainingSeconds: number
         <p className="nc-cooldown-sub" style={{ fontSize: "15px", color: "rgba(255,255,255,0.7)", marginBottom: "30px", lineHeight: "1.6" }}>Ya has votado recientemente. Podrás volver a participar cuando expire el período de espera.</p>
         
         <div style={{ width: "100%", height: "4px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", marginBottom: "30px", overflow: "hidden" }}>
-          <div style={{ width: `${progressPercent}%`, height: "100%", background: "linear-gradient(90deg, #4b0082, #ff6b6b)", transition: "width 0.3s ease" }} />
+          <div style={{ width: `${progressPercent}%`, height: "100%", background: "linear-gradient(90deg, #4b0082, #6d28d9)", transition: "width 0.3s ease" }} />
         </div>
         
         <div className="nc-cooldown-timer" style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "30px" }}>
@@ -145,7 +145,7 @@ function ThankYouScreen({ onResults, onRateLeaders, onHome }: { onResults: () =>
         
         <div className="nc-thankyou-btns" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <button className="nc-btn-primary" onClick={onRateLeaders} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(124,58,237,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; }}>★ Valorar a los líderes</button>
-          <button className="nc-btn-primary" onClick={onResults} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #4b0082, #ff6b6b)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(75, 0, 130,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; (e.target as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(75, 0, 130,0.4)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; (e.target as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(75, 0, 130,0.3)"; }}>📊 Ver Resultados en Vivo</button>
+          <button className="nc-btn-primary" onClick={onResults} style={{ width: "100%", padding: "14px 24px", background: "linear-gradient(135deg, #4b0082, #6d28d9)", border: "none", color: "#fff", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease", boxShadow: "0 8px 24px rgba(75, 0, 130,0.3)" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = "translateY(-2px)"; (e.target as HTMLButtonElement).style.boxShadow = "0 12px 32px rgba(75, 0, 130,0.4)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = "translateY(0)"; (e.target as HTMLButtonElement).style.boxShadow = "0 8px 24px rgba(75, 0, 130,0.3)"; }}>📊 Ver Resultados en Vivo</button>
           <button className="nc-btn-outline" onClick={onHome} style={{ width: "100%", padding: "14px 24px", background: "rgba(75, 0, 130,0.15)", border: "1px solid #4b0082", color: "#4b0082", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.3s ease" }} onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = "rgba(75, 0, 130,0.25)"; }} onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = "rgba(75, 0, 130,0.15)"; }}>← Volver al Inicio</button>
         </div>
         
@@ -486,7 +486,7 @@ export default function NanoEncuestaBC() {
       .filter((leader) => leader.party_key === selectedParty?.party_key)
       .map(leader => [getLeaderIdentityKey(leader.leader_name), leader])
   ).values());
-  const accentColor = selectedParty?.color || "#e8465a";
+  const accentColor = selectedParty?.color || "#4b0082";
   const stepVal = responses[currentStepData.key as keyof NanoSurveyResponse];
 
   // Cards options
@@ -532,9 +532,9 @@ export default function NanoEncuestaBC() {
           --nc-text: #f0eff8;
           --nc-muted: #7a7990;
           --nc-muted2: #5a596a;
-          --nc-accent: #e8465a;
-          --nc-accent2: #ff6b7a;
-          --nc-accent-dim: rgba(232,70,90,0.1);
+          --nc-accent: #4b0082;
+          --nc-accent2: #6d28d9;
+          --nc-accent-dim: rgba(75,0,130,0.1);
           --nc-green: #22c55e;
           --nc-gold: #c9a96e;
           --nc-radius: 14px;
@@ -610,7 +610,7 @@ export default function NanoEncuestaBC() {
           letter-spacing: 0.08em; text-transform: uppercase;
           color: var(--nc-accent);
           background: var(--nc-accent-dim);
-          border: 1px solid rgba(232,70,90,0.2);
+          border: 1px solid rgba(75,0,130,0.2);
           border-radius: 100px;
           padding: 4px 10px;
         }
@@ -659,7 +659,7 @@ export default function NanoEncuestaBC() {
         }
         .nc-input:focus {
           border-color: var(--nc-accent);
-          box-shadow: 0 0 0 3px rgba(232,70,90,0.1);
+          box-shadow: 0 0 0 3px rgba(75,0,130,0.1);
         }
         .nc-input::placeholder { color: var(--nc-muted2); }
         .nc-select {
@@ -764,7 +764,7 @@ export default function NanoEncuestaBC() {
           border-radius: 50%;
           object-fit: cover;
           border: 2px solid var(--nc-accent);
-          box-shadow: 0 4px 14px rgba(232,70,90,0.3);
+          box-shadow: 0 4px 14px rgba(75,0,130,0.3);
           flex-shrink: 0;
         }
 
@@ -942,7 +942,10 @@ export default function NanoEncuestaBC() {
           font-family: inherit; cursor: pointer;
           transition: all 0.18s;
         }
-        .nc-btn-next:hover { background: var(--nc-accent2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,70,90,0.35); }
+        .nc-btn-next:hover { background: var(--nc-accent2); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(75,0,130,0.38); }
+        .nc-btn-next:active, .nc-btn-primary:active, .nc-btn-outline:active, .nc-btn-prev:active { transform: translateY(0) scale(0.97); }
+        .nc-btn-next:focus-visible, .nc-btn-primary:focus-visible, .nc-btn-outline:focus-visible, .nc-btn-prev:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+
         .nc-btn-next:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
 
         /* Buttons: buttons */
@@ -983,8 +986,8 @@ export default function NanoEncuestaBC() {
         }
         .nc-cooldown-icon {
           width: 64px; height: 64px; border-radius: 50%;
-          background: rgba(232,70,90,0.1);
-          border: 1px solid rgba(232,70,90,0.25);
+          background: rgba(75,0,130,0.1);
+          border: 1px solid rgba(75,0,130,0.25);
           display: flex; align-items: center; justify-content: center;
           color: var(--nc-accent); margin: 0 auto 20px;
         }
@@ -1022,7 +1025,8 @@ export default function NanoEncuestaBC() {
         .nc-loading-spinner {
           width: 20px; height: 20px; border-radius: 50%;
           border: 2px solid var(--nc-border2);
-          border-top-color: var(--nc-accent);
+          border-top-color: #4b0082;
+          box-shadow: 0 0 0 3px rgba(75,0,130,0.08);
           animation: nc-spin 0.7s linear infinite;
           margin: 0 auto;
         }
@@ -1113,7 +1117,7 @@ export default function NanoEncuestaBC() {
         /* BC visual refresh: solo presentación, sin cambios de encuesta */
         .nc-wrap {
           background:
-            radial-gradient(circle at 10% 0%, rgba(232, 70, 90, 0.14), transparent 30%),
+            radial-gradient(circle at 10% 0%, rgba(75, 0, 130, 0.14), transparent 30%),
             radial-gradient(circle at 92% 18%, rgba(56, 189, 248, 0.1), transparent 28%),
             linear-gradient(145deg, #060914 0%, #0b1020 54%, #070a14 100%);
         }
@@ -1155,14 +1159,14 @@ export default function NanoEncuestaBC() {
         .nc-input:focus,
         .nc-select:focus {
           border-color: rgba(255,255,255,0.28);
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.12), 12px 14px 28px rgba(2,6,23,0.24), 0 0 24px rgba(232,70,90,0.07);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.12), 12px 14px 28px rgba(2,6,23,0.24), 0 0 24px rgba(75,0,130,0.07);
         }
         .nc-party-btn.selected,
         .nc-leader-btn.selected,
         .nc-option-card.selected,
         .nc-num-btn.selected,
         .nc-ideology-btn.selected {
-          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.16), 0 12px 28px rgba(2,6,23,0.34), 0 0 24px rgba(232,70,90,0.13);
+          box-shadow: inset 1px 1px 0 rgba(255,255,255,0.16), 0 12px 28px rgba(2,6,23,0.34), 0 0 24px rgba(75,0,130,0.13);
         }
         .nc-btn-next,
         .nc-btn-primary {
@@ -1595,7 +1599,7 @@ export default function NanoEncuestaBC() {
                         <button
                           key={opt.value}
                           className={`nc-option-card${isSelected ? " selected" : ""}`}
-                          style={isSelected ? { borderColor: "var(--nc-accent)", background: "rgba(232,70,90,0.05)" } : {}}
+                          style={isSelected ? { borderColor: "var(--nc-accent)", background: "rgba(75,0,130,0.05)" } : {}}
                           title={`Seleccionar: ${opt.label}`}
                           onClick={() => {
                             if (opt.value === "Otro") {

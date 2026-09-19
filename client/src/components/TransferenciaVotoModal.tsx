@@ -550,7 +550,7 @@ export function TransferenciaVotoModal({
         if (watermark) {
           context.drawImage(watermark, width - 76, 12, 36, 36);
         } else {
-          context.fillStyle = "#e8465a";
+          context.fillStyle = "#4b0082";
           context.fillRect(width - 76, 12, 36, 36);
           context.fillStyle = "#ffffff";
           context.font = "800 14px Arial, sans-serif";

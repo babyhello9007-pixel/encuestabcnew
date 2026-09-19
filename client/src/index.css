@@ -274,7 +274,7 @@ textarea {
     --color-rose-200: #fecdd3;
     --color-rose-300: #fda4af;
     --color-rose-400: #fb7185;
-    --color-rose-500: #f43f5e;
+    --color-rose-500: #4b0082;
     --color-rose-600: #e11d48;
     --color-rose-700: #be123c;
     --color-rose-800: #9f1239;
@@ -285,7 +285,7 @@ textarea {
   body {
     background:
       radial-gradient(circle at 20% 15%, rgba(59, 130, 246, 0.08), transparent 40%),
-      radial-gradient(circle at 85% 0%, rgba(244, 63, 94, 0.08), transparent 35%),
+      radial-gradient(circle at 85% 0%, rgba(75, 0, 130, 0.08), transparent 35%),
       linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
     min-height: 100vh;
   }
@@ -1217,7 +1217,7 @@ body {
 
 .linktree-page {
   background:
-    radial-gradient(circle at 12% 4%, rgba(244, 63, 94, 0.18), transparent 28%),
+    radial-gradient(circle at 12% 4%, rgba(75, 0, 130, 0.18), transparent 28%),
     radial-gradient(circle at 88% 22%, rgba(56, 189, 248, 0.14), transparent 30%),
     linear-gradient(145deg, #060a18 0%, #10172a 52%, #080d1d 100%) !important;
 }
@@ -1235,7 +1235,7 @@ body {
 .linktree-page .linktree-social-card:hover,
 .linktree-page .linktree-quorum-feature:hover {
   transform: translateY(-3px) scale(1.005);
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.17), 16px 20px 42px rgba(2, 6, 23, 0.4), 0 0 28px rgba(244, 63, 94, 0.08);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.17), 16px 20px 42px rgba(2, 6, 23, 0.4), 0 0 28px rgba(75, 0, 130, 0.08);
 }
 
 .linktree-page .linktree-logo-shell {
@@ -1244,7 +1244,7 @@ body {
 
 .linktree-light {
   background:
-    radial-gradient(circle at 12% 4%, rgba(244, 63, 94, 0.12), transparent 28%),
+    radial-gradient(circle at 12% 4%, rgba(75, 0, 130, 0.12), transparent 28%),
     radial-gradient(circle at 88% 22%, rgba(56, 189, 248, 0.12), transparent 30%),
     linear-gradient(145deg, #f8fafc 0%, #eef2ff 52%, #fff1f2 100%) !important;
 }
@@ -1279,8 +1279,8 @@ body {
 .linktree-light .linktree-card:hover,
 .linktree-light .linktree-social-card:hover,
 .linktree-light .linktree-quorum-feature:hover {
-  border-color: rgba(244, 63, 94, 0.28);
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.9), 16px 20px 42px rgba(148, 163, 184, 0.26), 0 0 28px rgba(244, 63, 94, 0.08);
+  border-color: rgba(75, 0, 130, 0.28);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.9), 16px 20px 42px rgba(148, 163, 184, 0.26), 0 0 28px rgba(75, 0, 130, 0.08);
 }
 
 .bc-top5-widget {
@@ -1300,9 +1300,9 @@ body {
 }
 
 .bc-top5-leader:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(232, 70, 90, 0.09)) !important;
-  border-color: rgba(232, 70, 90, 0.42) !important;
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), 10px 14px 24px rgba(2,6,23,0.24), 0 0 22px rgba(232,70,90,0.08);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(75, 0, 130, 0.09)) !important;
+  border-color: rgba(75, 0, 130, 0.42) !important;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.14), 10px 14px 24px rgba(2,6,23,0.24), 0 0 22px rgba(75,0,130,0.08);
 }
 
 .bc-top5-tooltip {
@@ -1321,4 +1321,24 @@ body {
 .bc-top5-widget .text-slate-300,
 .bc-top5-widget .text-slate-400 {
   color: #b8c4d8 !important;
+}
+
+/* Corporate purple micro-interactions: hover lift, press feedback and accessible focus. */
+.btn-primary:not(:disabled), .btn-secondary:not(:disabled),
+button[class*="bg-[#4b0082]"]:not(:disabled),
+button[class*="bg-red-500"]:not(:disabled), button[class*="bg-red-600"]:not(:disabled), button[class*="bg-red-700"]:not(:disabled) {
+  transition: transform 160ms cubic-bezier(.23,1,.32,1), background-color 180ms ease, box-shadow 180ms ease, color 180ms ease;
+}
+.btn-primary:not(:disabled):hover, .btn-secondary:not(:disabled):hover,
+button[class*="bg-[#4b0082]"]:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(75, 0, 130, .28);
+}
+.btn-primary:not(:disabled):active, .btn-secondary:not(:disabled):active,
+button[class*="bg-[#4b0082]"]:not(:disabled):active { transform: translateY(0) scale(.97); }
+.btn-primary:focus-visible, .btn-secondary:focus-visible,
+button[class*="bg-[#4b0082]"]:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary, .btn-secondary, button[class*="bg-[#4b0082]"], .r-hbtn { transition: none !important; }
+  .btn-primary:hover, .btn-secondary:hover, button[class*="bg-[#4b0082]"]:hover, .r-hbtn:hover { transform: none !important; }
 }

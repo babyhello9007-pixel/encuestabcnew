@@ -142,7 +142,7 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
     return {
       key: partidoName,
       name: partidoName,
-      color: "#e8465a",
+      color: "#4b0082",
       logo: "",
     };
   };
@@ -159,7 +159,7 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
           gap: 12,
         }}
       >
-        <Loader2 className="animate-spin" size={32} style={{ color: "#e8465a" }} />
+        <Loader2 className="animate-spin" size={32} style={{ color: "#4b0082" }} />
         <span style={{ fontSize: 13, color: "#7a7990" }}>Cargando análisis de opinión...</span>
       </div>
     );
@@ -277,7 +277,7 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-          <TrendingUp size={20} style={{ color: "#e8465a" }} />
+          <TrendingUp size={20} style={{ color: "#4b0082" }} />
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#f0eff8" }}>
             Distribución General de Opiniones
           </h3>
@@ -310,7 +310,7 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.borderColor = "rgba(232, 70, 90, 0.3)";
+                  e.currentTarget.style.borderColor = "rgba(75, 0, 130, 0.3)";
                   e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
                 }}
                 onMouseLeave={(e) => {
@@ -361,7 +361,7 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
                       style={{
                         width: `${Math.min(pct, 100)}%`,
                         height: "100%",
-                        background: "linear-gradient(90deg, #e8465a, #818cf8)",
+                        background: "linear-gradient(90deg, #4b0082, #818cf8)",
                         borderRadius: 10,
                         transition: "width 0.8s ease-out",
                       }}
@@ -394,8 +394,8 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
             padding: "8px 16px",
             borderRadius: 20,
             border: "1px solid",
-            borderColor: activeOpinionFilter === "todas" ? "#e8465a" : "rgba(255,255,255,0.1)",
-            background: activeOpinionFilter === "todas" ? "rgba(232, 70, 90, 0.15)" : "rgba(255,255,255,0.03)",
+            borderColor: activeOpinionFilter === "todas" ? "#4b0082" : "rgba(255,255,255,0.1)",
+            background: activeOpinionFilter === "todas" ? "rgba(75, 0, 130, 0.15)" : "rgba(255,255,255,0.03)",
             color: activeOpinionFilter === "todas" ? "#f0eff8" : "#7a7990",
             fontSize: 12,
             fontWeight: 600,
@@ -414,8 +414,8 @@ export function CrisisCeutaSection({ partyMeta: propsPartyMeta }: CrisisCeutaSec
               padding: "8px 16px",
               borderRadius: 20,
               border: "1px solid",
-              borderColor: activeOpinionFilter === opKey ? "#e8465a" : "rgba(255,255,255,0.1)",
-              background: activeOpinionFilter === opKey ? "rgba(232, 70, 90, 0.15)" : "rgba(255,255,255,0.03)",
+              borderColor: activeOpinionFilter === opKey ? "#4b0082" : "rgba(255,255,255,0.1)",
+              background: activeOpinionFilter === opKey ? "rgba(75, 0, 130, 0.15)" : "rgba(255,255,255,0.03)",
               color: activeOpinionFilter === opKey ? "#f0eff8" : "#7a7990",
               fontSize: 12,
               fontWeight: 600,

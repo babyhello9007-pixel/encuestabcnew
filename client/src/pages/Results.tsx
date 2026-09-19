@@ -164,7 +164,11 @@ const RESULTS_CSS = `
 .r-brand-title { font-size: 16px; font-weight: 700; color: #f0eff8; line-height: 1.2; }
 .r-brand-sub { font-size: 12px; color: #7a7990; }
 .r-header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.r-hbtn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+.r-hbtn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: transform 160ms cubic-bezier(.23,1,.32,1), background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease; white-space: nowrap; }
+  .r-hbtn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(75,0,130,.22); }
+  .r-hbtn:not(:disabled):active { transform: translateY(0) scale(.97); box-shadow: 0 3px 8px rgba(75,0,130,.18); }
+  .r-hbtn:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+  .r-hbtn:disabled { cursor: not-allowed; opacity: .58; }
 .r-hbtn-ai { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #f59e0b; }
 .r-hbtn-ai:hover { background: rgba(245,158,11,0.25); }
 .r-hbtn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #7a7990; }
@@ -189,8 +193,8 @@ const RESULTS_CSS = `
   .r-hbtn-crown:hover, .r-hbtn-crown.is-active { background: rgba(251,191,36,.24); transform: translateY(-1px); }
   .r-panel-badge { padding: 2px 5px; border-radius: 999px; background: rgba(94,234,212,.16); color: #99f6e4; font-size: 9px; font-weight: 900; }
   .r-share-feedback { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 8px; background: rgba(16,185,129,.13); border: 1px solid rgba(110,231,183,.28); color: #a7f3d0; font-size: 12px; font-weight: 700; animation: fadeIn .2s ease-out both; }
-  .r-export-progress { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 8px; color: #bfdbfe; background: rgba(59,130,246,.13); border: 1px solid rgba(96,165,250,.25); font-size: 10px; font-weight: 800; white-space: nowrap; }
-  .r-export-spinner { width: 10px; height: 10px; border: 2px solid rgba(191,219,254,.28); border-top-color: #bfdbfe; border-radius: 50%; animation: rSpin .7s linear infinite; }
+  .r-export-progress { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 8px; color: #ddd6fe; background: rgba(75,0,130,.18); border: 1px solid rgba(167,139,250,.36); font-size: 10px; font-weight: 800; white-space: nowrap; }
+  .r-export-spinner { width: 10px; height: 10px; border: 2px solid rgba(196,181,253,.3); border-top-color: #a78bfa; border-radius: 50%; animation: rSpin .7s linear infinite; box-shadow: 0 0 0 2px rgba(75,0,130,.12); }
   .r-pdf-preview-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(2,6,23,.74); backdrop-filter: blur(12px); animation: fadeIn .18s ease-out both; }
   .r-pdf-preview-modal { width: min(940px, 100%); height: min(92vh, 820px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(148,163,184,.28); border-radius: 18px; background: rgba(15,23,42,.96); box-shadow: 0 24px 80px rgba(0,0,0,.45); }
   .r-pdf-preview-head, .r-pdf-preview-options, .r-pdf-preview-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
@@ -213,7 +217,7 @@ const RESULTS_CSS = `
 .r-nav-group { position: relative; display: flex; align-items: center; }
 .r-nav-group-btn { display: flex; align-items: center; gap: 6px; padding: 12px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; color: #7a7990; transition: all 0.18s; white-space: nowrap; }
 .r-nav-group-btn:hover { color: #f0eff8; }
-.r-nav-group-btn.active { color: #e8465a; border-bottom-color: #e8465a; }
+.r-nav-group-btn.active { color: #4b0082; border-bottom-color: #4b0082; }
 .r-dropdown { position: absolute; top: 100%; left: 0; min-width: 200px; z-index: 100; background: #18181f; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; animation: dropIn 0.15s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.5); margin-top: 2px; }
 @keyframes dropIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -223,7 +227,7 @@ const RESULTS_CSS = `
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 .r-dropdown-item { display: block; width: 100%; text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; background: none; border: none; color: #7a7990; border-left: 2px solid transparent; transition: all 0.15s; }
 .r-dropdown-item:hover { background: rgba(255,255,255,0.04); color: #f0eff8; }
-.r-dropdown-item.active { color: #e8465a; border-left-color: #e8465a; background: rgba(232,70,90,0.06); font-weight: 700; }
+.r-dropdown-item.active { color: #4b0082; border-left-color: #4b0082; background: rgba(75,0,130,0.06); font-weight: 700; }
 
 /* Main */
 .r-main { flex: 1; padding: 14px 20px 60px; max-width: 1180px; margin: 0 auto; width: 100%; box-sizing: border-box; }
@@ -236,13 +240,13 @@ const RESULTS_CSS = `
 
 .r-stat-label { font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7a7990; margin-bottom: 4px; }
 .r-stat-value { font-family: 'TVP', sans-serif; font-size: 28px; font-weight: 800; color: #f0eff8; line-height: 1; }
-.r-stat-value.accent { color: #e8465a; }
+.r-stat-value.accent { color: #4b0082; }
 .r-stat-suffix { font-size: 12px; color: #7a7990; margin-top: 2px; }
 
 /* Sort bar */
 .r-sort-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .r-sort-btn { padding: 6px 13px; border-radius: 100px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; transition: all 0.18s; }
-.r-sort-btn.active { background: #e8465a; border-color: #e8465a; color: #fff; }
+.r-sort-btn.active { background: #4b0082; border-color: #4b0082; color: #fff; }
 .r-sort-hint { margin-left: auto; font-size: 12px; color: #5a596a; }
 
 /* Advanced result filters */
@@ -265,8 +269,8 @@ const RESULTS_CSS = `
 .r-filter-label { color: #a4a2b6; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .r-filter-select { width: 100%; min-height: 36px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 9px; background: rgba(7,9,19,.58); color: #f0eff8; font: inherit; font-size: 12px; outline: none; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
 .r-filter-select:focus { border-color: rgba(94,234,212,.65); background: rgba(7,9,19,.78); box-shadow: 0 0 0 3px rgba(94,234,212,.10); }
-.r-filter-clear { min-height: 32px; padding: 6px 11px; border: 1px solid rgba(232,70,90,.32); border-radius: 8px; background: rgba(232,70,90,.10); color: #ff9aa5; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .18s ease, background .18s ease; }
-.r-filter-clear:hover { background: rgba(232,70,90,.20); transform: translateY(-1px); }
+.r-filter-clear { min-height: 32px; padding: 6px 11px; border: 1px solid rgba(75,0,130,.32); border-radius: 8px; background: rgba(75,0,130,.10); color: #ff9aa5; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+.r-filter-clear:hover { background: rgba(75,0,130,.20); transform: translateY(-1px); }
 .r-filter-summary { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; color: #8b8aa0; font-size: 11px; }
 .r-filter-summary strong { color: #5eead4; font-weight: 800; }
 .r-filter-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -345,7 +349,7 @@ const RESULTS_CSS = `
 }
 
 /* Party cards */
-.r-party-card { --party-accent: #e8465a; background: linear-gradient(160deg, color-mix(in srgb, var(--party-accent) 12%, transparent), rgba(255,255,255,0.03)); backdrop-filter: blur(20px) saturate(175%); -webkit-backdrop-filter: blur(20px) saturate(175%); border: 1px solid color-mix(in srgb, var(--party-accent) 38%, rgba(255,255,255,0.16)); border-radius: 16px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
+.r-party-card { --party-accent: #4b0082; background: linear-gradient(160deg, color-mix(in srgb, var(--party-accent) 12%, transparent), rgba(255,255,255,0.03)); backdrop-filter: blur(20px) saturate(175%); -webkit-backdrop-filter: blur(20px) saturate(175%); border: 1px solid color-mix(in srgb, var(--party-accent) 38%, rgba(255,255,255,0.16)); border-radius: 16px; padding: 16px 18px; cursor: pointer; transition: all 0.2s; }
 .r-party-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px color-mix(in srgb, var(--party-accent) 35%, rgba(0,0,0,0.32)); }
 .r-party-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .r-party-logo-wrap { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -442,7 +446,7 @@ const RESULTS_CSS = `
 .r-leader-img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px; display: block; }
 .r-leader-img-placeholder { width: 72px; height: 72px; border-radius: 50%; background: #18181f; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #7a7990; margin: 0 auto 10px; }
 .r-leader-name { font-size: 12px; font-weight: 700; color: #f0eff8; margin-bottom: 8px; line-height: 1.3; }
-.r-leader-score { font-family: 'TVP', sans-serif; font-size: 22px; font-weight: 800; color: #e8465a; line-height: 1; margin-bottom: 4px; }
+.r-leader-score { font-family: 'TVP', sans-serif; font-size: 22px; font-weight: 800; color: #4b0082; line-height: 1; margin-bottom: 4px; }
 .r-leader-bar-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
 .r-leader-bar-fill { height: 100%; border-radius: 2px; }
 .r-leader-count { font-size: 10px; color: #5a596a; }
@@ -468,9 +472,9 @@ const RESULTS_CSS = `
 .r-sim-body { padding: 20px; }
 .r-mode-tabs { display: flex; gap: 2px; padding: 3px; background: rgba(255,255,255,0.05); border-radius: 10px; width: fit-content; margin-bottom: 16px; }
 .r-mode-tab { padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; background: transparent; color: #7a7990; transition: all 0.18s; }
-.r-mode-tab.active { background: #e8465a; color: #fff; }
+.r-mode-tab.active { background: #4b0082; color: #fff; }
 .r-sim-total { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 9px; padding: 8px 14px; margin-bottom: 14px; font-size: 13px; color: #7a7990; flex-wrap: wrap; }
-.r-sim-total strong { color: #e8465a; font-size: 15px; }
+.r-sim-total strong { color: #4b0082; font-size: 15px; }
 .r-sim-party-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .r-sim-party-row { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 9px; padding: 8px 12px; transition: border-color 0.18s; }
 .r-sim-party-row:hover { border-color: rgba(255,255,255,0.12); }
@@ -478,7 +482,7 @@ const RESULTS_CSS = `
 .r-sim-party-name { flex: 1; font-size: 12px; font-weight: 600; color: #f0eff8; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .r-sim-pct { font-size: 10px; color: #7a7990; min-width: 30px; text-align: right; }
 .r-sim-input { width: 72px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 4px 7px; text-align: right; font-size: 11px; color: #f0eff8; font-family: inherit; outline: none; flex-shrink: 0; transition: border-color 0.18s; }
-.r-sim-input:focus { border-color: #e8465a; }
+.r-sim-input:focus { border-color: #4b0082; }
 .r-sim-results { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 16px; margin-top: 16px; }
 .r-sim-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .r-sim-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -492,12 +496,12 @@ const RESULTS_CSS = `
 .r-sim-add-title { font-size: 11px; font-weight: 700; color: #5a596a; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
 .r-sim-add-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .r-sim-add-input { flex: 1; min-width: 120px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 7px 10px; font-size: 12px; color: #f0eff8; font-family: inherit; outline: none; }
-.r-sim-add-btn { display: flex; align-items: center; gap: 4px; padding: 7px 14px; background: #e8465a; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; color: #fff; font-family: inherit; cursor: pointer; }
+.r-sim-add-btn { display: flex; align-items: center; gap: 4px; padding: 7px 14px; background: #4b0082; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; color: #fff; font-family: inherit; cursor: pointer; }
 
 /* Map */
 .r-map-toggle { display: flex; gap: 4px; }
 .r-map-btn { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 7px; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; transition: all 0.18s; }
-.r-map-btn.active { background: #e8465a; border-color: #e8465a; color: #fff; }
+.r-map-btn.active { background: #4b0082; border-color: #4b0082; color: #fff; }
 
 /* Infog modal */
 .r-infog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -507,13 +511,13 @@ const RESULTS_CSS = `
 .r-infog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
 .r-infog-option { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 10px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.08); background: #18181f; cursor: pointer; transition: all 0.18s; text-align: center; }
 .r-infog-option:hover { border-color: rgba(255,255,255,0.18); }
-.r-infog-option.selected { border-color: #e8465a; background: rgba(232,70,90,0.08); }
+.r-infog-option.selected { border-color: #4b0082; background: rgba(75,0,130,0.08); }
 .r-infog-option-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
 .r-infog-option-label { font-size: 12px; font-weight: 700; color: #f0eff8; }
 .r-infog-option-desc { font-size: 10px; color: #7a7990; }
 .r-infog-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 .r-infog-cancel { padding: 9px 18px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #7a7990; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
-.r-infog-generate { padding: 9px 22px; border-radius: 9px; border: none; background: #e8465a; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.r-infog-generate { padding: 9px 22px; border-radius: 9px; border: none; background: #4b0082; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
 
 /* Government builder */
 .r-gov-modal { background: #111118; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 28px; max-width: 780px; width: 100%; max-height: 92vh; overflow-y: auto; }
@@ -522,7 +526,7 @@ const RESULTS_CSS = `
 .r-gov-ministry-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #5a596a; margin-bottom: 6px; }
 .r-gov-ministry-name { font-size: 13px; font-weight: 600; color: #f0eff8; margin-bottom: 4px; }
 .r-gov-ministry-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 6px 10px; font-size: 12px; color: #f0eff8; font-family: inherit; outline: none; margin-top: 4px; transition: border-color 0.18s; }
-.r-gov-ministry-input:focus { border-color: #e8465a; }
+.r-gov-ministry-input:focus { border-color: #4b0082; }
 
 /* Methodology */
 .r-method { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -531,22 +535,22 @@ const RESULTS_CSS = `
 
 /* Select */
 .r-select { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; padding: 9px 12px; font-size: 13px; color: #f0eff8; font-family: inherit; outline: none; appearance: none; transition: border-color 0.18s; }
-.r-select:focus { border-color: #e8465a; }
+.r-select:focus { border-color: #4b0082; }
 .r-select option { background: #18181f; }
 .r-circ-info { display: flex; align-items: center; gap: 8px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 9px; padding: 9px 14px; font-size: 12px; color: #f59e0b; margin-bottom: 12px; }
 .r-empty-circ { text-align: center; padding: 36px 20px; color: #5a596a; }
 .r-trash-btn { background: none; border: none; color: #5a596a; cursor: pointer; padding: 4px; transition: color 0.18s; }
-.r-trash-btn:hover { color: #e8465a; }
+.r-trash-btn:hover { color: #4b0082; }
 
 /* CTA */
 .r-cta { text-align: center; padding: 20px; }
 .r-cta-text { font-size: 13px; color: #7a7990; margin-bottom: 10px; }
-.r-cta-btn { padding: 9px 24px; border-radius: 9px; background: #e8465a; border: none; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
-.r-cta-btn:hover { background: #ff6b7a; }
+.r-cta-btn { padding: 9px 24px; border-radius: 9px; background: #4b0082; border: none; color: #fff; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.r-cta-btn:hover { background: #6d28d9; }
 
 /* Helpers */
 .r-loader { display: flex; align-items: center; justify-content: center; padding: 60px 20px; }
-.r-spin { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.08); border-top-color: #e8465a; animation: spin 0.7s linear infinite; }
+.r-spin { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.08); border-top-color: #4b0082; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── MOBILE ── */
@@ -584,7 +588,7 @@ const RESULTS_CSS = `
 /* BC visual refresh: solo presentación, sin cambios de datos o interacción */
 .r-root {
   background:
-    radial-gradient(circle at 6% 0%, rgba(232, 70, 90, 0.16), transparent 26%),
+    radial-gradient(circle at 6% 0%, rgba(75, 0, 130, 0.16), transparent 26%),
     radial-gradient(circle at 96% 18%, rgba(56, 189, 248, 0.1), transparent 28%),
     linear-gradient(145deg, #060914 0%, #0b1020 52%, #070a14 100%);
 }
@@ -622,7 +626,7 @@ const RESULTS_CSS = `
 .r-section:hover,
 .r-sim-wrap:hover {
   border-color: rgba(255, 255, 255, 0.24);
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.16), 18px 24px 46px rgba(2, 6, 23, 0.4), 0 0 28px rgba(232, 70, 90, 0.07);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.16), 18px 24px 46px rgba(2, 6, 23, 0.4), 0 0 28px rgba(75, 0, 130, 0.07);
 }
 .r-dropdown,
 .r-infog-option,
@@ -711,13 +715,13 @@ async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, t
   background.addColorStop(1, "#210d17");
   context.fillStyle = background;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#e8465a";
+  context.fillStyle = "#4b0082";
   context.fillRect(0, 0, 1800, 14);
   context.fillStyle = "#f8fafc";
   context.font = "900 56px Inter, TVP, sans-serif";
   context.fillText("BATALLA CULTURAL", 96, 125);
   context.font = "800 32px Inter, TVP, sans-serif";
-  context.fillStyle = "#e8465a";
+  context.fillStyle = "#4b0082";
   context.fillText(title.toUpperCase(), 96, 178);
   context.font = "500 24px Inter, TVP, sans-serif";
   context.fillStyle = "#aeb8cc";
@@ -741,7 +745,7 @@ async function exportResultsSummaryPng(stats: PartyStats[], activeTab: TabKey, t
     const y = 310 + line * (cardHeight + 34);
     context.fillStyle = "rgba(255,255,255,0.065)";
     drawRounded(x, y, columnWidth, cardHeight, 24);
-    context.fillStyle = row.color || "#e8465a";
+    context.fillStyle = row.color || "#4b0082";
     drawRounded(x + 26, y + 27, 12, 96, 6);
     context.fillStyle = "#f8fafc";
     context.font = "800 31px Inter, TVP, sans-serif";
@@ -886,7 +890,7 @@ function PartyLogoImg({ src, name, color, size = 36 }: { src?: string; name: str
     return <img src={src} alt={name} style={{ width: size, height: size, objectFit: "contain", borderRadius: 6 }} onError={() => setErr(true)} />;
   }
   return (
-    <div style={{ width: size, height: size, borderRadius: 6, background: color || "#e8465a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
+    <div style={{ width: size, height: size, borderRadius: 6, background: color || "#4b0082", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.38, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
       {name.charAt(0)}
     </div>
   );
@@ -1078,7 +1082,7 @@ function GobiernoModal({
       // Partido y presidente
       const pm = partyMeta[selectedParty];
       if (pm) {
-        ctx.fillStyle = pm.color || "#e8465a";
+        ctx.fillStyle = pm.color || "#4b0082";
         ctx.beginPath();
         ctx.roundRect(40, 112, 300, 64, 10);
         ctx.fill();
@@ -1224,7 +1228,7 @@ function GobiernoModal({
               onDragStart={() => setDragMinistryId(min.id)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => { if (dragMinistryId) handleMoveMinistry(dragMinistryId, min.id); setDragMinistryId(null); }}
-              style={{ transition: "all .2s ease", borderColor: dragMinistryId === min.id ? "#e8465a" : undefined }}
+              style={{ transition: "all .2s ease", borderColor: dragMinistryId === min.id ? "#4b0082" : undefined }}
             >
               <div className="r-gov-ministry-title">{min.icon || "🏛️"} {min.titulo}</div>
               <input className="r-gov-ministry-input" placeholder="Título del ministerio…" value={min.titulo} onChange={e => updateMin(min.id, { titulo: e.target.value })} />
@@ -1328,7 +1332,7 @@ function InfografiaModal({ parties, regions, onClose, onGenerate }: {
         <p className="r-infog-sub">Selecciona el tipo de infografía</p>
         <div className="r-infog-grid">
           {[
-            { t: "general" as const, icon: <BarChart2 size={20} color="#e8465a" />, bg: "rgba(232,70,90,0.15)", label: "General", desc: "Resultados globales" },
+            { t: "general" as const, icon: <BarChart2 size={20} color="#4b0082" />, bg: "rgba(75,0,130,0.15)", label: "General", desc: "Resultados globales" },
             { t: "party" as const, icon: <Award size={20} color="#818cf8" />, bg: "rgba(99,102,241,0.15)", label: "Por Partido", desc: "Perfil detallado" },
             { t: "leaders" as const, icon: <Users size={20} color="#34d399" />, bg: "rgba(52,211,153,0.15)", label: "Top 5 Líderes", desc: "Ranking de valoración" },
           ].map(opt => (
@@ -1412,7 +1416,7 @@ function LideresDePartidosSection({ partyMeta }: { partyMeta: Record<string, Par
           id: row.id, party_key: row.party_key, leader_name: row.leader_name,
           photo_url: row.photo_url, is_active: row.is_active,
           display_name: row.party_configuration?.display_name ?? row.party_key,
-          color: row.party_configuration?.color ?? "#e8465a",
+          color: row.party_configuration?.color ?? "#4b0082",
           logo_url: row.party_configuration?.logo_url ?? "",
         }));
         setLeaders(mapped);
@@ -1875,7 +1879,7 @@ function LeadersByPartyAvg({ leaderRatings, generalStats, generalPartyMap }: {
         });
         const result = Object.entries(byP).filter(([, d]) => Object.keys(d.sums).length > 0).map(([partyName, d]) => {
           const pm = Object.values(generalPartyMap).find(p => p.name === partyName || p.key === partyName);
-          return { partyName, color: pm?.color || "#e8465a", logo: pm?.logo || "", ratings: fields.map(f => ({ name: LEADER_MAP[f]?.name || f, avg: d.counts[f] > 0 ? Math.round((d.sums[f] / d.counts[f]) * 10) / 10 : 0 })).sort((a, b) => b.avg - a.avg) };
+          return { partyName, color: pm?.color || "#4b0082", logo: pm?.logo || "", ratings: fields.map(f => ({ name: LEADER_MAP[f]?.name || f, avg: d.counts[f] > 0 ? Math.round((d.sums[f] / d.counts[f]) * 10) / 10 : 0 })).sort((a, b) => b.avg - a.avg) };
         }).sort((a, b) => { const as_ = generalStats.find(s => s.nombre === a.partyName); const bs_ = generalStats.find(s => s.nombre === b.partyName); return (bs_?.votos || 0) - (as_?.votos || 0); }).slice(0, 8);
         setPartyAvgs(result);
       } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -1912,7 +1916,7 @@ function LeadersByPartyAvg({ leaderRatings, generalStats, generalPartyMap }: {
                 {fieldOrder.map(f => {
                   const r = p.ratings.find(r => r.name === LEADER_MAP[f]?.name);
                   const avg = r?.avg ?? 0;
-                  const color = avg >= 7 ? "#22c55e" : avg >= 4 ? "#f59e0b" : avg >= 1 ? "#e8465a" : "#5a596a";
+                  const color = avg >= 7 ? "#22c55e" : avg >= 4 ? "#f59e0b" : avg >= 1 ? "#4b0082" : "#5a596a";
                   return <td key={f} style={{ textAlign: "center" }}><span style={{ fontSize: 13, fontWeight: 700, color }}>{avg > 0 ? avg.toFixed(1) : "—"}</span></td>;
                 })}
               </tr>
@@ -1969,8 +1973,8 @@ function AnalisisAvanzadoSection({
           <div style={{ fontSize: 12, color: "#7a7990" }}>Sin datos suficientes para flujo de voto.</div>
         )}
       </div>
-      <div className="r-section"><div className="r-section-title">Bubble: tamaño votos / posición ideológica</div><ResponsiveContainer width="100%" height={250}><ScatterChart><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" /><XAxis type="number" dataKey="x" name="Ideología" stroke="#7a7990" /><YAxis type="number" dataKey="y" name="Votos" stroke="#7a7990" /><ZAxis dataKey="z" range={[50, 600]} /><Tooltip cursor={{ strokeDasharray: "3 3" }} /><Scatter data={bubbleData} fill="#e8465a" /></ScatterChart></ResponsiveContainer></div>
-      <div className="r-section"><div className="r-section-title">Radar líderes (promedio por partido)</div><ResponsiveContainer width="100%" height={260}><RadarChart data={radarData}><PolarGrid /><PolarAngleAxis dataKey="partido" /><PolarRadiusAxis angle={30} domain={[0, 10]} /><Radar name="Feijóo" dataKey="feijoo" stroke="#60a5fa" fill="#60a5fa" fillOpacity={0.3} /><Radar name="Sánchez" dataKey="sanchez" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.2} /><Radar name="Abascal" dataKey="abascal" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} /><Legend /></RadarChart></ResponsiveContainer></div>
+      <div className="r-section"><div className="r-section-title">Bubble: tamaño votos / posición ideológica</div><ResponsiveContainer width="100%" height={250}><ScatterChart><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" /><XAxis type="number" dataKey="x" name="Ideología" stroke="#7a7990" /><YAxis type="number" dataKey="y" name="Votos" stroke="#7a7990" /><ZAxis dataKey="z" range={[50, 600]} /><Tooltip cursor={{ strokeDasharray: "3 3" }} /><Scatter data={bubbleData} fill="#4b0082" /></ScatterChart></ResponsiveContainer></div>
+      <div className="r-section"><div className="r-section-title">Radar líderes (promedio por partido)</div><ResponsiveContainer width="100%" height={260}><RadarChart data={radarData}><PolarGrid /><PolarAngleAxis dataKey="partido" /><PolarRadiusAxis angle={30} domain={[0, 10]} /><Radar name="Feijóo" dataKey="feijoo" stroke="#60a5fa" fill="#60a5fa" fillOpacity={0.3} /><Radar name="Sánchez" dataKey="sanchez" stroke="#4b0082" fill="#4b0082" fillOpacity={0.2} /><Radar name="Abascal" dataKey="abascal" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} /><Legend /></RadarChart></ResponsiveContainer></div>
       <div className="r-section"><div className="r-section-title">Predicción y tendencia (últimos snapshots)</div><ResponsiveContainer width="100%" height={250}><LineChart data={tendenciaActual}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" /><XAxis dataKey="snapshot_at" tick={{ fill: "#7a7990", fontSize: 10 }} /><YAxis tick={{ fill: "#7a7990", fontSize: 10 }} /><Tooltip /><Line type="monotone" dataKey="porcentaje" stroke="#f59e0b" dot={false} /></LineChart></ResponsiveContainer></div>
     </div>
   );
@@ -2092,7 +2096,7 @@ function SimuladorElectoral({ generalStats, generalPartyMap, votosPorProvincia, 
     }
     const nombres: Record<string, string> = {}; const logos: Record<string, string> = {};
     Object.entries(simulatorPartyMap).forEach(([k, p]) => { nombres[k] = p.name; logos[k] = p.logo; });
-    return obtenerEstadisticas(nv, escanos, nombres, logos).map(s => ({ ...s, color: simulatorPartyMap[s.id]?.color || "#e8465a" }));
+    return obtenerEstadisticas(nv, escanos, nombres, logos).map(s => ({ ...s, color: simulatorPartyMap[s.id]?.color || "#4b0082" }));
   }, [simulatorEscanosByProvince, simulatorVotes, simulatorPartyMap, effectiveVotesByProvince]);
 
   const addCustomParty = () => {
@@ -2524,7 +2528,7 @@ async function generarInfografiaPNG(
       const span = (party.escanos / totalSeats) * Math.PI;
       ctx.beginPath(); ctx.moveTo(hx, hy);
       ctx.arc(hx, hy, hr, angle, angle + span);
-      ctx.closePath(); ctx.fillStyle = party.color || "#e8465a"; ctx.fill();
+      ctx.closePath(); ctx.fillStyle = party.color || "#4b0082"; ctx.fill();
       angle += span;
     });
     ctx.fillStyle = "#0a0a1a"; ctx.beginPath(); ctx.arc(hx, hy, hr * 0.55, 0, Math.PI * 2); ctx.fill();
@@ -3965,17 +3969,17 @@ export default function Results() {
                         borderRadius: 8,
                         fontSize: 11,
                         fontWeight: 600,
-                        background: "rgba(232,70,90,0.15)",
-                        border: "1px solid rgba(232,70,90,0.3)",
-                        color: "#e8465a",
+                        background: "rgba(75,0,130,0.15)",
+                        border: "1px solid rgba(75,0,130,0.3)",
+                        color: "#4b0082",
                         cursor: "pointer",
                         transition: "all 0.2s",
                       }}
                       onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(232,70,90,0.25)";
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(75,0,130,0.25)";
                       }}
                       onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(232,70,90,0.15)";
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(75,0,130,0.15)";
                       }}
                     >
                       <GitBranch size={11} style={{ display: "inline", marginRight: 4 }} />
@@ -4097,7 +4101,7 @@ export default function Results() {
                         <Tooltip contentStyle={{ background: "#11131c", border: "1px solid rgba(255,255,255,.14)", borderRadius: 10, color: "#f8fafc" }} labelStyle={{ color: "#f8fafc", fontWeight: 800 }} itemStyle={{ color: "#dbeafe" }} />
                         <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                         {["PP", "PSOE", "VOX", "SUMAR", "PODEMOS", "Ciudadanos", "ERC", "JUNTS", "PNV", "BILDU",].map((p) => (
-                          <Line key={p} name={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#e8465a"} strokeWidth={2.2} activeDot={{ r: 5 }} dot={{ r: 2, strokeWidth: 0 }} connectNulls />
+                          <Line key={p} name={p} type="monotone" dataKey={p} stroke={partyColorMap[p.toUpperCase()] || "#4b0082"} strokeWidth={2.2} activeDot={{ r: 5 }} dot={{ r: 2, strokeWidth: 0 }} connectNulls />
                         ))}
                       </LineChart>
                     </ResponsiveContainer>
@@ -4113,7 +4117,7 @@ export default function Results() {
                       <Tooltip contentStyle={{ background: "#11131c", border: "1px solid rgba(255,255,255,.14)", borderRadius: 10, color: "#f8fafc" }} labelStyle={{ color: "#f8fafc", fontWeight: 800 }} itemStyle={{ color: "#dbeafe" }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Bar dataKey="escanos_2023" fill="#60a5fa" name="2023" />
-                      <Bar dataKey="escanos_actuales" fill="#e8465a" name="Actual BC" />
+                      <Bar dataKey="escanos_actuales" fill="#4b0082" name="Actual BC" />
                                           </BarChart>
 	                    </ResponsiveContainer>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8, marginTop: 14 }}>
@@ -4206,7 +4210,7 @@ export default function Results() {
                               const canonicalLeaderName = leaderNameParts.join("::") || leader.name;
                               const normalizedLeaderName = normalizePartyReference(canonicalLeaderName);
                               const li = leaderPhotoByName[`${normalizePartyReference(partyKey)}::${normalizedLeaderName}`] || leaderPhotoByName[normalizedLeaderName];
-                              const scoreColor = leader.average >= 7 ? "#22c55e" : leader.average >= 4 ? "#f59e0b" : "#e8465a";
+                              const scoreColor = leader.average >= 7 ? "#22c55e" : leader.average >= 4 ? "#f59e0b" : "#4b0082";
                               return (
                                 <div key={leader.fieldName} className="r-leader-card">
                                   {li ? <img src={li} alt={leader.name} className="r-leader-img" style={{ border: `2px solid ${scoreColor}30` }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} /> : <div className="r-leader-img-placeholder">{leader.name.charAt(0)}</div>}
@@ -4228,7 +4232,7 @@ export default function Results() {
                                 <YAxis stroke="rgba(255,255,255,0.1)" domain={[0, 10]} fontSize={10} tick={{ fill: "#7a7990" }} />
                                 <Tooltip contentStyle={{ background: "#18181f", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 11 }} formatter={(v: any) => v.toFixed(1)} />
                                 <Bar dataKey="average" radius={[5, 5, 0, 0]}>
-                                  {leaderRatings.map(l => <Cell key={l.fieldName} fill={l.average >= 7 ? "#22c55e" : l.average >= 4 ? "#f59e0b" : "#e8465a"} fillOpacity={0.85} />)}
+                                  {leaderRatings.map(l => <Cell key={l.fieldName} fill={l.average >= 7 ? "#22c55e" : l.average >= 4 ? "#f59e0b" : "#4b0082"} fillOpacity={0.85} />)}
                                 </Bar>
                               </BarChart>
                             </ResponsiveContainer>
